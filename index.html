@@ -232,11 +232,18 @@
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
-            border-radius: 12px;
-            height: 80px;
+            border-radius: 16px;
+            height: 120px;
+            background-size: cover;
+            background-position: top;
         }
 
-        .column-header img { width: 100%; height: 100%; object-fit: cover; }
+        .column-header.header-hot { background-image: url('img/chaud_fond_carte_pipe_vente.png'); }
+        .column-header.header-warm { background-image: url('img/tiede_fond_carte_pipe_vente.png'); }
+        .column-header.header-cold { background-image: url('img/froid_fond_carte_pipe_vente.png'); }
+        .column-header.header-mandate { background-image: url('img/mandat_fond_carte_pipe_vente.png'); }
+        .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
+        .column-header.header-lost { background-image: url('img/perdu_fond_carte_pipe_vente.png'); }
 
         .column-label {
             position: absolute;
@@ -250,16 +257,9 @@
             text-transform: uppercase;
             letter-spacing: 1px;
             color: white;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.4);
+            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
             font-style: italic;
         }
-
-        .hot-label { background: linear-gradient(135deg, rgba(255, 71, 87, 0.9) 0%, rgba(255, 71, 87, 0.7) 100%); }
-        .warm-label { background: linear-gradient(135deg, rgba(255, 165, 2, 0.9) 0%, rgba(255, 165, 2, 0.7) 100%); }
-        .cold-label { background: linear-gradient(135deg, rgba(46, 134, 222, 0.9) 0%, rgba(46, 134, 222, 0.7) 100%); }
-        .mandate-label { background: linear-gradient(135deg, rgba(38, 222, 129, 0.9) 0%, rgba(32, 191, 107, 0.7) 100%); }
-        .sold-label { background: linear-gradient(135deg, rgba(255, 215, 0, 0.95) 0%, rgba(255, 183, 0, 0.85) 100%); }
-        .lost-label { background: linear-gradient(135deg, rgba(99, 110, 114, 0.9) 0%, rgba(45, 52, 54, 0.7) 100%); }
 
         .column-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
@@ -584,9 +584,8 @@
     <div class="pipeline">
         <!-- Colonne Hot -->
         <div class="column" data-status="hot">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g1' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FF6B6B'/%3E%3Cstop offset='100%25' style='stop-color:%23FF4757'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g1)'/%3E%3Cpath d='M0,200 Q200,150 400,200 T800,200 L800,400 L0,400 Z' fill='%23FF4757' opacity='0.5'/%3E%3C/svg%3E" alt="Hot">
-                <div class="column-label hot-label">LEADS CHAUDES</div>
+            <div class="column-header header-hot">
+                <div class="column-label">LEADS CHAUDES</div>
             </div>
             <div class="column-title">Prospects prêts à - 30 Jours</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -595,9 +594,8 @@
 
         <!-- Colonne Warm -->
         <div class="column" data-status="warm">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g2' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FFB347'/%3E%3Cstop offset='100%25' style='stop-color:%23FFA502'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g2)'/%3E%3Cpath d='M0,250 Q200,200 400,250 T800,250 L800,400 L0,400 Z' fill='%23FFA502' opacity='0.5'/%3E%3C/svg%3E" alt="Warm">
-                <div class="column-label warm-label">LEADS TIÈDES</div>
+            <div class="column-header header-warm">
+                <div class="column-label">LEADS TIÈDES</div>
             </div>
             <div class="column-title">Prospects prêts entre 30 et 60 jours</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -606,9 +604,8 @@
 
         <!-- Colonne Cold -->
         <div class="column" data-status="cold">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g3' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2354A0FF'/%3E%3Cstop offset='100%25' style='stop-color:%232E86DE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g3)'/%3E%3Cpath d='M0,220 Q200,170 400,220 T800,220 L800,400 L0,400 Z' fill='%232E86DE' opacity='0.5'/%3E%3C/svg%3E" alt="Cold">
-                <div class="column-label cold-label">LEADS FROIDES</div>
+            <div class="column-header header-cold">
+                <div class="column-label">LEADS FROIDES</div>
             </div>
             <div class="column-title">Prospects à 60 Jours et +</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -617,9 +614,8 @@
 
         <!-- Colonne Sous Mandats -->
         <div class="column" data-status="mandate">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g4' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%2326de81'/%3E%3Cstop offset='100%25' style='stop-color:%2320bf6b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g4)'/%3E%3Cpath d='M0,240 Q200,190 400,240 T800,240 L800,400 L0,400 Z' fill='%2320bf6b' opacity='0.5'/%3E%3C/svg%3E" alt="Mandate">
-                <div class="column-label mandate-label">SOUS MANDATS</div>
+            <div class="column-header header-mandate">
+                <div class="column-label">SOUS MANDATS</div>
             </div>
             <div class="column-title">Mandats signés</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -628,9 +624,8 @@
 
         <!-- Colonne Vendus -->
         <div class="column" data-status="sold">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g5' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23ffd700'/%3E%3Cstop offset='100%25' style='stop-color:%23ffb700'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g5)'/%3E%3Cpath d='M0,200 Q200,150 400,200 T800,200 L800,400 L0,400 Z' fill='%23ffb700' opacity='0.5'/%3E%3Cpath d='M300,150 L350,100 L400,150 L450,50 L500,120 L550,80 L600,150' stroke='%23fff' stroke-width='8' fill='none'/%3E%3C/svg%3E" alt="Sold">
-                <div class="column-label sold-label">VENDUS</div>
+            <div class="column-header header-sold">
+                <div class="column-label">VENDUS</div>
             </div>
             <div class="column-title">Biens vendus 🎉</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -639,9 +634,8 @@
 
         <!-- Colonne Perdus -->
         <div class="column" data-status="lost">
-            <div class="column-header">
-                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 400'%3E%3Cdefs%3E%3ClinearGradient id='g6' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23636e72'/%3E%3Cstop offset='100%25' style='stop-color:%232d3436'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='800' height='400' fill='url(%23g6)'/%3E%3Cpath d='M0,260 Q200,210 400,260 T800,260 L800,400 L0,400 Z' fill='%232d3436' opacity='0.5'/%3E%3C/svg%3E" alt="Lost">
-                <div class="column-label lost-label">PERDUS</div>
+            <div class="column-header header-lost">
+                <div class="column-label">PERDUS</div>
             </div>
             <div class="column-title">Leads perdus / Abandonnés</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
