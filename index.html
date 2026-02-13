@@ -27,7 +27,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
             min-height: 100vh;
             padding: 20px;
             color: var(--text-dark);
@@ -40,11 +40,10 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
-            padding: 20px 30px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(20px);
+            padding: 16px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
         }
 
         .logo {
@@ -54,7 +53,8 @@
         }
 
         .logo img {
-            height: 36px;
+            width: 120px;
+            height: auto;
         }
 
         .nav-tabs {
@@ -208,9 +208,9 @@
         }
 
         .pipeline::-webkit-scrollbar { height: 12px; }
-        .pipeline::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        .pipeline::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
-        .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+        .pipeline::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
+        .pipeline::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
+        .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
         .column {
             background: rgba(255, 255, 255, 0.95);
@@ -551,7 +551,7 @@
         @media (max-width: 768px) {
             .pipeline { grid-template-columns: 1fr; }
             .form-row { grid-template-columns: 1fr; }
-            .logo img { height: 28px; }
+            .logo img { width: 90px; }
             .modal-content { padding: 24px; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
             .nav-tabs { order: 1; }
