@@ -863,29 +863,34 @@
                     <div class="form-section-title">📇 Contact</div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label">Prénom Nom *</label>
-                            <input type="text" class="form-input" id="name" placeholder="Jean Dupont" required>
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Téléphone</label>
-                            <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78">
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Email</label>
                             <input type="email" class="form-input" id="email" placeholder="jean@email.com">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Source du lead</label>
                             <select class="form-select" id="source">
                                 <option value="">Sélectionnez</option>
-                                <option value="boitage">📬 Boîtage</option>
-                                <option value="recommandation">🤝 Recommandation</option>
-                                <option value="pige">📰 Pige</option>
-                                <option value="siteimmo">🌐 Site Immo</option>
-                                <option value="boucheaoreille">🗣️ Bouche à oreille</option>
+                                <option value="site_annonce">🌐 Site d'annonce (SL, LBC, BienIci)</option>
                                 <option value="efficity">🏢 Efficity</option>
+                                <option value="recommandation">🤝 Recommandation</option>
+                                <option value="appel_entrant">📞 Appel entrant</option>
+                                <option value="reseaux_sociaux">📱 Réseaux sociaux</option>
                                 <option value="autre">📌 Autre</option>
                             </select>
                         </div>
@@ -1178,11 +1183,11 @@
 
             // Source tag
             if (buyer.source) {
-                html += getSourceTag(buyer.source);
+                html += getBuyerSourceTag(buyer.source);
             }
 
             // Infos principales
-            html += `<div class="card-name">${buyer.name}</div>`;
+            html += `<div class="card-name">${buyer.first_name} ${buyer.last_name}</div>`;
             if (buyer.phone) html += `<div class="card-info">📞 ${buyer.phone}</div>`;
             if (buyer.email) html += `<div class="card-info">📧 ${buyer.email}</div>`;
 
@@ -1305,7 +1310,8 @@
             const buyer = buyers.find(b => b.id === id);
             if (!buyer) return;
 
-            document.getElementById('name').value = buyer.name || '';
+            document.getElementById('firstName').value = buyer.first_name || '';
+            document.getElementById('lastName').value = buyer.last_name || '';
             document.getElementById('phone').value = buyer.phone || '';
             document.getElementById('email').value = buyer.email || '';
             document.getElementById('source').value = buyer.source || '';
@@ -1358,11 +1364,12 @@
 
         // ===== SOUMISSION =====
         async function handleSubmit() {
-            const name = document.getElementById('name').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const propertyType = document.getElementById('propertyType').value;
             const sector = document.getElementById('sector').value.trim();
 
-            if (!name || !propertyType || !sector) {
+            if (!firstName || !lastName || !propertyType || !sector) {
                 alert('Veuillez remplir les champs obligatoires (*)');
                 return;
             }
@@ -1370,7 +1377,8 @@
             const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
 
             const buyerData = {
-                name,
+                first_name: firstName,
+                last_name: lastName,
                 phone: document.getElementById('phone').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 source: document.getElementById('source').value || null,

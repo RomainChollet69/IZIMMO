@@ -683,18 +683,24 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Nom complet *</label>
-                        <input type="text" class="form-input" id="name" placeholder="Jean Dupont" required>
+                        <label class="form-label">Prénom *</label>
+                        <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Nom *</label>
+                        <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Téléphone</label>
                         <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78">
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -840,7 +846,7 @@
                 html += getSourceTag(seller.source);
             }
 
-            html += `<div class="card-name">${seller.name}</div>`;
+            html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
 
             if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
             if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
@@ -928,7 +934,8 @@
 
             document.getElementById('status').value = seller.status || '';
             document.getElementById('source').value = seller.source || '';
-            document.getElementById('name').value = seller.name || '';
+            document.getElementById('firstName').value = seller.first_name || '';
+            document.getElementById('lastName').value = seller.last_name || '';
             document.getElementById('phone').value = seller.phone || '';
             document.getElementById('email').value = seller.email || '';
             document.getElementById('address').value = seller.address || '';
@@ -959,10 +966,11 @@
         async function handleFormSubmit() {
             const status = document.getElementById('status').value;
             const source = document.getElementById('source').value;
-            const name = document.getElementById('name').value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
             const date = document.getElementById('date').value;
 
-            if (!status || !source || !name || !date) {
+            if (!status || !source || !firstName || !lastName || !date) {
                 alert('Veuillez remplir tous les champs obligatoires (*)');
                 return;
             }
@@ -970,7 +978,8 @@
             const sellerData = {
                 status,
                 source,
-                name,
+                first_name: firstName,
+                last_name: lastName,
                 phone: document.getElementById('phone').value.trim() || null,
                 email: document.getElementById('email').value.trim() || null,
                 address: document.getElementById('address').value.trim() || null,

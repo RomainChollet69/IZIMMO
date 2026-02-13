@@ -291,9 +291,15 @@
                 <!-- Contact -->
                 <div class="form-section">
                     <div class="form-section-title">📇 Vos coordonnées</div>
-                    <div class="form-group">
-                        <label class="form-label">Prénom Nom *</label>
-                        <input type="text" class="form-input" id="name" placeholder="Jean Dupont" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -304,6 +310,18 @@
                             <label class="form-label">Email</label>
                             <input type="email" class="form-input" id="email" placeholder="jean@email.com">
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Comment nous avez-vous connu ?</label>
+                        <select class="form-select" id="source">
+                            <option value="">Sélectionnez</option>
+                            <option value="site_annonce">🌐 Site d'annonce (SL, LBC, BienIci)</option>
+                            <option value="efficity">🏢 Efficity</option>
+                            <option value="recommandation">🤝 Recommandation</option>
+                            <option value="appel_entrant">📞 Appel entrant</option>
+                            <option value="reseaux_sociaux">📱 Réseaux sociaux</option>
+                            <option value="autre">📌 Autre</option>
+                        </select>
                     </div>
                 </div>
 
@@ -439,12 +457,13 @@
 
             // Soumission
             document.getElementById('submitBtn').addEventListener('click', async () => {
-                const name = document.getElementById('name').value.trim();
+                const firstName = document.getElementById('firstName').value.trim();
+                const lastName = document.getElementById('lastName').value.trim();
                 const phone = document.getElementById('phone').value.trim();
                 const propertyType = document.getElementById('propertyType').value;
                 const sector = document.getElementById('sector').value.trim();
 
-                if (!name || !phone || !propertyType || !sector) {
+                if (!firstName || !lastName || !phone || !propertyType || !sector) {
                     alert('Veuillez remplir les champs obligatoires (*)');
                     return;
                 }
@@ -456,9 +475,11 @@
                 const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
 
                 const buyerData = {
-                    name,
+                    first_name: firstName,
+                    last_name: lastName,
                     phone,
                     email: document.getElementById('email').value.trim() || null,
+                    source: document.getElementById('source').value || null,
                     property_type: propertyType,
                     rooms: document.getElementById('rooms').value || null,
                     sector,
