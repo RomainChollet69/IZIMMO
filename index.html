@@ -755,7 +755,7 @@
 
         async function createSeller(seller) {
             const { data, error } = await supabaseClient.from('sellers').insert([seller]).select();
-            if (error) { console.error('Erreur création:', error); alert('Erreur lors de la création.'); return null; }
+            if (error) { console.error('Erreur création:', error.message, error.details, error.code, error.hint); alert('Erreur création: ' + error.message + (error.details ? '\nDétails: ' + error.details : '') + (error.hint ? '\nHint: ' + error.hint : '')); return null; }
             return data[0];
         }
 
