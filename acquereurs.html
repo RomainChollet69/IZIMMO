@@ -54,7 +54,7 @@
         }
 
         .logo img {
-            width: 120px;
+            width: 160px;
             height: auto;
         }
 
@@ -64,7 +64,7 @@
         }
 
         .nav-tab {
-            color: var(--text-light);
+            color: var(--text-dark);
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 10px;
@@ -72,16 +72,17 @@
             font-weight: 600;
             font-size: 15px;
             transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
         }
 
         .nav-tab:hover {
             color: #667eea;
-            background: rgba(102, 126, 234, 0.08);
+            background: rgba(255, 255, 255, 0.9);
         }
 
         .nav-tab.active {
             color: #667eea;
-            background: rgba(102, 126, 234, 0.12);
+            background: rgba(255, 255, 255, 0.95);
         }
 
         .header-actions {
@@ -778,7 +779,7 @@
         @media (max-width: 768px) {
             .pipeline { grid-template-columns: 1fr; }
             .form-row, .form-row-3 { grid-template-columns: 1fr; }
-            .logo img { width: 90px; }
+            .logo img { width: 110px; }
             .modal-content { padding: 24px; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
             .nav-tabs { order: 1; }
