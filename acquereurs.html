@@ -775,17 +775,122 @@
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
 
-        /* ===== RESPONSIVE ===== */
+        /* ===== RESPONSIVE TABLETTE ===== */
         @media (max-width: 768px) {
-            .pipeline { grid-template-columns: 1fr; }
+            body { padding: 12px; }
+
+            .header {
+                flex-wrap: wrap;
+                padding: 12px 16px;
+                gap: 10px;
+                border-radius: 12px;
+                margin-bottom: 16px;
+            }
+
+            .logo img { width: 100px; }
+
+            .nav-tab {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+
+            .header-actions { gap: 10px; }
+
+            .user-name { display: none; }
+            .user-avatar { width: 28px; height: 28px; }
+
+            .alert-counter {
+                padding: 8px 12px;
+                gap: 6px;
+            }
+            .alert-icon { font-size: 18px; }
+            .alert-text { font-size: 12px; }
+            .alert-number { font-size: 16px; }
+
+            .add-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .pipeline {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scroll-snap-type: x mandatory;
+                gap: 12px;
+                padding-bottom: 12px;
+            }
+
+            .column {
+                min-width: 300px;
+                flex-shrink: 0;
+                scroll-snap-align: start;
+                min-height: 400px;
+            }
+
+            .column-header { height: 120px; }
+
+            .modal-content {
+                padding: 24px;
+                border-radius: 16px 16px 0 0;
+                max-width: 100%;
+            }
+
             .form-row, .form-row-3 { grid-template-columns: 1fr; }
-            .logo img { width: 110px; }
-            .modal-content { padding: 24px; }
-            .header { flex-direction: column; gap: 15px; text-align: center; }
-            .nav-tabs { order: 1; }
-            .header-actions { flex-direction: column; width: 100%; order: 2; }
-            .alert-counter { width: 100%; justify-content: center; }
-            .add-btn { width: 100%; }
+
+            .modal-title { font-size: 22px; }
+        }
+
+        /* ===== RESPONSIVE MOBILE ===== */
+        @media (max-width: 480px) {
+            body { padding: 8px; }
+
+            .header {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+
+            .logo img { width: 80px; }
+
+            .nav-text { display: none; }
+            .nav-tab {
+                padding: 8px 12px;
+                font-size: 18px;
+            }
+
+            .header-actions { gap: 8px; }
+
+            .btn-text { display: none; }
+            .add-btn {
+                padding: 10px 14px;
+                font-size: 18px;
+                min-width: auto;
+            }
+
+            .alert-text { display: none; }
+            .alert-counter {
+                padding: 8px 10px;
+            }
+
+            .column {
+                min-width: 280px;
+            }
+
+            .column-header { height: 100px; }
+            .column-label { font-size: 18px; padding: 8px 12px; }
+            .column-title { font-size: 14px; margin-top: 10px; }
+
+            .modal-content {
+                padding: 20px 16px;
+                max-height: 95vh;
+            }
+
+            .modal-title { font-size: 20px; }
+
+            .card { padding: 14px; }
+            .card-name { font-size: 15px; }
+            .card-info { font-size: 12px; }
         }
     </style>
 </head>
@@ -793,8 +898,8 @@
     <div class="header">
         <a href="index.html" class="logo"><img src="img/logo_200.png" alt="WAIMMO"></a>
         <nav class="nav-tabs">
-            <a href="index.html" class="nav-tab">🏠 Pipeline Vendeurs</a>
-            <a href="acquereurs.html" class="nav-tab active">🔑 Pipeline Acquéreurs</a>
+            <a href="index.html" class="nav-tab">🏠 <span class="nav-text">Pipeline Vendeurs</span></a>
+            <a href="acquereurs.html" class="nav-tab active">🔑 <span class="nav-text">Pipeline Acquéreurs</span></a>
         </nav>
         <div class="header-actions">
             <div id="userProfile" class="user-profile"></div>
@@ -804,7 +909,7 @@
                     <span class="alert-number" id="alertNumber">0</span> à relancer
                 </span>
             </div>
-            <button class="add-btn" id="addBuyerBtn">+ Ajouter un Acquéreur</button>
+            <button class="add-btn" id="addBuyerBtn">+ <span class="btn-text">Ajouter un Acquéreur</span></button>
         </div>
     </div>
 
