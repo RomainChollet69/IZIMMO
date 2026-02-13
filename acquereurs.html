@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IZIMMO — Pipeline Acquéreurs</title>
+    <title>WAIMMO — Pipeline Acquéreurs</title>
+    <meta property="og:title" content="WAIMMO — CRM Immobilier">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
@@ -46,14 +49,13 @@
         }
 
         .logo {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
             text-decoration: none;
+        }
+
+        .logo img {
+            height: 36px;
         }
 
         .nav-tabs {
@@ -775,7 +777,7 @@
         @media (max-width: 768px) {
             .pipeline { grid-template-columns: 1fr; }
             .form-row, .form-row-3 { grid-template-columns: 1fr; }
-            .logo { font-size: 20px; }
+            .logo img { height: 28px; }
             .modal-content { padding: 24px; }
             .header { flex-direction: column; gap: 15px; text-align: center; }
             .nav-tabs { order: 1; }
@@ -787,7 +789,7 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="logo">IZIMMO</a>
+        <a href="index.html" class="logo"><img src="img/logo_200.png" alt="WAIMMO"></a>
         <nav class="nav-tabs">
             <a href="index.html" class="nav-tab">🏠 Pipeline Vendeurs</a>
             <a href="acquereurs.html" class="nav-tab active">🔑 Pipeline Acquéreurs</a>

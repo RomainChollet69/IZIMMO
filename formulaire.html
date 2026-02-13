@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IZIMMO — Ma Recherche Immobilière</title>
+    <title>WAIMMO — Ma Recherche Immobilière</title>
+    <meta property="og:title" content="WAIMMO — Ma Recherche Immobilière">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
@@ -48,16 +51,8 @@
             margin-bottom: 32px;
         }
 
-        .form-logo {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 36px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .form-logo img {
+            height: 50px;
             margin-bottom: 8px;
         }
 
@@ -283,7 +278,7 @@
         <!-- Formulaire -->
         <div id="formView">
             <div class="form-header">
-                <div class="form-logo">IZIMMO</div>
+                <div class="form-logo"><img src="img/logo_200.png" alt="WAIMMO"></div>
                 <div class="form-subtitle">Décrivez votre recherche immobilière.<br>Nous trouverons le bien qui vous correspond.</div>
             </div>
 
