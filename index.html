@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Immobilier - Pipeline</title>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <title>IZIMMO — Pipeline Vendeurs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
             --hot-color: #FF4757;
             --warm-color: #FFA502;
             --cold-color: #2E86DE;
-            --bg-dark: #0A0E27;
-            --bg-light: #F5F6FA;
-            --card-bg: #FFFFFF;
             --text-dark: #2C3E50;
             --text-light: #7F8C8D;
             --border-color: #E1E8ED;
@@ -35,6 +30,7 @@
             overflow-x: hidden;
         }
 
+        /* ===== HEADER & NAVIGATION ===== */
         .header {
             display: flex;
             justify-content: space-between;
@@ -45,6 +41,43 @@
             backdrop-filter: blur(20px);
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            color: rgba(255, 255, 255, 0.6);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-tab.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .header-actions {
@@ -74,13 +107,9 @@
             background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
         }
 
-        .alert-counter.has-alerts .alert-text {
-            color: white;
-        }
+        .alert-counter.has-alerts .alert-text { color: white; }
 
-        .alert-counter.has-alerts .alert-icon {
-            animation: ring 2s infinite;
-        }
+        .alert-counter.has-alerts .alert-icon { animation: ring 2s infinite; }
 
         @keyframes ring {
             0%, 100% { transform: rotate(0deg); }
@@ -88,9 +117,7 @@
             20%, 40% { transform: rotate(10deg); }
         }
 
-        .alert-icon {
-            font-size: 24px;
-        }
+        .alert-icon { font-size: 24px; }
 
         .alert-text {
             font-family: 'Inter', sans-serif;
@@ -104,16 +131,6 @@
             font-size: 20px;
             font-weight: 800;
             font-family: 'Barlow Semi Condensed', sans-serif;
-        }
-
-        .logo {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 28px;
-            font-weight: 800;
-            color: white;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .add-btn {
@@ -135,6 +152,7 @@
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
 
+        /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
             grid-template-columns: repeat(6, minmax(320px, 1fr));
@@ -145,24 +163,11 @@
             padding-bottom: 20px;
             scroll-behavior: smooth;
         }
-        
-        .pipeline::-webkit-scrollbar {
-            height: 12px;
-        }
-        
-        .pipeline::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-        }
-        
-        .pipeline::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
-        }
-        
-        .pipeline::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.5);
-        }
+
+        .pipeline::-webkit-scrollbar { height: 12px; }
+        .pipeline::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
+        .pipeline::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+        .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
 
         .column {
             background: rgba(255, 255, 255, 0.95);
@@ -175,14 +180,8 @@
         }
 
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .column-header {
@@ -193,11 +192,7 @@
             height: 200px;
         }
 
-        .column-header img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .column-header img { width: 100%; height: 100%; object-fit: cover; }
 
         .column-label {
             position: absolute;
@@ -215,29 +210,12 @@
             font-style: italic;
         }
 
-        .hot-label {
-            background: linear-gradient(135deg, rgba(255, 71, 87, 0.9) 0%, rgba(255, 71, 87, 0.7) 100%);
-        }
-
-        .warm-label {
-            background: linear-gradient(135deg, rgba(255, 165, 2, 0.9) 0%, rgba(255, 165, 2, 0.7) 100%);
-        }
-
-        .cold-label {
-            background: linear-gradient(135deg, rgba(46, 134, 222, 0.9) 0%, rgba(46, 134, 222, 0.7) 100%);
-        }
-
-        .mandate-label {
-            background: linear-gradient(135deg, rgba(38, 222, 129, 0.9) 0%, rgba(32, 191, 107, 0.7) 100%);
-        }
-
-        .sold-label {
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.95) 0%, rgba(255, 183, 0, 0.85) 100%);
-        }
-
-        .lost-label {
-            background: linear-gradient(135deg, rgba(99, 110, 114, 0.9) 0%, rgba(45, 52, 54, 0.7) 100%);
-        }
+        .hot-label { background: linear-gradient(135deg, rgba(255, 71, 87, 0.9) 0%, rgba(255, 71, 87, 0.7) 100%); }
+        .warm-label { background: linear-gradient(135deg, rgba(255, 165, 2, 0.9) 0%, rgba(255, 165, 2, 0.7) 100%); }
+        .cold-label { background: linear-gradient(135deg, rgba(46, 134, 222, 0.9) 0%, rgba(46, 134, 222, 0.7) 100%); }
+        .mandate-label { background: linear-gradient(135deg, rgba(38, 222, 129, 0.9) 0%, rgba(32, 191, 107, 0.7) 100%); }
+        .sold-label { background: linear-gradient(135deg, rgba(255, 215, 0, 0.95) 0%, rgba(255, 183, 0, 0.85) 100%); }
+        .lost-label { background: linear-gradient(135deg, rgba(99, 110, 114, 0.9) 0%, rgba(45, 52, 54, 0.7) 100%); }
 
         .column-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
@@ -265,6 +243,7 @@
             min-height: 200px;
         }
 
+        /* ===== CARTES ===== */
         .lead-card {
             background: white;
             border-radius: 12px;
@@ -278,24 +257,13 @@
         }
 
         @keyframes cardAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         @keyframes highlight {
-            0%, 100% {
-                box-shadow: var(--shadow);
-            }
-            50% {
-                box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.5), var(--shadow-hover);
-                transform: scale(1.02);
-            }
+            0%, 100% { box-shadow: var(--shadow); }
+            50% { box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.5), var(--shadow-hover); transform: scale(1.02); }
         }
 
         .lead-card:hover {
@@ -303,10 +271,7 @@
             box-shadow: var(--shadow-hover);
         }
 
-        .lead-card.dragging {
-            opacity: 0.5;
-            cursor: grabbing;
-        }
+        .lead-card.dragging { opacity: 0.5; cursor: grabbing; }
 
         .card-tag {
             display: inline-block;
@@ -317,66 +282,6 @@
             text-transform: uppercase;
             margin-bottom: 10px;
             letter-spacing: 0.5px;
-        }
-
-        .tag-siteweb {
-            background: #3498db;
-            color: white;
-        }
-
-        .tag-reseaux {
-            background: #e84393;
-            color: white;
-        }
-
-        .tag-panneau {
-            background: #00b894;
-            color: white;
-        }
-
-        .tag-boucheaoreille {
-            background: #a29bfe;
-            color: white;
-        }
-
-        .tag-appel {
-            background: #d63031;
-            color: white;
-        }
-
-        .tag-email {
-            background: #00cec9;
-            color: white;
-        }
-
-        .tag-partenaire {
-            background: #fdcb6e;
-            color: #2d3436;
-        }
-
-        .tag-prospection {
-            background: #6c5ce7;
-            color: white;
-        }
-
-        .tag-publicite {
-            background: #5f27cd;
-            color: white;
-        }
-
-        .tag-boitage {
-            background: #00b8a9;
-            color: white;
-        }
-
-        .tag-recommandation {
-            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-            color: #2d3436;
-        }
-
-        .tag-pige {
-            background: #ff7675;
-            color: white;
         }
 
         .card-name {
@@ -426,21 +331,9 @@
             font-weight: 600;
         }
 
-        .followup-ok {
-            background: #d1f2eb;
-            color: #0c5460;
-        }
-
-        .followup-due {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .followup-overdue {
-            background: #f8d7da;
-            color: #721c24;
-            animation: pulse 2s infinite;
-        }
+        .followup-ok { background: #d1f2eb; color: #0c5460; }
+        .followup-due { background: #fff3cd; color: #856404; }
+        .followup-overdue { background: #f8d7da; color: #721c24; animation: pulse 2s infinite; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -479,28 +372,20 @@
             font-size: 18px;
         }
 
-        .card-btn:hover {
-            color: var(--text-dark);
-        }
+        .card-btn:hover { color: var(--text-dark); }
 
-        /* Modal */
+        /* ===== MODAL ===== */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.7);
             backdrop-filter: blur(8px);
             z-index: 1000;
             animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .modal.active {
             display: flex;
@@ -522,14 +407,8 @@
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .modal-header {
@@ -562,13 +441,9 @@
             justify-content: center;
         }
 
-        .close-btn:hover {
-            color: var(--text-dark);
-        }
+        .close-btn:hover { color: var(--text-dark); }
 
-        .form-group {
-            margin-bottom: 24px;
-        }
+        .form-group { margin-bottom: 24px; }
 
         .form-label {
             display: block;
@@ -599,10 +474,7 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .form-textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
+        .form-textarea { resize: vertical; min-height: 100px; }
 
         .form-row {
             display: grid;
@@ -632,49 +504,27 @@
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
 
-        /* Responsive */
+        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .pipeline {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .logo {
-                font-size: 20px;
-            }
-
-            .modal-content {
-                padding: 24px;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .header-actions {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .alert-counter {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .add-btn {
-                width: 100%;
-            }
+            .pipeline { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .logo { font-size: 20px; }
+            .modal-content { padding: 24px; }
+            .header { flex-direction: column; gap: 15px; text-align: center; }
+            .nav-tabs { order: 1; }
+            .header-actions { flex-direction: column; width: 100%; order: 2; }
+            .alert-counter { width: 100%; justify-content: center; }
+            .add-btn { width: 100%; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <div class="logo">PIPELINE VENDEURS 2026</div>
+        <a href="index.html" class="logo">IZIMMO</a>
+        <nav class="nav-tabs">
+            <a href="index.html" class="nav-tab active">🏠 Pipeline Vendeurs</a>
+            <a href="acquereurs.html" class="nav-tab">🔑 Pipeline Acquéreurs</a>
+        </nav>
         <div class="header-actions">
             <div class="alert-counter" id="alertCounter">
                 <span class="alert-icon">🔔</span>
@@ -694,10 +544,7 @@
                 <div class="column-label hot-label">LEADS CHAUDES</div>
             </div>
             <div class="column-title">Prospects prêts à - 30 Jours</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="hot-container"></div>
         </div>
 
@@ -708,10 +555,7 @@
                 <div class="column-label warm-label">LEADS TIÈDES</div>
             </div>
             <div class="column-title">Prospects prêts entre 30 et 60 jours</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="warm-container"></div>
         </div>
 
@@ -722,10 +566,7 @@
                 <div class="column-label cold-label">LEADS FROIDES</div>
             </div>
             <div class="column-title">Prospects à 60 Jours et +</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="cold-container"></div>
         </div>
 
@@ -736,10 +577,7 @@
                 <div class="column-label mandate-label">SOUS MANDATS</div>
             </div>
             <div class="column-title">Mandats signés</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="mandate-container"></div>
         </div>
 
@@ -750,10 +588,7 @@
                 <div class="column-label sold-label">VENDUS</div>
             </div>
             <div class="column-title">Biens vendus 🎉</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="sold-container"></div>
         </div>
 
@@ -764,10 +599,7 @@
                 <div class="column-label lost-label">PERDUS</div>
             </div>
             <div class="column-title">Leads perdus / Abandonnés</div>
-            <div class="column-count">
-                <span>📋</span>
-                <span class="count">0</span>
-            </div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="lost-container"></div>
         </div>
     </div>
@@ -797,18 +629,13 @@
                     <label class="form-label">Source du Lead *</label>
                     <select class="form-select" id="source" required>
                         <option value="">Sélectionnez une source</option>
-                        <option value="siteweb">🌐 Site web</option>
-                        <option value="reseaux">📱 Réseaux sociaux</option>
-                        <option value="panneau">🪧 Panneau A vendre</option>
-                        <option value="boucheaoreille">👥 Bouche-à-oreille</option>
-                        <option value="appel">📞 Appel entrant</option>
-                        <option value="email">📧 Email</option>
-                        <option value="partenaire">🤝 Partenaire/Notaire</option>
-                        <option value="prospection">🔍 Prospection terrain</option>
-                        <option value="publicite">📰 Publicité</option>
-                        <option value="boitage">🚪 Boîtage</option>
-                        <option value="recommandation">⭐ Recommandation</option>
-                        <option value="pige">🎯 Pige</option>
+                        <option value="boitage">📬 Boîtage</option>
+                        <option value="recommandation">🤝 Recommandation</option>
+                        <option value="pige">📰 Pige</option>
+                        <option value="siteimmo">🌐 Site Immo</option>
+                        <option value="boucheaoreille">🗣️ Bouche à oreille</option>
+                        <option value="efficity">🏢 Efficity</option>
+                        <option value="autre">📌 Autre</option>
                     </select>
                 </div>
 
@@ -840,7 +667,7 @@
 
                 <div class="form-group">
                     <label class="form-label">Notes & Commentaires</label>
-                    <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend, préfère être contacté par email..."></textarea>
+                    <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend..."></textarea>
                 </div>
 
                 <div class="form-row">
@@ -850,19 +677,13 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Date de relance</label>
-                        <input type="date" class="form-input" id="followupDate" placeholder="Prochaine relance">
+                        <input type="date" class="form-input" id="reminder">
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="form-label">Budget (€)</label>
-                        <input type="number" class="form-input" id="budget" placeholder="350000">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Surface (m²)</label>
-                        <input type="number" class="form-input" id="surface" placeholder="120">
-                    </div>
+                <div class="form-group">
+                    <label class="form-label">Budget / Estimation (€)</label>
+                    <input type="text" class="form-input" id="budget" placeholder="350 000 €">
                 </div>
 
                 <button type="button" class="submit-btn" id="submitBtn">Créer le Lead</button>
@@ -871,34 +692,42 @@
     </div>
 
     <script>
-        // Variables globales
-        let leads = [];
+        // ===== DONNÉES =====
+        let sellers = [];
         let draggedCard = null;
 
-        // Charger les données
-        function loadLeads() {
-            try {
-                const stored = localStorage.getItem('leads');
-                if (stored) {
-                    leads = JSON.parse(stored);
-                }
-            } catch (e) {
-                console.error('Erreur de chargement:', e);
-                leads = [];
-            }
+        // ===== SUPABASE CRUD =====
+        async function loadSellers() {
+            const { data, error } = await supabaseClient
+                .from('sellers')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) { console.error('Erreur chargement:', error); return; }
+            sellers = data || [];
+            renderSellers();
         }
 
-        // Sauvegarder les données
-        function saveLeads() {
-            try {
-                localStorage.setItem('leads', JSON.stringify(leads));
-            } catch (e) {
-                console.error('Erreur de sauvegarde:', e);
-            }
+        async function createSeller(seller) {
+            const { data, error } = await supabaseClient.from('sellers').insert([seller]).select();
+            if (error) { console.error('Erreur création:', error); alert('Erreur lors de la création.'); return null; }
+            return data[0];
         }
 
-        // Rendu des leads
-        function renderLeads() {
+        async function updateSeller(id, updates) {
+            updates.updated_at = new Date().toISOString();
+            const { data, error } = await supabaseClient.from('sellers').update(updates).eq('id', id).select();
+            if (error) { console.error('Erreur mise à jour:', error); alert('Erreur lors de la mise à jour.'); return null; }
+            return data[0];
+        }
+
+        async function deleteSellerDB(id) {
+            const { error } = await supabaseClient.from('sellers').delete().eq('id', id);
+            if (error) { console.error('Erreur suppression:', error); alert('Erreur lors de la suppression.'); return false; }
+            return true;
+        }
+
+        // ===== RENDU =====
+        function renderSellers() {
             const containers = {
                 hot: document.getElementById('hot-container'),
                 warm: document.getElementById('warm-container'),
@@ -908,140 +737,165 @@
                 lost: document.getElementById('lost-container')
             };
 
-            Object.values(containers).forEach(container => {
-                if (container) container.innerHTML = '';
-            });
+            Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
-            leads.forEach(lead => {
-                const card = createLeadCard(lead);
-                if (containers[lead.status]) {
-                    containers[lead.status].appendChild(card);
+            sellers.forEach(seller => {
+                const card = createSellerCard(seller);
+                if (containers[seller.status]) {
+                    containers[seller.status].appendChild(card);
                 }
             });
 
             updateCounts();
         }
 
-        // Créer une carte lead
-        function createLeadCard(lead) {
+        function createSellerCard(seller) {
             const card = document.createElement('div');
             card.className = 'lead-card';
             card.draggable = true;
-            card.dataset.id = lead.id;
+            card.dataset.id = seller.id;
 
-            const sourceLabels = {
-                siteweb: '🌐 Site web',
-                reseaux: '📱 Réseaux sociaux',
-                panneau: '🪧 Panneau',
-                boucheaoreille: '👥 Bouche-à-oreille',
-                appel: '📞 Appel entrant',
-                email: '📧 Email',
-                partenaire: '🤝 Partenaire',
-                prospection: '🔍 Prospection',
-                publicite: '📰 Publicité',
-                boitage: '🚪 Boîtage',
-                recommandation: '⭐ Recommandation',
-                pige: '🎯 Pige'
-            };
+            // Date formatée
+            let formattedDate = '';
+            if (seller.date) {
+                formattedDate = new Date(seller.date).toLocaleDateString('fr-FR', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                });
+            }
 
-            const formattedDate = new Date(lead.date).toLocaleDateString('fr-FR', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-
-            // Vérifier si la date de relance est dépassée
+            // Relance
             let followupStatus = '';
             let showAlert = false;
-            if (lead.followupDate) {
+            if (seller.reminder) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const followupDate = new Date(lead.followupDate);
-                followupDate.setHours(0, 0, 0, 0);
-                const diffTime = followupDate - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                const formattedFollowup = followupDate.toLocaleDateString('fr-FR', {
-                    day: '2-digit',
-                    month: 'short'
-                });
+                const reminderDate = new Date(seller.reminder);
+                reminderDate.setHours(0, 0, 0, 0);
+                const diffDays = Math.ceil((reminderDate - today) / (1000 * 60 * 60 * 24));
+                const formatted = reminderDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 
                 if (diffDays < 0) {
-                    followupStatus = `<div class="card-followup followup-overdue">⚠️ Relance en retard (${formattedFollowup})</div>`;
+                    followupStatus = `<div class="card-followup followup-overdue">⚠️ Relance en retard (${formatted})</div>`;
                     showAlert = true;
                 } else if (diffDays === 0) {
                     followupStatus = `<div class="card-followup followup-due">🔔 À relancer aujourd'hui</div>`;
                     showAlert = true;
                 } else if (diffDays <= 3) {
-                    followupStatus = `<div class="card-followup followup-due">📅 Relance ${formattedFollowup}</div>`;
+                    followupStatus = `<div class="card-followup followup-due">📅 Relance ${formatted}</div>`;
                 } else {
-                    followupStatus = `<div class="card-followup followup-ok">📅 Relance ${formattedFollowup}</div>`;
+                    followupStatus = `<div class="card-followup followup-ok">📅 Relance ${formatted}</div>`;
                 }
             }
 
             let html = '';
-            
-            // Badge d'alerte si relance dépassée
+
             if (showAlert) {
-                html += `<div class="badge-alert">À RELANCER</div>`;
+                html += '<div class="badge-alert">À RELANCER</div>';
             }
 
-            html += `<div class="card-tag tag-${lead.source}">${sourceLabels[lead.source] || lead.source}</div><div class="card-name">${lead.name}</div>`;
-
-            if (lead.phone) html += `<div class="card-info">📞 ${lead.phone}</div>`;
-            if (lead.email) html += `<div class="card-info">📧 ${lead.email}</div>`;
-            if (lead.address) html += `<div class="card-info">📍 ${lead.address}</div>`;
-            if (lead.description) html += `<div class="card-info">${lead.description}</div>`;
-            if (lead.budget) html += `<div class="card-info">💰 ${parseInt(lead.budget).toLocaleString('fr-FR')} €</div>`;
-            if (lead.surface) html += `<div class="card-info">📐 ${lead.surface} m²</div>`;
-            
-            // Afficher les notes si présentes
-            if (lead.notes) {
-                html += `<div class="card-notes">💬 ${lead.notes}</div>`;
+            // Source tag (utilise getSourceTag du config partagé)
+            if (seller.source) {
+                html += getSourceTag(seller.source);
             }
 
-            html += `<div class="card-date">📅 ${formattedDate}</div>`;
-            
-            // Afficher le statut de relance
-            if (followupStatus) {
-                html += followupStatus;
+            html += `<div class="card-name">${seller.name}</div>`;
+
+            if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
+            if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
+            if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
+            if (seller.description) html += `<div class="card-info">${seller.description}</div>`;
+            if (seller.budget) html += `<div class="card-info">💰 ${seller.budget}</div>`;
+
+            if (seller.notes) {
+                html += `<div class="card-notes">💬 ${seller.notes}</div>`;
             }
 
-            html += `<div class="card-actions"><button class="card-btn" onclick="editLead(${lead.id})" title="Modifier">✏️</button><button class="card-btn" onclick="deleteLead(${lead.id})" title="Supprimer">🗑️</button></div>`;
+            if (formattedDate) {
+                html += `<div class="card-date">📅 ${formattedDate}</div>`;
+            }
+
+            html += followupStatus;
+
+            html += `<div class="card-actions">
+                <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
+                <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
+            </div>`;
 
             card.innerHTML = html;
             return card;
         }
 
-        // Supprimer un lead
-        function deleteLead(id) {
-            if (confirm('Êtes-vous sûr de vouloir supprimer ce lead ?')) {
-                leads = leads.filter(lead => lead.id !== id);
-                saveLeads();
-                renderLeads();
+        function updateCounts() {
+            const statuses = ['hot', 'warm', 'cold', 'mandate', 'sold', 'lost'];
+            statuses.forEach(status => {
+                const count = sellers.filter(s => s.status === status).length;
+                const col = document.querySelector(`.column[data-status="${status}"] .count`);
+                if (col) col.textContent = count;
+            });
+            updateAlertCounter();
+        }
+
+        function updateAlertCounter() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const count = sellers.filter(s => {
+                if (!s.reminder) return false;
+                const d = new Date(s.reminder);
+                d.setHours(0, 0, 0, 0);
+                return d <= today;
+            }).length;
+
+            document.getElementById('alertNumber').textContent = count;
+            const el = document.getElementById('alertCounter');
+            if (count > 0) el.classList.add('has-alerts');
+            else el.classList.remove('has-alerts');
+        }
+
+        // ===== MODAL =====
+        function openModal() {
+            document.getElementById('modal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            const dateInput = document.getElementById('date');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = new Date().toISOString().split('T')[0];
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (!submitBtn.dataset.editId) {
+                document.querySelector('.modal-title').textContent = 'Nouveau Lead';
+                submitBtn.textContent = 'Créer le Lead';
             }
         }
 
-        // Modifier un lead
-        function editLead(id) {
-            const lead = leads.find(l => l.id === id);
-            if (!lead) return;
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            document.body.style.overflow = 'auto';
 
-            // Remplir le formulaire avec les données du lead
-            document.getElementById('status').value = lead.status;
-            document.getElementById('source').value = lead.source || '';
-            document.getElementById('name').value = lead.name;
-            document.getElementById('phone').value = lead.phone || '';
-            document.getElementById('email').value = lead.email || '';
-            document.getElementById('address').value = lead.address || '';
-            document.getElementById('description').value = lead.description || '';
-            document.getElementById('notes').value = lead.notes || '';
-            document.getElementById('date').value = lead.date;
-            document.getElementById('followupDate').value = lead.followupDate || '';
-            document.getElementById('budget').value = lead.budget || '';
-            document.getElementById('surface').value = lead.surface || '';
+            document.getElementById('leadForm').reset();
+            const submitBtn = document.getElementById('submitBtn');
+            delete submitBtn.dataset.editId;
+            submitBtn.textContent = 'Créer le Lead';
+            document.querySelector('.modal-title').textContent = 'Nouveau Lead';
+        }
 
-            // Changer le titre et le texte du bouton
+        // ===== EDIT / DELETE =====
+        function editSeller(id) {
+            const seller = sellers.find(s => s.id === id);
+            if (!seller) return;
+
+            document.getElementById('status').value = seller.status || '';
+            document.getElementById('source').value = seller.source || '';
+            document.getElementById('name').value = seller.name || '';
+            document.getElementById('phone').value = seller.phone || '';
+            document.getElementById('email').value = seller.email || '';
+            document.getElementById('address').value = seller.address || '';
+            document.getElementById('description').value = seller.description || '';
+            document.getElementById('notes').value = seller.notes || '';
+            document.getElementById('date').value = seller.date || '';
+            document.getElementById('reminder').value = seller.reminder || '';
+            document.getElementById('budget').value = seller.budget || '';
+
             document.querySelector('.modal-title').textContent = 'Modifier le Lead';
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.textContent = 'Mettre à jour';
@@ -1050,285 +904,118 @@
             openModal();
         }
 
-        // Mise à jour des compteurs
-        function updateCounts() {
-            const counts = {
-                hot: leads.filter(l => l.status === 'hot').length,
-                warm: leads.filter(l => l.status === 'warm').length,
-                cold: leads.filter(l => l.status === 'cold').length,
-                mandate: leads.filter(l => l.status === 'mandate').length,
-                sold: leads.filter(l => l.status === 'sold').length,
-                lost: leads.filter(l => l.status === 'lost').length
+        async function confirmDeleteSeller(id) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce lead ?')) return;
+            const ok = await deleteSellerDB(id);
+            if (ok) {
+                sellers = sellers.filter(s => s.id !== id);
+                renderSellers();
+            }
+        }
+
+        // ===== SOUMISSION =====
+        async function handleFormSubmit() {
+            const status = document.getElementById('status').value;
+            const source = document.getElementById('source').value;
+            const name = document.getElementById('name').value.trim();
+            const date = document.getElementById('date').value;
+
+            if (!status || !source || !name || !date) {
+                alert('Veuillez remplir tous les champs obligatoires (*)');
+                return;
+            }
+
+            const sellerData = {
+                status,
+                source,
+                name,
+                phone: document.getElementById('phone').value.trim() || null,
+                email: document.getElementById('email').value.trim() || null,
+                address: document.getElementById('address').value.trim() || null,
+                description: document.getElementById('description').value.trim() || null,
+                notes: document.getElementById('notes').value.trim() || null,
+                date,
+                reminder: document.getElementById('reminder').value || null,
+                budget: document.getElementById('budget').value.trim() || null
             };
 
-            document.querySelectorAll('.column').forEach(col => {
-                const status = col.dataset.status;
-                const countEl = col.querySelector('.count');
-                if (countEl) {
-                    countEl.textContent = counts[status];
+            const editId = document.getElementById('submitBtn').dataset.editId;
+
+            if (editId) {
+                const updated = await updateSeller(editId, sellerData);
+                if (updated) {
+                    const idx = sellers.findIndex(s => s.id === editId);
+                    if (idx !== -1) sellers[idx] = updated;
                 }
-            });
-
-            // Mettre à jour le compteur d'alertes
-            updateAlertCounter();
-        }
-
-        // Mettre à jour le compteur de leads à relancer
-        function updateAlertCounter() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            const leadsToFollowup = leads.filter(lead => {
-                if (!lead.followupDate) return false;
-                
-                const followupDate = new Date(lead.followupDate);
-                followupDate.setHours(0, 0, 0, 0);
-                
-                // Inclure les leads à relancer aujourd'hui ou en retard
-                return followupDate <= today;
-            });
-
-            const count = leadsToFollowup.length;
-            const alertNumber = document.getElementById('alertNumber');
-            const alertCounter = document.getElementById('alertCounter');
-
-            if (alertNumber) {
-                alertNumber.textContent = count;
+            } else {
+                const created = await createSeller(sellerData);
+                if (created) sellers.unshift(created);
             }
 
-            if (alertCounter) {
-                if (count > 0) {
-                    alertCounter.classList.add('has-alerts');
-                } else {
-                    alertCounter.classList.remove('has-alerts');
-                }
-            }
+            renderSellers();
+            closeModal();
         }
 
-        // Drag and Drop
+        // ===== DRAG & DROP =====
         function setupDragAndDrop() {
-            document.addEventListener('dragstart', function(e) {
+            document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
                     draggedCard = e.target;
                     e.target.classList.add('dragging');
                 }
             });
 
-            document.addEventListener('dragend', function(e) {
+            document.addEventListener('dragend', e => {
                 if (e.target.classList.contains('lead-card')) {
                     e.target.classList.remove('dragging');
                 }
             });
 
             document.querySelectorAll('.cards-container').forEach(container => {
-                container.addEventListener('dragover', function(e) {
-                    e.preventDefault();
-                });
+                container.addEventListener('dragover', e => e.preventDefault());
 
-                container.addEventListener('drop', function(e) {
+                container.addEventListener('drop', async e => {
                     e.preventDefault();
-                    
-                    if (draggedCard) {
-                        const leadId = parseInt(draggedCard.dataset.id);
-                        const newStatus = this.closest('.column').dataset.status;
-                        
-                        const lead = leads.find(l => l.id === leadId);
-                        if (lead) {
-                            lead.status = newStatus;
-                            saveLeads();
-                            renderLeads();
-                        }
+                    if (!draggedCard) return;
+
+                    const sellerId = draggedCard.dataset.id;
+                    const newStatus = container.closest('.column').dataset.status;
+                    const seller = sellers.find(s => s.id === sellerId);
+
+                    if (seller && seller.status !== newStatus) {
+                        seller.status = newStatus;
+                        await updateSeller(sellerId, { status: newStatus });
+                        renderSellers();
                     }
                 });
             });
         }
 
-        // Modal
-        function openModal() {
-            const modal = document.getElementById('modal');
-            if (modal) {
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
-                
-                const dateInput = document.getElementById('date');
-                if (dateInput && !dateInput.value) {
-                    const today = new Date().toISOString().split('T')[0];
-                    dateInput.value = today;
-                }
-                
-                // S'assurer que le titre et bouton sont en mode création si pas en édition
-                const submitBtn = document.getElementById('submitBtn');
-                if (!submitBtn.dataset.editId) {
-                    document.querySelector('.modal-title').textContent = 'Nouveau Lead';
-                    submitBtn.textContent = 'Créer le Lead';
-                }
-            }
-        }
-
-        function closeModal() {
-            const modal = document.getElementById('modal');
-            if (modal) {
-                modal.classList.remove('active');
-                document.body.style.overflow = 'auto';
-                
-                // Réinitialiser le formulaire et le mode édition
-                const form = document.getElementById('leadForm');
-                if (form) form.reset();
-                
-                const submitBtn = document.getElementById('submitBtn');
-                if (submitBtn) {
-                    delete submitBtn.dataset.editId;
-                    submitBtn.textContent = 'Créer le Lead';
-                }
-                
-                document.querySelector('.modal-title').textContent = 'Nouveau Lead';
-            }
-        }
-
-        // Gestion de la soumission
-        function handleFormSubmit() {
-            console.log('Formulaire soumis');
-            
-            const status = document.getElementById('status').value;
-            const source = document.getElementById('source').value;
-            const name = document.getElementById('name').value;
-            const phone = document.getElementById('phone').value;
-            const email = document.getElementById('email').value;
-            const address = document.getElementById('address').value;
-            const description = document.getElementById('description').value;
-            const notes = document.getElementById('notes').value;
-            const date = document.getElementById('date').value;
-            const followupDate = document.getElementById('followupDate').value;
-            const budget = document.getElementById('budget').value;
-            const surface = document.getElementById('surface').value;
-            
-            if (!status || !source || !name || !date) {
-                alert('Veuillez remplir tous les champs obligatoires (*)');
-                return;
-            }
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const editId = submitBtn.dataset.editId;
-
-            if (editId) {
-                // Mode édition - mettre à jour le lead existant
-                const lead = leads.find(l => l.id === parseInt(editId));
-                if (lead) {
-                    lead.status = status;
-                    lead.source = source;
-                    lead.name = name;
-                    lead.phone = phone;
-                    lead.email = email;
-                    lead.address = address;
-                    lead.description = description;
-                    lead.notes = notes;
-                    lead.date = date;
-                    lead.followupDate = followupDate;
-                    lead.budget = budget;
-                    lead.surface = surface;
-                    
-                    console.log('Lead mis à jour:', lead);
-                }
-                
-                // Réinitialiser le mode édition
-                delete submitBtn.dataset.editId;
-                submitBtn.textContent = 'Créer le Lead';
-                document.querySelector('.modal-title').textContent = 'Nouveau Lead';
-            } else {
-                // Mode création - créer un nouveau lead
-                const lead = {
-                    id: Date.now(),
-                    status: status,
-                    source: source,
-                    name: name,
-                    phone: phone,
-                    email: email,
-                    address: address,
-                    description: description,
-                    notes: notes,
-                    date: date,
-                    followupDate: followupDate,
-                    budget: budget,
-                    surface: surface,
-                    createdAt: new Date().toISOString()
-                };
-
-                console.log('Nouveau lead:', lead);
-                leads.push(lead);
-            }
-
-            saveLeads();
-            renderLeads();
-            closeModal();
-            
-            const form = document.getElementById('leadForm');
-            if (form) {
-                form.reset();
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('date').value = today;
-            }
-            
-            console.log('Lead créé/modifié avec succès!');
-        }
-
-        // Initialisation
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Page chargée, initialisation...');
-            
-            loadLeads();
-            renderLeads();
+        // ===== INITIALISATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            loadSellers();
             setupDragAndDrop();
-            
-            const dateInput = document.getElementById('date');
-            if (dateInput) {
-                const today = new Date().toISOString().split('T')[0];
-                dateInput.value = today;
-            }
 
-            const addBtn = document.getElementById('addLeadBtn');
-            if (addBtn) {
-                addBtn.addEventListener('click', openModal);
-            }
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
-            const closeBtn = document.getElementById('closeModalBtn');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', closeModal);
-            }
+            document.getElementById('addLeadBtn').addEventListener('click', openModal);
+            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('submitBtn').addEventListener('click', handleFormSubmit);
 
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-                submitBtn.addEventListener('click', handleFormSubmit);
-            }
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+            document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
-            const alertCounter = document.getElementById('alertCounter');
-            if (alertCounter) {
-                alertCounter.addEventListener('click', function() {
-                    // Scroller vers le premier lead à relancer
-                    const cards = document.querySelectorAll('.lead-card');
-                    for (let card of cards) {
-                        const badge = card.querySelector('.badge-alert');
-                        if (badge) {
-                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            card.style.animation = 'none';
-                            setTimeout(() => {
-                                card.style.animation = 'highlight 1s ease';
-                            }, 10);
-                            break;
-                        }
+            document.getElementById('alertCounter').addEventListener('click', () => {
+                const cards = document.querySelectorAll('.lead-card');
+                for (let card of cards) {
+                    if (card.querySelector('.badge-alert')) {
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        card.style.animation = 'none';
+                        setTimeout(() => { card.style.animation = 'highlight 1s ease'; }, 10);
+                        break;
                     }
-                });
-            }
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') closeModal();
+                }
             });
-
-            const modal = document.getElementById('modal');
-            if (modal) {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) closeModal();
-                });
-            }
         });
     </script>
 </body>

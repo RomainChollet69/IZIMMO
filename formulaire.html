@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IZIMMO — Ma Recherche Immobilière</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        .form-container {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            margin: 20px auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .form-logo {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .form-subtitle {
+            font-size: 16px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        .form-section {
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-section:last-of-type { border-bottom: none; }
+
+        .form-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #667eea;
+            margin-bottom: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group { margin-bottom: 20px; }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: white;
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea { resize: vertical; min-height: 80px; }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Critères toggles */
+        .criteria-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .criteria-toggle input { display: none; }
+
+        .criteria-toggle span {
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: 2px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .criteria-toggle input:checked + span {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .criteria-toggle span:hover { border-color: #667eea; }
+
+        /* Toggle vendeur */
+        .seller-toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 52px;
+            height: 28px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input { display: none; }
+
+        .toggle-slider {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ccc;
+            border-radius: 28px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(24px);
+        }
+
+        .seller-fields {
+            background: #F3E5F5;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 12px;
+            border: 2px solid #E1BEE7;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Message de confirmation */
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .success-message.active { display: block; }
+
+        .success-icon {
+            font-size: 72px;
+            margin-bottom: 20px;
+            animation: bounceIn 0.6s ease;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .success-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+
+        .success-text {
+            font-size: 16px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .form-container { padding: 24px; margin: 10px; }
+            .form-row { grid-template-columns: 1fr; }
+            .form-logo { font-size: 28px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <!-- Formulaire -->
+        <div id="formView">
+            <div class="form-header">
+                <div class="form-logo">IZIMMO</div>
+                <div class="form-subtitle">Décrivez votre recherche immobilière.<br>Nous trouverons le bien qui vous correspond.</div>
+            </div>
+
+            <form id="publicForm">
+                <!-- Contact -->
+                <div class="form-section">
+                    <div class="form-section-title">📇 Vos coordonnées</div>
+                    <div class="form-group">
+                        <label class="form-label">Prénom Nom *</label>
+                        <input type="text" class="form-input" id="name" placeholder="Jean Dupont" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Téléphone *</label>
+                            <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="email" placeholder="jean@email.com">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recherche -->
+                <div class="form-section">
+                    <div class="form-section-title">🔍 Votre recherche</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Type de bien *</label>
+                            <select class="form-select" id="propertyType" required>
+                                <option value="">Sélectionnez</option>
+                                <option value="appartement">Appartement</option>
+                                <option value="maison">Maison</option>
+                                <option value="terrain">Terrain</option>
+                                <option value="immeuble">Immeuble</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Typologie</label>
+                            <select class="form-select" id="rooms">
+                                <option value="">—</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                                <option value="T5+">T5+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Secteur / Villes souhaitées *</label>
+                        <input type="text" class="form-input" id="sector" placeholder="Lyon 3, Villeurbanne, Bron..." required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Budget min (€)</label>
+                            <input type="number" class="form-input" id="budgetMin" placeholder="200 000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Budget max (€)</label>
+                            <input type="number" class="form-input" id="budgetMax" placeholder="350 000">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Surface minimum (m²)</label>
+                        <input type="number" class="form-input" id="surfaceMin" placeholder="60">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Critères importants</label>
+                        <div class="criteria-toggles">
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="jardin"><span>🌿 Jardin</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="parking"><span>🅿️ Parking</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="ascenseur"><span>🛗 Ascenseur</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="balcon_terrasse"><span>☀️ Balcon/Terrasse</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="calme"><span>🤫 Calme</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="neuf_renove"><span>✨ Neuf/Rénové</span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Situation -->
+                <div class="form-section">
+                    <div class="form-section-title">📊 Votre situation</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Délai du projet</label>
+                            <select class="form-select" id="timeline">
+                                <option value="">—</option>
+                                <option value="immediat">🚀 Immédiat</option>
+                                <option value="court_terme">📅 Court terme (1-3 mois)</option>
+                                <option value="moyen_terme">📆 Moyen terme (3-6 mois)</option>
+                                <option value="long_terme">🗓️ Long terme (6 mois+)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pré-accord bancaire</label>
+                            <select class="form-select" id="bankApproval">
+                                <option value="">—</option>
+                                <option value="oui">✅ Oui</option>
+                                <option value="non">❌ Non</option>
+                                <option value="en_cours">⏳ En cours</option>
+                                <option value="ne_sait_pas">❓ Je ne sais pas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="seller-toggle-group">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="isSeller">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span style="font-weight:600;font-size:14px;">Je suis aussi vendeur d'un bien</span>
+                        </div>
+                        <div class="seller-fields" id="sellerFields" style="display:none;">
+                            <div class="form-group" style="margin-bottom:12px;">
+                                <label class="form-label">Adresse du bien à vendre</label>
+                                <input type="text" class="form-input" id="sellerAddress" placeholder="123 rue de la Paix, Lyon">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label class="form-label">Prix de vente souhaité</label>
+                                <input type="text" class="form-input" id="sellerPrice" placeholder="350 000 €">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Éléments rédhibitoires</label>
+                        <textarea class="form-textarea" id="dealbreakers" placeholder="Y a-t-il des choses que vous refusez absolument ? (Ex : rez-de-chaussée, proximité voie ferrée...)"></textarea>
+                    </div>
+                </div>
+
+                <button type="button" class="submit-btn" id="submitBtn">Envoyer ma recherche</button>
+            </form>
+        </div>
+
+        <!-- Confirmation -->
+        <div class="success-message" id="successView">
+            <div class="success-icon">🎉</div>
+            <div class="success-title">Recherche envoyée !</div>
+            <div class="success-text">
+                Merci pour votre confiance.<br>
+                Nous avons bien reçu vos critères de recherche.<br>
+                Nous reviendrons vers vous très rapidement avec des biens correspondant à vos attentes.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle vendeur
+            document.getElementById('isSeller').addEventListener('change', function() {
+                document.getElementById('sellerFields').style.display = this.checked ? 'block' : 'none';
+            });
+
+            // Soumission
+            document.getElementById('submitBtn').addEventListener('click', async () => {
+                const name = document.getElementById('name').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const propertyType = document.getElementById('propertyType').value;
+                const sector = document.getElementById('sector').value.trim();
+
+                if (!name || !phone || !propertyType || !sector) {
+                    alert('Veuillez remplir les champs obligatoires (*)');
+                    return;
+                }
+
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true;
+                btn.textContent = 'Envoi en cours...';
+
+                const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
+
+                const buyerData = {
+                    name,
+                    phone,
+                    email: document.getElementById('email').value.trim() || null,
+                    property_type: propertyType,
+                    rooms: document.getElementById('rooms').value || null,
+                    sector,
+                    surface_min: parseInt(document.getElementById('surfaceMin').value) || null,
+                    budget_min: parseInt(document.getElementById('budgetMin').value) || null,
+                    budget_max: parseInt(document.getElementById('budgetMax').value) || null,
+                    criteria,
+                    bank_approval: document.getElementById('bankApproval').value || null,
+                    timeline: document.getElementById('timeline').value || null,
+                    is_seller: document.getElementById('isSeller').checked,
+                    seller_address: document.getElementById('sellerAddress').value.trim() || null,
+                    seller_price: document.getElementById('sellerPrice').value.trim() || null,
+                    dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
+                    status: 'new'
+                };
+
+                const { error } = await supabaseClient.from('buyers').insert([buyerData]);
+
+                if (error) {
+                    console.error('Erreur:', error);
+                    alert('Une erreur est survenue. Veuillez réessayer.');
+                    btn.disabled = false;
+                    btn.textContent = 'Envoyer ma recherche';
+                    return;
+                }
+
+                // Afficher la confirmation
+                document.getElementById('formView').style.display = 'none';
+                document.getElementById('successView').classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
