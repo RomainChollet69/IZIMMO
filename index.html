@@ -278,7 +278,9 @@
             overflow-x: auto;
             overflow-y: visible;
             padding-bottom: 20px;
+            cursor: grab;
         }
+        .pipeline.grabbing { cursor: grabbing; }
 
         .pipeline::-webkit-scrollbar { height: 12px; }
         .pipeline::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
@@ -3904,25 +3906,38 @@
                 if (e.target === document.getElementById('modal')) closeModal();
             });
 
-            // Scroll horizontal du pipeline avec la molette souris
+            // Grab & drag horizontal du pipeline
             const pipelineEl = document.querySelector('.pipeline');
             if (pipelineEl) {
-                pipelineEl.addEventListener('wheel', (e) => {
-                    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-                        // Vérifier si la cible est dans un conteneur qui scroll verticalement
-                        let target = e.target;
-                        while (target && target !== pipelineEl) {
-                            const style = window.getComputedStyle(target);
-                            const overflowY = style.overflowY;
-                            if ((overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight) {
-                                return; // Laisser le scroll vertical natif dans ce conteneur
-                            }
-                            target = target.parentElement;
-                        }
-                        e.preventDefault();
-                        pipelineEl.scrollLeft += e.deltaY;
-                    }
-                }, { passive: false });
+                let isGrabbing = false;
+                let grabStartX = 0;
+                let grabScrollLeft = 0;
+
+                pipelineEl.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.lead-card, button, a, input, select, textarea, .modal')) return;
+                    isGrabbing = true;
+                    pipelineEl.classList.add('grabbing');
+                    grabStartX = e.pageX - pipelineEl.offsetLeft;
+                    grabScrollLeft = pipelineEl.scrollLeft;
+                    e.preventDefault();
+                });
+
+                pipelineEl.addEventListener('mousemove', (e) => {
+                    if (!isGrabbing) return;
+                    e.preventDefault();
+                    const x = e.pageX - pipelineEl.offsetLeft;
+                    pipelineEl.scrollLeft = grabScrollLeft - (x - grabStartX) * 1.5;
+                });
+
+                pipelineEl.addEventListener('mouseup', () => {
+                    isGrabbing = false;
+                    pipelineEl.classList.remove('grabbing');
+                });
+
+                pipelineEl.addEventListener('mouseleave', () => {
+                    isGrabbing = false;
+                    pipelineEl.classList.remove('grabbing');
+                });
             }
 
             document.getElementById('alertCounter').addEventListener('click', () => {
