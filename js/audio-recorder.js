@@ -33,6 +33,13 @@ window.AudioRecorder = class AudioRecorder {
             return null;
         }
 
+        // Vérifier que le navigateur supporte l'enregistrement audio
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            const msg = 'Micro non disponible — vérifiez que le site est en HTTPS';
+            this.onStateChange('error', msg);
+            throw new Error(msg);
+        }
+
         if (typeof MediaRecorder === 'undefined') {
             this.onStateChange('error', 'Enregistrement audio non supporté par ce navigateur');
             throw new Error('MediaRecorder not supported');
@@ -42,9 +49,30 @@ window.AudioRecorder = class AudioRecorder {
         try {
             this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         } catch (err) {
-            const msg = (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
-                ? 'Micro bloqué — autorisez le micro dans les réglages du navigateur'
-                : 'Impossible d\'accéder au micro';
+            console.warn('getUserMedia error:', err.name, err.message);
+            let msg;
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                // Vérifier si la permission a été explicitement refusée ou jamais demandée
+                let permState = null;
+                try {
+                    if (navigator.permissions && navigator.permissions.query) {
+                        const result = await navigator.permissions.query({ name: 'microphone' });
+                        permState = result.state;
+                    }
+                } catch (_) { /* permissions API non supportée */ }
+
+                if (permState === 'denied') {
+                    msg = 'Micro refusé — allez dans Réglages > Safari > Microphone pour autoriser ce site';
+                } else {
+                    msg = 'Micro bloqué — appuyez à nouveau et autorisez l\'accès au micro dans la popup';
+                }
+            } else if (err.name === 'NotFoundError') {
+                msg = 'Aucun micro détecté sur cet appareil';
+            } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
+                msg = 'Micro déjà utilisé par une autre application';
+            } else {
+                msg = 'Impossible d\'accéder au micro : ' + (err.message || err.name);
+            }
             this.onStateChange('error', msg);
             throw new Error(msg);
         }
