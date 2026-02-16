@@ -754,6 +754,120 @@
         .commission-inline-input.amount { width: 80px; }
         .commission-inline-input.rate { width: 35px; text-align: center; }
 
+        /* ===== LIENS D'ANNONCES ===== */
+        .links-section {
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+        .links-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        .links-list { display: flex; flex-direction: column; gap: 6px; }
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            animation: slideUp 0.3s ease;
+        }
+        .link-platform-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .link-url {
+            flex: 1;
+            font-size: 12px;
+            color: #667eea;
+            text-decoration: none;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .link-url:hover { text-decoration: underline; }
+        .link-delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #CFD8DC;
+            font-size: 14px;
+            padding: 2px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+        }
+        .link-delete-btn:hover { color: #FF4757; }
+        .link-add-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            background: #f0f2f5;
+            border: 1px dashed #CFD8DC;
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 6px;
+        }
+        .link-add-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .link-input-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+        .link-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #E1E8ED;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            outline: none;
+        }
+        .link-input:focus { border-color: #667eea; }
+        .link-confirm-btn {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .link-cancel-btn {
+            padding: 8px 10px;
+            background: #f0f2f5;
+            border: 1px solid #E1E8ED;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+        .card-links-count {
+            font-size: 11px;
+            color: #667eea;
+            background: #f0f2ff;
+            padding: 3px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -1052,6 +1166,18 @@
                     <div class="form-group">
                         <label class="form-label">Notes & Commentaires</label>
                         <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend..."></textarea>
+                    </div>
+
+                    <!-- Liens d'annonces -->
+                    <div class="links-section">
+                        <div class="links-section-title">Liens d'annonces</div>
+                        <div class="links-list" id="linksList"></div>
+                        <div id="linkInputRow" class="link-input-row" style="display:none">
+                            <input type="text" class="link-input" id="linkInput" placeholder="Coller l'URL de l'annonce…">
+                            <button type="button" class="link-confirm-btn" onclick="confirmAddLink()">✓</button>
+                            <button type="button" class="link-cancel-btn" onclick="cancelAddLink()">✕</button>
+                        </div>
+                        <button type="button" class="link-add-btn" id="linkAddBtn" onclick="showLinkInput()">+ Ajouter un lien</button>
                     </div>
 
                     <div class="form-row">
@@ -1586,6 +1712,11 @@
                 html += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
+            // Links count
+            if (Array.isArray(seller.links) && seller.links.length > 0) {
+                html += `<div class="card-links-count">🔗 ${seller.links.length} annonce${seller.links.length > 1 ? 's' : ''}</div>`;
+            }
+
             if (seller.notes) {
                 html += `<div class="card-notes">💬 ${seller.notes}</div>`;
             }
@@ -1691,6 +1822,96 @@
             if (initialTab) switchTab(initialTab);
         }
 
+        // ===== LIENS D'ANNONCES =====
+        let currentLinks = [];
+
+        const PLATFORM_CONFIG = {
+            'seloger.com':    { label: '🏠 SeLoger',    bg: '#0055FF', color: '#fff' },
+            'leboncoin.fr':   { label: '🟠 LeBonCoin',  bg: '#FF6E14', color: '#fff' },
+            'bienici.com':    { label: '🔵 BienIci',    bg: '#00B8D9', color: '#fff' },
+            'efficity.com':   { label: '🏢 Efficity',   bg: '#004D40', color: '#fff' },
+            'orpi.com':       { label: 'Orpi',           bg: '#E30613', color: '#fff' },
+            'century21.fr':   { label: 'Century 21',     bg: '#B8860B', color: '#fff' },
+            'laforet.com':    { label: 'Laforêt',        bg: '#007A33', color: '#fff' },
+            'pap.fr':         { label: 'PAP',            bg: '#6A1B9A', color: '#fff' },
+            'logic-immo.com': { label: 'Logic-Immo',     bg: '#1565C0', color: '#fff' }
+        };
+
+        function detectPlatform(url) {
+            try {
+                const hostname = new URL(url).hostname.replace('www.', '');
+                for (const [domain, config] of Object.entries(PLATFORM_CONFIG)) {
+                    if (hostname.includes(domain)) return config;
+                }
+            } catch (e) { /* invalid URL */ }
+            return { label: '🌐 Autre', bg: '#CFD8DC', color: '#37474F' };
+        }
+
+        function truncateUrl(url, max) {
+            try {
+                const u = new URL(url);
+                const display = u.hostname.replace('www.', '') + u.pathname;
+                return display.length > max ? display.substring(0, max) + '…' : display;
+            } catch (e) { return url.length > max ? url.substring(0, max) + '…' : url; }
+        }
+
+        function renderLinks() {
+            const list = document.getElementById('linksList');
+            if (currentLinks.length === 0) {
+                list.innerHTML = '';
+                return;
+            }
+            list.innerHTML = currentLinks.map((link, i) => {
+                const p = detectPlatform(link);
+                return `<div class="link-item">
+                    <span class="link-platform-badge" style="background:${p.bg};color:${p.color}">${p.label}</span>
+                    <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="link-url" title="${escapeHtml(link)}">${escapeHtml(truncateUrl(link, 40))}</a>
+                    <button type="button" class="link-delete-btn" onclick="removeLink(${i})" title="Supprimer">🗑️</button>
+                </div>`;
+            }).join('');
+        }
+
+        function showLinkInput() {
+            document.getElementById('linkInputRow').style.display = 'flex';
+            document.getElementById('linkAddBtn').style.display = 'none';
+            const input = document.getElementById('linkInput');
+            input.value = '';
+            input.focus();
+        }
+
+        function cancelAddLink() {
+            document.getElementById('linkInputRow').style.display = 'none';
+            document.getElementById('linkAddBtn').style.display = '';
+            document.getElementById('linkInput').value = '';
+        }
+
+        function confirmAddLink() {
+            const input = document.getElementById('linkInput');
+            let url = input.value.trim();
+            if (!url) return;
+            // Auto-add https if missing
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            currentLinks.push(url);
+            renderLinks();
+            cancelAddLink();
+        }
+
+        function removeLink(index) {
+            currentLinks.splice(index, 1);
+            renderLinks();
+        }
+
+        // Allow Enter key in link input
+        document.addEventListener('DOMContentLoaded', () => {
+            const linkInput = document.getElementById('linkInput');
+            if (linkInput) {
+                linkInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); confirmAddLink(); }
+                    if (e.key === 'Escape') cancelAddLink();
+                });
+            }
+        });
+
         function closeModal() {
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
@@ -1721,6 +1942,11 @@
             currentVisits = [];
             const visitList = document.getElementById('visitList');
             if (visitList) visitList.innerHTML = '<div class="visit-empty">Aucune visite enregistrée</div>';
+
+            // Reset links
+            currentLinks = [];
+            renderLinks();
+            cancelAddLink();
         }
 
         // ===== EDIT / DELETE =====
@@ -1757,6 +1983,10 @@
             document.getElementById('commissionRate').value = seller.commission_rate || 4;
             const budgetForComm = parseAmount(seller.budget);
             document.getElementById('commissionAmount').value = seller.commission_amount || (budgetForComm > 0 ? Math.round(budgetForComm * (seller.commission_rate || 4) / 100) : '');
+
+            // Links
+            currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
+            renderLinks();
 
             document.querySelector('.modal-title').textContent = 'Modifier le Lead';
             const submitBtn = document.getElementById('submitBtn');
@@ -1818,7 +2048,8 @@
                 mandate_end_date: document.getElementById('mandateEndDate').value || null,
                 mandate_price: document.getElementById('mandatePrice').value.trim() || null,
                 commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
-                commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null
+                commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
+                links: currentLinks.length > 0 ? currentLinks : []
             };
 
             // Auto-calculate commission if budget set and no manual amount
