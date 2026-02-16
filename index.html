@@ -278,7 +278,6 @@
             overflow-x: auto;
             overflow-y: visible;
             padding-bottom: 20px;
-            scroll-behavior: smooth;
         }
 
         .pipeline::-webkit-scrollbar { height: 12px; }
@@ -3910,6 +3909,16 @@
             if (pipelineEl) {
                 pipelineEl.addEventListener('wheel', (e) => {
                     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                        // Vérifier si la cible est dans un conteneur qui scroll verticalement
+                        let target = e.target;
+                        while (target && target !== pipelineEl) {
+                            const style = window.getComputedStyle(target);
+                            const overflowY = style.overflowY;
+                            if ((overflowY === 'auto' || overflowY === 'scroll') && target.scrollHeight > target.clientHeight) {
+                                return; // Laisser le scroll vertical natif dans ce conteneur
+                            }
+                            target = target.parentElement;
+                        }
                         e.preventDefault();
                         pipelineEl.scrollLeft += e.deltaY;
                     }

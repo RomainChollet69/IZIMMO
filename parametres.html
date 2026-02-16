@@ -9,6 +9,7 @@
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <style>
@@ -594,6 +595,289 @@
             gap: 8px;
         }
 
+        /* ===== EXCEL IMPORT WIZARD ===== */
+        #excelFileInput { display: none; }
+
+        .import-wizard { display: none; }
+        .import-wizard.active { display: block; }
+
+        .wizard-steps {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+        }
+        .wizard-step {
+            flex: 1;
+            text-align: center;
+            padding: 10px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            background: #f0f2f5;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .wizard-step.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .wizard-step.done {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .wizard-panel { display: none; }
+        .wizard-panel.active { display: block; }
+
+        .drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 48px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+        }
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .drop-zone-icon { font-size: 48px; margin-bottom: 12px; }
+        .drop-zone-text { font-size: 15px; color: var(--text-light); }
+        .drop-zone-text strong { color: #667eea; }
+        .drop-zone-hint { font-size: 12px; color: #bbb; margin-top: 8px; }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #E8F5E9;
+            border-radius: 10px;
+            margin-top: 16px;
+        }
+        .file-info-icon { font-size: 24px; }
+        .file-info-name { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+        .file-info-meta { font-size: 12px; color: var(--text-light); }
+        .file-info-remove {
+            margin-left: auto;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-light);
+        }
+        .file-info-remove:hover { color: #e74c3c; }
+
+        .preview-table-wrapper {
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-top: 16px;
+            max-height: 300px;
+        }
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .preview-table th {
+            position: sticky;
+            top: 0;
+            background: #f0f2f5;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: var(--text-dark);
+            white-space: nowrap;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .preview-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f2f5;
+            white-space: nowrap;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-dark);
+        }
+
+        .mapping-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .mapping-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .mapping-col-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dark);
+            min-width: 140px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .mapping-arrow { color: var(--text-light); font-size: 16px; flex-shrink: 0; }
+        .mapping-select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            background: white;
+            cursor: pointer;
+        }
+        .mapping-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .mapping-badge {
+            font-size: 16px;
+            flex-shrink: 0;
+            width: 28px;
+            text-align: center;
+        }
+
+        .mapping-analyzing {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 30px;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .import-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .import-option-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .import-progress {
+            margin-top: 20px;
+        }
+        .progress-bar-outer {
+            width: 100%;
+            height: 12px;
+            background: #f0f2f5;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 6px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 10px;
+        }
+
+        .import-result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            background: #E8F5E9;
+            border: 1px solid #A5D6A7;
+        }
+        .import-result.has-errors {
+            background: #FFF3E0;
+            border-color: #FFE0B2;
+        }
+        .import-result-line {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .import-result-line:last-child { margin-bottom: 0; }
+        .import-result-detail {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-light);
+            cursor: pointer;
+            text-decoration: underline dotted;
+        }
+        .import-result-detail:hover { color: var(--text-dark); }
+        .import-result-skipped {
+            display: none;
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .import-result-skipped.visible { display: block; }
+
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            gap: 12px;
+        }
+        .wizard-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--border-color);
+            background: white;
+            color: var(--text-dark);
+        }
+        .wizard-btn:hover { border-color: #667eea; color: #667eea; }
+        .wizard-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+        .wizard-btn.primary:hover {
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+        }
+        .wizard-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .status-distribution {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .status-chip {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f0f2f5;
+            color: var(--text-dark);
+        }
+
         /* Hidden file input */
         #vcfFileInput { display: none; }
 
@@ -714,6 +998,96 @@
             <div style="display:flex;align-items:center;margin-top:8px;">
                 <button class="save-btn" id="saveProfileBtn">Enregistrer</button>
                 <span class="save-success" id="saveSuccess">Enregistré</span>
+            </div>
+        </div>
+
+        <!-- Section Import Excel Leads -->
+        <div class="settings-section" id="excelImportSection">
+            <h2 class="section-title">Importer des Leads (Excel / CSV)</h2>
+
+            <div id="excelImportStart">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-icon">📊</div>
+                    <div class="drop-zone-text">Glissez votre fichier ici ou <strong>cliquez pour parcourir</strong></div>
+                    <div class="drop-zone-hint">Formats acceptés : .xlsx, .xls, .csv</div>
+                </div>
+                <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv">
+                <div id="excelFileInfo" style="display:none;"></div>
+            </div>
+
+            <div class="import-wizard" id="importWizard">
+                <div class="wizard-steps">
+                    <div class="wizard-step active" data-step="1">1. Aperçu</div>
+                    <div class="wizard-step" data-step="2">2. Mapping</div>
+                    <div class="wizard-step" data-step="3">3. Options</div>
+                    <div class="wizard-step" data-step="4">4. Import</div>
+                </div>
+
+                <!-- Step 1: Preview -->
+                <div class="wizard-panel active" id="wizardStep1">
+                    <p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">Aperçu des premières lignes de votre fichier :</p>
+                    <div class="preview-table-wrapper" id="previewTableWrapper"></div>
+                    <div class="wizard-actions">
+                        <button class="wizard-btn" onclick="cancelImportWizard()">Annuler</button>
+                        <button class="wizard-btn primary" onclick="goToStep(2)">Suivant →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Mapping -->
+                <div class="wizard-panel" id="wizardStep2">
+                    <p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">Vérifiez le mapping des colonnes :</p>
+                    <div id="mappingAnalyzing" class="mapping-analyzing" style="display:none;">
+                        <span class="loading-spinner">⏳</span> Analyse IA des colonnes en cours...
+                    </div>
+                    <div class="mapping-grid" id="mappingGrid"></div>
+                    <div class="wizard-actions">
+                        <button class="wizard-btn" onclick="goToStep(1)">← Retour</button>
+                        <button class="wizard-btn primary" onclick="goToStep(3)">Suivant →</button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Options -->
+                <div class="wizard-panel" id="wizardStep3">
+                    <div class="import-options">
+                        <div class="import-option-row">
+                            <div class="form-group">
+                                <label class="form-label">Importer en tant que</label>
+                                <select class="form-input" id="importType">
+                                    <option value="sellers">🏠 Vendeurs</option>
+                                    <option value="buyers">🔑 Acquéreurs</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" id="defaultStatusLabel">Colonne par défaut</label>
+                                <select class="form-input" id="importDefaultStatus"></select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Source par défaut (si non renseignée)</label>
+                            <select class="form-input" id="importDefaultSource">
+                                <option value="">— Aucune —</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="wizard-actions">
+                        <button class="wizard-btn" onclick="goToStep(2)">← Retour</button>
+                        <button class="wizard-btn primary" id="importBtn" onclick="executeImport()">Importer</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Result -->
+                <div class="wizard-panel" id="wizardStep4">
+                    <div class="import-progress" id="importProgress">
+                        <div class="progress-bar-outer">
+                            <div class="progress-bar-inner" id="progressBar"></div>
+                        </div>
+                        <div class="progress-text" id="progressText">Import en cours...</div>
+                    </div>
+                    <div id="importResultContainer"></div>
+                    <div class="wizard-actions" id="wizardStep4Actions" style="display:none;">
+                        <button class="wizard-btn primary" onclick="cancelImportWizard()">Terminé</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1396,6 +1770,510 @@
                 const noEmail = uniqueRows.filter(r => !r.email).length;
                 showImportSummary(inserted, { noPhone, noName, noEmail, skipped });
             }
+        }
+        // ===== EXCEL IMPORT WIZARD =====
+        let excelHeaders = [];
+        let excelRows = [];
+        let columnMapping = {};
+        let hasStatusColumn = false;
+
+        const CRM_FIELDS = {
+            first_name: 'Prénom',
+            last_name: 'Nom',
+            full_name: 'Nom complet',
+            phone: 'Téléphone',
+            email: 'Email',
+            address: 'Adresse',
+            description: 'Description',
+            budget: 'Budget / Prix',
+            source: 'Source',
+            notes: 'Notes',
+            date: 'Date de contact',
+            reminder: 'Date de relance',
+            property_type: 'Type de bien',
+            surface: 'Surface',
+            status: 'Statut / Colonne',
+            ignore: '❌ Ignorer'
+        };
+
+        const SELLER_STATUSES = [
+            { value: 'hot', label: '🔥 Leads Chaudes' },
+            { value: 'warm', label: '🌤️ Leads Tièdes' },
+            { value: 'cold', label: '❄️ Leads Froides' },
+            { value: 'mandate', label: '✅ Sous Mandats' },
+            { value: 'competitor', label: '🏢 Chez Concurrent' },
+            { value: 'sold', label: '🏆 Vendus' },
+            { value: 'lost', label: '❌ Perdus' }
+        ];
+
+        const BUYER_STATUSES = [
+            { value: 'new', label: '🆕 Nouveaux' },
+            { value: 'active', label: '🔍 En recherche' },
+            { value: 'offer', label: '📝 Offre en cours' },
+            { value: 'closed', label: '🏆 Conclus' }
+        ];
+
+        const SELLER_SOURCES = [
+            { value: 'boitage', label: '📬 Boîtage' },
+            { value: 'recommandation', label: '🤝 Recommandation' },
+            { value: 'pige', label: '📰 Pige' },
+            { value: 'siteimmo', label: '🌐 Site Immo' },
+            { value: 'boucheaoreille', label: '🗣️ Bouche à oreille' },
+            { value: 'efficity', label: '🏢 Efficity' },
+            { value: 'autre', label: '📌 Autre' }
+        ];
+
+        const BUYER_SOURCES = [
+            { value: 'site_annonce', label: '🌐 Site d\'annonce' },
+            { value: 'efficity', label: '🏢 Efficity' },
+            { value: 'recommandation', label: '🤝 Recommandation' },
+            { value: 'appel_entrant', label: '📞 Appel entrant' },
+            { value: 'reseaux_sociaux', label: '📱 Réseaux sociaux' },
+            { value: 'autre', label: '📌 Autre' }
+        ];
+
+        // Setup drag & drop
+        document.addEventListener('DOMContentLoaded', () => {
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('excelFileInput');
+
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file) handleExcelFile(file);
+            });
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files[0]) handleExcelFile(e.target.files[0]);
+                e.target.value = '';
+            });
+
+            // Update options when import type changes
+            document.getElementById('importType').addEventListener('change', updateImportOptions);
+        });
+
+        function handleExcelFile(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (!['xlsx', 'xls', 'csv'].includes(ext)) {
+                alert('Format non supporté. Utilisez .xlsx, .xls ou .csv');
+                return;
+            }
+
+            // Show file info
+            const fileInfo = document.getElementById('excelFileInfo');
+            fileInfo.style.display = 'block';
+            fileInfo.innerHTML = `<div class="file-info">
+                <span class="file-info-icon">📄</span>
+                <div>
+                    <div class="file-info-name">${escapeHtml(file.name)}</div>
+                    <div class="file-info-meta">${(file.size / 1024).toFixed(1)} Ko</div>
+                </div>
+                <button class="file-info-remove" onclick="cancelImportWizard()">✕</button>
+            </div>`;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const workbook = XLSX.read(e.target.result, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    if (data.length < 2) {
+                        alert('Le fichier semble vide ou ne contient qu\'une ligne d\'en-têtes.');
+                        return;
+                    }
+
+                    excelHeaders = data[0].map(h => (h || '').toString().trim());
+                    excelRows = data.slice(1).filter(row => row.some(cell => cell !== undefined && cell !== null && cell !== ''));
+
+                    // Show wizard
+                    document.getElementById('dropZone').style.display = 'none';
+                    document.getElementById('importWizard').classList.add('active');
+
+                    // Render preview
+                    renderPreview();
+                    // Auto-map columns
+                    autoMapColumns();
+                } catch (err) {
+                    console.error('Erreur lecture fichier:', err);
+                    alert('Erreur lors de la lecture du fichier.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function renderPreview() {
+            const wrapper = document.getElementById('previewTableWrapper');
+            const previewRows = excelRows.slice(0, 5);
+            let html = '<table class="preview-table"><thead><tr>';
+            excelHeaders.forEach(h => { html += `<th>${escapeHtml(h)}</th>`; });
+            html += '</tr></thead><tbody>';
+            previewRows.forEach(row => {
+                html += '<tr>';
+                excelHeaders.forEach((_, i) => {
+                    const val = row[i] !== undefined && row[i] !== null ? String(row[i]) : '';
+                    html += `<td>${escapeHtml(val)}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            html += `<p style="font-size:12px;color:var(--text-light);margin-top:8px;padding:0 12px;">${excelRows.length} lignes détectées</p>`;
+            wrapper.innerHTML = html;
+        }
+
+        async function autoMapColumns() {
+            const grid = document.getElementById('mappingGrid');
+            const analyzing = document.getElementById('mappingAnalyzing');
+            analyzing.style.display = 'flex';
+            grid.innerHTML = '';
+
+            // Get sample data for AI
+            const sampleRows = excelRows.slice(0, 3).map(row => {
+                const obj = {};
+                excelHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? String(row[i]) : ''; });
+                return obj;
+            });
+
+            try {
+                const resp = await fetch('/api/map-columns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ headers: excelHeaders, sampleRows })
+                });
+
+                if (resp.ok) {
+                    columnMapping = await resp.json();
+                } else {
+                    // Fallback: set all to ignore
+                    excelHeaders.forEach(h => { columnMapping[h] = 'ignore'; });
+                }
+            } catch (err) {
+                console.error('Mapping error:', err);
+                excelHeaders.forEach(h => { columnMapping[h] = 'ignore'; });
+            }
+
+            analyzing.style.display = 'none';
+            hasStatusColumn = Object.values(columnMapping).includes('status');
+            renderMapping();
+        }
+
+        function renderMapping() {
+            const grid = document.getElementById('mappingGrid');
+            grid.innerHTML = excelHeaders.map(h => {
+                const mapped = columnMapping[h] || 'ignore';
+                const isAuto = mapped !== 'ignore';
+                const badge = isAuto ? '✅' : '⚠️';
+                const options = Object.entries(CRM_FIELDS).map(([k, v]) =>
+                    `<option value="${k}" ${k === mapped ? 'selected' : ''}>${v}</option>`
+                ).join('');
+                return `<div class="mapping-row">
+                    <span class="mapping-col-name" title="${escapeHtml(h)}">${escapeHtml(h)}</span>
+                    <span class="mapping-arrow">→</span>
+                    <select class="mapping-select" onchange="updateMapping('${escapeHtml(h)}', this.value)">${options}</select>
+                    <span class="mapping-badge">${badge}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function updateMapping(header, value) {
+            columnMapping[header] = value;
+            hasStatusColumn = Object.values(columnMapping).includes('status');
+            // Update badge
+            renderMapping();
+        }
+
+        function updateImportOptions() {
+            const type = document.getElementById('importType').value;
+            const statusSelect = document.getElementById('importDefaultStatus');
+            const sourceSelect = document.getElementById('importDefaultSource');
+
+            const statuses = type === 'sellers' ? SELLER_STATUSES : BUYER_STATUSES;
+            const sources = type === 'sellers' ? SELLER_SOURCES : BUYER_SOURCES;
+
+            statusSelect.innerHTML = statuses.map(s =>
+                `<option value="${s.value}">${s.label}</option>`
+            ).join('');
+
+            sourceSelect.innerHTML = '<option value="">— Aucune —</option>' +
+                sources.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+
+            // Update label if status column detected
+            const label = document.getElementById('defaultStatusLabel');
+            label.textContent = hasStatusColumn ? 'Colonne par défaut (si statut non détecté)' : 'Colonne par défaut';
+        }
+
+        function goToStep(step) {
+            // Update steps indicator
+            document.querySelectorAll('.wizard-step').forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i + 1 < step) el.classList.add('done');
+                if (i + 1 === step) el.classList.add('active');
+            });
+            // Show panel
+            document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('wizardStep' + step).classList.add('active');
+
+            // Initialize options when entering step 3
+            if (step === 3) {
+                updateImportOptions();
+            }
+        }
+
+        function cancelImportWizard() {
+            document.getElementById('importWizard').classList.remove('active');
+            document.getElementById('dropZone').style.display = '';
+            document.getElementById('excelFileInfo').style.display = 'none';
+            document.getElementById('importResultContainer').innerHTML = '';
+            document.getElementById('wizardStep4Actions').style.display = 'none';
+            excelHeaders = [];
+            excelRows = [];
+            columnMapping = {};
+            hasStatusColumn = false;
+            // Reset steps
+            document.querySelectorAll('.wizard-step').forEach((el, i) => {
+                el.classList.remove('active', 'done');
+                if (i === 0) el.classList.add('active');
+            });
+            document.querySelectorAll('.wizard-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('wizardStep1').classList.add('active');
+        }
+
+        // ===== STATUS INTERPRETATION =====
+        function interpretStatus(rawValue, importType) {
+            if (!rawValue) return null;
+            const val = rawValue.toString().toLowerCase().trim();
+
+            if (importType === 'sellers') {
+                if (['chaud', 'hot', 'urgent', 'rdv', 'très intéressé'].some(k => val.includes(k))) return 'hot';
+                if (['tiède', 'tiede', 'warm', 'moyen', 'intéressé', 'en cours'].some(k => val.includes(k))) return 'warm';
+                if (['froid', 'cold', 'long terme', 'pas pressé', 'attente'].some(k => val.includes(k))) return 'cold';
+                if (['mandat', 'signé', 'en vente', 'mandate'].some(k => val.includes(k))) return 'mandate';
+                if (['concurrent', 'autre agence', 'competitor', 'pris'].some(k => val.includes(k))) return 'competitor';
+                if (['vendu', 'sold', 'acte', 'conclu'].some(k => val.includes(k))) return 'sold';
+                if (['perdu', 'lost', 'abandonné', 'refus', 'ne vend plus', 'annulé'].some(k => val.includes(k))) return 'lost';
+            } else {
+                if (['nouveau', 'new', 'récent'].some(k => val.includes(k))) return 'new';
+                if (['actif', 'active', 'recherche', 'en cours'].some(k => val.includes(k))) return 'active';
+                if (['offre', 'offer', 'proposition'].some(k => val.includes(k))) return 'offer';
+                if (['conclu', 'closed', 'signé', 'acheté'].some(k => val.includes(k))) return 'closed';
+            }
+            return null;
+        }
+
+        function splitName(fullName) {
+            const parts = (fullName || '').trim().split(/\s+/);
+            if (parts.length === 0 || !parts[0]) return { first_name: '', last_name: '' };
+            if (parts.length === 1) return { first_name: parts[0], last_name: '' };
+            const last_name = parts.pop();
+            return { first_name: parts.join(' '), last_name };
+        }
+
+        function parseBudget(val) {
+            if (!val) return null;
+            const cleaned = val.toString().replace(/[€\s,.]/g, '').replace(/\s/g, '');
+            const num = parseInt(cleaned);
+            return isNaN(num) ? null : num;
+        }
+
+        // ===== EXECUTE IMPORT =====
+        async function executeImport() {
+            const importType = document.getElementById('importType').value;
+            const defaultStatus = document.getElementById('importDefaultStatus').value;
+            const defaultSource = document.getElementById('importDefaultSource').value;
+            const table = importType === 'sellers' ? 'sellers' : 'buyers';
+
+            goToStep(4);
+
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+
+            // Build reverse mapping: crmField -> header
+            const reverseMap = {};
+            Object.entries(columnMapping).forEach(([header, field]) => {
+                if (field !== 'ignore') {
+                    if (!reverseMap[field]) reverseMap[field] = [];
+                    reverseMap[field].push(header);
+                }
+            });
+
+            // Get existing phones for duplicate detection
+            progressText.textContent = 'Vérification des doublons...';
+            const { data: existingLeads } = await supabaseClient
+                .from(table)
+                .select('phone')
+                .eq('user_id', currentUserId);
+
+            const existingPhones = new Set(
+                (existingLeads || [])
+                    .map(l => l.phone ? l.phone.replace(/[\s\-\.]/g, '') : null)
+                    .filter(Boolean)
+            );
+
+            // Build leads
+            const leads = [];
+            const skipped = [];
+            const statusCounts = {};
+
+            excelRows.forEach((row, rowIdx) => {
+                const getValue = (field) => {
+                    const headers = reverseMap[field];
+                    if (!headers) return null;
+                    for (const h of headers) {
+                        const idx = excelHeaders.indexOf(h);
+                        if (idx >= 0 && row[idx] !== undefined && row[idx] !== null && row[idx] !== '') {
+                            return String(row[idx]).trim();
+                        }
+                    }
+                    return null;
+                };
+
+                let firstName = getValue('first_name') || '';
+                let lastName = getValue('last_name') || '';
+                const fullName = getValue('full_name');
+                if (fullName && !firstName && !lastName) {
+                    const split = splitName(fullName);
+                    firstName = split.first_name;
+                    lastName = split.last_name;
+                }
+
+                // Skip rows without any name
+                if (!firstName && !lastName) {
+                    skipped.push({ row: rowIdx + 2, reason: 'Pas de nom' });
+                    return;
+                }
+
+                // Duplicate check by phone
+                const phone = getValue('phone');
+                if (phone) {
+                    const normPhone = phone.replace(/[\s\-\.]/g, '');
+                    if (existingPhones.has(normPhone)) {
+                        skipped.push({ row: rowIdx + 2, reason: `Doublon (tél: ${phone})` });
+                        return;
+                    }
+                    existingPhones.add(normPhone);
+                }
+
+                // Determine status
+                let status = defaultStatus;
+                const rawStatus = getValue('status');
+                if (rawStatus) {
+                    const interpreted = interpretStatus(rawStatus, importType);
+                    if (interpreted) status = interpreted;
+                }
+
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+                const lead = {
+                    user_id: currentUserId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: phone || null,
+                    email: getValue('email') || null,
+                    status,
+                    source: getValue('source') || defaultSource || null
+                };
+
+                // Additional fields
+                const address = getValue('address');
+                if (address) lead.address = address;
+
+                const description = getValue('description');
+                if (description) lead.description = description;
+
+                const budget = getValue('budget');
+                if (budget) {
+                    const parsed = parseBudget(budget);
+                    if (parsed) lead.budget = parsed;
+                }
+
+                const notes = getValue('notes');
+                // Notes will be added as timestamped notes after insert
+
+                const date = getValue('date');
+                if (date && importType === 'sellers') lead.date = date;
+
+                const reminder = getValue('reminder');
+                if (reminder) lead.reminder = reminder;
+
+                const propertyType = getValue('property_type');
+                if (propertyType) lead.property_type = propertyType.toLowerCase();
+
+                const surface = getValue('surface');
+                if (surface) lead.surface = surface;
+
+                leads.push({ lead, notes });
+            });
+
+            if (leads.length === 0) {
+                progressText.textContent = '';
+                progressBar.style.width = '100%';
+                showImportResult(0, skipped, statusCounts, importType);
+                return;
+            }
+
+            // Insert in batches of 50
+            let inserted = 0;
+            const batchSize = 50;
+            for (let i = 0; i < leads.length; i += batchSize) {
+                const batch = leads.slice(i, i + batchSize);
+                const batchData = batch.map(b => b.lead);
+
+                const { error } = await supabaseClient.from(table).insert(batchData);
+                if (error) {
+                    console.error('Import batch error:', error);
+                    skipped.push({ row: '-', reason: `Erreur batch: ${error.message}` });
+                    break;
+                }
+                inserted += batch.length;
+
+                const pct = Math.round((inserted / leads.length) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = `Import en cours... ${inserted}/${leads.length}`;
+            }
+
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Import terminé !';
+            showImportResult(inserted, skipped, statusCounts, importType);
+        }
+
+        function showImportResult(inserted, skipped, statusCounts, importType) {
+            const container = document.getElementById('importResultContainer');
+            const hasErrors = skipped.length > 0;
+
+            const statuses = importType === 'sellers' ? SELLER_STATUSES : BUYER_STATUSES;
+            const statusLabels = {};
+            statuses.forEach(s => { statusLabels[s.value] = s.label; });
+
+            let html = `<div class="import-result ${hasErrors ? 'has-errors' : ''}">`;
+            html += `<div class="import-result-line" style="color:#2E7D32;">✅ ${inserted} lead${inserted > 1 ? 's' : ''} importé${inserted > 1 ? 's' : ''} avec succès</div>`;
+
+            // Status distribution
+            if (inserted > 0 && Object.keys(statusCounts).length > 0) {
+                html += '<div class="status-distribution">';
+                Object.entries(statusCounts).forEach(([s, count]) => {
+                    html += `<span class="status-chip">${statusLabels[s] || s} : ${count}</span>`;
+                });
+                html += '</div>';
+            }
+
+            if (skipped.length > 0) {
+                html += `<div class="import-result-line" style="color:#E65100;">⚠️ ${skipped.length} ligne${skipped.length > 1 ? 's' : ''} ignorée${skipped.length > 1 ? 's' : ''}</div>`;
+                html += `<div class="import-result-detail" onclick="this.nextElementSibling.classList.toggle('visible')">📋 Voir le détail</div>`;
+                html += '<div class="import-result-skipped">';
+                skipped.forEach(s => {
+                    html += `<div>Ligne ${s.row} : ${escapeHtml(s.reason)}</div>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+
+            document.getElementById('importProgress').style.display = 'none';
+            document.getElementById('wizardStep4Actions').style.display = 'flex';
         }
     </script>
     <script src="js/todo-widget.js"></script>
