@@ -570,6 +570,16 @@
     }
 
     async function startRecording() {
+        // Acquérir le micro IMMÉDIATEMENT dans le handler de clic (critique pour iOS Safari)
+        let stream;
+        try {
+            stream = await AudioRecorder.acquireMic();
+        } catch (err) {
+            console.warn('Mic acquire error:', err);
+            showVoiceError('⚠️ ' + err.message);
+            return;
+        }
+
         todoRecorder = new AudioRecorder({
             maxDuration: 30000,
             apiTimeout: 15000,
@@ -596,7 +606,7 @@
         });
 
         try {
-            const text = await todoRecorder.record();
+            const text = await todoRecorder.record(stream);
             if (text && text.trim()) {
                 processVoiceInput(text.trim());
             }

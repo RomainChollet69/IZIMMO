@@ -1,7 +1,8 @@
 // WAIMMO — AudioRecorder : enregistrement micro + transcription Whisper
 // Usage :
+//   const stream = await AudioRecorder.acquireMic();
 //   const recorder = new AudioRecorder({ onStateChange: (state, msg) => {} });
-//   const text = await recorder.record();
+//   const text = await recorder.record(stream);
 //   recorder.stop();
 
 window.AudioRecorder = class AudioRecorder {
@@ -18,6 +19,15 @@ window.AudioRecorder = class AudioRecorder {
         this._maxTimer = null;
     }
 
+    // Acquérir le micro — DOIT être appelé directement depuis le gestionnaire de clic
+    // (iOS Safari exige que getUserMedia soit le premier await dans le handler)
+    static async acquireMic() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error('Micro non disponible — vérifiez que le site est en HTTPS');
+        }
+        return await navigator.mediaDevices.getUserMedia({ audio: true });
+    }
+
     _getMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
@@ -26,18 +36,11 @@ window.AudioRecorder = class AudioRecorder {
         return '';
     }
 
-    async record() {
+    async record(existingStream) {
         // Toggle : si déjà en cours, on arrête
         if (this.isRecording) {
             this.stop();
             return null;
-        }
-
-        // Vérifier que le navigateur supporte l'enregistrement audio
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            const msg = 'Micro non disponible — vérifiez que le site est en HTTPS';
-            this.onStateChange('error', msg);
-            throw new Error(msg);
         }
 
         if (typeof MediaRecorder === 'undefined') {
@@ -45,36 +48,44 @@ window.AudioRecorder = class AudioRecorder {
             throw new Error('MediaRecorder not supported');
         }
 
-        // Demande micro
-        try {
-            this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (err) {
-            console.warn('getUserMedia error:', err.name, err.message);
-            let msg;
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                // Vérifier si la permission a été explicitement refusée ou jamais demandée
-                let permState = null;
-                try {
-                    if (navigator.permissions && navigator.permissions.query) {
-                        const result = await navigator.permissions.query({ name: 'microphone' });
-                        permState = result.state;
-                    }
-                } catch (_) { /* permissions API non supportée */ }
-
-                if (permState === 'denied') {
-                    msg = 'Micro refusé — allez dans Réglages > Safari > Microphone pour autoriser ce site';
-                } else {
-                    msg = 'Micro bloqué — appuyez à nouveau et autorisez l\'accès au micro dans la popup';
-                }
-            } else if (err.name === 'NotFoundError') {
-                msg = 'Aucun micro détecté sur cet appareil';
-            } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
-                msg = 'Micro déjà utilisé par une autre application';
-            } else {
-                msg = 'Impossible d\'accéder au micro : ' + (err.message || err.name);
+        // Utiliser le stream fourni ou en acquérir un nouveau
+        if (existingStream) {
+            this.stream = existingStream;
+        } else {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                const msg = 'Micro non disponible — vérifiez que le site est en HTTPS';
+                this.onStateChange('error', msg);
+                throw new Error(msg);
             }
-            this.onStateChange('error', msg);
-            throw new Error(msg);
+            try {
+                this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                console.warn('getUserMedia error:', err.name, err.message);
+                let msg;
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    let permState = null;
+                    try {
+                        if (navigator.permissions && navigator.permissions.query) {
+                            const result = await navigator.permissions.query({ name: 'microphone' });
+                            permState = result.state;
+                        }
+                    } catch (_) { /* permissions API non supportée */ }
+
+                    if (permState === 'denied') {
+                        msg = 'Micro refusé — allez dans Réglages > Safari > Microphone pour autoriser ce site';
+                    } else {
+                        msg = 'Micro bloqué — appuyez à nouveau et autorisez l\'accès au micro dans la popup';
+                    }
+                } else if (err.name === 'NotFoundError') {
+                    msg = 'Aucun micro détecté sur cet appareil';
+                } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
+                    msg = 'Micro déjà utilisé par une autre application';
+                } else {
+                    msg = 'Impossible d\'accéder au micro : ' + (err.message || err.name);
+                }
+                this.onStateChange('error', msg);
+                throw new Error(msg);
+            }
         }
 
         const mimeType = this._getMimeType();

@@ -2436,6 +2436,16 @@
                 return;
             }
 
+            // Acquérir le micro IMMÉDIATEMENT (critique pour iOS Safari)
+            let stream;
+            try {
+                stream = await AudioRecorder.acquireMic();
+            } catch (err) {
+                console.warn('Mic acquire error:', err);
+                alert(err.message);
+                return;
+            }
+
             noteRecorder = new AudioRecorder({
                 maxDuration: 30000,
                 onStateChange: (state, msg) => {
@@ -2455,7 +2465,7 @@
             });
 
             try {
-                const text = await noteRecorder.record();
+                const text = await noteRecorder.record(stream);
                 if (text) {
                     const current = input.value.trim();
                     input.value = current ? current + ' ' + text : text;
@@ -2499,6 +2509,18 @@
                 return;
             }
 
+            // Acquérir le micro IMMÉDIATEMENT dans le handler de clic (critique pour iOS Safari)
+            let stream;
+            try {
+                stream = await AudioRecorder.acquireMic();
+            } catch (err) {
+                console.warn('Mic acquire error:', err);
+                status.textContent = '⚠️ ' + err.message;
+                status.className = 'dictate-status active';
+                setTimeout(() => { status.className = 'dictate-status'; }, 4000);
+                return;
+            }
+
             sellerRecorder = new AudioRecorder({
                 maxDuration: 30000,
                 onStateChange: (state, msg) => {
@@ -2531,7 +2553,7 @@
             });
 
             try {
-                const text = await sellerRecorder.record();
+                const text = await sellerRecorder.record(stream);
                 if (text && text.trim()) {
                     console.log('Dictée transcrite:', text.trim());
                     await parseSellerDictation(text.trim(), btn, status);
