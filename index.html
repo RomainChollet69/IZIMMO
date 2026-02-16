@@ -911,6 +911,135 @@
         }
         .dictate-status.active { display: block; }
 
+        /* ===== NOTES HORODATÉES ===== */
+        .notes-section { margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px; }
+        .notes-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        .notes-section-title .notes-count {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--text-light);
+            text-transform: none;
+        }
+        .notes-input-row {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .notes-textarea {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #E1E8ED;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: #2C3E50;
+            resize: none;
+            outline: none;
+            min-height: 36px;
+            max-height: 60px;
+            line-height: 1.4;
+        }
+        .notes-textarea:focus { border-color: #667eea; }
+        .notes-textarea::placeholder { color: #B0BEC5; }
+        .notes-mic-btn {
+            padding: 8px 10px;
+            background: #f0f2f5;
+            border: 1px solid #E1E8ED;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; }
+        .notes-mic-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .notes-mic-btn.recording {
+            background: #FFEBEE;
+            border-color: #FF4757;
+            animation: dictatePulse 1.2s infinite;
+        }
+        .notes-add-btn {
+            padding: 8px 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: opacity 0.2s;
+        }
+        .notes-add-btn:hover { opacity: 0.9; }
+        .notes-timeline {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .notes-timeline::-webkit-scrollbar { width: 4px; }
+        .notes-timeline::-webkit-scrollbar-thumb { background: #CFD8DC; border-radius: 4px; }
+        .note-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            position: relative;
+        }
+        .note-item:last-child { border-bottom: none; }
+        .note-date {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-bottom: 3px;
+        }
+        .note-content {
+            font-size: 13px;
+            color: var(--text-dark);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        .note-delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 0;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            color: #CFD8DC;
+            opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+            padding: 2px 4px;
+        }
+        .note-item:hover .note-delete-btn { opacity: 1; }
+        .note-delete-btn:hover { color: #FF4757; }
+        .notes-empty {
+            font-size: 13px;
+            color: var(--text-light);
+            font-style: italic;
+            padding: 12px 0;
+        }
+        .card-notes-preview {
+            font-size: 12px;
+            color: var(--text-light);
+            font-style: italic;
+            margin-top: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .card-notes-badge {
+            font-size: 11px;
+            color: #667eea;
+            background: #f0f2ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -1208,9 +1337,17 @@
                         <textarea class="form-textarea" id="description" placeholder="T4 133m² avec jardin, proche commodités..."></textarea>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Notes & Commentaires</label>
-                        <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend..."></textarea>
+                    <!-- Notes horodatées -->
+                    <div class="notes-section">
+                        <div class="notes-section-title">📝 Notes <span class="notes-count" id="notesCount"></span></div>
+                        <div class="notes-input-row">
+                            <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
+                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale">🎙️</button>
+                            <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
+                        </div>
+                        <div class="notes-timeline" id="notesTimeline">
+                            <div class="notes-empty">Aucune note pour le moment</div>
+                        </div>
                     </div>
 
                     <!-- Liens d'annonces -->
@@ -1353,6 +1490,7 @@
             if (error) { console.error('Erreur chargement:', error); return; }
             sellers = data || [];
             await loadVisitCounts();
+            await loadNotePreviews();
             renderSellers();
         }
 
@@ -1396,6 +1534,28 @@
             if (error || !data) { visitCounts = {}; return; }
             visitCounts = {};
             data.forEach(v => { visitCounts[v.seller_id] = (visitCounts[v.seller_id] || 0) + 1; });
+        }
+
+        // ===== NOTES PREVIEWS FOR CARDS =====
+        let notesPreviews = {}; // { sellerId: { count, lastContent } }
+
+        async function loadNotePreviews() {
+            const userId = await getCurrentUserId();
+            if (!userId || sellers.length === 0) { notesPreviews = {}; return; }
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .select('seller_id, content, created_at')
+                .eq('user_id', userId)
+                .in('seller_id', sellers.map(s => s.id))
+                .order('created_at', { ascending: false });
+            if (error || !data) { notesPreviews = {}; return; }
+            notesPreviews = {};
+            data.forEach(n => {
+                if (!notesPreviews[n.seller_id]) {
+                    notesPreviews[n.seller_id] = { count: 0, lastContent: n.content };
+                }
+                notesPreviews[n.seller_id].count++;
+            });
         }
 
         async function loadVisits(sellerId) {
@@ -1762,8 +1922,12 @@
                 html += `<div class="card-links-count">🔗 ${seller.links.length} annonce${seller.links.length > 1 ? 's' : ''}</div>`;
             }
 
-            if (seller.notes) {
-                html += `<div class="card-notes">💬 ${seller.notes}</div>`;
+            // Notes horodatées
+            const np = notesPreviews[seller.id];
+            if (np && np.count > 0) {
+                html += `<span class="card-notes-badge">📝 ${np.count}</span>`;
+                const preview = np.lastContent.length > 50 ? np.lastContent.substring(0, 50) + '…' : np.lastContent;
+                html += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
             }
 
             if (formattedDate) {
@@ -1865,6 +2029,156 @@
 
             updateModalTabs();
             if (initialTab) switchTab(initialTab);
+        }
+
+        // ===== NOTES HORODATÉES =====
+        let currentNotes = [];
+        let noteRecognition = null;
+        let isNoteRecording = false;
+
+        async function loadNotes(sellerId) {
+            const userId = await getCurrentUserId();
+            if (!userId || !sellerId) { currentNotes = []; renderNotes(); return; }
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('seller_id', sellerId)
+                .order('created_at', { ascending: false });
+            if (error) { console.error('Notes load error:', error); return; }
+            currentNotes = data || [];
+            renderNotes();
+        }
+
+        async function addNote(sellerId) {
+            const input = document.getElementById('noteInput');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!sellerId) { alert('Enregistrez le lead avant d\'ajouter des notes.'); return; }
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .insert({ user_id: userId, seller_id: sellerId, content: text })
+                .select()
+                .single();
+            if (error) { console.error('Note insert error:', error); return; }
+            currentNotes.unshift(data);
+            input.value = '';
+            renderNotes();
+        }
+
+        async function deleteNote(noteId) {
+            if (!confirm('Supprimer cette note ?')) return;
+            const { error } = await supabaseClient
+                .from('lead_notes')
+                .delete()
+                .eq('id', noteId);
+            if (error) { console.error('Note delete error:', error); return; }
+            currentNotes = currentNotes.filter(n => n.id !== noteId);
+            renderNotes();
+        }
+
+        function formatNoteDate(isoStr) {
+            const d = new Date(isoStr);
+            const months = ['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()}h${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function renderNotes() {
+            const timeline = document.getElementById('notesTimeline');
+            const countEl = document.getElementById('notesCount');
+            countEl.textContent = currentNotes.length > 0 ? `(${currentNotes.length})` : '';
+
+            if (currentNotes.length === 0) {
+                timeline.innerHTML = '<div class="notes-empty">Aucune note pour le moment</div>';
+                return;
+            }
+            timeline.innerHTML = currentNotes.map(n => `
+                <div class="note-item" data-id="${n.id}">
+                    <div class="note-date">${formatNoteDate(n.created_at)}</div>
+                    <div class="note-content">${escapeHtml(n.content)}</div>
+                    <button type="button" class="note-delete-btn" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        // Dictée vocale pour notes
+        function startNoteRecording() {
+            if (!hasSpeechRecognition) { showSpeechFallbackPopup(); return; }
+            if (isNoteRecording) { stopNoteRecording(); return; }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            noteRecognition = new SpeechRecognition();
+            noteRecognition.lang = 'fr-FR';
+            noteRecognition.continuous = true;
+            noteRecognition.interimResults = true;
+
+            const btn = document.getElementById('noteMicBtn');
+            const input = document.getElementById('noteInput');
+            let finalText = input.value;
+            let silenceTimer = null;
+
+            noteRecognition.onstart = () => {
+                isNoteRecording = true;
+                btn.classList.add('recording');
+            };
+
+            noteRecognition.onresult = (event) => {
+                clearTimeout(silenceTimer);
+                let interim = '';
+                let final = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        final += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                if (final) finalText += (finalText ? ' ' : '') + final;
+                input.value = finalText + (interim ? ' ' + interim : '');
+                // Auto-stop après 3s de silence
+                silenceTimer = setTimeout(() => stopNoteRecording(), 3000);
+            };
+
+            noteRecognition.onerror = () => stopNoteRecording();
+            noteRecognition.onend = () => stopNoteRecording();
+            noteRecognition.start();
+        }
+
+        function stopNoteRecording() {
+            isNoteRecording = false;
+            const btn = document.getElementById('noteMicBtn');
+            if (btn) btn.classList.remove('recording');
+            if (noteRecognition) {
+                try { noteRecognition.stop(); } catch (e) {}
+                noteRecognition = null;
+            }
+        }
+
+        // Event listeners pour notes (attachés dans DOMContentLoaded)
+        function setupNoteEvents() {
+            const micBtn = document.getElementById('noteMicBtn');
+            const addBtn = document.getElementById('noteAddBtn');
+            const input = document.getElementById('noteInput');
+
+            if (micBtn) micBtn.addEventListener('click', startNoteRecording);
+            if (addBtn) addBtn.addEventListener('click', () => {
+                const editId = document.getElementById('submitBtn').dataset.editId;
+                if (editId) addNote(editId);
+                else alert('Enregistrez le lead avant d\'ajouter des notes.');
+            });
+            if (input) input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const editId = document.getElementById('submitBtn').dataset.editId;
+                    if (editId) addNote(editId);
+                    else alert('Enregistrez le lead avant d\'ajouter des notes.');
+                }
+            });
+
+            // Appliquer classe unavailable si pas de Speech
+            if (micBtn && !hasSpeechRecognition) micBtn.classList.add('unavailable');
         }
 
         // ===== DICTÉE VOCALE MODALE =====
@@ -2100,6 +2414,12 @@
             currentLinks = [];
             renderLinks();
             cancelAddLink();
+
+            // Reset notes
+            currentNotes = [];
+            renderNotes();
+            stopNoteRecording();
+            document.getElementById('noteInput').value = '';
         }
 
         // ===== EDIT / DELETE =====
@@ -2120,7 +2440,6 @@
             addrInput.dataset.city = seller.city || '';
             addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('description').value = seller.description || '';
-            document.getElementById('notes').value = seller.notes || '';
             document.getElementById('date').value = seller.date || '';
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('budget').value = seller.budget || '';
@@ -2147,6 +2466,9 @@
             submitBtn.dataset.editId = id;
 
             openModal(initialTab);
+
+            // Load notes
+            loadNotes(id);
 
             // Load visits if mandate
             if (seller.status === 'mandate') {
@@ -2191,7 +2513,6 @@
                 city: addressInput.dataset.city || null,
                 postal_code: addressInput.dataset.postalCode || null,
                 description: document.getElementById('description').value.trim() || null,
-                notes: document.getElementById('notes').value.trim() || null,
                 date,
                 reminder: document.getElementById('reminder').value || null,
                 budget: document.getElementById('budget').value.trim() || null,
@@ -2231,6 +2552,7 @@
             }
 
             await loadVisitCounts();
+            await loadNotePreviews();
             renderSellers();
             closeModal();
         }
@@ -2290,6 +2612,7 @@
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('address');
             setupBuyerAutocomplete();
+            setupNoteEvents();
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 

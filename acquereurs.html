@@ -818,6 +818,52 @@
         }
         .dictate-status.active { display: block; }
 
+        /* ===== NOTES HORODATÉES ===== */
+        .notes-section { margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px; }
+        .notes-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 14px; font-weight: 700; text-transform: uppercase;
+            color: var(--text-dark); margin-bottom: 10px;
+        }
+        .notes-section-title .notes-count { font-family: 'Inter', sans-serif; font-weight: 400; font-size: 12px; color: var(--text-light); text-transform: none; }
+        .notes-input-row { display: flex; gap: 6px; margin-bottom: 12px; }
+        .notes-textarea {
+            flex: 1; padding: 8px 12px; border: 1px solid #E1E8ED; border-radius: 8px;
+            font-family: 'Inter', sans-serif; font-size: 13px; color: #2C3E50;
+            resize: none; outline: none; min-height: 36px; max-height: 60px; line-height: 1.4;
+        }
+        .notes-textarea:focus { border-color: #667eea; }
+        .notes-textarea::placeholder { color: #B0BEC5; }
+        .notes-mic-btn {
+            padding: 8px 10px; background: #f0f2f5; border: 1px solid #E1E8ED;
+            border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+        }
+        .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; }
+        .notes-mic-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .notes-mic-btn.recording { background: #FFEBEE; border-color: #FF4757; animation: dictatePulse 1.2s infinite; }
+        .notes-add-btn {
+            padding: 8px 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; flex-shrink: 0;
+        }
+        .notes-add-btn:hover { opacity: 0.9; }
+        .notes-timeline { max-height: 300px; overflow-y: auto; }
+        .notes-timeline::-webkit-scrollbar { width: 4px; }
+        .notes-timeline::-webkit-scrollbar-thumb { background: #CFD8DC; border-radius: 4px; }
+        .note-item { padding: 10px 0; border-bottom: 1px solid #f0f0f0; position: relative; }
+        .note-item:last-child { border-bottom: none; }
+        .note-date { font-size: 11px; color: var(--text-light); margin-bottom: 3px; }
+        .note-content { font-size: 13px; color: var(--text-dark); line-height: 1.4; word-break: break-word; }
+        .note-delete-btn {
+            position: absolute; top: 10px; right: 0; background: none; border: none;
+            cursor: pointer; font-size: 13px; color: #CFD8DC; opacity: 0;
+            transition: opacity 0.2s, color 0.2s; padding: 2px 4px;
+        }
+        .note-item:hover .note-delete-btn { opacity: 1; }
+        .note-delete-btn:hover { color: #FF4757; }
+        .notes-empty { font-size: 13px; color: var(--text-light); font-style: italic; padding: 12px 0; }
+        .card-notes-preview { font-size: 12px; color: var(--text-light); font-style: italic; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-notes-badge { font-size: 11px; color: #667eea; background: #f0f2ff; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -1175,9 +1221,17 @@
                         <label class="form-label">Éléments rédhibitoires</label>
                         <textarea class="form-textarea" id="dealbreakers" placeholder="Pas de rez-de-chaussée, pas proche voie ferrée..."></textarea>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Notes libres</label>
-                        <textarea class="form-textarea" id="notes" placeholder="Informations complémentaires..."></textarea>
+                    <!-- Notes horodatées -->
+                    <div class="notes-section">
+                        <div class="notes-section-title">📝 Notes <span class="notes-count" id="notesCount"></span></div>
+                        <div class="notes-input-row">
+                            <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
+                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale">🎙️</button>
+                            <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
+                        </div>
+                        <div class="notes-timeline" id="notesTimeline">
+                            <div class="notes-empty">Aucune note pour le moment</div>
+                        </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -1276,6 +1330,7 @@
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];
+            await loadBuyerNotePreviews();
             renderBuyers();
         }
 
@@ -1370,9 +1425,12 @@
             if (buyer.phone) html += `<div class="card-info">📞 ${buyer.phone}</div>`;
             if (buyer.email) html += `<div class="card-info">📧 ${buyer.email}</div>`;
 
-            // Notes
-            if (buyer.notes) {
-                html += `<div class="card-notes">💬 ${buyer.notes}</div>`;
+            // Notes horodatées
+            const np = notesPreviews[buyer.id];
+            if (np && np.count > 0) {
+                html += `<span class="card-notes-badge">📝 ${np.count}</span>`;
+                const preview = np.lastContent.length > 50 ? np.lastContent.substring(0, 50) + '…' : np.lastContent;
+                html += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
             }
 
             // Compteur de liens
@@ -1438,6 +1496,11 @@
             currentLinks = [];
             renderLinks();
             stopBuyerDictation();
+            // Reset notes
+            currentNotes = [];
+            renderBuyerNotes();
+            stopBuyerNoteRecording();
+            document.getElementById('noteInput').value = '';
             const btn = document.getElementById('submitBtn');
             delete btn.dataset.editId;
             btn.textContent = "Créer l'Acquéreur";
@@ -1548,6 +1611,130 @@
             notesField.value = current ? current + '\n' + text : text;
         }
 
+        // ===== NOTES HORODATÉES =====
+        let currentNotes = [];
+        let noteRecognition = null;
+        let isNoteRecording = false;
+
+        async function loadBuyerNotes(buyerId) {
+            const userId = await getCurrentUserId();
+            if (!userId || !buyerId) { currentNotes = []; renderBuyerNotes(); return; }
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .select('*')
+                .eq('user_id', userId)
+                .eq('buyer_id', buyerId)
+                .order('created_at', { ascending: false });
+            if (error) { console.error('Notes load error:', error); return; }
+            currentNotes = data || [];
+            renderBuyerNotes();
+        }
+
+        async function addBuyerNote(buyerId) {
+            const input = document.getElementById('noteInput');
+            const text = input.value.trim();
+            if (!text) return;
+            if (!buyerId) { alert('Enregistrez le lead avant d\'ajouter des notes.'); return; }
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .insert({ user_id: userId, buyer_id: buyerId, content: text })
+                .select()
+                .single();
+            if (error) { console.error('Note insert error:', error); return; }
+            currentNotes.unshift(data);
+            input.value = '';
+            renderBuyerNotes();
+        }
+
+        async function deleteBuyerNote(noteId) {
+            if (!confirm('Supprimer cette note ?')) return;
+            const { error } = await supabaseClient.from('lead_notes').delete().eq('id', noteId);
+            if (error) { console.error('Note delete error:', error); return; }
+            currentNotes = currentNotes.filter(n => n.id !== noteId);
+            renderBuyerNotes();
+        }
+
+        function formatNoteDate(isoStr) {
+            const d = new Date(isoStr);
+            const months = ['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()}h${String(d.getMinutes()).padStart(2,'0')}`;
+        }
+
+        function renderBuyerNotes() {
+            const timeline = document.getElementById('notesTimeline');
+            const countEl = document.getElementById('notesCount');
+            countEl.textContent = currentNotes.length > 0 ? `(${currentNotes.length})` : '';
+            if (currentNotes.length === 0) {
+                timeline.innerHTML = '<div class="notes-empty">Aucune note pour le moment</div>';
+                return;
+            }
+            timeline.innerHTML = currentNotes.map(n => `
+                <div class="note-item" data-id="${n.id}">
+                    <div class="note-date">${formatNoteDate(n.created_at)}</div>
+                    <div class="note-content">${escapeHtml(n.content)}</div>
+                    <button type="button" class="note-delete-btn" onclick="deleteBuyerNote('${n.id}')" title="Supprimer">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        function startBuyerNoteRecording() {
+            if (!hasSpeechRecognition) { showSpeechFallbackPopup(); return; }
+            if (isNoteRecording) { stopBuyerNoteRecording(); return; }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            noteRecognition = new SpeechRecognition();
+            noteRecognition.lang = 'fr-FR';
+            noteRecognition.continuous = true;
+            noteRecognition.interimResults = true;
+            const btn = document.getElementById('noteMicBtn');
+            const input = document.getElementById('noteInput');
+            let finalText = input.value;
+            let silenceTimer = null;
+            noteRecognition.onstart = () => { isNoteRecording = true; btn.classList.add('recording'); };
+            noteRecognition.onresult = (event) => {
+                clearTimeout(silenceTimer);
+                let interim = '', final = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) final += event.results[i][0].transcript;
+                    else interim += event.results[i][0].transcript;
+                }
+                if (final) finalText += (finalText ? ' ' : '') + final;
+                input.value = finalText + (interim ? ' ' + interim : '');
+                silenceTimer = setTimeout(() => stopBuyerNoteRecording(), 3000);
+            };
+            noteRecognition.onerror = () => stopBuyerNoteRecording();
+            noteRecognition.onend = () => stopBuyerNoteRecording();
+            noteRecognition.start();
+        }
+
+        function stopBuyerNoteRecording() {
+            isNoteRecording = false;
+            const btn = document.getElementById('noteMicBtn');
+            if (btn) btn.classList.remove('recording');
+            if (noteRecognition) { try { noteRecognition.stop(); } catch (e) {} noteRecognition = null; }
+        }
+
+        // Note previews for cards
+        let notesPreviews = {};
+
+        async function loadBuyerNotePreviews() {
+            const userId = await getCurrentUserId();
+            if (!userId || buyers.length === 0) { notesPreviews = {}; return; }
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .select('buyer_id, content, created_at')
+                .eq('user_id', userId)
+                .in('buyer_id', buyers.map(b => b.id))
+                .order('created_at', { ascending: false });
+            if (error || !data) { notesPreviews = {}; return; }
+            notesPreviews = {};
+            data.forEach(n => {
+                if (!notesPreviews[n.buyer_id]) notesPreviews[n.buyer_id] = { count: 0, lastContent: n.content };
+                notesPreviews[n.buyer_id].count++;
+            });
+        }
+
         // ===== LIENS =====
         function renderLinks() {
             const container = document.getElementById('linksContainer');
@@ -1613,7 +1800,6 @@
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
             document.getElementById('timeline').value = buyer.timeline || '';
             document.getElementById('dealbreakers').value = buyer.dealbreakers || '';
-            document.getElementById('notes').value = buyer.notes || '';
             document.getElementById('reminder').value = buyer.reminder || '';
             document.getElementById('status').value = buyer.status || 'new';
 
@@ -1640,6 +1826,9 @@
             document.querySelector('.modal-title').textContent = "Modifier l'Acquéreur";
 
             openModal();
+
+            // Load notes
+            loadBuyerNotes(id);
         }
 
         async function confirmDeleteBuyer(id) {
@@ -1689,7 +1878,6 @@
                 seller_address: document.getElementById('sellerAddress').value.trim() || null,
                 seller_price: document.getElementById('sellerPrice').value.trim() || null,
                 dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
-                notes: document.getElementById('notes').value.trim() || null,
                 reminder: document.getElementById('reminder').value || null,
                 status: document.getElementById('status').value,
                 links: currentLinks
@@ -1708,6 +1896,7 @@
                 if (created) buyers.unshift(created);
             }
 
+            await loadBuyerNotePreviews();
             renderBuyers();
             closeModal();
         }
@@ -1753,6 +1942,23 @@
             setupDragAndDrop();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('sector');
+
+            // Note events
+            document.getElementById('noteMicBtn').addEventListener('click', startBuyerNoteRecording);
+            document.getElementById('noteAddBtn').addEventListener('click', () => {
+                const editId = document.getElementById('submitBtn').dataset.editId;
+                if (editId) addBuyerNote(editId);
+                else alert('Enregistrez le lead avant d\'ajouter des notes.');
+            });
+            document.getElementById('noteInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    const editId = document.getElementById('submitBtn').dataset.editId;
+                    if (editId) addBuyerNote(editId);
+                    else alert('Enregistrez le lead avant d\'ajouter des notes.');
+                }
+            });
+            if (!hasSpeechRecognition) document.getElementById('noteMicBtn').classList.add('unavailable');
 
             document.getElementById('addBuyerBtn').addEventListener('click', openModal);
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
