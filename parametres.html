@@ -369,6 +369,221 @@
         .contacts-empty-icon { font-size: 48px; margin-bottom: 12px; }
         .contacts-empty-text { font-size: 15px; line-height: 1.6; }
 
+        /* ===== CONTACTS FILTERS ===== */
+        .contacts-filters {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .contacts-filters::-webkit-scrollbar { height: 4px; }
+        .contacts-filters::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 2px; }
+
+        .filter-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 14px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            background: white;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .filter-btn:hover { border-color: #2DD4BF; color: #2DD4BF; }
+        .filter-btn.active { background: #2DD4BF; color: white; border-color: #2DD4BF; }
+
+        /* ===== SEARCH + SORT ROW ===== */
+        .search-sort-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            align-items: stretch;
+        }
+        .search-sort-row .search-input { flex: 1; margin-bottom: 0; }
+
+        .sort-select {
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            background: white;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        .sort-select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* ===== IMPORT SUMMARY BANNER ===== */
+        .import-summary {
+            background: #E8F5E9;
+            border: 1px solid #A5D6A7;
+            border-radius: 10px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .import-summary-content {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .import-summary .stat-ok { color: #2E7D32; }
+        .import-summary .stat-warn {
+            color: #E65100;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+        }
+        .import-summary .stat-warn:hover { color: #BF360C; }
+        .import-summary .stat-skip { color: #7B1FA2; }
+        .import-summary-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: var(--text-light);
+            padding: 4px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .import-summary-close:hover { color: var(--text-dark); }
+
+        /* ===== SELECT ALL ROW ===== */
+        .select-all-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            margin-bottom: 6px;
+            border-radius: 8px;
+            background: #f0f2f5;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        /* ===== CONTACT CHECKBOX ===== */
+        .contact-checkbox {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            cursor: pointer;
+            accent-color: #667eea;
+            flex-shrink: 0;
+        }
+
+        /* ===== INCOMPLETE / DETAIL LINES ===== */
+        .contact-row.incomplete { background: #FFF3E0; }
+        .contact-row.incomplete:hover { background: #FFE0B2; }
+
+        .contact-detail-line {
+            font-size: 12px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .contact-detail-line .missing { color: #ccc; }
+
+        /* ===== BULK ACTIONS BAR ===== */
+        .bulk-actions {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 0 0 16px 16px;
+            z-index: 100;
+            margin: 0 -32px -32px;
+        }
+        .bulk-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        .bulk-delete-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: #FF4757;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .bulk-delete-btn:hover { background: #e8384a; transform: translateY(-1px); }
+
+        /* ===== DUPLICATE GROUPS ===== */
+        .duplicate-group {
+            background: #F3E5F5;
+            border-left: 3px solid #9C27B0;
+            border-radius: 0 10px 10px 0;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .duplicate-group .contact-row { background: rgba(255,255,255,0.7); margin-bottom: 4px; }
+        .duplicate-group .contact-row:last-child { margin-bottom: 0; }
+        .duplicate-group .contact-row:hover { background: rgba(255,255,255,0.9); }
+
+        .duplicate-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #7B1FA2;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            margin-bottom: 6px;
+        }
+        .clean-dupes-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: #9C27B0;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+        .clean-dupes-btn:hover { background: #7B1FA2; transform: translateY(-1px); }
+
         .loading-spinner {
             display: flex;
             align-items: center;
@@ -432,6 +647,15 @@
             .contact-initial { width: 32px; height: 32px; font-size: 12px; }
             .contact-name { font-size: 13px; }
             .contact-detail { font-size: 11px; }
+
+            .contacts-filters { gap: 6px; padding-bottom: 6px; }
+            .filter-btn { padding: 6px 10px; font-size: 12px; }
+            .search-sort-row { flex-direction: column; }
+            .sort-select { width: 100%; }
+            .contact-checkbox { width: 24px; height: 24px; min-width: 24px; }
+            .bulk-actions { margin: 0 -20px -20px; padding: 10px 14px; }
+            .import-summary-content { flex-direction: column; gap: 6px; }
+            .import-summary { padding: 12px 14px; }
         }
     </style>
 </head>
@@ -494,7 +718,7 @@
         </div>
 
         <!-- Section Mes Contacts -->
-        <div class="settings-section">
+        <div class="settings-section" id="contactsSection">
             <h2 class="section-title">Mes Contacts</h2>
 
             <div class="contacts-toolbar">
@@ -506,13 +730,54 @@
                 </div>
             </div>
 
-            <input type="search" class="search-input" id="contactSearch" placeholder="Rechercher un contact...">
+            <!-- Bandeau résumé post-import -->
+            <div class="import-summary" id="importSummary" style="display:none;">
+                <div class="import-summary-content" id="importSummaryContent"></div>
+                <button class="import-summary-close" id="importSummaryClose">✕</button>
+            </div>
 
+            <!-- Barre de filtres -->
+            <div class="contacts-filters" id="contactsFilters">
+                <button class="filter-btn active" data-filter="all">👤 Tous <span class="count">(0)</span></button>
+                <button class="filter-btn" data-filter="no_phone">⚠️ Sans numéro <span class="count">(0)</span></button>
+                <button class="filter-btn" data-filter="no_name">⚠️ Sans nom <span class="count">(0)</span></button>
+                <button class="filter-btn" data-filter="no_email">⚠️ Sans email <span class="count">(0)</span></button>
+                <button class="filter-btn" data-filter="complete">✅ Complets <span class="count">(0)</span></button>
+                <button class="filter-btn" data-filter="duplicates">👥 Doublons <span class="count">(0)</span></button>
+            </div>
+
+            <!-- Recherche + Tri -->
+            <div class="search-sort-row">
+                <input type="search" class="search-input" id="contactSearch" placeholder="Rechercher un contact...">
+                <select class="sort-select" id="contactSort">
+                    <option value="az">A → Z</option>
+                    <option value="za">Z → A</option>
+                    <option value="recent">📅 Plus récents</option>
+                    <option value="oldest">📅 Plus anciens</option>
+                </select>
+            </div>
+
+            <!-- Bouton nettoyer doublons -->
+            <button class="clean-dupes-btn" id="cleanDupesBtn" style="display:none;">🧹 Nettoyer les doublons</button>
+
+            <!-- Ligne tout sélectionner -->
+            <div class="select-all-row" id="selectAllRow" style="display:none;">
+                <input type="checkbox" class="contact-checkbox" id="selectAllCheckbox">
+                <span>Tout sélectionner</span>
+            </div>
+
+            <!-- Liste contacts -->
             <div class="contacts-list" id="contactsList">
                 <div class="contacts-empty">
                     <div class="contacts-empty-icon">📇</div>
                     <div class="contacts-empty-text">Aucun contact importé pour le moment.<br>Importez vos contacts pour les retrouver lors de l'ajout de leads.</div>
                 </div>
+            </div>
+
+            <!-- Barre actions groupées -->
+            <div class="bulk-actions" id="bulkActions" style="display:none;">
+                <span class="bulk-count" id="bulkCount">0 contacts sélectionnés</span>
+                <button class="bulk-delete-btn" id="bulkDeleteBtn">🗑️ Supprimer (0)</button>
             </div>
         </div>
     </div>
@@ -520,6 +785,11 @@
     <script>
         let allContacts = [];
         let currentUserId = null;
+        let currentFilter = 'all';
+        let currentSort = 'az';
+        let selectedIds = new Set();
+        let duplicateIds = new Set();
+        let duplicateGroups = [];
 
         // ===== AUTH HELPER =====
         async function getCurrentUserId() {
@@ -537,7 +807,6 @@
             const user = session.user;
             const meta = user.user_metadata;
 
-            // Fill profile read-only fields
             const fullName = meta.full_name || meta.name || '';
             const avatar = meta.avatar_url || meta.picture || '';
             const email = user.email || '';
@@ -547,27 +816,59 @@
             document.getElementById('profileEmail').textContent = email;
             document.getElementById('profileEmailInput').value = email;
 
-            // Split name for first/last
             const parts = fullName.trim().split(/\s+/);
             document.getElementById('profileFirstName').value = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
             document.getElementById('profileLastName').value = parts.length > 1 ? parts[parts.length - 1] : '';
 
-            // Load profile from DB
             await loadProfile();
-            // Load contacts
             await loadContacts();
 
-            // Contact Picker API support (Chrome mobile Android)
             if ('contacts' in navigator && 'ContactsManager' in window) {
                 document.getElementById('importNativeBtn').style.display = 'inline-flex';
             }
 
-            // Event listeners
+            // Profile
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+
+            // Import
             document.getElementById('importNativeBtn').addEventListener('click', importNativeContacts);
             document.getElementById('importVcfBtn').addEventListener('click', () => document.getElementById('vcfFileInput').click());
             document.getElementById('vcfFileInput').addEventListener('change', handleVcfUpload);
-            document.getElementById('contactSearch').addEventListener('input', filterContacts);
+
+            // Search
+            document.getElementById('contactSearch').addEventListener('input', applyFiltersAndRender);
+
+            // Sort
+            document.getElementById('contactSort').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                applyFiltersAndRender();
+            });
+
+            // Filters
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    selectedIds.clear();
+                    document.getElementById('cleanDupesBtn').style.display = currentFilter === 'duplicates' && duplicateIds.size > 0 ? 'inline-flex' : 'none';
+                    applyFiltersAndRender();
+                });
+            });
+
+            // Select all
+            document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
+
+            // Bulk delete
+            document.getElementById('bulkDeleteBtn').addEventListener('click', bulkDelete);
+
+            // Clean duplicates
+            document.getElementById('cleanDupesBtn').addEventListener('click', cleanDuplicates);
+
+            // Close import summary
+            document.getElementById('importSummaryClose').addEventListener('click', () => {
+                document.getElementById('importSummary').style.display = 'none';
+            });
         });
 
         // ===== PROFILE CRUD =====
@@ -614,22 +915,161 @@
             setTimeout(() => msg.classList.remove('visible'), 2500);
         }
 
-        // ===== CONTACTS CRUD =====
-        async function loadContacts() {
-            const { data, error } = await supabaseClient
-                .from('contacts')
-                .select('*')
-                .eq('user_id', currentUserId)
-                .order('name');
+        // ===== HELPERS: INITIALS & AVATAR COLOR =====
+        const AVATAR_COLORS = ['#667eea', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#3498db'];
 
-            if (error) { console.error('Erreur chargement contacts:', error); return; }
-            allContacts = data || [];
-            renderContacts(allContacts);
+        function getInitials(name) {
+            if (!name || !name.trim()) return '?';
+            const parts = name.trim().split(/\s+/);
+            if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            return parts[0].substring(0, 2).toUpperCase();
+        }
+
+        function getAvatarColor(name) {
+            if (!name) return AVATAR_COLORS[0];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+        }
+
+        // ===== DUPLICATE DETECTION =====
+        function findDuplicates(contacts) {
+            const dupeIds = new Set();
+            const groups = [];
+            const phoneGroups = {};
+            const nameGroups = {};
+
+            contacts.forEach(c => {
+                if (c.phone) {
+                    const norm = c.phone.replace(/[\s\-\.]/g, '');
+                    if (!phoneGroups[norm]) phoneGroups[norm] = [];
+                    phoneGroups[norm].push(c);
+                }
+                if (c.name && c.name.trim()) {
+                    const norm = c.name.trim().toLowerCase();
+                    if (!nameGroups[norm]) nameGroups[norm] = [];
+                    nameGroups[norm].push(c);
+                }
+            });
+
+            const processedGroupKeys = new Set();
+
+            Object.entries(phoneGroups).forEach(([key, arr]) => {
+                if (arr.length > 1) {
+                    arr.forEach(c => dupeIds.add(c.id));
+                    const ids = arr.map(c => c.id).sort().join(',');
+                    if (!processedGroupKeys.has(ids)) {
+                        processedGroupKeys.add(ids);
+                        groups.push({ type: 'téléphone', contacts: arr });
+                    }
+                }
+            });
+
+            Object.entries(nameGroups).forEach(([key, arr]) => {
+                if (arr.length > 1) {
+                    arr.forEach(c => dupeIds.add(c.id));
+                    const ids = arr.map(c => c.id).sort().join(',');
+                    if (!processedGroupKeys.has(ids)) {
+                        processedGroupKeys.add(ids);
+                        groups.push({ type: 'nom', contacts: arr });
+                    }
+                }
+            });
+
+            return { dupeIds, groups };
+        }
+
+        // ===== FILTER COUNTS =====
+        function updateFilterCounts() {
+            const total = allContacts.length;
+            const noPhone = allContacts.filter(c => !c.phone || !c.phone.trim()).length;
+            const noName = allContacts.filter(c => !c.name || !c.name.trim() || c.name === 'Sans nom').length;
+            const noEmail = allContacts.filter(c => !c.email || !c.email.trim()).length;
+            const complete = allContacts.filter(c => c.name && c.name.trim() && c.name !== 'Sans nom' && c.phone && c.phone.trim() && c.email && c.email.trim()).length;
+
+            const dupeResult = findDuplicates(allContacts);
+            duplicateIds = dupeResult.dupeIds;
+            duplicateGroups = dupeResult.groups;
+
+            const counts = { all: total, no_phone: noPhone, no_name: noName, no_email: noEmail, complete: complete, duplicates: duplicateIds.size };
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                const f = btn.dataset.filter;
+                btn.querySelector('.count').textContent = `(${counts[f] || 0})`;
+            });
+        }
+
+        // ===== GET FILTERED + SORTED CONTACTS =====
+        function getFilteredContacts() {
+            let list = [...allContacts];
+
+            // Apply filter
+            switch (currentFilter) {
+                case 'no_phone': list = list.filter(c => !c.phone || !c.phone.trim()); break;
+                case 'no_name': list = list.filter(c => !c.name || !c.name.trim() || c.name === 'Sans nom'); break;
+                case 'no_email': list = list.filter(c => !c.email || !c.email.trim()); break;
+                case 'complete': list = list.filter(c => c.name && c.name.trim() && c.name !== 'Sans nom' && c.phone && c.phone.trim() && c.email && c.email.trim()); break;
+                case 'duplicates': list = list.filter(c => duplicateIds.has(c.id)); break;
+            }
+
+            // Apply search
+            const q = document.getElementById('contactSearch').value.trim().toLowerCase();
+            if (q) {
+                list = list.filter(c =>
+                    (c.name || '').toLowerCase().includes(q) ||
+                    (c.phone || '').toLowerCase().includes(q) ||
+                    (c.email || '').toLowerCase().includes(q)
+                );
+            }
+
+            // Apply sort
+            list.sort((a, b) => {
+                switch (currentSort) {
+                    case 'az': return (a.name || '').localeCompare(b.name || '', 'fr');
+                    case 'za': return (b.name || '').localeCompare(a.name || '', 'fr');
+                    case 'recent': return (b.created_at || '').localeCompare(a.created_at || '');
+                    case 'oldest': return (a.created_at || '').localeCompare(b.created_at || '');
+                    default: return 0;
+                }
+            });
+
+            return list;
+        }
+
+        // ===== RENDER =====
+        function isIncomplete(c) {
+            return !c.phone || !c.phone.trim() || !c.name || !c.name.trim() || c.name === 'Sans nom';
+        }
+
+        function buildContactRowHtml(c) {
+            const initials = getInitials(c.name);
+            const color = getAvatarColor(c.name);
+            const checked = selectedIds.has(c.id) ? 'checked' : '';
+            const incompleteClass = isIncomplete(c) ? ' incomplete' : '';
+            const phoneLine = c.phone && c.phone.trim()
+                ? `📞 ${escapeHtml(c.phone)}`
+                : `📞 <span class="missing">—</span>`;
+            const emailLine = c.email && c.email.trim()
+                ? `📧 ${escapeHtml(c.email)}`
+                : `📧 <span class="missing">—</span>`;
+
+            return `<div class="contact-row${incompleteClass}" data-id="${c.id}">
+                <input type="checkbox" class="contact-checkbox" ${checked} onchange="toggleSelection('${c.id}')">
+                <div class="contact-initial" style="background:${color}">${initials}</div>
+                <div class="contact-info">
+                    <div class="contact-name">${escapeHtml(c.name || 'Sans nom')}</div>
+                    <div class="contact-detail-line">${phoneLine}</div>
+                    <div class="contact-detail-line">${emailLine}</div>
+                </div>
+                <button class="contact-delete" onclick="deleteContact('${c.id}')" title="Supprimer">🗑️</button>
+            </div>`;
         }
 
         function renderContacts(contacts) {
             document.getElementById('contactsCountNum').textContent = allContacts.length;
             const list = document.getElementById('contactsList');
+
+            // Show/hide select all row
+            document.getElementById('selectAllRow').style.display = contacts.length > 0 ? 'flex' : 'none';
 
             if (contacts.length === 0) {
                 const searchVal = document.getElementById('contactSearch').value.trim();
@@ -641,32 +1081,154 @@
                             : 'Aucun contact importé pour le moment.<br>Importez vos contacts pour les retrouver lors de l\'ajout de leads.'
                         }</div>
                     </div>`;
+                updateBulkActions();
                 return;
             }
 
-            list.innerHTML = contacts.map(c => {
-                const initial = (c.name || '?').charAt(0).toUpperCase();
-                const details = [c.phone, c.email].filter(Boolean).join(' · ');
-                return `<div class="contact-row">
-                    <div class="contact-initial">${initial}</div>
-                    <div class="contact-info">
-                        <div class="contact-name">${escapeHtml(c.name)}</div>
-                        ${details ? `<div class="contact-detail">${escapeHtml(details)}</div>` : ''}
-                    </div>
-                    <button class="contact-delete" onclick="deleteContact('${c.id}')" title="Supprimer">🗑️</button>
-                </div>`;
-            }).join('');
+            // Duplicate view: grouped display
+            if (currentFilter === 'duplicates' && duplicateGroups.length > 0) {
+                const q = document.getElementById('contactSearch').value.trim().toLowerCase();
+                let html = '';
+                duplicateGroups.forEach(group => {
+                    let groupContacts = group.contacts;
+                    if (q) {
+                        groupContacts = groupContacts.filter(c =>
+                            (c.name || '').toLowerCase().includes(q) ||
+                            (c.phone || '').toLowerCase().includes(q) ||
+                            (c.email || '').toLowerCase().includes(q)
+                        );
+                    }
+                    if (groupContacts.length < 2) return;
+                    html += `<div class="duplicate-group">
+                        <div class="duplicate-label">Doublon par ${group.type}</div>
+                        ${groupContacts.map(c => buildContactRowHtml(c)).join('')}
+                    </div>`;
+                });
+                list.innerHTML = html || '<div class="contacts-empty"><div class="contacts-empty-icon">🔍</div><div class="contacts-empty-text">Aucun doublon trouvé.</div></div>';
+            } else {
+                list.innerHTML = contacts.map(c => buildContactRowHtml(c)).join('');
+            }
+
+            updateBulkActions();
+            updateSelectAllCheckbox(contacts);
         }
 
-        function filterContacts() {
-            const q = document.getElementById('contactSearch').value.trim().toLowerCase();
-            if (!q) { renderContacts(allContacts); return; }
-            const filtered = allContacts.filter(c =>
-                (c.name || '').toLowerCase().includes(q) ||
-                (c.phone || '').includes(q) ||
-                (c.email || '').toLowerCase().includes(q)
-            );
-            renderContacts(filtered);
+        function applyFiltersAndRender() {
+            const contacts = getFilteredContacts();
+            renderContacts(contacts);
+        }
+
+        // ===== SELECTION =====
+        function toggleSelection(id) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            updateBulkActions();
+            updateSelectAllCheckbox(getFilteredContacts());
+        }
+
+        function toggleSelectAll() {
+            const filtered = getFilteredContacts();
+            const allChecked = filtered.length > 0 && filtered.every(c => selectedIds.has(c.id));
+            if (allChecked) {
+                filtered.forEach(c => selectedIds.delete(c.id));
+            } else {
+                filtered.forEach(c => selectedIds.add(c.id));
+            }
+            applyFiltersAndRender();
+        }
+
+        function updateSelectAllCheckbox(contacts) {
+            const cb = document.getElementById('selectAllCheckbox');
+            if (contacts.length === 0) { cb.checked = false; cb.indeterminate = false; return; }
+            const checkedCount = contacts.filter(c => selectedIds.has(c.id)).length;
+            cb.checked = checkedCount === contacts.length;
+            cb.indeterminate = checkedCount > 0 && checkedCount < contacts.length;
+        }
+
+        function updateBulkActions() {
+            const count = selectedIds.size;
+            const bar = document.getElementById('bulkActions');
+            bar.style.display = count > 0 ? 'flex' : 'none';
+            document.getElementById('bulkCount').textContent = `${count} contact${count > 1 ? 's' : ''} sélectionné${count > 1 ? 's' : ''}`;
+            document.getElementById('bulkDeleteBtn').textContent = `🗑️ Supprimer (${count})`;
+        }
+
+        // ===== BULK DELETE =====
+        async function bulkDelete() {
+            const count = selectedIds.size;
+            if (count === 0) return;
+            if (!confirm(`Supprimer ${count} contact${count > 1 ? 's' : ''} ? Cette action est irréversible.`)) return;
+
+            const ids = [...selectedIds];
+            const { error } = await supabaseClient
+                .from('contacts')
+                .delete()
+                .in('id', ids)
+                .eq('user_id', currentUserId);
+
+            if (error) { console.error('Erreur suppression groupée:', error); alert('Erreur lors de la suppression.'); return; }
+            allContacts = allContacts.filter(c => !selectedIds.has(c.id));
+            selectedIds.clear();
+            updateFilterCounts();
+            applyFiltersAndRender();
+        }
+
+        // ===== CLEAN DUPLICATES =====
+        function cleanDuplicates() {
+            selectedIds.clear();
+            duplicateGroups.forEach(group => {
+                const sorted = [...group.contacts].sort((a, b) => {
+                    const scoreA = (a.name && a.name !== 'Sans nom' ? 1 : 0) + (a.phone ? 1 : 0) + (a.email ? 1 : 0);
+                    const scoreB = (b.name && b.name !== 'Sans nom' ? 1 : 0) + (b.phone ? 1 : 0) + (b.email ? 1 : 0);
+                    return scoreB - scoreA;
+                });
+                // Keep the first (most complete), select others for deletion
+                sorted.slice(1).forEach(c => selectedIds.add(c.id));
+            });
+            applyFiltersAndRender();
+        }
+
+        // ===== IMPORT SUMMARY =====
+        function showImportSummary(total, stats) {
+            const content = document.getElementById('importSummaryContent');
+            let html = `<span class="stat-ok">✅ ${total} contacts importés</span>`;
+
+            const warnings = [];
+            if (stats.noPhone > 0) warnings.push(`<span class="stat-warn" data-filter="no_phone">${stats.noPhone} sans numéro</span>`);
+            if (stats.noName > 0) warnings.push(`<span class="stat-warn" data-filter="no_name">${stats.noName} sans nom</span>`);
+            if (stats.noEmail > 0) warnings.push(`<span class="stat-warn" data-filter="no_email">${stats.noEmail} sans email</span>`);
+            if (stats.skipped > 0) html += `<span class="stat-skip">⏭️ ${stats.skipped} doublons ignorés</span>`;
+            if (warnings.length > 0) html += `<span>⚠️ ${warnings.join(' · ')}</span>`;
+
+            content.innerHTML = html;
+            document.getElementById('importSummary').style.display = 'flex';
+
+            // Clickable warning stats → activate filter
+            content.querySelectorAll('.stat-warn').forEach(el => {
+                el.addEventListener('click', () => {
+                    const filter = el.dataset.filter;
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector(`.filter-btn[data-filter="${filter}"]`).classList.add('active');
+                    currentFilter = filter;
+                    selectedIds.clear();
+                    document.getElementById('cleanDupesBtn').style.display = 'none';
+                    applyFiltersAndRender();
+                });
+            });
+        }
+
+        // ===== CONTACTS CRUD =====
+        async function loadContacts() {
+            const { data, error } = await supabaseClient
+                .from('contacts')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .order('name');
+
+            if (error) { console.error('Erreur chargement contacts:', error); return; }
+            allContacts = data || [];
+            updateFilterCounts();
+            applyFiltersAndRender();
         }
 
         async function deleteContact(id) {
@@ -679,7 +1241,9 @@
 
             if (error) { console.error('Erreur suppression:', error); alert('Erreur lors de la suppression.'); return; }
             allContacts = allContacts.filter(c => c.id !== id);
-            filterContacts();
+            selectedIds.delete(id);
+            updateFilterCounts();
+            applyFiltersAndRender();
         }
 
         // ===== IMPORT NATIVE (Contact Picker API) =====
@@ -742,22 +1306,18 @@
 
                 const lines = block.split(/\r?\n/);
                 for (const line of lines) {
-                    // Full Name
                     if (line.startsWith('FN:') || line.startsWith('FN;')) {
                         name = line.replace(/^FN[;:]/, '').replace(/^[^:]*:/, '').trim();
                     }
-                    // Name fallback (N: last;first;...)
                     if (!name && line.startsWith('N:')) {
                         const parts = line.replace('N:', '').split(';');
                         const last = (parts[0] || '').trim();
                         const first = (parts[1] || '').trim();
                         name = [first, last].filter(Boolean).join(' ');
                     }
-                    // Phone
                     if (!phone && (line.startsWith('TEL:') || line.startsWith('TEL;'))) {
                         phone = line.replace(/^TEL[^:]*:/, '').trim();
                     }
-                    // Email
                     if (!email && (line.startsWith('EMAIL:') || line.startsWith('EMAIL;'))) {
                         email = line.replace(/^EMAIL[^:]*:/, '').trim();
                     }
@@ -771,7 +1331,7 @@
             return contacts;
         }
 
-        // ===== INSERT BATCH =====
+        // ===== INSERT BATCH (with dedup) =====
         async function insertContacts(rows) {
             if (rows.length === 0) return;
 
@@ -780,14 +1340,27 @@
             btn.textContent = `Import de ${rows.length} contacts...`;
             btn.disabled = true;
 
+            // Dedup: skip contacts with same normalized phone as existing
+            const existingPhones = new Set(
+                allContacts.map(c => c.phone ? c.phone.replace(/[\s\-\.]/g, '') : null).filter(Boolean)
+            );
+            let skipped = 0;
+            const uniqueRows = rows.filter(r => {
+                if (!r.phone) return true;
+                const norm = r.phone.replace(/[\s\-\.]/g, '');
+                if (existingPhones.has(norm)) { skipped++; return false; }
+                existingPhones.add(norm);
+                return true;
+            });
+
             // Insert in batches of 100
             let inserted = 0;
-            for (let i = 0; i < rows.length; i += 100) {
-                const batch = rows.slice(i, i + 100);
+            for (let i = 0; i < uniqueRows.length; i += 100) {
+                const batch = uniqueRows.slice(i, i + 100);
                 const { error } = await supabaseClient.from('contacts').insert(batch);
                 if (error) {
                     console.error('Erreur import batch:', error);
-                    alert('Erreur pendant l\'import. ' + inserted + ' contacts importés sur ' + rows.length + '.');
+                    alert('Erreur pendant l\'import. ' + inserted + ' contacts importés sur ' + uniqueRows.length + '.');
                     break;
                 }
                 inserted += batch.length;
@@ -796,9 +1369,13 @@
             btn.textContent = origText;
             btn.disabled = false;
 
-            if (inserted > 0) {
+            if (inserted > 0 || skipped > 0) {
                 await loadContacts();
-                alert(inserted + ' contacts importés avec succès !');
+                // Compute stats for summary
+                const noPhone = uniqueRows.filter(r => !r.phone).length;
+                const noName = uniqueRows.filter(r => !r.name || r.name === 'Sans nom').length;
+                const noEmail = uniqueRows.filter(r => !r.email).length;
+                showImportSummary(inserted, { noPhone, noName, noEmail, skipped });
             }
         }
     </script>
