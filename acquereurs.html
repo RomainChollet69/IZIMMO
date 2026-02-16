@@ -1372,6 +1372,20 @@
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="neuf_renove"><span>✨ Neuf/Rénové</span></label>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Surface (m²)</label>
+                        <input type="text" class="form-input" id="surface" placeholder="65 m²">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Annexes</label>
+                        <div class="criteria-toggles">
+                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="parking"><span>🅿️ Parking</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="cave"><span>📦 Cave</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="balcon"><span>🌿 Balcon</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="jardin"><span>🌳 Jardin</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="garage"><span>🚗 Garage</span></label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Section Situation -->
@@ -1683,6 +1697,19 @@
             updateCounts();
         }
 
+        function getBuyerPropertyLine(buyer) {
+            const parts = [];
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            if (buyer.property_type) parts.push(typeEmojis[buyer.property_type] || '📍');
+            if (buyer.surface) parts.push(buyer.surface);
+            const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
+            if (Array.isArray(buyer.annexes) && buyer.annexes.length > 0) {
+                parts.push(buyer.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
+            }
+            if (parts.length === 0) return '';
+            return `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${parts.join(' · ')}</div>`;
+        }
+
         function createBuyerCard(buyer) {
             const card = document.createElement('div');
             card.className = 'lead-card';
@@ -1724,6 +1751,7 @@
 
             // Infos principales
             html += `<div class="card-name">${buyer.first_name} ${buyer.last_name}</div>`;
+            html += getBuyerPropertyLine(buyer);
             if (buyer.phone) html += `<div class="card-info">📞 ${buyer.phone}</div>`;
             if (buyer.email) html += `<div class="card-info">📧 ${buyer.email}</div>`;
 
@@ -1989,6 +2017,20 @@
                 }
 
                 if (fields.dealbreakers) document.getElementById('dealbreakers').value = fields.dealbreakers;
+
+                // Surface
+                if (fields.surface) {
+                    const surfaceInput = document.getElementById('surface');
+                    if (surfaceInput) surfaceInput.value = fields.surface;
+                }
+
+                // Annexes
+                if (Array.isArray(fields.annexes) && fields.annexes.length > 0) {
+                    fields.annexes.forEach(a => {
+                        const cb = document.querySelector(`input[name="annexes"][value="${a}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
 
                 // Bank approval select
                 if (fields.bank_approval) {
@@ -2258,6 +2300,12 @@
                 cb.checked = (buyer.criteria || []).includes(cb.value);
             });
 
+            // Surface & Annexes
+            document.getElementById('surface').value = buyer.surface || '';
+            document.querySelectorAll('input[name="annexes"]').forEach(cb => {
+                cb.checked = (buyer.annexes || []).includes(cb.value);
+            });
+
             // Vendeur toggle
             const isSeller = buyer.is_seller || false;
             document.getElementById('isSeller').checked = isSeller;
@@ -2303,6 +2351,7 @@
             }
 
             const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
+            const annexes = Array.from(document.querySelectorAll('input[name="annexes"]:checked')).map(cb => cb.value);
 
             const sectorInput = document.getElementById('sector');
             const buyerData = {
@@ -2322,6 +2371,8 @@
                 budget_min: parseInt(document.getElementById('budgetMin').value) || null,
                 budget_max: parseInt(document.getElementById('budgetMax').value) || null,
                 criteria,
+                surface: document.getElementById('surface').value.trim() || null,
+                annexes,
                 bank_approval: document.getElementById('bankApproval').value || null,
                 timeline: document.getElementById('timeline').value || null,
                 is_seller: document.getElementById('isSeller').checked,
@@ -2445,6 +2496,8 @@
                 { label: 'Typologie', getValue: b => b.rooms || '' },
                 { label: 'Secteur', getValue: b => b.sector || '' },
                 { label: 'Surface Min', getValue: b => b.surface_min || '' },
+                { label: 'Surface', getValue: b => b.surface || '' },
+                { label: 'Annexes', getValue: b => Array.isArray(b.annexes) ? b.annexes.join(', ') : '' },
                 { label: 'Budget Min', getValue: b => b.budget_min || '' },
                 { label: 'Budget Max', getValue: b => b.budget_max || '' },
                 { label: 'Accord Bancaire', getValue: b => BANK_LABELS[b.bank_approval] || b.bank_approval || '' },

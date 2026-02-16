@@ -594,6 +594,40 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
+        .annexes-toggles {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .annexe-toggle {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .annexe-toggle input { display: none; }
+
+        .annexe-toggle span {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 500;
+            background: white;
+            transition: all 0.2s;
+        }
+
+        .annexe-toggle input:checked + span {
+            background: #E8EAF6;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .annexe-toggle:hover span {
+            border-color: #667eea;
+        }
+
         .form-textarea { resize: vertical; min-height: 100px; }
 
         .form-row {
@@ -1706,6 +1740,34 @@
                         <input type="text" class="form-input" id="address" placeholder="123 Avenue Jean Monnet, Lyon">
                     </div>
 
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Type de bien</label>
+                            <select class="form-select" id="propertyType">
+                                <option value="">—</option>
+                                <option value="appartement">🏢 Appartement</option>
+                                <option value="maison">🏡 Maison</option>
+                                <option value="terrain">🏗️ Terrain</option>
+                                <option value="immeuble">🏛️ Immeuble</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Surface</label>
+                            <input type="text" class="form-input" id="surface" placeholder="90m²">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Annexes</label>
+                        <div class="annexes-toggles">
+                            <label class="annexe-toggle"><input type="checkbox" name="annexes" value="parking"><span>🅿️ Parking</span></label>
+                            <label class="annexe-toggle"><input type="checkbox" name="annexes" value="cave"><span>📦 Cave</span></label>
+                            <label class="annexe-toggle"><input type="checkbox" name="annexes" value="balcon"><span>🌿 Balcon/Terrasse</span></label>
+                            <label class="annexe-toggle"><input type="checkbox" name="annexes" value="jardin"><span>🌳 Jardin</span></label>
+                            <label class="annexe-toggle"><input type="checkbox" name="annexes" value="garage"><span>🚗 Garage</span></label>
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label class="form-label">Description du bien</label>
                         <textarea class="form-textarea" id="description" placeholder="T4 133m² avec jardin, proche commodités..."></textarea>
@@ -2432,6 +2494,19 @@
             updateCounts();
         }
 
+        function getPropertyLine(seller) {
+            const parts = [];
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            if (seller.property_type) parts.push(typeEmojis[seller.property_type] || '📍');
+            if (seller.surface) parts.push(seller.surface);
+            const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
+            if (Array.isArray(seller.annexes) && seller.annexes.length > 0) {
+                parts.push(seller.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
+            }
+            if (parts.length === 0) return '';
+            return `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${parts.join(' · ')}</div>`;
+        }
+
         function createSellerCard(seller) {
             const card = document.createElement('div');
             card.className = 'lead-card';
@@ -2487,6 +2562,7 @@
                 }
 
                 html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                html += getPropertyLine(seller);
                 if (seller.mandate_price) html += `<div class="card-info">💰 ${formatEuro(seller.mandate_price)}</div>`;
                 if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
                 if (seller.mandate_reference) html += `<div class="card-info">📋 Réf: ${seller.mandate_reference}</div>`;
@@ -2523,6 +2599,7 @@
             } else if (seller.status === 'competitor') {
                 // === CARTE CONCURRENT ===
                 html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                html += getPropertyLine(seller);
                 if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
                 if (seller.competitor_agency) html += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
                 if (seller.competitor_price) html += `<div class="card-info">💰 ${formatEuro(seller.competitor_price)}</div>`;
@@ -2535,6 +2612,7 @@
             } else {
                 // === CARTE STANDARD ===
                 html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                html += getPropertyLine(seller);
                 if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
                 if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
                 if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
@@ -2962,6 +3040,26 @@
                 // Reminder date
                 if (fields.reminder) document.getElementById('reminder').value = fields.reminder;
 
+                // Property type
+                if (fields.property_type) {
+                    const ptSelect = document.getElementById('propertyType');
+                    if (ptSelect) ptSelect.value = fields.property_type;
+                }
+
+                // Surface
+                if (fields.surface) {
+                    const surfaceInput = document.getElementById('surface');
+                    if (surfaceInput) surfaceInput.value = fields.surface;
+                }
+
+                // Annexes
+                if (Array.isArray(fields.annexes) && fields.annexes.length > 0) {
+                    fields.annexes.forEach(a => {
+                        const cb = document.querySelector(`input[name="annexes"][value="${a}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+
                 // Notes uniquement si Claude a extrait une info complémentaire
                 if (fields.notes) {
                     const noteInput = document.getElementById('noteInput');
@@ -3097,6 +3195,11 @@
             document.getElementById('modalTabs').style.display = 'none';
             switchTab('info');
 
+            // Reset property fields
+            document.getElementById('propertyType').value = '';
+            document.getElementById('surface').value = '';
+            document.querySelectorAll('input[name="annexes"]').forEach(cb => { cb.checked = false; });
+
             // Reset mandate fields
             document.getElementById('mandateType').value = '';
             document.getElementById('mandateReference').value = '';
@@ -3154,6 +3257,12 @@
             addrInput.dataset.city = seller.city || '';
             addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('description').value = seller.description || '';
+            document.getElementById('propertyType').value = seller.property_type || '';
+            document.getElementById('surface').value = seller.surface || '';
+            // Annexes checkboxes
+            document.querySelectorAll('input[name="annexes"]').forEach(cb => {
+                cb.checked = Array.isArray(seller.annexes) && seller.annexes.includes(cb.value);
+            });
             document.getElementById('date').value = seller.date || '';
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('budget').value = seller.budget || '';
@@ -3228,6 +3337,9 @@
                 city: addressInput.dataset.city || null,
                 postal_code: addressInput.dataset.postalCode || null,
                 description: document.getElementById('description').value.trim() || null,
+                property_type: document.getElementById('propertyType').value || null,
+                surface: document.getElementById('surface').value.trim() || null,
+                annexes: [...document.querySelectorAll('input[name="annexes"]:checked')].map(cb => cb.value),
                 date,
                 reminder: document.getElementById('reminder').value || null,
                 budget: document.getElementById('budget').value.trim() || null,
@@ -3458,6 +3570,9 @@
                 { label: 'Adresse', getValue: s => s.address || '' },
                 { label: 'Ville', getValue: s => s.city || '' },
                 { label: 'Code Postal', getValue: s => s.postal_code || '' },
+                { label: 'Type Bien', getValue: s => s.property_type || '' },
+                { label: 'Surface', getValue: s => s.surface || '' },
+                { label: 'Annexes', getValue: s => Array.isArray(s.annexes) ? s.annexes.join(', ') : '' },
                 { label: 'Description', getValue: s => s.description || '' },
                 { label: 'Prix Estimation', getValue: s => rawAmount(s.budget) },
                 { label: 'Prix Mandat', getValue: s => rawAmount(s.mandate_price) },

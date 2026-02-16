@@ -39,6 +39,10 @@ Retourne un JSON avec ces champs :
   - "efficity" (si "efficity" est mentionné)
   - "autre" (si une autre source est mentionnée mais ne correspond à aucune ci-dessus)
   - null (si AUCUNE source n'est mentionnée)
+- "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble" (si le type de bien est mentionné)
+- "surface": string ou null — surface du bien (ex: "65 m²", "120 m²")
+- "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
+- "notes": string ou null — toute information complémentaire qui ne rentre dans aucun autre champ (contexte, remarques de l'agent, etc.)
 - "status": string ou null — parmi "hot", "warm", "cold" (UNIQUEMENT si explicitement mentionné comme "chaud/chaude", "tiède", "froid/froide")
 - "reminder": string ou null — date de relance au format AAAA-MM-JJ (si mentionnée)
 
@@ -72,7 +76,10 @@ Retourne un JSON avec ces champs :
 - "budget_min": number ou null — budget minimum en euros (nombre pur)
 - "budget_max": number ou null — budget maximum en euros (nombre pur)
 - "criteria": array ou null — parmi ["jardin", "parking", "ascenseur", "balcon_terrasse", "calme", "neuf_renove"]
+- "surface": string ou null — surface du bien (ex: "65 m²", "120 m²")
+- "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
 - "dealbreakers": string ou null — éléments rédhibitoires mentionnés
+- "notes": string ou null — toute information complémentaire qui ne rentre dans aucun autre champ
 - "status": string ou null — parmi "new", "active" (UNIQUEMENT si explicitement mentionné)
 - "reminder": string ou null — date de relance au format AAAA-MM-JJ
 
