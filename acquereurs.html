@@ -1274,7 +1274,7 @@
                 <button class="close-btn" id="closeModalBtn">&times;</button>
             </div>
             <form id="buyerForm">
-                <button type="button" class="dictate-btn" id="dictateBtn" onclick="handleBuyerDictateClick()">🎙️ Dicter mon lead</button>
+                <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
                 <div class="dictate-status" id="dictateStatus"></div>
                 <!-- Section Contact -->
                 <div class="form-section">
@@ -1831,13 +1831,16 @@
                 return;
             }
 
-            // Acquérir le micro IMMÉDIATEMENT dans le handler de clic (critique pour iOS Safari)
+            // getUserMedia DIRECT — iOS Safari exige que ce soit le 1er await sans wrapper async
             let stream;
             try {
-                stream = await AudioRecorder.acquireMic();
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
-                console.warn('Mic acquire error:', err);
-                status.textContent = '⚠️ ' + err.message;
+                console.warn('getUserMedia error:', err.name, err.message);
+                const msg = (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
+                    ? 'Micro bloqué — autorisez le micro dans les réglages Safari'
+                    : 'Impossible d\'accéder au micro';
+                status.textContent = '⚠️ ' + msg;
                 status.className = 'dictate-status active';
                 setTimeout(() => { status.className = 'dictate-status'; }, 4000);
                 return;
@@ -2094,13 +2097,13 @@
                 return;
             }
 
-            // Acquérir le micro IMMÉDIATEMENT (critique pour iOS Safari)
+            // getUserMedia DIRECT — iOS Safari exige que ce soit le 1er await sans wrapper async
             let stream;
             try {
-                stream = await AudioRecorder.acquireMic();
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
-                console.warn('Mic acquire error:', err);
-                alert(err.message);
+                console.warn('getUserMedia error:', err.name, err.message);
+                alert('Micro bloqué — autorisez le micro dans les réglages');
                 return;
             }
 
@@ -2461,6 +2464,7 @@
                 }
             });
 
+            document.getElementById('dictateBtn').addEventListener('click', handleBuyerDictateClick);
             document.getElementById('addBuyerBtn').addEventListener('click', openModal);
 
             // Export dropdown toggle

@@ -570,13 +570,13 @@
     }
 
     async function startRecording() {
-        // Acquérir le micro IMMÉDIATEMENT dans le handler de clic (critique pour iOS Safari)
+        // getUserMedia DIRECT — iOS Safari exige que ce soit le 1er await sans wrapper async
         let stream;
         try {
-            stream = await AudioRecorder.acquireMic();
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         } catch (err) {
-            console.warn('Mic acquire error:', err);
-            showVoiceError('⚠️ ' + err.message);
+            console.warn('getUserMedia error:', err.name, err.message);
+            showVoiceError('⚠️ Micro bloqué — autorisez le micro dans les réglages');
             return;
         }
 

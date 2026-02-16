@@ -1499,7 +1499,7 @@
             </div>
             <form id="leadForm">
                 <div id="tabInfo">
-                    <button type="button" class="dictate-btn" id="dictateBtn" onclick="handleDictateClick()">🎙️ Dicter mon lead</button>
+                    <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
                     <div class="dictate-status" id="dictateStatus"></div>
                     <div class="form-group">
                         <label class="form-label">Statut du Lead *</label>
@@ -2436,13 +2436,13 @@
                 return;
             }
 
-            // Acquérir le micro IMMÉDIATEMENT (critique pour iOS Safari)
+            // getUserMedia DIRECT — iOS Safari exige que ce soit le 1er await sans wrapper async
             let stream;
             try {
-                stream = await AudioRecorder.acquireMic();
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
-                console.warn('Mic acquire error:', err);
-                alert(err.message);
+                console.warn('getUserMedia error:', err.name, err.message);
+                alert('Micro bloqué — autorisez le micro dans les réglages');
                 return;
             }
 
@@ -2509,13 +2509,16 @@
                 return;
             }
 
-            // Acquérir le micro IMMÉDIATEMENT dans le handler de clic (critique pour iOS Safari)
+            // getUserMedia DIRECT — iOS Safari exige que ce soit le 1er await sans wrapper async
             let stream;
             try {
-                stream = await AudioRecorder.acquireMic();
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
-                console.warn('Mic acquire error:', err);
-                status.textContent = '⚠️ ' + err.message;
+                console.warn('getUserMedia error:', err.name, err.message);
+                const msg = (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
+                    ? 'Micro bloqué — autorisez le micro dans les réglages Safari'
+                    : 'Impossible d\'accéder au micro';
+                status.textContent = '⚠️ ' + msg;
                 status.className = 'dictate-status active';
                 setTimeout(() => { status.className = 'dictate-status'; }, 4000);
                 return;
@@ -3140,6 +3143,7 @@
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
+            document.getElementById('dictateBtn').addEventListener('click', handleDictateClick);
             document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
             document.getElementById('closeModalBtn').addEventListener('click', () => closeModal());
 
