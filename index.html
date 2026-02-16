@@ -1175,6 +1175,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadSellers();
             setupDragAndDrop();
+            setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 

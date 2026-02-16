@@ -34,3 +34,141 @@ function getBuyerSourceTag(source) {
     const config = BUYER_SOURCE_CONFIG[source] || BUYER_SOURCE_CONFIG.autre;
     return `<span class="card-tag" style="background:${config.bg};color:${config.color}">${config.label}</span>`;
 }
+
+// ===== AUTOCOMPLETE CONTACTS =====
+(function () {
+    const style = document.createElement('style');
+    style.textContent = `
+        .ac-wrapper { position: relative; }
+        .ac-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #E1E8ED;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            max-height: 220px;
+            overflow-y: auto;
+            z-index: 10000;
+            display: none;
+        }
+        .ac-dropdown.active { display: block; }
+        .ac-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+        .ac-item:last-child { border-bottom: none; }
+        .ac-item:hover, .ac-item.ac-selected { background: #f0f2f5; }
+        .ac-name { font-weight: 600; font-size: 14px; color: #2C3E50; }
+        .ac-details { font-size: 12px; color: #7F8C8D; margin-top: 2px; }
+    `;
+    document.head.appendChild(style);
+})();
+
+function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
+    const lastNameInput = document.getElementById(lastNameId);
+    if (!lastNameInput) return;
+
+    const formGroup = lastNameInput.closest('.form-group');
+    formGroup.classList.add('ac-wrapper');
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'ac-dropdown';
+    formGroup.appendChild(dropdown);
+
+    let debounceTimer = null;
+    let results = [];
+    let selIdx = -1;
+
+    lastNameInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = lastNameInput.value.trim();
+        if (q.length < 2) { dropdown.classList.remove('active'); return; }
+        debounceTimer = setTimeout(() => searchContacts(q), 300);
+    });
+
+    lastNameInput.addEventListener('keydown', (e) => {
+        if (!dropdown.classList.contains('active')) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selIdx = Math.min(selIdx + 1, results.length - 1);
+            highlightItem();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selIdx = Math.max(selIdx - 1, 0);
+            highlightItem();
+        } else if (e.key === 'Enter' && selIdx >= 0) {
+            e.preventDefault();
+            pickContact(results[selIdx]);
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+    });
+
+    async function searchContacts(query) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabaseClient
+            .from('contacts')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .ilike('name', '%' + query + '%')
+            .order('name')
+            .limit(8);
+
+        if (error || !data || data.length === 0) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        results = data;
+        selIdx = -1;
+        dropdown.innerHTML = data.map((c, i) => {
+            const det = [c.phone, c.email].filter(Boolean).join(' · ');
+            return `<div class="ac-item" data-i="${i}">
+                <div class="ac-name">${escapeHtml(c.name)}</div>
+                ${det ? `<div class="ac-details">${escapeHtml(det)}</div>` : ''}
+            </div>`;
+        }).join('');
+        dropdown.classList.add('active');
+
+        dropdown.querySelectorAll('.ac-item').forEach(item => {
+            item.addEventListener('click', () => pickContact(data[parseInt(item.dataset.i)]));
+        });
+    }
+
+    function highlightItem() {
+        dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
+            el.classList.toggle('ac-selected', i === selIdx);
+        });
+    }
+
+    function pickContact(contact) {
+        const parts = (contact.name || '').trim().split(/\s+/);
+        const firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
+        const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
+
+        document.getElementById(firstNameId).value = firstName;
+        document.getElementById(lastNameId).value = lastName;
+        if (contact.phone && document.getElementById(phoneId)) document.getElementById(phoneId).value = contact.phone;
+        if (contact.email && document.getElementById(emailId)) document.getElementById(emailId).value = contact.email;
+
+        dropdown.classList.remove('active');
+    }
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
