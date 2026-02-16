@@ -1172,6 +1172,13 @@
         let currentLinks = [];
         let draggedCard = null;
 
+        // ===== AUTH HELPER =====
+        async function getCurrentUserId() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) { window.location.href = 'login.html'; return null; }
+            return session.user.id;
+        }
+
         // ===== CONFIG BADGES =====
         const TYPE_CONFIG = {
             appartement: { label: 'Appart.', icon: '🏢', cls: 'badge-type-appartement' },
@@ -1221,9 +1228,12 @@
 
         // ===== SUPABASE CRUD =====
         async function loadBuyers() {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
             const { data, error } = await supabaseClient
                 .from('buyers')
                 .select('*')
+                .eq('user_id', userId)
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];
@@ -1231,20 +1241,27 @@
         }
 
         async function createBuyer(buyer) {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
+            buyer.user_id = userId;
             const { data, error } = await supabaseClient.from('buyers').insert([buyer]).select();
             if (error) { console.error('Erreur création:', error); alert('Erreur lors de la création.'); return null; }
             return data[0];
         }
 
         async function updateBuyer(id, updates) {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
             updates.updated_at = new Date().toISOString();
-            const { data, error } = await supabaseClient.from('buyers').update(updates).eq('id', id).select();
+            const { data, error } = await supabaseClient.from('buyers').update(updates).eq('id', id).eq('user_id', userId).select();
             if (error) { console.error('Erreur mise à jour:', error); alert('Erreur lors de la mise à jour.'); return null; }
             return data[0];
         }
 
         async function deleteBuyerDB(id) {
-            const { error } = await supabaseClient.from('buyers').delete().eq('id', id);
+            const userId = await getCurrentUserId();
+            if (!userId) return false;
+            const { error } = await supabaseClient.from('buyers').delete().eq('id', id).eq('user_id', userId);
             if (error) { console.error('Erreur suppression:', error); alert('Erreur lors de la suppression.'); return false; }
             return true;
         }
