@@ -46,26 +46,32 @@ function getBuyerSourceTag(source) {
             left: 0;
             right: 0;
             background: white;
-            border: 1px solid #E1E8ED;
-            border-top: none;
-            border-radius: 0 0 10px 10px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-            max-height: 220px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 200px;
             overflow-y: auto;
-            z-index: 10000;
+            z-index: 9999;
             display: none;
+            margin-top: 4px;
         }
         .ac-dropdown.active { display: block; }
         .ac-item {
-            padding: 10px 14px;
+            padding: 10px 12px;
             cursor: pointer;
             border-bottom: 1px solid #f0f0f0;
             transition: background 0.15s;
         }
         .ac-item:last-child { border-bottom: none; }
-        .ac-item:hover, .ac-item.ac-selected { background: #f0f2f5; }
-        .ac-name { font-weight: 600; font-size: 14px; color: #2C3E50; }
-        .ac-details { font-size: 12px; color: #7F8C8D; margin-top: 2px; }
+        .ac-item:hover, .ac-item.ac-selected { background: #f0f7ff; }
+        .ac-name { font-weight: 700; font-size: 14px; color: #2C3E50; }
+        .ac-details { font-size: 12px; color: #999; margin-top: 3px; }
+        .ac-details span { margin-right: 10px; }
+        @keyframes acFlash {
+            0% { background-color: #fff9c4; }
+            100% { background-color: white; }
+        }
+        .ac-flash { animation: acFlash 1s ease; }
     `;
     document.head.appendChild(style);
 })();
@@ -110,8 +116,14 @@ function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
         }
     });
 
+    // Fermer au clic en dehors
     document.addEventListener('click', (e) => {
         if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+    });
+
+    // Fermer quand le champ perd le focus (délai pour permettre le clic sur une suggestion)
+    lastNameInput.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.remove('active'), 200);
     });
 
     async function searchContacts(query) {
@@ -123,8 +135,7 @@ function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
             .select('*')
             .eq('user_id', session.user.id)
             .ilike('name', '%' + query + '%')
-            .order('name')
-            .limit(8);
+            .limit(5);
 
         if (error || !data || data.length === 0) {
             dropdown.classList.remove('active');
@@ -134,10 +145,12 @@ function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
         results = data;
         selIdx = -1;
         dropdown.innerHTML = data.map((c, i) => {
-            const det = [c.phone, c.email].filter(Boolean).join(' · ');
+            let details = [];
+            if (c.phone) details.push(`<span>📞 ${escapeHtml(c.phone)}</span>`);
+            if (c.email) details.push(`<span>📧 ${escapeHtml(c.email)}</span>`);
             return `<div class="ac-item" data-i="${i}">
                 <div class="ac-name">${escapeHtml(c.name)}</div>
-                ${det ? `<div class="ac-details">${escapeHtml(det)}</div>` : ''}
+                ${details.length ? `<div class="ac-details">${details.join('')}</div>` : ''}
             </div>`;
         }).join('');
         dropdown.classList.add('active');
@@ -153,15 +166,32 @@ function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
         });
     }
 
+    function flashField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('ac-flash');
+        void el.offsetWidth;
+        el.classList.add('ac-flash');
+    }
+
     function pickContact(contact) {
         const parts = (contact.name || '').trim().split(/\s+/);
         const firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
         const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
 
-        document.getElementById(firstNameId).value = firstName;
         document.getElementById(lastNameId).value = lastName;
-        if (contact.phone && document.getElementById(phoneId)) document.getElementById(phoneId).value = contact.phone;
-        if (contact.email && document.getElementById(emailId)) document.getElementById(emailId).value = contact.email;
+        document.getElementById(firstNameId).value = firstName;
+        flashField(lastNameId);
+        flashField(firstNameId);
+
+        if (contact.phone && document.getElementById(phoneId)) {
+            document.getElementById(phoneId).value = contact.phone;
+            flashField(phoneId);
+        }
+        if (contact.email && document.getElementById(emailId)) {
+            document.getElementById(emailId).value = contact.email;
+            flashField(emailId);
+        }
 
         dropdown.classList.remove('active');
     }
