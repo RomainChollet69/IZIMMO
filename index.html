@@ -868,6 +868,49 @@
             display: inline-block;
         }
 
+        /* ===== BOUTON DICTÉE VOCALE ===== */
+        .dictate-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            background: #f0f2f5;
+            border: 1px dashed #CFD8DC;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dictate-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .dictate-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .dictate-btn.recording {
+            background: #FFEBEE;
+            border-color: #FF4757;
+            border-style: solid;
+            color: #FF4757;
+            animation: dictatePulse 1.2s infinite;
+        }
+        @keyframes dictatePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 71, 87, 0); }
+        }
+        .dictate-status {
+            font-size: 12px;
+            color: #FF4757;
+            text-align: center;
+            margin-top: -14px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            display: none;
+        }
+        .dictate-status.active { display: block; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -1104,6 +1147,8 @@
             </div>
             <form id="leadForm">
                 <div id="tabInfo">
+                    <button type="button" class="dictate-btn" id="dictateBtn" onclick="handleDictateClick()">🎙️ Dicter mon lead</button>
+                    <div class="dictate-status" id="dictateStatus">🔴 Écoute en cours… Parlez naturellement.</div>
                     <div class="form-group">
                         <label class="form-label">Statut du Lead *</label>
                         <select class="form-select" id="status" required>
@@ -1820,6 +1865,114 @@
 
             updateModalTabs();
             if (initialTab) switchTab(initialTab);
+        }
+
+        // ===== DICTÉE VOCALE MODALE =====
+        let sellerDictation = null;
+        let isSellerDictating = false;
+
+        function handleDictateClick() {
+            if (!hasSpeechRecognition) {
+                showSpeechFallbackPopup();
+                return;
+            }
+            if (isSellerDictating) {
+                stopSellerDictation();
+            } else {
+                startSellerDictation();
+            }
+        }
+
+        function startSellerDictation() {
+            if (isSellerDictating) return;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            sellerDictation = new SpeechRecognition();
+            sellerDictation.lang = 'fr-FR';
+            sellerDictation.continuous = true;
+            sellerDictation.interimResults = false;
+
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+
+            sellerDictation.onstart = () => {
+                isSellerDictating = true;
+                btn.classList.add('recording');
+                btn.innerHTML = '⏹️ Arrêter la dictée';
+                status.classList.add('active');
+            };
+
+            sellerDictation.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                }
+                if (transcript.trim()) parseSellerDictation(transcript.trim());
+            };
+
+            sellerDictation.onerror = () => stopSellerDictation();
+            sellerDictation.onend = () => stopSellerDictation();
+
+            sellerDictation.start();
+        }
+
+        function stopSellerDictation() {
+            isSellerDictating = false;
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+            btn.classList.remove('recording');
+            btn.innerHTML = '🎙️ Dicter mon lead';
+            status.classList.remove('active');
+            if (sellerDictation) {
+                try { sellerDictation.stop(); } catch (e) { /* already stopped */ }
+                sellerDictation = null;
+            }
+        }
+
+        function parseSellerDictation(text) {
+            // Remplissage intelligent : détecte des patterns dans la phrase
+            const lower = text.toLowerCase();
+
+            // Nom : "monsieur/madame Dupont" ou "nom Dupont"
+            const nameMatch = lower.match(/(?:monsieur|madame|mme|mr|nom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
+            if (nameMatch) {
+                const ln = document.getElementById('lastName');
+                if (!ln.value) ln.value = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+            }
+
+            // Prénom
+            const firstMatch = lower.match(/(?:prénom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
+            if (firstMatch) {
+                const fn = document.getElementById('firstName');
+                if (!fn.value) fn.value = firstMatch[1].charAt(0).toUpperCase() + firstMatch[1].slice(1);
+            }
+
+            // Téléphone : séquences de chiffres
+            const phoneMatch = text.match(/(?:téléphone|tel|numéro|portable|mobile)?\s*(?:le\s+)?(\d[\d\s\-.]{8,})/i);
+            if (phoneMatch) {
+                const ph = document.getElementById('phone');
+                if (!ph.value) ph.value = phoneMatch[1].replace(/[\s\-.]/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
+            }
+
+            // Budget / prix
+            const budgetMatch = text.match(/(\d[\d\s]*(?:\d{3}))\s*(?:euros?|€)/i);
+            if (budgetMatch) {
+                const b = document.getElementById('budget');
+                if (!b.value) b.value = budgetMatch[1].replace(/\s/g, '');
+            }
+
+            // Adresse : "au" ou "adresse" ou "rue"
+            const addrMatch = text.match(/(?:adresse|au|rue|avenue|boulevard|impasse|chemin|place)\s+(.+?)(?:\s+(?:téléphone|budget|prix|notes?|$))/i);
+            if (addrMatch) {
+                const addr = document.getElementById('address');
+                if (!addr.value) addr.value = addrMatch[1].trim();
+            }
+
+            // Notes : tout le texte va aussi dans les notes comme transcription brute
+            const notesField = document.getElementById('notes');
+            const current = notesField.value;
+            notesField.value = current ? current + '\n' + text : text;
         }
 
         // ===== LIENS D'ANNONCES =====

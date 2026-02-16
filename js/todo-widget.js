@@ -341,8 +341,6 @@
     const panel = document.createElement('div');
     panel.className = 'todo-panel';
 
-    const speechAvailable = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-
     panel.innerHTML = `
         <div class="todo-panel-header">
             <h3>Ma Todo List</h3>
@@ -351,7 +349,7 @@
         <div class="todo-input-area">
             <div class="todo-input-row">
                 <input type="text" class="todo-text-input" placeholder="Ajouter une tâche…">
-                <button class="todo-voice-btn ${speechAvailable ? '' : 'unavailable'}" title="${speechAvailable ? 'Dictée vocale' : 'Dictée non supportée'}">🎙️</button>
+                <button class="todo-voice-btn ${hasSpeechRecognition ? '' : 'unavailable'}" title="Dictée vocale">🎙️</button>
                 <button class="todo-add-btn">+</button>
             </div>
             <div class="todo-voice-status">🔴 Écoute en cours…</div>
@@ -555,7 +553,7 @@
 
     // ===== DICTÉE VOCALE =====
     function startRecording() {
-        if (!speechAvailable || isRecording) return;
+        if (!hasSpeechRecognition || isRecording) return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognition = new SpeechRecognition();
@@ -611,12 +609,14 @@
         });
     }
 
-    if (speechAvailable) {
-        voiceBtn.addEventListener('click', () => {
-            if (isRecording) stopRecording();
-            else startRecording();
-        });
-    }
+    voiceBtn.addEventListener('click', () => {
+        if (!hasSpeechRecognition) {
+            showSpeechFallbackPopup();
+            return;
+        }
+        if (isRecording) stopRecording();
+        else startRecording();
+    });
 
     // ===== CLEAR DONE =====
     clearDoneBtn.addEventListener('click', clearDoneTodos);

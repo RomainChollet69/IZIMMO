@@ -775,6 +775,49 @@
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
 
+        /* ===== BOUTON DICTÉE VOCALE ===== */
+        .dictate-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            background: #f0f2f5;
+            border: 1px dashed #CFD8DC;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dictate-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .dictate-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .dictate-btn.recording {
+            background: #FFEBEE;
+            border-color: #FF4757;
+            border-style: solid;
+            color: #FF4757;
+            animation: dictatePulse 1.2s infinite;
+        }
+        @keyframes dictatePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.3); }
+            50% { box-shadow: 0 0 0 8px rgba(255, 71, 87, 0); }
+        }
+        .dictate-status {
+            font-size: 12px;
+            color: #FF4757;
+            text-align: center;
+            margin-top: -14px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            display: none;
+        }
+        .dictate-status.active { display: block; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -981,6 +1024,8 @@
                 <button class="close-btn" id="closeModalBtn">&times;</button>
             </div>
             <form id="buyerForm">
+                <button type="button" class="dictate-btn" id="dictateBtn" onclick="handleBuyerDictateClick()">🎙️ Dicter mon lead</button>
+                <div class="dictate-status" id="dictateStatus">🔴 Écoute en cours… Parlez naturellement.</div>
                 <!-- Section Contact -->
                 <div class="form-section">
                     <div class="form-section-title">📇 Contact</div>
@@ -1392,10 +1437,115 @@
             document.getElementById('sellerFields').style.display = 'none';
             currentLinks = [];
             renderLinks();
+            stopBuyerDictation();
             const btn = document.getElementById('submitBtn');
             delete btn.dataset.editId;
             btn.textContent = "Créer l'Acquéreur";
             document.querySelector('.modal-title').textContent = 'Nouvel Acquéreur';
+        }
+
+        // ===== DICTÉE VOCALE MODALE =====
+        let buyerDictation = null;
+        let isBuyerDictating = false;
+
+        function handleBuyerDictateClick() {
+            if (!hasSpeechRecognition) {
+                showSpeechFallbackPopup();
+                return;
+            }
+            if (isBuyerDictating) stopBuyerDictation();
+            else startBuyerDictation();
+        }
+
+        function startBuyerDictation() {
+            if (isBuyerDictating) return;
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            buyerDictation = new SpeechRecognition();
+            buyerDictation.lang = 'fr-FR';
+            buyerDictation.continuous = true;
+            buyerDictation.interimResults = false;
+
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+
+            buyerDictation.onstart = () => {
+                isBuyerDictating = true;
+                btn.classList.add('recording');
+                btn.innerHTML = '⏹️ Arrêter la dictée';
+                status.classList.add('active');
+            };
+
+            buyerDictation.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) transcript += event.results[i][0].transcript;
+                }
+                if (transcript.trim()) parseBuyerDictation(transcript.trim());
+            };
+
+            buyerDictation.onerror = () => stopBuyerDictation();
+            buyerDictation.onend = () => stopBuyerDictation();
+            buyerDictation.start();
+        }
+
+        function stopBuyerDictation() {
+            isBuyerDictating = false;
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+            if (btn) {
+                btn.classList.remove('recording');
+                btn.innerHTML = '🎙️ Dicter mon lead';
+            }
+            if (status) status.classList.remove('active');
+            if (buyerDictation) {
+                try { buyerDictation.stop(); } catch (e) { /* already stopped */ }
+                buyerDictation = null;
+            }
+        }
+
+        function parseBuyerDictation(text) {
+            const lower = text.toLowerCase();
+
+            // Nom
+            const nameMatch = lower.match(/(?:monsieur|madame|mme|mr|nom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
+            if (nameMatch) {
+                const ln = document.getElementById('lastName');
+                if (!ln.value) ln.value = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+            }
+
+            // Prénom
+            const firstMatch = lower.match(/(?:prénom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
+            if (firstMatch) {
+                const fn = document.getElementById('firstName');
+                if (!fn.value) fn.value = firstMatch[1].charAt(0).toUpperCase() + firstMatch[1].slice(1);
+            }
+
+            // Téléphone
+            const phoneMatch = text.match(/(\d[\d\s\-.]{8,})/i);
+            if (phoneMatch) {
+                const ph = document.getElementById('phone');
+                if (!ph.value) ph.value = phoneMatch[1].replace(/[\s\-.]/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
+            }
+
+            // Budget
+            const budgetMatch = text.match(/(\d[\d\s]*(?:\d{3}))\s*(?:euros?|€)/i);
+            if (budgetMatch) {
+                const val = budgetMatch[1].replace(/\s/g, '');
+                const bmax = document.getElementById('budgetMax');
+                if (!bmax.value) bmax.value = val;
+            }
+
+            // Secteur
+            const sectorMatch = lower.match(/(?:secteur|ville|à|sur)\s+([a-zéèêëàâùûîïôöç\s\-]+?)(?:\s+(?:budget|téléphone|notes?|$))/i);
+            if (sectorMatch) {
+                const s = document.getElementById('sector');
+                if (!s.value) s.value = sectorMatch[1].trim();
+            }
+
+            // Notes : transcription brute
+            const notesField = document.getElementById('notes');
+            const current = notesField.value;
+            notesField.value = current ? current + '\n' + text : text;
         }
 
         // ===== LIENS =====
