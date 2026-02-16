@@ -10,30 +10,33 @@
             position: fixed;
             bottom: 28px;
             right: 28px;
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
+            height: 48px;
+            padding: 0 18px;
+            border-radius: 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            font-size: 26px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
             z-index: 9990;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
+        .todo-fab-icon { font-size: 20px; line-height: 1; }
         .todo-fab:hover {
-            transform: scale(1.08);
+            transform: scale(1.05);
             box-shadow: 0 6px 24px rgba(102, 126, 234, 0.55);
         }
         .todo-fab.has-tasks::after {
             content: attr(data-count);
             position: absolute;
-            top: -4px;
-            right: -4px;
+            top: -6px;
+            right: -6px;
             background: #FF4757;
             color: white;
             font-size: 11px;
@@ -311,9 +314,9 @@
             .todo-fab {
                 bottom: 20px;
                 right: 20px;
-                width: 50px;
-                height: 50px;
-                font-size: 22px;
+                height: 44px;
+                padding: 0 14px;
+                font-size: 13px;
             }
             .todo-panel {
                 width: 100vw;
@@ -327,7 +330,7 @@
     // ===== HTML =====
     const fab = document.createElement('button');
     fab.className = 'todo-fab';
-    fab.innerHTML = '✅';
+    fab.innerHTML = '<span class="todo-fab-icon">✅</span> To Do List';
     fab.title = 'Todo List';
     document.body.appendChild(fab);
 
