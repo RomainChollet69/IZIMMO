@@ -1040,6 +1040,69 @@
             display: inline-block;
         }
 
+        /* ===== MOBILE-ONLY ELEMENTS (hidden on desktop) ===== */
+        .mobile-tabs { display: none; }
+        .mobile-move-btn { display: none !important; }
+        .move-popup-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .move-popup-overlay.active { display: flex; }
+        .move-popup {
+            background: white;
+            border-radius: 16px 16px 0 0;
+            padding: 24px 20px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 60vh;
+            overflow-y: auto;
+            animation: slideUp 0.25s ease;
+        }
+        .move-popup-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+        .move-popup-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+        .move-popup-option:hover { background: #f0f2f5; }
+        .move-popup-cancel {
+            display: block;
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            border: none;
+            border-radius: 10px;
+            background: #f0f2f5;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -1075,7 +1138,7 @@
             .nav-text { display: none; }
             .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
 
-            /* Ligne 3 : cloche + bouton "+" centrés */
+            /* Ligne 3 : cloche + bouton "+" */
             .alert-counter {
                 grid-column: 1;
                 grid-row: 3;
@@ -1092,54 +1155,98 @@
                 grid-column: 2;
                 grid-row: 3;
                 justify-self: start;
-                padding: 8px 14px;
+                padding: 10px 18px;
                 font-size: 20px;
                 line-height: 1;
                 border-radius: 10px;
+                background: #2DD4BF;
+                border-color: #2DD4BF;
             }
 
-            /* --- PIPELINE : scroll horizontal --- */
-            .pipeline {
+            /* --- MOBILE TAB BAR --- */
+            .mobile-tabs {
                 display: flex;
-                flex-wrap: nowrap;
+                gap: 0;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
-                scroll-snap-type: x mandatory;
-                gap: 12px;
-                padding-bottom: 8px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+                margin-bottom: 12px;
+                position: sticky;
+                top: 0;
+                z-index: 50;
             }
-
-            .pipeline::-webkit-scrollbar { height: 6px; }
-
-            .column {
-                min-width: 85vw;
+            .mobile-tabs::-webkit-scrollbar { display: none; }
+            .mobile-tab {
                 flex-shrink: 0;
-                scroll-snap-align: start;
-                min-height: auto;
-                padding: 14px;
+                padding: 10px 14px;
+                border: none;
+                background: none;
+                font-family: 'Inter', sans-serif;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--text-light);
+                cursor: pointer;
+                white-space: nowrap;
+                border-bottom: 3px solid transparent;
+                transition: all 0.2s;
             }
+            .mobile-tab.active { color: var(--text-dark); border-bottom-color: #2DD4BF; }
+            .mobile-tab .tab-count { font-weight: 400; }
 
-            .column-header { height: 80px; border-radius: 12px; margin-bottom: 12px; }
-            .column-label { font-size: 16px; padding: 8px 12px; }
-            .column-title { font-size: 13px; margin-top: 8px; margin-bottom: 6px; }
-            .column-count { font-size: 12px; margin-bottom: 12px; }
+            /* --- PIPELINE : onglet unique --- */
+            .pipeline {
+                display: block !important;
+                overflow: visible !important;
+                gap: 0 !important;
+                padding-bottom: 0 !important;
+            }
+            .column {
+                display: none !important;
+                min-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                min-height: auto;
+            }
+            .column.mobile-active { display: block !important; }
+            .column.mobile-active .column-header,
+            .column.mobile-active .column-title,
+            .column.mobile-active .column-count { display: none; }
 
-            /* --- CARTES : compactes --- */
-            .lead-card { padding: 12px; border-radius: 10px; }
+            /* --- CARTES MOBILE --- */
+            .lead-card {
+                padding: 16px;
+                border-radius: 12px;
+                width: 100%;
+            }
             .lead-card:hover { transform: none; }
-
             .card-tag { padding: 4px 8px; font-size: 10px; margin-bottom: 6px; }
-            .card-name { font-size: 14px; margin-bottom: 4px; }
-            .card-info { font-size: 12px; margin-bottom: 4px; line-height: 1.3; }
+            .card-name { font-size: 16px; margin-bottom: 6px; }
+            .card-info { font-size: 13px; margin-bottom: 4px; line-height: 1.4; }
             .card-date { display: none; }
-
-            .card-notes { font-size: 11px; padding: 6px; margin-top: 6px; max-height: 40px; }
-            .card-followup { font-size: 11px; padding: 3px 6px; margin-top: 6px; }
+            .card-notes-preview { font-size: 12px; }
+            .card-followup { font-size: 11px; padding: 4px 8px; margin-top: 6px; }
             .badge-alert { font-size: 9px; padding: 3px 6px; }
+            .cards-container { gap: 10px; min-height: 60px; }
 
-            .card-actions { margin-top: 8px; gap: 4px; }
-            .card-btn { font-size: 14px; padding: 4px; }
-            .cards-container { gap: 8px; min-height: 100px; }
+            /* Actions : boutons tactiles */
+            .card-actions {
+                margin-top: 10px;
+                gap: 6px;
+                display: flex;
+                justify-content: flex-end;
+            }
+            .card-btn {
+                font-size: 16px;
+                padding: 8px;
+                min-width: 44px;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mobile-move-btn { display: inline-flex !important; }
 
             /* --- MODALE : pleine largeur --- */
             .modal.active { padding: 0; align-items: flex-end; }
@@ -1199,6 +1306,16 @@
             </div>
             <button class="add-btn" id="addLeadBtn">+ <span class="btn-text">Ajouter un Lead</span></button>
         </div>
+    </div>
+
+    <!-- Mobile Tab Bar -->
+    <div class="mobile-tabs" id="mobileTabs">
+        <button class="mobile-tab active" data-status="hot">🔥 Chaudes <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="warm">🟠 Tièdes <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="cold">🔵 Froides <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="mandate">📋 Mandats <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="sold">✅ Vendus <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
     </div>
 
     <div class="pipeline">
@@ -1470,6 +1587,102 @@
         let draggedCard = null;
         let visitCounts = {};
         let currentVisits = [];
+
+        // ===== MOBILE TABS =====
+        const SELLER_TABS = [
+            { status: 'hot', icon: '🔥', label: 'Chaudes' },
+            { status: 'warm', icon: '🟠', label: 'Tièdes' },
+            { status: 'cold', icon: '🔵', label: 'Froides' },
+            { status: 'mandate', icon: '📋', label: 'Mandats' },
+            { status: 'sold', icon: '✅', label: 'Vendus' },
+            { status: 'lost', icon: '❌', label: 'Perdus' }
+        ];
+        let mobileActiveTab = localStorage.getItem('waimmo_mobile_tab_sellers') || 'hot';
+
+        function isMobile() { return window.innerWidth <= 768; }
+
+        function setMobileTab(status) {
+            mobileActiveTab = status;
+            localStorage.setItem('waimmo_mobile_tab_sellers', status);
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+            document.querySelectorAll('.column').forEach(c => c.classList.toggle('mobile-active', c.dataset.status === status));
+            // Scroll active tab into view
+            const activeTab = document.querySelector(`.mobile-tab[data-status="${status}"]`);
+            if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        }
+
+        function updateMobileTabCounts() {
+            SELLER_TABS.forEach(tab => {
+                const count = sellers.filter(s => s.status === tab.status).length;
+                const el = document.querySelector(`.mobile-tab[data-status="${tab.status}"] .tab-count`);
+                if (el) el.textContent = `(${count})`;
+            });
+        }
+
+        function initMobileTabs() {
+            document.querySelectorAll('.mobile-tab').forEach(tab => {
+                tab.addEventListener('click', () => setMobileTab(tab.dataset.status));
+            });
+
+            // Swipe detection
+            const pipeline = document.querySelector('.pipeline');
+            let touchStartX = 0, touchStartY = 0;
+            pipeline.addEventListener('touchstart', e => {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, { passive: true });
+            pipeline.addEventListener('touchend', e => {
+                const dx = e.changedTouches[0].clientX - touchStartX;
+                const dy = e.changedTouches[0].clientY - touchStartY;
+                if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                    const statuses = SELLER_TABS.map(t => t.status);
+                    const idx = statuses.indexOf(mobileActiveTab);
+                    if (dx < 0 && idx < statuses.length - 1) setMobileTab(statuses[idx + 1]);
+                    else if (dx > 0 && idx > 0) setMobileTab(statuses[idx - 1]);
+                }
+            }, { passive: true });
+
+            setMobileTab(mobileActiveTab);
+
+            // Close move popup
+            document.getElementById('movePopupCancel').addEventListener('click', closeMovePopup);
+            document.getElementById('movePopup').addEventListener('click', e => { if (e.target === e.currentTarget) closeMovePopup(); });
+        }
+
+        function openMovePopup(sellerId) {
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+            const options = document.getElementById('movePopupOptions');
+            options.innerHTML = SELLER_TABS
+                .filter(t => t.status !== seller.status)
+                .map(t => `<button class="move-popup-option" onclick="moveSeller('${sellerId}','${t.status}')">${t.icon} ${t.label}</button>`)
+                .join('');
+            document.getElementById('movePopup').classList.add('active');
+        }
+
+        function closeMovePopup() {
+            document.getElementById('movePopup').classList.remove('active');
+        }
+
+        async function moveSeller(sellerId, newStatus) {
+            closeMovePopup();
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+            const updated = await updateSeller(sellerId, { status: newStatus });
+            if (updated) {
+                const idx = sellers.findIndex(s => s.id === sellerId);
+                if (idx !== -1) sellers[idx] = updated;
+            } else {
+                seller.status = newStatus;
+            }
+            await loadVisitCounts();
+            renderSellers();
+            // Auto-open mandate modal if first time
+            const fresh = sellers.find(s => s.id === sellerId);
+            if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
+                editSeller(sellerId, 'mandate');
+            }
+        }
 
         // ===== AUTH HELPER =====
         async function getCurrentUserId() {
@@ -1937,6 +2150,7 @@
             html += followupStatus;
 
             html += `<div class="card-actions">
+                <button class="card-btn mobile-move-btn" onclick="openMovePopup('${seller.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
                 <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
             </div>`;
@@ -1953,6 +2167,7 @@
                 if (col) col.textContent = count;
             });
             updateAlertCounter();
+            updateMobileTabCounts();
         }
 
         function updateAlertCounter() {
@@ -2609,6 +2824,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadSellers();
             setupDragAndDrop();
+            initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('address');
             setupBuyerAutocomplete();
@@ -2660,6 +2876,15 @@
             });
         });
     </script>
+    <!-- Move Popup -->
+    <div class="move-popup-overlay" id="movePopup">
+        <div class="move-popup">
+            <div class="move-popup-title">📂 Déplacer vers...</div>
+            <div class="move-popup-options" id="movePopupOptions"></div>
+            <button class="move-popup-cancel" id="movePopupCancel">Annuler</button>
+        </div>
+    </div>
+
     <script src="js/todo-widget.js"></script>
 </body>
 </html>
