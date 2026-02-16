@@ -582,6 +582,7 @@
 
         todoRecorder = new AudioRecorder({
             maxDuration: 30000,
+            silenceTimeout: 3000,
             apiTimeout: 15000,
             onStateChange: (state, msg) => {
                 if (state === 'recording') {

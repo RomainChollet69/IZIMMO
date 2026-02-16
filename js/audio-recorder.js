@@ -1,13 +1,14 @@
 // WAIMMO — AudioRecorder : enregistrement micro + transcription Whisper
 // Usage :
-//   const stream = await AudioRecorder.acquireMic();
-//   const recorder = new AudioRecorder({ onStateChange: (state, msg) => {} });
+//   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+//   const recorder = new AudioRecorder({ silenceTimeout: 3000, onStateChange: (state, msg) => {} });
 //   const text = await recorder.record(stream);
-//   recorder.stop();
 
 window.AudioRecorder = class AudioRecorder {
     constructor(options = {}) {
         this.maxDuration = options.maxDuration || 30000;
+        this.silenceTimeout = options.silenceTimeout || 0; // 0 = désactivé
+        this.silenceThreshold = options.silenceThreshold || 0.01;
         this.apiTimeout = options.apiTimeout || 15000;
         this.onStateChange = options.onStateChange || (() => {});
         this.mediaRecorder = null;
@@ -17,15 +18,10 @@ window.AudioRecorder = class AudioRecorder {
         this._resolve = null;
         this._reject = null;
         this._maxTimer = null;
-    }
-
-    // Acquérir le micro — DOIT être appelé directement depuis le gestionnaire de clic
-    // (iOS Safari exige que getUserMedia soit le premier await dans le handler)
-    static async acquireMic() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            throw new Error('Micro non disponible — vérifiez que le site est en HTTPS');
-        }
-        return await navigator.mediaDevices.getUserMedia({ audio: true });
+        this._silenceTimer = null;
+        this._silenceCheckInterval = null;
+        this._audioContext = null;
+        this._analyser = null;
     }
 
     _getMimeType() {
@@ -34,6 +30,56 @@ window.AudioRecorder = class AudioRecorder {
         if (MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
         if (MediaRecorder.isTypeSupported('audio/mp4')) return 'audio/mp4';
         return '';
+    }
+
+    _startSilenceDetection() {
+        if (!this.silenceTimeout || !this.stream) return;
+        try {
+            this._audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = this._audioContext.createMediaStreamSource(this.stream);
+            this._analyser = this._audioContext.createAnalyser();
+            this._analyser.fftSize = 512;
+            source.connect(this._analyser);
+
+            const dataArray = new Uint8Array(this._analyser.frequencyBinCount);
+            let silenceStart = null;
+            let hasSpoken = false;
+
+            this._silenceCheckInterval = setInterval(() => {
+                if (!this.isRecording) return;
+                this._analyser.getByteFrequencyData(dataArray);
+                // Calculer le volume moyen normalisé (0-1)
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const avg = sum / dataArray.length / 255;
+
+                if (avg > this.silenceThreshold) {
+                    hasSpoken = true;
+                    silenceStart = null;
+                } else if (hasSpoken) {
+                    // Silence détecté après avoir parlé
+                    if (!silenceStart) {
+                        silenceStart = Date.now();
+                    } else if (Date.now() - silenceStart >= this.silenceTimeout) {
+                        this.stop();
+                    }
+                }
+            }, 200);
+        } catch (e) {
+            console.warn('Silence detection not available:', e);
+        }
+    }
+
+    _stopSilenceDetection() {
+        if (this._silenceCheckInterval) {
+            clearInterval(this._silenceCheckInterval);
+            this._silenceCheckInterval = null;
+        }
+        if (this._audioContext) {
+            try { this._audioContext.close(); } catch (_) {}
+            this._audioContext = null;
+        }
+        this._analyser = null;
     }
 
     async record(existingStream) {
@@ -63,19 +109,7 @@ window.AudioRecorder = class AudioRecorder {
                 console.warn('getUserMedia error:', err.name, err.message);
                 let msg;
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    let permState = null;
-                    try {
-                        if (navigator.permissions && navigator.permissions.query) {
-                            const result = await navigator.permissions.query({ name: 'microphone' });
-                            permState = result.state;
-                        }
-                    } catch (_) { /* permissions API non supportée */ }
-
-                    if (permState === 'denied') {
-                        msg = 'Micro refusé — allez dans Réglages > Safari > Microphone pour autoriser ce site';
-                    } else {
-                        msg = 'Micro bloqué — appuyez à nouveau et autorisez l\'accès au micro dans la popup';
-                    }
+                    msg = 'Micro bloqué — autorisez le micro dans les réglages du navigateur';
                 } else if (err.name === 'NotFoundError') {
                     msg = 'Aucun micro détecté sur cet appareil';
                 } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
@@ -105,6 +139,7 @@ window.AudioRecorder = class AudioRecorder {
 
             this.mediaRecorder.onstop = async () => {
                 clearTimeout(this._maxTimer);
+                this._stopSilenceDetection();
                 this.isRecording = false;
                 this._releaseStream();
 
@@ -131,6 +166,7 @@ window.AudioRecorder = class AudioRecorder {
 
             this.mediaRecorder.onerror = () => {
                 clearTimeout(this._maxTimer);
+                this._stopSilenceDetection();
                 this.isRecording = false;
                 this._releaseStream();
                 this.onStateChange('error', 'Erreur d\'enregistrement');
@@ -144,15 +180,18 @@ window.AudioRecorder = class AudioRecorder {
 
             this.mediaRecorder.start(1000);
             this.onStateChange('recording');
+
+            // Démarrer la détection de silence
+            this._startSilenceDetection();
         });
     }
 
     stop() {
         clearTimeout(this._maxTimer);
+        this._stopSilenceDetection();
         if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
             this.mediaRecorder.stop();
         } else {
-            // Pas en cours → juste cleanup
             this.isRecording = false;
             this._releaseStream();
             this.onStateChange('idle');

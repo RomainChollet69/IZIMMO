@@ -272,7 +272,7 @@
         /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
-            grid-template-columns: repeat(6, minmax(320px, 1fr));
+            grid-template-columns: repeat(7, minmax(320px, 1fr));
             grid-auto-flow: column;
             gap: 20px;
             overflow-x: auto;
@@ -315,6 +315,7 @@
         .column-header.header-warm { background-image: url('img/tiede_fond_carte_pipe_vente.png'); }
         .column-header.header-cold { background-image: url('img/froid_fond_carte_pipe_vente.png'); }
         .column-header.header-mandate { background-image: url('img/mandat_fond_carte_pipe_vente.png'); }
+        .column-header.header-competitor { background: linear-gradient(135deg, #78909C 0%, #546E7A 50%, #455A64 100%); }
         .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
         .column-header.header-lost { background-image: url('img/perdu_fond_carte_pipe_vente.png'); }
 
@@ -544,21 +545,23 @@
         }
 
         .close-btn {
-            background: none;
+            background: #f0f0f0;
             border: none;
-            font-size: 28px;
+            font-size: 20px;
             cursor: pointer;
-            color: var(--text-light);
-            transition: color 0.2s ease;
+            color: #333;
+            transition: all 0.2s ease;
             padding: 0;
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
-        .close-btn:hover { color: var(--text-dark); }
+        .close-btn:hover { background: #e0e0e0; color: #111; }
 
         .form-group { margin-bottom: 24px; }
 
@@ -794,6 +797,142 @@
             padding: 20px;
             font-style: italic;
         }
+
+        /* ===== PRICE HISTORY ===== */
+        .price-history-section {
+            margin-top: 24px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .price-current {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, #E8EAF6, #F3E5F5);
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .price-current-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: #333;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+        }
+
+        .price-change-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .price-change-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .price-change-form {
+            display: none;
+            padding: 12px 16px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .price-change-form.active { display: flex; gap: 8px; align-items: center; }
+
+        .price-change-form input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .price-change-form button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .price-change-confirm { background: #4CAF50; color: white; }
+        .price-change-cancel { background: #eee; color: #333; }
+
+        .price-summary {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 12px;
+            padding: 8px 12px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .price-timeline {
+            position: relative;
+            padding-left: 24px;
+        }
+
+        .price-timeline::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #ddd;
+        }
+
+        .price-timeline-item {
+            position: relative;
+            padding: 8px 0 8px 16px;
+            font-size: 13px;
+        }
+
+        .price-timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 14px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px #ddd;
+        }
+
+        .price-timeline-item.price-down::before { background: #e53935; }
+        .price-timeline-item.price-up::before { background: #43A047; }
+        .price-timeline-item.price-initial::before { background: #667eea; }
+
+        .price-timeline-date {
+            font-size: 11px;
+            color: var(--text-light);
+        }
+
+        .price-timeline-values {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .price-timeline-variation {
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .price-timeline-variation.down { color: #e53935; }
+        .price-timeline-variation.up { color: #43A047; }
 
         /* ===== COMMISSION ===== */
         .card-commission {
@@ -1420,6 +1559,7 @@
         <button class="mobile-tab" data-status="warm">🟠 Tièdes <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="cold">🔵 Froides <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="mandate">📋 Mandats <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="competitor">🏢 Concurrent <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="sold">✅ Vendus <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
     </div>
@@ -1463,6 +1603,16 @@
             <div class="column-title">Mandats signés</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="mandate-container"></div>
+        </div>
+
+        <!-- Colonne Chez Concurrent -->
+        <div class="column" data-status="competitor">
+            <div class="column-header header-competitor">
+                <div class="column-label">🏢 CHEZ CONCURRENT</div>
+            </div>
+            <div class="column-title">Biens chez la concurrence</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
+            <div class="cards-container" id="competitor-container"></div>
         </div>
 
         <!-- Colonne Vendus -->
@@ -1509,6 +1659,7 @@
                             <option value="warm">🟡 Warm - Entre 30 et 60 jours</option>
                             <option value="cold">❄️ Cold - 60 jours et +</option>
                             <option value="mandate">✅ Sous Mandats</option>
+                            <option value="competitor">🏢 Chez Concurrent</option>
                             <option value="sold">🏆 Vendus</option>
                             <option value="lost">❌ Perdus</option>
                         </select>
@@ -1641,11 +1792,26 @@
                                 <input type="date" class="form-input" id="mandateEndDate">
                             </div>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="mandatePriceGroup">
                             <label class="form-label">Prix de mise en vente (€)</label>
                             <input type="text" class="form-input" id="mandatePrice" placeholder="350 000 €">
                         </div>
                         <div id="mandateCountdown"></div>
+                    </div>
+
+                    <div class="price-history-section" id="priceHistorySection" style="display:none">
+                        <div class="visits-title">Historique des prix</div>
+                        <div class="price-current">
+                            <div class="price-current-value" id="priceCurrentDisplay">—</div>
+                            <button type="button" class="price-change-btn" id="priceChangeBtn">Modifier le prix</button>
+                        </div>
+                        <div class="price-change-form" id="priceChangeForm">
+                            <input type="text" id="priceNewValue" placeholder="Nouveau prix (ex: 310000)">
+                            <button type="button" class="price-change-confirm" id="priceChangeConfirm">Valider</button>
+                            <button type="button" class="price-change-cancel" id="priceChangeCancel">Annuler</button>
+                        </div>
+                        <div class="price-summary" id="priceSummary" style="display:none"></div>
+                        <div class="price-timeline" id="priceTimeline"></div>
                     </div>
 
                     <div class="visits-section">
@@ -1700,6 +1866,7 @@
             { status: 'warm', icon: '🟠', label: 'Tièdes' },
             { status: 'cold', icon: '🔵', label: 'Froides' },
             { status: 'mandate', icon: '📋', label: 'Mandats' },
+            { status: 'competitor', icon: '🏢', label: 'Concurrent' },
             { status: 'sold', icon: '✅', label: 'Vendus' },
             { status: 'lost', icon: '❌', label: 'Perdus' }
         ];
@@ -1787,6 +1954,10 @@
             const fresh = sellers.find(s => s.id === sellerId);
             if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
                 editSeller(sellerId, 'mandate');
+            }
+            // Auto-open competitor popup if first time
+            if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
+                showCompetitorPopup(sellerId);
             }
         }
 
@@ -1970,6 +2141,136 @@
             }
         }
 
+        // ===== PRICE HISTORY =====
+        let currentPriceHistory = [];
+
+        async function loadPriceHistory(sellerId) {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('price_history')
+                .select('*')
+                .eq('seller_id', sellerId)
+                .eq('user_id', userId)
+                .order('changed_at', { ascending: false });
+            if (error) { console.error('Erreur chargement historique prix:', error); return; }
+            currentPriceHistory = data || [];
+            renderPriceHistory();
+        }
+
+        async function addPriceHistoryEntry(sellerId, oldPrice, newPrice) {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
+            const entry = { user_id: userId, seller_id: sellerId, old_price: oldPrice, new_price: newPrice };
+            const { data, error } = await supabaseClient.from('price_history').insert([entry]).select();
+            if (error) { console.error('Erreur ajout historique prix:', error); return null; }
+            return data[0];
+        }
+
+        function renderPriceHistory() {
+            const section = document.getElementById('priceHistorySection');
+            const timeline = document.getElementById('priceTimeline');
+            const summary = document.getElementById('priceSummary');
+            const display = document.getElementById('priceCurrentDisplay');
+            const mandatePrice = document.getElementById('mandatePrice').value;
+
+            if (!mandatePrice && currentPriceHistory.length === 0) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            const currentPrice = parseAmount(mandatePrice);
+            display.textContent = currentPrice > 0 ? formatEuro(currentPrice) : '—';
+
+            // Summary
+            if (currentPriceHistory.length > 0) {
+                const initial = currentPriceHistory[currentPriceHistory.length - 1];
+                const initialPrice = initial.old_price || initial.new_price;
+                if (initialPrice && currentPrice && initialPrice !== currentPrice) {
+                    const diff = currentPrice - initialPrice;
+                    const pct = ((diff / initialPrice) * 100).toFixed(1);
+                    const sign = diff > 0 ? '+' : '';
+                    summary.innerHTML = `Prix initial : ${formatEuro(initialPrice)} → Actuel : ${formatEuro(currentPrice)} (${sign}${pct}%, ${sign}${formatEuro(diff)})`;
+                    summary.style.display = 'block';
+                } else {
+                    summary.style.display = 'none';
+                }
+            } else {
+                summary.style.display = 'none';
+            }
+
+            // Timeline
+            if (currentPriceHistory.length === 0) {
+                timeline.innerHTML = '';
+                return;
+            }
+
+            timeline.innerHTML = currentPriceHistory.map((entry, i) => {
+                const date = new Date(entry.changed_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+                const isLast = i === currentPriceHistory.length - 1;
+                let cls = 'price-initial';
+                let variation = '';
+
+                if (entry.old_price && entry.new_price) {
+                    const diff = entry.new_price - entry.old_price;
+                    const pct = ((diff / entry.old_price) * 100).toFixed(1);
+                    if (diff < 0) {
+                        cls = 'price-down';
+                        variation = `<span class="price-timeline-variation down">${pct}% (${formatEuro(diff)})</span>`;
+                    } else {
+                        cls = 'price-up';
+                        variation = `<span class="price-timeline-variation up">+${pct}% (+${formatEuro(diff)})</span>`;
+                    }
+                }
+
+                const values = entry.old_price
+                    ? `${formatEuro(entry.old_price)} → ${formatEuro(entry.new_price)}`
+                    : `${formatEuro(entry.new_price)} (prix initial)`;
+
+                return `<div class="price-timeline-item ${cls}">
+                    <div class="price-timeline-date">${date}</div>
+                    <div class="price-timeline-values">${values} ${variation}</div>
+                </div>`;
+            }).join('');
+        }
+
+        async function handlePriceChange() {
+            const sellerId = document.getElementById('submitBtn').dataset.editId;
+            if (!sellerId) return;
+
+            const rawValue = document.getElementById('priceNewValue').value.trim();
+            const newPrice = parseAmount(rawValue);
+            if (!newPrice || newPrice <= 0) { alert('Veuillez saisir un prix valide.'); return; }
+
+            const currentPrice = parseAmount(document.getElementById('mandatePrice').value);
+
+            // Ajouter l'entrée dans l'historique
+            const entry = await addPriceHistoryEntry(sellerId, currentPrice || null, newPrice);
+            if (entry) {
+                currentPriceHistory.unshift(entry);
+            }
+
+            // Mettre à jour le prix dans le formulaire
+            document.getElementById('mandatePrice').value = newPrice;
+
+            // Sauvegarder immédiatement le nouveau prix en BDD
+            await updateSeller(sellerId, { mandate_price: newPrice });
+            const idx = sellers.findIndex(s => s.id === sellerId);
+            if (idx !== -1) sellers[idx].mandate_price = newPrice;
+
+            // Recalculer la commission
+            const rate = parseFloat(document.getElementById('commissionRate').value) || 4;
+            const newCommission = Math.round(newPrice * rate / 100);
+            document.getElementById('commissionAmount').value = newCommission;
+
+            // Fermer le formulaire et re-render
+            document.getElementById('priceChangeForm').classList.remove('active');
+            document.getElementById('priceNewValue').value = '';
+            renderPriceHistory();
+            renderSellers();
+        }
+
         // ===== COMMISSION INLINE EDIT =====
         function editCommissionInline(event, sellerId) {
             event.stopPropagation();
@@ -2114,6 +2415,7 @@
                 warm: document.getElementById('warm-container'),
                 cold: document.getElementById('cold-container'),
                 mandate: document.getElementById('mandate-container'),
+                competitor: document.getElementById('competitor-container'),
                 sold: document.getElementById('sold-container'),
                 lost: document.getElementById('lost-container')
             };
@@ -2218,6 +2520,18 @@
                 }
 
                 if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
+            } else if (seller.status === 'competitor') {
+                // === CARTE CONCURRENT ===
+                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
+                if (seller.competitor_agency) html += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
+                if (seller.competitor_price) html += `<div class="card-info">💰 ${formatEuro(seller.competitor_price)}</div>`;
+                if (seller.competitor_date) {
+                    const since = Math.floor((new Date() - new Date(seller.competitor_date)) / (1000 * 60 * 60 * 24));
+                    html += `<div class="card-info" style="font-size:12px;color:var(--text-light)">📅 Depuis ${since} jour${since > 1 ? 's' : ''}</div>`;
+                }
+                if (seller.competitor_url) html += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
+                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
             } else {
                 // === CARTE STANDARD ===
                 html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
@@ -2266,7 +2580,7 @@
         }
 
         function updateCounts() {
-            const statuses = ['hot', 'warm', 'cold', 'mandate', 'sold', 'lost'];
+            const statuses = ['hot', 'warm', 'cold', 'mandate', 'competitor', 'sold', 'lost'];
             statuses.forEach(status => {
                 const count = sellers.filter(s => s.status === status).length;
                 const col = document.querySelector(`.column[data-status="${status}"] .count`);
@@ -2334,9 +2648,34 @@
         }
 
         let formModified = false;
+        let isNewLead = true;
+        let originalFormValues = {};
+
+        function getFormValues() {
+            const vals = {};
+            document.getElementById('modal').querySelectorAll('input, textarea, select').forEach(el => {
+                if (el.type === 'checkbox') vals[el.id || el.name] = el.checked;
+                else vals[el.id || el.name] = el.value;
+            });
+            return vals;
+        }
+
+        function canCloseWithoutConfirm() {
+            if (isNewLead) {
+                // Nouveau lead : fermer direct si rien n'a été modifié
+                return !formModified;
+            } else {
+                // Lead existant : fermer direct si rien n'a changé
+                const current = getFormValues();
+                return JSON.stringify(current) === JSON.stringify(originalFormValues);
+            }
+        }
 
         function openModal(initialTab) {
             formModified = false;
+            const submitBtn = document.getElementById('submitBtn');
+            isNewLead = !submitBtn.dataset.editId;
+
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -2345,14 +2684,16 @@
                 dateInput.value = new Date().toISOString().split('T')[0];
             }
 
-            const submitBtn = document.getElementById('submitBtn');
-            if (!submitBtn.dataset.editId) {
+            if (isNewLead) {
                 document.querySelector('.modal-title').textContent = 'Nouveau Lead';
                 submitBtn.textContent = 'Créer le Lead';
             }
 
             updateModalTabs();
             if (initialTab) switchTab(initialTab);
+
+            // Snapshot des valeurs originales après un court délai (pour que les champs soient remplis)
+            setTimeout(() => { originalFormValues = getFormValues(); }, 100);
         }
 
         // ===== NOTES HORODATÉES =====
@@ -2448,6 +2789,7 @@
 
             noteRecorder = new AudioRecorder({
                 maxDuration: 30000,
+                silenceTimeout: 5000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -2526,6 +2868,7 @@
 
             sellerRecorder = new AudioRecorder({
                 maxDuration: 30000,
+                silenceTimeout: 5000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -2619,9 +2962,11 @@
                 // Reminder date
                 if (fields.reminder) document.getElementById('reminder').value = fields.reminder;
 
-                // Transcription brute dans les notes
-                const noteInput = document.getElementById('noteInput');
-                if (noteInput) noteInput.value = text;
+                // Notes uniquement si Claude a extrait une info complémentaire
+                if (fields.notes) {
+                    const noteInput = document.getElementById('noteInput');
+                    if (noteInput) noteInput.value = fields.notes;
+                }
 
                 if (statusEl) {
                     statusEl.textContent = '✅ Champs remplis !';
@@ -2630,11 +2975,8 @@
                 }
             } catch (err) {
                 console.error('Parse error:', err);
-                // Fallback : mettre le texte brut dans les notes
-                const noteInput = document.getElementById('noteInput');
-                if (noteInput) noteInput.value = text;
                 if (statusEl) {
-                    statusEl.textContent = '⚠️ Analyse échouée, texte copié dans les notes';
+                    statusEl.textContent = '⚠️ Analyse échouée';
                     statusEl.className = 'dictate-status active';
                     setTimeout(() => { statusEl.className = 'dictate-status'; }, 4000);
                 }
@@ -2734,13 +3076,14 @@
         });
 
         function closeModal(skipConfirm) {
-            if (!skipConfirm && formModified) {
-                if (!confirm('Vous avez des modifications non enregistrées. Fermer sans enregistrer ?')) {
-                    return;
-                }
+            if (!skipConfirm && !canCloseWithoutConfirm()) {
+                const msg = isNewLead ? 'Lead non enregistré. Fermer ?' : 'Modifications non enregistrées. Fermer ?';
+                if (!confirm(msg)) return;
             }
 
             formModified = false;
+            isNewLead = true;
+            originalFormValues = {};
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
 
@@ -2770,6 +3113,15 @@
             currentVisits = [];
             const visitList = document.getElementById('visitList');
             if (visitList) visitList.innerHTML = '<div class="visit-empty">Aucune visite enregistrée</div>';
+
+            // Reset price history
+            currentPriceHistory = [];
+            const phSection = document.getElementById('priceHistorySection');
+            if (phSection) phSection.style.display = 'none';
+            const phTimeline = document.getElementById('priceTimeline');
+            if (phTimeline) phTimeline.innerHTML = '';
+            const priceChangeForm = document.getElementById('priceChangeForm');
+            if (priceChangeForm) priceChangeForm.classList.remove('active');
 
             // Reset links
             currentLinks = [];
@@ -2832,9 +3184,10 @@
             // Load notes
             loadNotes(id);
 
-            // Load visits if mandate
+            // Load visits and price history if mandate
             if (seller.status === 'mandate') {
                 loadVisits(id);
+                loadPriceHistory(id);
                 updateMandateCountdown();
             }
         }
@@ -2903,6 +3256,14 @@
             const editId = document.getElementById('submitBtn').dataset.editId;
 
             if (editId) {
+                // Premier enregistrement du prix de mise en vente → historique initial
+                if (status === 'mandate' && sellerData.mandate_price) {
+                    const existingSeller = sellers.find(s => s.id === editId);
+                    if (existingSeller && !existingSeller.mandate_price && currentPriceHistory.length === 0) {
+                        await addPriceHistoryEntry(editId, null, parseAmount(sellerData.mandate_price));
+                    }
+                }
+
                 const updated = await updateSeller(editId, sellerData);
                 if (updated) {
                     const idx = sellers.findIndex(s => s.id === editId);
@@ -2918,6 +3279,72 @@
             renderSellers();
             formModified = false;
             closeModal(true);
+        }
+
+        // ===== COMPETITOR POPUP =====
+        let pendingCompetitorSellerId = null;
+
+        function showCompetitorPopup(sellerId) {
+            pendingCompetitorSellerId = sellerId;
+            document.getElementById('competitorUrlInput').value = '';
+            document.getElementById('competitorScrapingStatus').style.display = 'none';
+            document.getElementById('competitorPopup').style.display = 'flex';
+        }
+
+        function closeCompetitorPopup() {
+            document.getElementById('competitorPopup').style.display = 'none';
+            pendingCompetitorSellerId = null;
+        }
+
+        async function handleCompetitorUrl() {
+            const url = document.getElementById('competitorUrlInput').value.trim();
+            if (!url || !pendingCompetitorSellerId) { closeCompetitorPopup(); return; }
+
+            const statusEl = document.getElementById('competitorScrapingStatus');
+            statusEl.style.display = 'block';
+            statusEl.textContent = '⏳ Récupération des informations...';
+
+            try {
+                const resp = await fetch('/api/scrape-listing', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+
+                const updates = { competitor_url: url };
+
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data.agency) updates.competitor_agency = data.agency;
+                    if (data.price) updates.competitor_price = data.price;
+                    if (data.description) updates.competitor_description = data.description;
+                    if (data.surface) updates.competitor_surface = data.surface;
+                    if (data.date) updates.competitor_date = data.date;
+                    updates.competitor_scraped_at = new Date().toISOString();
+                }
+
+                const updated = await updateSeller(pendingCompetitorSellerId, updates);
+                if (updated) {
+                    const idx = sellers.findIndex(s => s.id === pendingCompetitorSellerId);
+                    if (idx !== -1) sellers[idx] = updated;
+                }
+                renderSellers();
+            } catch (err) {
+                console.error('Scraping error:', err);
+                // Sauvegarder au moins l'URL
+                const updated = await updateSeller(pendingCompetitorSellerId, { competitor_url: url });
+                if (updated) {
+                    const idx = sellers.findIndex(s => s.id === pendingCompetitorSellerId);
+                    if (idx !== -1) sellers[idx] = updated;
+                }
+                renderSellers();
+            }
+
+            closeCompetitorPopup();
+        }
+
+        async function handleCompetitorSkip() {
+            closeCompetitorPopup();
         }
 
         // ===== DRAG & DROP =====
@@ -2963,6 +3390,10 @@
                         if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
                             editSeller(sellerId, 'mandate');
                         }
+                        // Auto-ouverture popup concurrent UNIQUEMENT si pas encore de lien
+                        if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
+                            showCompetitorPopup(sellerId);
+                        }
                     }
                 });
             });
@@ -2971,7 +3402,7 @@
         // ===== EXPORT CSV =====
         const SELLER_STATUS_LABELS = {
             hot: 'Lead Chaude', warm: 'Lead Tiède', cold: 'Lead Froide',
-            mandate: 'Sous Mandat', sold: 'Vendu', lost: 'Perdu'
+            mandate: 'Sous Mandat', competitor: 'Chez Concurrent', sold: 'Vendu', lost: 'Perdu'
         };
 
         function exportToCSV(data, columns, filename) {
@@ -3164,6 +3595,33 @@
             document.getElementById('submitBtn').addEventListener('click', handleFormSubmit);
             document.getElementById('addVisitBtn').addEventListener('click', handleAddVisit);
 
+            // Price history buttons
+            document.getElementById('priceChangeBtn').addEventListener('click', () => {
+                document.getElementById('priceChangeForm').classList.add('active');
+                document.getElementById('priceNewValue').focus();
+            });
+            document.getElementById('priceChangeCancel').addEventListener('click', () => {
+                document.getElementById('priceChangeForm').classList.remove('active');
+                document.getElementById('priceNewValue').value = '';
+            });
+            document.getElementById('priceChangeConfirm').addEventListener('click', handlePriceChange);
+            document.getElementById('priceNewValue').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handlePriceChange(); }
+                if (e.key === 'Escape') {
+                    document.getElementById('priceChangeForm').classList.remove('active');
+                    document.getElementById('priceNewValue').value = '';
+                }
+            });
+
+            // Competitor popup
+            document.getElementById('competitorUrlConfirm').addEventListener('click', handleCompetitorUrl);
+            document.getElementById('competitorUrlSkip').addEventListener('click', handleCompetitorSkip);
+            document.getElementById('competitorPopup').addEventListener('click', e => { if (e.target === e.currentTarget) closeCompetitorPopup(); });
+            document.getElementById('competitorUrlInput').addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); handleCompetitorUrl(); }
+                if (e.key === 'Escape') closeCompetitorPopup();
+            });
+
             // Mise à jour onglets selon statut
             document.getElementById('status').addEventListener('change', updateModalTabs);
             // Mise à jour countdown selon date fin
@@ -3190,8 +3648,21 @@
             document.addEventListener('keydown', e => {
                 if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) closeModal();
             });
-            // Backdrop click — do NOT close (prevent accidental data loss)
-            document.getElementById('modal').addEventListener('click', e => { e.stopPropagation(); });
+            // Backdrop click — ferme si pas de modifications
+            document.getElementById('modal').addEventListener('click', e => {
+                if (e.target === document.getElementById('modal')) closeModal();
+            });
+
+            // Scroll horizontal du pipeline avec la molette souris
+            const pipelineEl = document.querySelector('.pipeline');
+            if (pipelineEl) {
+                pipelineEl.addEventListener('wheel', (e) => {
+                    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                        e.preventDefault();
+                        pipelineEl.scrollLeft += e.deltaY;
+                    }
+                }, { passive: false });
+            }
 
             document.getElementById('alertCounter').addEventListener('click', () => {
                 const cards = document.querySelectorAll('.lead-card');
@@ -3212,6 +3683,20 @@
             <div class="move-popup-title">📂 Déplacer vers...</div>
             <div class="move-popup-options" id="movePopupOptions"></div>
             <button class="move-popup-cancel" id="movePopupCancel">Annuler</button>
+        </div>
+    </div>
+
+    <!-- Competitor URL Popup -->
+    <div class="move-popup-overlay" id="competitorPopup" style="display:none">
+        <div class="move-popup" style="max-width:420px">
+            <div class="move-popup-title">🏢 Lien de l'annonce concurrente</div>
+            <p style="font-size:13px;color:var(--text-light);margin-bottom:12px">Collez le lien de l'annonce sur SeLoger, LeBonCoin, etc.</p>
+            <input type="url" id="competitorUrlInput" placeholder="https://www.seloger.com/..." style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:'Inter',sans-serif">
+            <div id="competitorScrapingStatus" style="display:none;font-size:13px;color:#667eea;margin-bottom:12px">⏳ Récupération des informations...</div>
+            <div style="display:flex;gap:8px">
+                <button id="competitorUrlConfirm" style="flex:1;padding:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Valider</button>
+                <button id="competitorUrlSkip" style="flex:1;padding:10px;background:#eee;color:#333;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Passer</button>
+            </div>
         </div>
     </div>
 
