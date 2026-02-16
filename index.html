@@ -2042,15 +2042,19 @@
                 date,
                 reminder: document.getElementById('reminder').value || null,
                 budget: document.getElementById('budget').value.trim() || null,
-                mandate_type: document.getElementById('mandateType').value || null,
-                mandate_reference: document.getElementById('mandateReference').value.trim() || null,
-                mandate_start_date: document.getElementById('mandateStartDate').value || null,
-                mandate_end_date: document.getElementById('mandateEndDate').value || null,
-                mandate_price: document.getElementById('mandatePrice').value.trim() || null,
                 commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
                 commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
                 links: currentLinks.length > 0 ? currentLinks : []
             };
+
+            // Inclure les champs mandat UNIQUEMENT si l'onglet est visible (status=mandate)
+            if (status === 'mandate') {
+                sellerData.mandate_type = document.getElementById('mandateType').value || null;
+                sellerData.mandate_reference = document.getElementById('mandateReference').value.trim() || null;
+                sellerData.mandate_start_date = document.getElementById('mandateStartDate').value || null;
+                sellerData.mandate_end_date = document.getElementById('mandateEndDate').value || null;
+                sellerData.mandate_price = document.getElementById('mandatePrice').value.trim() || null;
+            }
 
             // Auto-calculate commission if budget set and no manual amount
             if (!sellerData.commission_amount) {
@@ -2105,12 +2109,20 @@
                     const seller = sellers.find(s => s.id === sellerId);
 
                     if (seller && seller.status !== newStatus) {
-                        seller.status = newStatus;
-                        await updateSeller(sellerId, { status: newStatus });
+                        // Ne mettre à jour QUE le status — jamais les champs mandat
+                        const updated = await updateSeller(sellerId, { status: newStatus });
+                        if (updated) {
+                            const idx = sellers.findIndex(s => s.id === sellerId);
+                            if (idx !== -1) sellers[idx] = updated;
+                        } else {
+                            seller.status = newStatus;
+                        }
+                        await loadVisitCounts();
                         renderSellers();
 
-                        // Auto-transition : ouvre la modale sur l'onglet mandat
-                        if (newStatus === 'mandate' && !seller.mandate_start_date) {
+                        // Auto-ouverture modale mandat UNIQUEMENT si première fois (pas de date signature)
+                        const fresh = sellers.find(s => s.id === sellerId);
+                        if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
                             editSeller(sellerId, 'mandate');
                         }
                     }
