@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/audio-recorder.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -888,7 +889,7 @@
             transition: all 0.2s;
         }
         .dictate-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
-        .dictate-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .dictate-status.transcribing { display: block; color: #667eea; }
         .dictate-btn.recording {
             background: #FFEBEE;
             border-color: #FF4757;
@@ -960,7 +961,7 @@
             flex-shrink: 0;
         }
         .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; }
-        .notes-mic-btn.unavailable { opacity: 0.5; cursor: pointer; }
+        .notes-mic-btn.transcribing { background: #E8EAF6; border-color: #667eea; }
         .notes-mic-btn.recording {
             background: #FFEBEE;
             border-color: #FF4757;
@@ -1394,7 +1395,7 @@
             <form id="leadForm">
                 <div id="tabInfo">
                     <button type="button" class="dictate-btn" id="dictateBtn" onclick="handleDictateClick()">🎙️ Dicter mon lead</button>
-                    <div class="dictate-status" id="dictateStatus">🔴 Écoute en cours… Parlez naturellement.</div>
+                    <div class="dictate-status" id="dictateStatus"></div>
                     <div class="form-group">
                         <label class="form-label">Statut du Lead *</label>
                         <select class="form-select" id="status" required>
@@ -2248,8 +2249,7 @@
 
         // ===== NOTES HORODATÉES =====
         let currentNotes = [];
-        let noteRecognition = null;
-        let isNoteRecording = false;
+        let noteRecorder = null;
 
         async function loadNotes(sellerId) {
             const userId = await getCurrentUserId();
@@ -2318,56 +2318,42 @@
             `).join('');
         }
 
-        // Dictée vocale pour notes
-        function startNoteRecording() {
-            if (!hasSpeechRecognition) { showSpeechFallbackPopup(); return; }
-            if (isNoteRecording) { stopNoteRecording(); return; }
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            noteRecognition = new SpeechRecognition();
-            noteRecognition.lang = 'fr-FR';
-            noteRecognition.continuous = true;
-            noteRecognition.interimResults = true;
-
+        // Dictée vocale pour notes (MediaRecorder + Whisper)
+        async function startNoteRecording() {
             const btn = document.getElementById('noteMicBtn');
             const input = document.getElementById('noteInput');
-            let finalText = input.value;
-            let silenceTimer = null;
 
-            noteRecognition.onstart = () => {
-                isNoteRecording = true;
-                btn.classList.add('recording');
-            };
+            if (noteRecorder && noteRecorder.isRecording) {
+                noteRecorder.stop();
+                return;
+            }
 
-            noteRecognition.onresult = (event) => {
-                clearTimeout(silenceTimer);
-                let interim = '';
-                let final = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        final += event.results[i][0].transcript;
+            noteRecorder = new AudioRecorder({
+                maxDuration: 30000,
+                onStateChange: (state, msg) => {
+                    if (state === 'recording') {
+                        btn.classList.add('recording');
+                        btn.classList.remove('transcribing');
+                    } else if (state === 'transcribing') {
+                        btn.classList.remove('recording');
+                        btn.classList.add('transcribing');
+                        btn.innerHTML = '⏳';
                     } else {
-                        interim += event.results[i][0].transcript;
+                        btn.classList.remove('recording', 'transcribing');
+                        btn.innerHTML = '🎙️';
                     }
+                    if (state === 'error' && msg) alert(msg);
                 }
-                if (final) finalText += (finalText ? ' ' : '') + final;
-                input.value = finalText + (interim ? ' ' + interim : '');
-                // Auto-stop après 3s de silence
-                silenceTimer = setTimeout(() => stopNoteRecording(), 3000);
-            };
+            });
 
-            noteRecognition.onerror = () => stopNoteRecording();
-            noteRecognition.onend = () => stopNoteRecording();
-            noteRecognition.start();
-        }
-
-        function stopNoteRecording() {
-            isNoteRecording = false;
-            const btn = document.getElementById('noteMicBtn');
-            if (btn) btn.classList.remove('recording');
-            if (noteRecognition) {
-                try { noteRecognition.stop(); } catch (e) {}
-                noteRecognition = null;
+            try {
+                const text = await noteRecorder.record();
+                if (text) {
+                    const current = input.value.trim();
+                    input.value = current ? current + ' ' + text : text;
+                }
+            } catch (err) {
+                console.error('Note recording error:', err);
             }
         }
 
@@ -2391,71 +2377,58 @@
                     else alert('Enregistrez le lead avant d\'ajouter des notes.');
                 }
             });
-
-            // Appliquer classe unavailable si pas de Speech
-            if (micBtn && !hasSpeechRecognition) micBtn.classList.add('unavailable');
         }
 
-        // ===== DICTÉE VOCALE MODALE =====
-        let sellerDictation = null;
-        let isSellerDictating = false;
+        // ===== DICTÉE VOCALE MODALE (MediaRecorder + Whisper) =====
+        let sellerRecorder = null;
 
-        function handleDictateClick() {
-            if (!hasSpeechRecognition) {
-                showSpeechFallbackPopup();
+        async function handleDictateClick() {
+            const btn = document.getElementById('dictateBtn');
+            const status = document.getElementById('dictateStatus');
+
+            if (sellerRecorder && sellerRecorder.isRecording) {
+                sellerRecorder.stop();
                 return;
             }
-            if (isSellerDictating) {
-                stopSellerDictation();
-            } else {
-                startSellerDictation();
-            }
-        }
 
-        function startSellerDictation() {
-            if (isSellerDictating) return;
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            sellerDictation = new SpeechRecognition();
-            sellerDictation.lang = 'fr-FR';
-            sellerDictation.continuous = true;
-            sellerDictation.interimResults = false;
-
-            const btn = document.getElementById('dictateBtn');
-            const status = document.getElementById('dictateStatus');
-
-            sellerDictation.onstart = () => {
-                isSellerDictating = true;
-                btn.classList.add('recording');
-                btn.innerHTML = '⏹️ Arrêter la dictée';
-                status.classList.add('active');
-            };
-
-            sellerDictation.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        transcript += event.results[i][0].transcript;
+            sellerRecorder = new AudioRecorder({
+                maxDuration: 30000,
+                onStateChange: (state, msg) => {
+                    if (state === 'recording') {
+                        btn.classList.add('recording');
+                        btn.innerHTML = '⏹️ Arrêter la dictée';
+                        status.textContent = '🔴 Écoute en cours… Parlez naturellement.';
+                        status.className = 'dictate-status active';
+                    } else if (state === 'transcribing') {
+                        btn.classList.remove('recording');
+                        btn.innerHTML = '⏳ Transcription...';
+                        status.textContent = '⏳ Transcription en cours...';
+                        status.className = 'dictate-status active transcribing';
+                    } else if (state === 'error') {
+                        btn.classList.remove('recording');
+                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        if (msg) {
+                            status.textContent = '⚠️ ' + msg;
+                            status.className = 'dictate-status active';
+                            setTimeout(() => { status.className = 'dictate-status'; }, 4000);
+                        } else {
+                            status.className = 'dictate-status';
+                        }
+                    } else {
+                        btn.classList.remove('recording');
+                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        status.className = 'dictate-status';
                     }
                 }
-                if (transcript.trim()) parseSellerDictation(transcript.trim());
-            };
+            });
 
-            sellerDictation.onerror = () => stopSellerDictation();
-            sellerDictation.onend = () => stopSellerDictation();
-
-            sellerDictation.start();
-        }
-
-        function stopSellerDictation() {
-            isSellerDictating = false;
-            const btn = document.getElementById('dictateBtn');
-            const status = document.getElementById('dictateStatus');
-            btn.classList.remove('recording');
-            btn.innerHTML = '🎙️ Dicter mon lead';
-            status.classList.remove('active');
-            if (sellerDictation) {
-                try { sellerDictation.stop(); } catch (e) { /* already stopped */ }
-                sellerDictation = null;
+            try {
+                const text = await sellerRecorder.record();
+                if (text && text.trim()) {
+                    parseSellerDictation(text.trim());
+                }
+            } catch (err) {
+                console.error('Seller dictation error:', err);
             }
         }
 
@@ -2633,7 +2606,8 @@
             // Reset notes
             currentNotes = [];
             renderNotes();
-            stopNoteRecording();
+            if (noteRecorder) noteRecorder.stop();
+            if (sellerRecorder) sellerRecorder.stop();
             document.getElementById('noteInput').value = '';
         }
 

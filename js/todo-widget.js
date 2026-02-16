@@ -185,9 +185,9 @@
             border-color: #FF4757;
             animation: todoPulse 1.2s infinite;
         }
-        .todo-voice-btn.unavailable {
-            opacity: 0.35;
-            cursor: not-allowed;
+        .todo-voice-btn.transcribing {
+            background: #E8EAF6;
+            border-color: #667eea;
         }
         @keyframes todoPulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
@@ -360,7 +360,7 @@
         <div class="todo-input-area">
             <div class="todo-input-row">
                 <input type="text" class="todo-text-input" placeholder="Ajouter une tâche…">
-                <button class="todo-voice-btn ${hasSpeechRecognition ? '' : 'unavailable'}" title="Dictée vocale">🎙️</button>
+                <button class="todo-voice-btn" title="Dictée vocale">🎙️</button>
                 <button class="todo-add-btn">+</button>
             </div>
             <div class="todo-voice-status">🔴 Écoute en cours…</div>
@@ -385,8 +385,7 @@
 
     let todos = [];
     let isOpen = false;
-    let recognition = null;
-    let isRecording = false;
+    let todoRecorder = null;
 
     // ===== OUVRIR / FERMER =====
     function openPanel() {
@@ -400,7 +399,7 @@
         isOpen = false;
         panel.classList.remove('active');
         overlay.classList.remove('active');
-        stopRecording();
+        if (todoRecorder) todoRecorder.stop();
     }
 
     fab.addEventListener('click', () => {
@@ -567,87 +566,55 @@
         voiceStatus.textContent = msg;
         voiceStatus.classList.remove('active');
         voiceStatus.classList.add('error');
-        setTimeout(() => { voiceStatus.classList.remove('error'); voiceStatus.textContent = '🔴 Écoute en cours…'; }, 4000);
+        setTimeout(() => { voiceStatus.classList.remove('error'); voiceStatus.textContent = ''; }, 4000);
     }
 
-    function startRecording() {
-        if (isRecording) return;
-
-        // Reset stuck state
-        isRecording = false;
-
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            showSpeechFallbackPopup();
-            return;
-        }
-
-        recognition = new SpeechRecognition();
-        recognition.lang = 'fr-FR';
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = () => {
-            isRecording = true;
-            voiceBtn.classList.add('recording');
-            voiceStatus.classList.remove('error');
-            voiceStatus.textContent = '🔴 Écoute en cours…';
-            voiceStatus.classList.add('active');
-        };
-
-        recognition.onresult = (event) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-            for (let i = 0; i < event.results.length; i++) {
-                if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
-                else interimTranscript += event.results[i][0].transcript;
+    async function startRecording() {
+        todoRecorder = new AudioRecorder({
+            maxDuration: 30000,
+            apiTimeout: 15000,
+            onStateChange: (state, msg) => {
+                if (state === 'recording') {
+                    voiceBtn.classList.add('recording');
+                    voiceBtn.classList.remove('transcribing');
+                    voiceStatus.classList.remove('error');
+                    voiceStatus.textContent = '🔴 Écoute en cours…';
+                    voiceStatus.classList.add('active');
+                } else if (state === 'transcribing') {
+                    voiceBtn.classList.remove('recording');
+                    voiceBtn.classList.add('transcribing');
+                    voiceStatus.textContent = '⏳ Transcription…';
+                } else if (state === 'done' || state === 'idle') {
+                    voiceBtn.classList.remove('recording', 'transcribing');
+                    voiceStatus.classList.remove('active');
+                    voiceStatus.textContent = '';
+                } else if (state === 'error') {
+                    voiceBtn.classList.remove('recording', 'transcribing');
+                    showVoiceError('⚠️ ' + (msg || 'Erreur micro'));
+                }
             }
-            // Show interim in input for visual feedback
-            if (interimTranscript && !finalTranscript) {
-                textInput.value = interimTranscript;
-            }
-            if (finalTranscript) {
-                processVoiceInput(finalTranscript);
-            }
-        };
-
-        recognition.onerror = (event) => {
-            console.warn('Speech error:', event.error);
-            stopRecording();
-            if (event.error === 'not-allowed' || event.error === 'permission-denied') {
-                showVoiceError('⚠️ Micro bloqué — autorisez le micro dans les réglages du navigateur');
-            } else if (event.error === 'no-speech') {
-                showVoiceError('🤷 Aucune voix détectée, réessayez');
-            } else if (event.error === 'network') {
-                showVoiceError('⚠️ Erreur réseau — vérifiez votre connexion');
-            } else {
-                showVoiceError('⚠️ Erreur micro : ' + event.error);
-            }
-        };
-
-        recognition.onend = () => {
-            stopRecording();
-        };
+        });
 
         try {
-            recognition.start();
-        } catch (e) {
-            console.warn('Speech start error:', e);
-            stopRecording();
-            showVoiceError('⚠️ Impossible de démarrer le micro');
+            const text = await todoRecorder.record();
+            if (text && text.trim()) {
+                processVoiceInput(text.trim());
+            }
+        } catch (err) {
+            console.warn('Todo voice error:', err);
         }
+        todoRecorder = null;
     }
 
     function stopRecording() {
-        isRecording = false;
-        voiceBtn.classList.remove('recording');
+        if (todoRecorder) {
+            todoRecorder.stop();
+            todoRecorder = null;
+        }
+        voiceBtn.classList.remove('recording', 'transcribing');
         if (!voiceStatus.classList.contains('error')) {
             voiceStatus.classList.remove('active');
-        }
-        if (recognition) {
-            try { recognition.stop(); } catch (e) { /* already stopped */ }
-            recognition = null;
+            voiceStatus.textContent = '';
         }
     }
 
@@ -669,12 +636,11 @@
     voiceBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (!hasSpeechRecognition) {
-            showSpeechFallbackPopup();
-            return;
+        if (todoRecorder && todoRecorder.isRecording) {
+            stopRecording();
+        } else {
+            startRecording();
         }
-        if (isRecording) stopRecording();
-        else startRecording();
     });
 
     // ===== CLEAR DONE =====
