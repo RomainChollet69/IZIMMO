@@ -173,6 +173,20 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+// ===== FORMATAGE MONTANTS =====
+function parseAmount(val) {
+    if (!val && val !== 0) return 0;
+    if (typeof val === 'number') return val;
+    return parseFloat(String(val).replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+}
+
+function formatEuro(amount) {
+    if (!amount && amount !== 0) return '';
+    const num = typeof amount === 'number' ? amount : parseAmount(amount);
+    if (isNaN(num) || num === 0) return '';
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num);
+}
+
 // ===== AUTOCOMPLETE ADRESSE (api-adresse.data.gouv.fr) =====
 (function () {
     const style = document.createElement('style');

@@ -1189,15 +1189,9 @@
 
         // ===== HELPERS =====
         function formatBudget(min, max) {
-            const fmt = (n) => {
-                n = parseInt(n);
-                if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M';
-                if (n >= 1000) return Math.round(n / 1000) + 'k';
-                return n.toString();
-            };
-            if (min && max) return fmt(min) + '-' + fmt(max) + '€';
-            if (max) return '< ' + fmt(max) + '€';
-            if (min) return '> ' + fmt(min) + '€';
+            if (min && max) return formatEuro(min) + ' - ' + formatEuro(max);
+            if (max) return '< ' + formatEuro(max);
+            if (min) return '> ' + formatEuro(min);
             return '';
         }
 

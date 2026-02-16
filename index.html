@@ -723,6 +723,37 @@
             font-style: italic;
         }
 
+        /* ===== COMMISSION ===== */
+        .card-commission {
+            font-size: 13px;
+            color: #F57F17;
+            background: #FFF8E1;
+            padding: 6px 10px;
+            border-radius: 6px;
+            margin-top: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-weight: 600;
+        }
+
+        .card-commission:hover { background: #FFF3C4; }
+        .card-commission.editing { cursor: default; background: #FFF8E1; }
+
+        .commission-inline-input {
+            border: none;
+            border-bottom: 1.5px solid #F57F17;
+            background: transparent;
+            font-size: 13px;
+            color: #F57F17;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            padding: 0 2px;
+            outline: none;
+        }
+
+        .commission-inline-input.amount { width: 80px; }
+        .commission-inline-input.rate { width: 35px; text-align: center; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -859,6 +890,9 @@
             .mandate-meta { gap: 4px; }
             .mandate-meta-item { font-size: 10px; }
             .mandate-badge { font-size: 10px; padding: 3px 8px; }
+            .card-commission { font-size: 11px; padding: 4px 8px; }
+            .commission-inline-input.amount { width: 60px; }
+            .commission-inline-input.rate { width: 28px; }
         }
     </style>
 </head>
@@ -1034,6 +1068,17 @@
                     <div class="form-group">
                         <label class="form-label">Budget / Estimation (€)</label>
                         <input type="text" class="form-input" id="budget" placeholder="350 000 €">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Taux de commission (%)</label>
+                            <input type="number" class="form-input" id="commissionRate" value="4" min="0" max="100" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Commission TTC (€)</label>
+                            <input type="number" class="form-input" id="commissionAmount" placeholder="Auto">
+                        </div>
                     </div>
                 </div>
 
@@ -1275,6 +1320,63 @@
             }
         }
 
+        // ===== COMMISSION INLINE EDIT =====
+        function editCommissionInline(event, sellerId) {
+            event.stopPropagation();
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+
+            const div = event.currentTarget;
+            if (div.classList.contains('editing')) return;
+
+            const budgetNum = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            const rate = seller.commission_rate || 4;
+            const amount = seller.commission_amount || Math.round(budgetNum * rate / 100);
+
+            div.classList.add('editing');
+            div.innerHTML = `💼 <input class="commission-inline-input amount" type="number" value="${Math.round(amount)}"> € TTC (<input class="commission-inline-input rate" type="number" value="${rate}" step="0.1">%)`;
+
+            const amountInput = div.querySelector('.amount');
+            const rateInput = div.querySelector('.rate');
+
+            rateInput.addEventListener('input', () => {
+                const r = parseFloat(rateInput.value) || 0;
+                if (budgetNum > 0) amountInput.value = Math.round(budgetNum * r / 100);
+            });
+
+            amountInput.addEventListener('input', () => {
+                const a = parseFloat(amountInput.value) || 0;
+                if (budgetNum > 0) rateInput.value = (a / budgetNum * 100).toFixed(1);
+            });
+
+            const save = async () => {
+                const newRate = parseFloat(rateInput.value) || 4;
+                const newAmount = parseFloat(amountInput.value) || 0;
+                await updateSeller(sellerId, { commission_rate: newRate, commission_amount: newAmount });
+                seller.commission_rate = newRate;
+                seller.commission_amount = newAmount;
+                div.classList.remove('editing');
+                div.innerHTML = `💼 ${formatEuro(newAmount)} TTC (${newRate}%)`;
+            };
+
+            amountInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+            rateInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+
+            let blurTimeout;
+            const handleBlur = () => {
+                blurTimeout = setTimeout(() => {
+                    if (!div.contains(document.activeElement)) save();
+                }, 200);
+            };
+            amountInput.addEventListener('blur', handleBlur);
+            rateInput.addEventListener('blur', handleBlur);
+            amountInput.addEventListener('focus', () => clearTimeout(blurTimeout));
+            rateInput.addEventListener('focus', () => clearTimeout(blurTimeout));
+
+            amountInput.focus();
+            amountInput.select();
+        }
+
         // ===== BUYER AUTOCOMPLETE (visites) =====
         function setupBuyerAutocomplete() {
             const input = document.getElementById('visitBuyerName');
@@ -1433,7 +1535,7 @@
                 }
 
                 html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
-                if (seller.mandate_price) html += `<div class="card-info">💰 ${seller.mandate_price}</div>`;
+                if (seller.mandate_price) html += `<div class="card-info">💰 ${formatEuro(seller.mandate_price)}</div>`;
                 if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
                 if (seller.mandate_reference) html += `<div class="card-info">📋 Réf: ${seller.mandate_reference}</div>`;
 
@@ -1473,7 +1575,15 @@
                 if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
                 if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
                 if (seller.description) html += `<div class="card-info">${seller.description}</div>`;
-                if (seller.budget) html += `<div class="card-info">💰 ${seller.budget}</div>`;
+                if (seller.budget) html += `<div class="card-info">💰 ${formatEuro(seller.budget)}</div>`;
+            }
+
+            // Commission
+            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
+                html += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
             if (seller.notes) {
@@ -1603,6 +1713,10 @@
             document.getElementById('mandatePrice').value = '';
             document.getElementById('mandateCountdown').innerHTML = '';
 
+            // Reset commission
+            document.getElementById('commissionRate').value = 4;
+            document.getElementById('commissionAmount').value = '';
+
             // Reset visits
             currentVisits = [];
             const visitList = document.getElementById('visitList');
@@ -1638,6 +1752,11 @@
             document.getElementById('mandateStartDate').value = seller.mandate_start_date || '';
             document.getElementById('mandateEndDate').value = seller.mandate_end_date || '';
             document.getElementById('mandatePrice').value = seller.mandate_price || '';
+
+            // Commission fields
+            document.getElementById('commissionRate').value = seller.commission_rate || 4;
+            const budgetForComm = parseAmount(seller.budget);
+            document.getElementById('commissionAmount').value = seller.commission_amount || (budgetForComm > 0 ? Math.round(budgetForComm * (seller.commission_rate || 4) / 100) : '');
 
             document.querySelector('.modal-title').textContent = 'Modifier le Lead';
             const submitBtn = document.getElementById('submitBtn');
@@ -1697,8 +1816,18 @@
                 mandate_reference: document.getElementById('mandateReference').value.trim() || null,
                 mandate_start_date: document.getElementById('mandateStartDate').value || null,
                 mandate_end_date: document.getElementById('mandateEndDate').value || null,
-                mandate_price: document.getElementById('mandatePrice').value.trim() || null
+                mandate_price: document.getElementById('mandatePrice').value.trim() || null,
+                commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
+                commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null
             };
+
+            // Auto-calculate commission if budget set and no manual amount
+            if (!sellerData.commission_amount) {
+                const budgetNum = parseAmount(sellerData.budget);
+                if (budgetNum > 0) {
+                    sellerData.commission_amount = Math.round(budgetNum * sellerData.commission_rate / 100);
+                }
+            }
 
             const editId = document.getElementById('submitBtn').dataset.editId;
 
@@ -1777,6 +1906,24 @@
             document.getElementById('status').addEventListener('change', updateModalTabs);
             // Mise à jour countdown selon date fin
             document.getElementById('mandateEndDate').addEventListener('change', updateMandateCountdown);
+
+            // Commission auto-calculation
+            document.getElementById('budget').addEventListener('input', () => {
+                const budget = parseAmount(document.getElementById('budget').value);
+                const rate = parseFloat(document.getElementById('commissionRate').value) || 4;
+                if (budget > 0) document.getElementById('commissionAmount').value = Math.round(budget * rate / 100);
+                else document.getElementById('commissionAmount').value = '';
+            });
+            document.getElementById('commissionRate').addEventListener('input', () => {
+                const budget = parseAmount(document.getElementById('budget').value);
+                const rate = parseFloat(document.getElementById('commissionRate').value) || 0;
+                if (budget > 0) document.getElementById('commissionAmount').value = Math.round(budget * rate / 100);
+            });
+            document.getElementById('commissionAmount').addEventListener('input', () => {
+                const budget = parseAmount(document.getElementById('budget').value);
+                const amount = parseFloat(document.getElementById('commissionAmount').value) || 0;
+                if (budget > 0 && amount > 0) document.getElementById('commissionRate').value = (amount / budget * 100).toFixed(1);
+            });
 
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
             document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
