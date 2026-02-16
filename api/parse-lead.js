@@ -39,6 +39,7 @@ Retourne un JSON avec ces champs :
   - "efficity" (si "efficity" est mentionné)
   - "autre" (si une autre source est mentionnée mais ne correspond à aucune ci-dessus)
   - null (si AUCUNE source n'est mentionnée)
+- "referrer_name": string ou null — nom de l'apporteur d'affaire (ex: "recommandé par Patrick Durand" → "Patrick Durand", "recommandation de Sophie Martin" → "Sophie Martin"). Seulement si la source est "recommandation" ET qu'un nom est mentionné après.
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble" (si le type de bien est mentionné)
 - "surface": string ou null — surface du bien (ex: "65 m²", "120 m²")
 - "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
@@ -49,6 +50,7 @@ Retourne un JSON avec ces champs :
 Règles :
 - Si la personne dit "Sophie Martin", le prénom est "Sophie" et le nom est "Martin"
 - Si la personne dit "Madame Martin", first_name est null et last_name est "Martin"
+- IMPORTANT : "referrer_name" est le nom de la personne qui a RECOMMANDÉ le lead (l'apporteur), PAS le nom du lead lui-même. Ne pas confondre avec first_name/last_name.
 - Ne jamais inventer de données. Si un champ n'est pas mentionné, il DOIT être null
 - Retourne UNIQUEMENT le JSON, sans commentaire ni explication`;
 
@@ -69,6 +71,7 @@ Retourne un JSON avec ces champs :
   - "reseaux_sociaux" (si "réseaux sociaux", "facebook", "instagram" est mentionné)
   - "autre" (si une autre source est mentionnée mais ne correspond à aucune ci-dessus)
   - null (si AUCUNE source n'est mentionnée)
+- "referrer_name": string ou null — nom de l'apporteur d'affaire (ex: "recommandé par Patrick Durand" → "Patrick Durand"). Seulement si la source est "recommandation" ET qu'un nom est mentionné après.
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble"
 - "rooms": string ou null — parmi "T1", "T2", "T3", "T4", "T5+"
 - "sector": string ou null — ville ou quartier recherché
@@ -85,6 +88,7 @@ Retourne un JSON avec ces champs :
 
 Règles :
 - Si la personne dit "Sophie Martin", le prénom est "Sophie" et le nom est "Martin"
+- IMPORTANT : "referrer_name" est le nom de la personne qui a RECOMMANDÉ le lead (l'apporteur), PAS le nom du lead lui-même.
 - Ne jamais inventer de données. Si un champ n'est pas mentionné, il DOIT être null
 - Retourne UNIQUEMENT le JSON, sans commentaire ni explication`;
 

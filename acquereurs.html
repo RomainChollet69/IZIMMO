@@ -684,6 +684,25 @@
             border-color: #667eea;
         }
 
+        .referrer-group {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            margin-top: 0;
+        }
+        .referrer-group.active {
+            max-height: 80px;
+            opacity: 1;
+            margin-top: 12px;
+        }
+        .referrer-via {
+            font-size: 12px;
+            color: #999;
+            font-style: italic;
+            margin-top: 2px;
+        }
+
         /* Toggle switch vendeur */
         .seller-toggle-group {
             display: flex;
@@ -1313,6 +1332,10 @@
                                 <option value="reseaux_sociaux">📱 Réseaux sociaux</option>
                                 <option value="autre">📌 Autre</option>
                             </select>
+                            <div class="referrer-group" id="referrerGroup">
+                                <label class="form-label">Apporteur d'affaire</label>
+                                <input type="text" class="form-input" id="referrerName" placeholder="Nom de l'apporteur..." autocomplete="off">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1747,6 +1770,9 @@
             // Source tag
             if (buyer.source) {
                 html += getBuyerSourceTag(buyer.source);
+                if (buyer.source === 'recommandation' && buyer.referrer_name) {
+                    html += `<div class="referrer-via">via ${escapeHtml(buyer.referrer_name)}</div>`;
+                }
             }
 
             // Infos principales
@@ -1860,6 +1886,8 @@
         function resetForm() {
             document.getElementById('buyerForm').reset();
             document.getElementById('sellerFields').style.display = 'none';
+            document.getElementById('referrerGroup').classList.remove('active');
+            document.getElementById('referrerName').value = '';
             currentLinks = [];
             renderLinks();
             if (buyerRecorder) buyerRecorder.stop();
@@ -1978,6 +2006,16 @@
                             sourceSelect.value = option.value;
                             break;
                         }
+                    }
+                    // Show referrer field if recommandation
+                    const rg = document.getElementById('referrerGroup');
+                    if (fields.source.toLowerCase() === 'recommandation') {
+                        rg.classList.add('active');
+                        if (fields.referrer_name) {
+                            document.getElementById('referrerName').value = fields.referrer_name;
+                        }
+                    } else {
+                        rg.classList.remove('active');
                     }
                 }
 
@@ -2278,6 +2316,16 @@
             document.getElementById('phone').value = buyer.phone || '';
             document.getElementById('email').value = buyer.email || '';
             document.getElementById('source').value = buyer.source || '';
+            // Referrer field
+            const referrerGroup = document.getElementById('referrerGroup');
+            const referrerInput = document.getElementById('referrerName');
+            if (buyer.source === 'recommandation') {
+                referrerGroup.classList.add('active');
+                referrerInput.value = buyer.referrer_name || '';
+            } else {
+                referrerGroup.classList.remove('active');
+                referrerInput.value = '';
+            }
             document.getElementById('propertyType').value = buyer.property_type || '';
             document.getElementById('rooms').value = buyer.rooms || '';
             document.getElementById('surfaceMin').value = buyer.surface_min || '';
@@ -2360,6 +2408,7 @@
                 phone: document.getElementById('phone').value.trim(),
                 email: document.getElementById('email').value.trim(),
                 source: document.getElementById('source').value || null,
+                referrer_name: document.getElementById('source').value === 'recommandation' ? (document.getElementById('referrerName').value.trim() || null) : null,
                 property_type: propertyType,
                 rooms: document.getElementById('rooms').value || null,
                 sector,
@@ -2511,6 +2560,7 @@
                 }},
                 { label: 'Éléments Rédhibitoires', getValue: b => b.dealbreakers || '' },
                 { label: 'Source', getValue: b => { const c = BUYER_SOURCE_CONFIG[b.source]; return c ? c.label.replace(/^.\s*/, '') : (b.source || ''); }},
+                { label: 'Apporteur', getValue: b => b.referrer_name || '' },
                 { label: 'Date Relance', getValue: b => fmtDate(b.reminder) },
                 { label: 'Notes', getValue: b => '' }
             ];
@@ -2522,6 +2572,91 @@
             document.getElementById('exportDropdown').classList.remove('active');
         }
 
+        // ===== APPORTEUR D'AFFAIRE (Recommandation) =====
+        function setupReferrerField() {
+            const sourceSelect = document.getElementById('source');
+            const referrerGroup = document.getElementById('referrerGroup');
+            const referrerInput = document.getElementById('referrerName');
+
+            sourceSelect.addEventListener('change', () => {
+                if (sourceSelect.value === 'recommandation') {
+                    referrerGroup.classList.add('active');
+                } else {
+                    referrerGroup.classList.remove('active');
+                    referrerInput.value = '';
+                }
+            });
+
+            // Autocomplete contacts pour l'apporteur
+            const wrapper = referrerGroup;
+            wrapper.style.position = 'relative';
+            const dropdown = document.createElement('div');
+            dropdown.className = 'ac-dropdown';
+            wrapper.appendChild(dropdown);
+
+            let debounceTimer = null;
+            let results = [];
+            let selIdx = -1;
+
+            referrerInput.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const q = referrerInput.value.trim();
+                if (q.length < 2) { dropdown.classList.remove('active'); return; }
+                debounceTimer = setTimeout(() => searchReferrerContacts(q), 300);
+            });
+
+            referrerInput.addEventListener('keydown', (e) => {
+                if (!dropdown.classList.contains('active')) return;
+                if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx + 1, results.length - 1); highlightReferrer(); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); highlightReferrer(); }
+                else if (e.key === 'Enter' && selIdx >= 0) { e.preventDefault(); pickReferrer(results[selIdx]); }
+                else if (e.key === 'Escape') { dropdown.classList.remove('active'); }
+            });
+
+            referrerInput.addEventListener('blur', () => {
+                setTimeout(() => dropdown.classList.remove('active'), 200);
+            });
+
+            async function searchReferrerContacts(query) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return;
+                const { data, error } = await supabaseClient
+                    .from('contacts')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .ilike('name', '%' + query + '%')
+                    .limit(5);
+
+                if (error || !data || data.length === 0) { dropdown.classList.remove('active'); return; }
+                results = data;
+                selIdx = -1;
+                dropdown.innerHTML = data.map((c, i) => {
+                    let details = [];
+                    if (c.phone) details.push(`<span>📞 ${escapeHtml(c.phone)}</span>`);
+                    if (c.email) details.push(`<span>📧 ${escapeHtml(c.email)}</span>`);
+                    return `<div class="ac-item" data-i="${i}">
+                        <div class="ac-name">${escapeHtml(c.name)}</div>
+                        ${details.length ? `<div class="ac-details">${details.join('')}</div>` : ''}
+                    </div>`;
+                }).join('');
+                dropdown.classList.add('active');
+                dropdown.querySelectorAll('.ac-item').forEach(item => {
+                    item.addEventListener('click', () => pickReferrer(data[parseInt(item.dataset.i)]));
+                });
+            }
+
+            function highlightReferrer() {
+                dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
+                    el.classList.toggle('ac-selected', i === selIdx);
+                });
+            }
+
+            function pickReferrer(contact) {
+                referrerInput.value = contact.name || '';
+                dropdown.classList.remove('active');
+            }
+        }
+
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
             loadBuyers();
@@ -2529,6 +2664,7 @@
             initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('sector');
+            setupReferrerField();
 
             // Note events
             document.getElementById('noteMicBtn').addEventListener('click', startBuyerNoteRecording);
