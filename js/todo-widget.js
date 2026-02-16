@@ -162,6 +162,8 @@
         }
         .todo-voice-btn {
             padding: 10px 14px;
+            min-width: 44px;
+            min-height: 44px;
             background: #f0f2f5;
             border: 1px solid #E1E8ED;
             border-radius: 10px;
@@ -169,9 +171,14 @@
             cursor: pointer;
             transition: background 0.2s, border-color 0.2s;
             flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
         .todo-voice-btn:hover {
             background: #e8eaf6;
+        }
+        .todo-voice-btn:active {
+            background: #e0e3ff;
         }
         .todo-voice-btn.recording {
             background: #FFEBEE;
@@ -195,6 +202,10 @@
         }
         .todo-voice-status.active {
             display: block;
+        }
+        .todo-voice-status.error {
+            display: block;
+            color: #e67e22;
         }
 
         /* Liste des tâches */
@@ -552,43 +563,88 @@
     });
 
     // ===== DICTÉE VOCALE =====
+    function showVoiceError(msg) {
+        voiceStatus.textContent = msg;
+        voiceStatus.classList.remove('active');
+        voiceStatus.classList.add('error');
+        setTimeout(() => { voiceStatus.classList.remove('error'); voiceStatus.textContent = '🔴 Écoute en cours…'; }, 4000);
+    }
+
     function startRecording() {
-        if (!hasSpeechRecognition || isRecording) return;
+        if (isRecording) return;
+
+        // Reset stuck state
+        isRecording = false;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showSpeechFallbackPopup();
+            return;
+        }
+
         recognition = new SpeechRecognition();
         recognition.lang = 'fr-FR';
         recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.interimResults = true;
         recognition.maxAlternatives = 1;
 
         recognition.onstart = () => {
             isRecording = true;
             voiceBtn.classList.add('recording');
+            voiceStatus.classList.remove('error');
+            voiceStatus.textContent = '🔴 Écoute en cours…';
             voiceStatus.classList.add('active');
         };
 
         recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            processVoiceInput(transcript);
+            let finalTranscript = '';
+            let interimTranscript = '';
+            for (let i = 0; i < event.results.length; i++) {
+                if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+                else interimTranscript += event.results[i][0].transcript;
+            }
+            // Show interim in input for visual feedback
+            if (interimTranscript && !finalTranscript) {
+                textInput.value = interimTranscript;
+            }
+            if (finalTranscript) {
+                processVoiceInput(finalTranscript);
+            }
         };
 
         recognition.onerror = (event) => {
             console.warn('Speech error:', event.error);
             stopRecording();
+            if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+                showVoiceError('⚠️ Micro bloqué — autorisez le micro dans les réglages du navigateur');
+            } else if (event.error === 'no-speech') {
+                showVoiceError('🤷 Aucune voix détectée, réessayez');
+            } else if (event.error === 'network') {
+                showVoiceError('⚠️ Erreur réseau — vérifiez votre connexion');
+            } else {
+                showVoiceError('⚠️ Erreur micro : ' + event.error);
+            }
         };
 
         recognition.onend = () => {
             stopRecording();
         };
 
-        recognition.start();
+        try {
+            recognition.start();
+        } catch (e) {
+            console.warn('Speech start error:', e);
+            stopRecording();
+            showVoiceError('⚠️ Impossible de démarrer le micro');
+        }
     }
 
     function stopRecording() {
         isRecording = false;
         voiceBtn.classList.remove('recording');
-        voiceStatus.classList.remove('active');
+        if (!voiceStatus.classList.contains('error')) {
+            voiceStatus.classList.remove('active');
+        }
         if (recognition) {
             try { recognition.stop(); } catch (e) { /* already stopped */ }
             recognition = null;
@@ -602,6 +658,7 @@
 
         if (tasks.length === 0) return;
 
+        textInput.value = '';
         // Capitaliser la première lettre de chaque tâche
         tasks.forEach(task => {
             const capitalized = task.charAt(0).toUpperCase() + task.slice(1);
@@ -609,7 +666,9 @@
         });
     }
 
-    voiceBtn.addEventListener('click', () => {
+    voiceBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (!hasSpeechRecognition) {
             showSpeechFallbackPopup();
             return;
