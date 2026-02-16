@@ -1247,11 +1247,21 @@
 
         // ===== PROFILE CRUD =====
         async function loadProfile() {
-            const { data, error } = await supabaseClient
+            // Essayer d'abord avec 'id' (table Supabase standard), sinon 'user_id'
+            let { data, error } = await supabaseClient
                 .from('profiles')
                 .select('*')
-                .eq('user_id', currentUserId)
+                .eq('id', currentUserId)
                 .maybeSingle();
+
+            if (error) {
+                // Fallback : essayer avec user_id
+                ({ data, error } = await supabaseClient
+                    .from('profiles')
+                    .select('*')
+                    .eq('user_id', currentUserId)
+                    .maybeSingle());
+            }
 
             if (data) {
                 document.getElementById('phonePro').value = data.phone_pro || '';
@@ -1265,7 +1275,7 @@
             btn.textContent = 'Enregistrement...';
 
             const profileData = {
-                user_id: currentUserId,
+                id: currentUserId,
                 phone_pro: document.getElementById('phonePro').value.trim() || null,
                 agency_name: document.getElementById('agencyName').value.trim() || null,
                 updated_at: new Date().toISOString()
@@ -1273,7 +1283,7 @@
 
             const { error } = await supabaseClient
                 .from('profiles')
-                .upsert(profileData, { onConflict: 'user_id' });
+                .upsert(profileData, { onConflict: 'id' });
 
             btn.disabled = false;
             btn.textContent = 'Enregistrer';
