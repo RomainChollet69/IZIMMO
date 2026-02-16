@@ -199,6 +199,71 @@
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
         }
 
+        /* ===== EXPORT BUTTON & DROPDOWN ===== */
+        .export-wrapper {
+            position: relative;
+        }
+
+        .export-btn {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+
+        .export-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+            min-width: 260px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .export-dropdown.active { display: block; }
+
+        .export-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 18px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .export-dropdown-item:hover { background: #f0f4ff; }
+
+        .export-dropdown-sub {
+            padding-left: 32px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .export-dropdown-sub:hover { color: var(--text-dark); }
+
         /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
@@ -964,7 +1029,7 @@
             .nav-text { display: none; }
             .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
 
-            /* Ligne 3 : cloche + bouton "+" centrés */
+            /* Ligne 3 : cloche + export + bouton "+" centrés */
             .alert-counter {
                 grid-column: 1;
                 grid-row: 3;
@@ -977,10 +1042,28 @@
             .alert-icon { font-size: 20px; }
 
             .btn-text { display: none; }
+
+            .export-wrapper { grid-column: 1; grid-row: 4; justify-self: end; }
+            .export-btn {
+                padding: 8px 14px;
+                font-size: 20px;
+                line-height: 1;
+                border-radius: 10px;
+                border-color: rgba(0,0,0,0.15);
+                color: var(--text-dark);
+            }
+            .export-dropdown {
+                right: auto;
+                left: 0;
+                min-width: calc(100vw - 28px);
+            }
+
             .add-btn {
                 grid-column: 2;
                 grid-row: 3;
+                grid-row-end: 5;
                 justify-self: start;
+                align-self: center;
                 padding: 8px 14px;
                 font-size: 20px;
                 line-height: 1;
@@ -1118,6 +1201,17 @@
                 <span class="alert-text">
                     <span class="alert-number" id="alertNumber">0</span> à relancer
                 </span>
+            </div>
+            <div class="export-wrapper">
+                <button class="export-btn" id="exportBtn">📥 <span class="btn-text">Exporter</span></button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="export-dropdown-item" onclick="exportBuyersCSV()">📥 Exporter tout</button>
+                    <button class="export-dropdown-item" style="font-weight:600;color:var(--text-light);cursor:default;font-size:12px;text-transform:uppercase;letter-spacing:0.5px" disabled>Exporter la colonne…</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('new')">🆕 Nouveaux Acquéreurs</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('active')">🔍 En Recherche Active</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('bought')">🎉 Achetés</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('lost')">❌ Perdus</button>
+                </div>
             </div>
             <button class="add-btn" id="addBuyerBtn">+ <span class="btn-text">Ajouter un Acquéreur</span></button>
         </div>
@@ -2140,6 +2234,88 @@
             });
         }
 
+        // ===== EXPORT CSV =====
+        const BUYER_STATUS_LABELS = {
+            new: 'Nouveau', active: 'En Recherche Active',
+            bought: 'Acheté', lost: 'Perdu'
+        };
+
+        const BANK_LABELS = { oui: 'Oui', non: 'Non', en_cours: 'En cours', ne_sait_pas: 'Ne sait pas' };
+        const TIMELINE_LABELS = { immediat: 'Immédiat', court_terme: 'Court terme', moyen_terme: 'Moyen terme', long_terme: 'Long terme' };
+        const CRITERIA_LABELS = { jardin: 'Jardin', parking: 'Parking', ascenseur: 'Ascenseur', balcon_terrasse: 'Balcon/Terrasse', calme: 'Calme', neuf_renove: 'Neuf/Rénové' };
+
+        function exportToCSV(data, columns, filename) {
+            const BOM = '\uFEFF';
+            const header = columns.map(c => c.label).join(';');
+            const rows = data.map(item =>
+                columns.map(c => {
+                    let val = c.getValue(item);
+                    if (val === null || val === undefined) return '';
+                    val = String(val).replace(/"/g, '""');
+                    if (val.includes(';') || val.includes('"') || val.includes('\n')) {
+                        val = '"' + val + '"';
+                    }
+                    return val;
+                }).join(';')
+            );
+            const csv = BOM + header + '\n' + rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename + '_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            if (isNaN(dt)) return '';
+            return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function exportBuyersCSV(statusFilter) {
+            let data = buyers;
+            let filename = 'acquereurs';
+            if (statusFilter) {
+                data = buyers.filter(b => b.status === statusFilter);
+                filename = 'acquereurs_' + (BUYER_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase().replace(/\s+/g, '-');
+            }
+            if (data.length === 0) { alert('Aucun acquéreur à exporter.'); return; }
+
+            const columns = [
+                { label: 'Statut', getValue: b => BUYER_STATUS_LABELS[b.status] || b.status },
+                { label: 'Nom', getValue: b => ((b.first_name || '') + ' ' + (b.last_name || '')).trim() },
+                { label: 'Téléphone', getValue: b => b.phone || '' },
+                { label: 'Email', getValue: b => b.email || '' },
+                { label: 'Type Bien', getValue: b => b.property_type || '' },
+                { label: 'Typologie', getValue: b => b.rooms || '' },
+                { label: 'Secteur', getValue: b => b.sector || '' },
+                { label: 'Surface Min', getValue: b => b.surface_min || '' },
+                { label: 'Budget Min', getValue: b => b.budget_min || '' },
+                { label: 'Budget Max', getValue: b => b.budget_max || '' },
+                { label: 'Accord Bancaire', getValue: b => BANK_LABELS[b.bank_approval] || b.bank_approval || '' },
+                { label: 'Délai Projet', getValue: b => TIMELINE_LABELS[b.timeline] || b.timeline || '' },
+                { label: 'Vendeur', getValue: b => b.is_seller ? 'Oui' : 'Non' },
+                { label: 'Adresse Vendeur', getValue: b => b.seller_address || '' },
+                { label: 'Prix Vendeur', getValue: b => b.seller_price || '' },
+                { label: 'Critères', getValue: b => {
+                    if (!Array.isArray(b.criteria)) return '';
+                    return b.criteria.map(c => CRITERIA_LABELS[c] || c).join(', ');
+                }},
+                { label: 'Éléments Rédhibitoires', getValue: b => b.dealbreakers || '' },
+                { label: 'Source', getValue: b => { const c = BUYER_SOURCE_CONFIG[b.source]; return c ? c.label.replace(/^.\s*/, '') : (b.source || ''); }},
+                { label: 'Date Relance', getValue: b => fmtDate(b.reminder) },
+                { label: 'Notes', getValue: b => '' }
+            ];
+            exportToCSV(data, columns, filename);
+            closeExportDropdown();
+        }
+
+        function closeExportDropdown() {
+            document.getElementById('exportDropdown').classList.remove('active');
+        }
+
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
             loadBuyers();
@@ -2165,6 +2341,15 @@
             });
 
             document.getElementById('addBuyerBtn').addEventListener('click', openModal);
+
+            // Export dropdown toggle
+            document.getElementById('exportBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('exportDropdown').classList.toggle('active');
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.export-wrapper')) closeExportDropdown();
+            });
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('submitBtn').addEventListener('click', handleSubmit);
             document.getElementById('addLinkBtn').addEventListener('click', addLink);

@@ -198,6 +198,77 @@
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
         }
 
+        /* ===== EXPORT BUTTON & DROPDOWN ===== */
+        .export-wrapper {
+            position: relative;
+        }
+
+        .export-btn {
+            background: transparent;
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        .export-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: white;
+            transform: translateY(-2px);
+        }
+
+        .export-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+            min-width: 260px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+
+        .export-dropdown.active { display: block; }
+
+        .export-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 18px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .export-dropdown-item:hover { background: #f0f4ff; }
+
+        .export-dropdown-separator {
+            height: 1px;
+            background: #e8eaf6;
+            margin: 4px 0;
+        }
+
+        .export-dropdown-sub {
+            padding-left: 32px;
+            font-size: 13px;
+            color: var(--text-light);
+        }
+
+        .export-dropdown-sub:hover { color: var(--text-dark); }
+
         /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
@@ -1139,7 +1210,7 @@
             .nav-text { display: none; }
             .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
 
-            /* Ligne 3 : cloche + bouton "+" */
+            /* Ligne 3 : cloche + export + bouton "+" */
             .alert-counter {
                 grid-column: 1;
                 grid-row: 3;
@@ -1152,10 +1223,28 @@
             .alert-icon { font-size: 20px; }
 
             .btn-text { display: none; }
+
+            .export-wrapper { grid-column: 1; grid-row: 4; justify-self: end; }
+            .export-btn {
+                padding: 8px 14px;
+                font-size: 20px;
+                line-height: 1;
+                border-radius: 10px;
+                border-color: rgba(0,0,0,0.15);
+                color: var(--text-dark);
+            }
+            .export-dropdown {
+                right: auto;
+                left: 0;
+                min-width: calc(100vw - 28px);
+            }
+
             .add-btn {
                 grid-column: 2;
                 grid-row: 3;
+                grid-row-end: 5;
                 justify-self: start;
+                align-self: center;
                 padding: 10px 18px;
                 font-size: 20px;
                 line-height: 1;
@@ -1304,6 +1393,22 @@
                 <span class="alert-text">
                     <span class="alert-number" id="alertNumber">0</span> à relancer
                 </span>
+            </div>
+            <div class="export-wrapper">
+                <button class="export-btn" id="exportBtn">📥 <span class="btn-text">Exporter</span></button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="export-dropdown-item" onclick="exportSellersCSV()">📥 Exporter tout</button>
+                    <button class="export-dropdown-item" style="font-weight:600;color:var(--text-light);cursor:default;font-size:12px;text-transform:uppercase;letter-spacing:0.5px" disabled>Exporter la colonne…</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">🔥 Leads Chaudes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">🟡 Leads Tièdes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">❄️ Leads Froides</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">✅ Sous Mandats</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">🏆 Vendus</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">❌ Perdus</button>
+                    <div class="export-dropdown-separator"></div>
+                    <button class="export-dropdown-item" onclick="exportVisitsCSV()">📅 Exporter les visites</button>
+                    <button class="export-dropdown-item" onclick="exportCommissionsCSV()">💰 Exporter les commissions</button>
+                </div>
             </div>
             <button class="add-btn" id="addLeadBtn">+ <span class="btn-text">Ajouter un Lead</span></button>
         </div>
@@ -2794,6 +2899,169 @@
             });
         }
 
+        // ===== EXPORT CSV =====
+        const SELLER_STATUS_LABELS = {
+            hot: 'Lead Chaude', warm: 'Lead Tiède', cold: 'Lead Froide',
+            mandate: 'Sous Mandat', sold: 'Vendu', lost: 'Perdu'
+        };
+
+        function exportToCSV(data, columns, filename) {
+            const BOM = '\uFEFF';
+            const header = columns.map(c => c.label).join(';');
+            const rows = data.map(item =>
+                columns.map(c => {
+                    let val = c.getValue(item);
+                    if (val === null || val === undefined) return '';
+                    val = String(val).replace(/"/g, '""');
+                    if (val.includes(';') || val.includes('"') || val.includes('\n')) {
+                        val = '"' + val + '"';
+                    }
+                    return val;
+                }).join(';')
+            );
+            const csv = BOM + header + '\n' + rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename + '_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+        }
+
+        function fmtDate(d) {
+            if (!d) return '';
+            const dt = new Date(d);
+            if (isNaN(dt)) return '';
+            return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        }
+
+        function rawAmount(val) {
+            if (!val && val !== 0) return '';
+            const num = parseAmount(val);
+            return num === 0 ? '' : num;
+        }
+
+        function exportSellersCSV(statusFilter) {
+            let data = sellers;
+            let filename = 'vendeurs';
+            if (statusFilter) {
+                data = sellers.filter(s => s.status === statusFilter);
+                filename = 'vendeurs_' + (SELLER_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase().replace(/\s+/g, '-');
+            }
+            if (data.length === 0) { alert('Aucun lead à exporter.'); return; }
+
+            const columns = [
+                { label: 'Statut', getValue: s => SELLER_STATUS_LABELS[s.status] || s.status },
+                { label: 'Nom', getValue: s => ((s.first_name || '') + ' ' + (s.last_name || '')).trim() },
+                { label: 'Téléphone', getValue: s => s.phone || '' },
+                { label: 'Email', getValue: s => s.email || '' },
+                { label: 'Adresse', getValue: s => s.address || '' },
+                { label: 'Ville', getValue: s => s.city || '' },
+                { label: 'Code Postal', getValue: s => s.postal_code || '' },
+                { label: 'Description', getValue: s => s.description || '' },
+                { label: 'Prix Estimation', getValue: s => rawAmount(s.budget) },
+                { label: 'Prix Mandat', getValue: s => rawAmount(s.mandate_price) },
+                { label: 'Commission (€)', getValue: s => rawAmount(s.commission_amount) },
+                { label: 'Commission (%)', getValue: s => s.commission_rate || '' },
+                { label: 'Type Mandat', getValue: s => s.mandate_type || '' },
+                { label: 'Date Signature Mandat', getValue: s => fmtDate(s.mandate_start_date) },
+                { label: 'Date Fin Mandat', getValue: s => fmtDate(s.mandate_end_date) },
+                { label: 'Référence Mandat', getValue: s => s.mandate_reference || '' },
+                { label: 'Nb Visites', getValue: s => visitCounts[s.id] || 0 },
+                { label: 'Source', getValue: s => { const c = SOURCE_CONFIG[s.source]; return c ? c.label.replace(/^.\s*/, '') : (s.source || ''); }},
+                { label: 'Date Contact', getValue: s => fmtDate(s.date) },
+                { label: 'Date Relance', getValue: s => fmtDate(s.reminder) },
+                { label: 'Notes', getValue: s => '' },
+                { label: 'Liens Annonces', getValue: s => Array.isArray(s.links) ? s.links.join(' | ') : '' }
+            ];
+            exportToCSV(data, columns, filename);
+            closeExportDropdown();
+        }
+
+        async function exportVisitsCSV() {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('visits')
+                .select('*')
+                .eq('user_id', userId)
+                .order('visit_date', { ascending: false });
+            if (error || !data || data.length === 0) { alert('Aucune visite à exporter.'); return; }
+
+            // Map seller info
+            const sellerMap = {};
+            sellers.forEach(s => { sellerMap[s.id] = s; });
+
+            const ratingLabels = { 5: 'Excellent', 4: 'Bien', 3: 'Moyen', 2: 'Décevant', 1: 'Mauvais' };
+            const columns = [
+                { label: 'Bien (adresse)', getValue: v => { const s = sellerMap[v.seller_id]; return s ? (s.address || '') : ''; }},
+                { label: 'Vendeur (nom)', getValue: v => { const s = sellerMap[v.seller_id]; return s ? ((s.first_name || '') + ' ' + (s.last_name || '')).trim() : ''; }},
+                { label: 'Date Visite', getValue: v => fmtDate(v.visit_date) },
+                { label: 'Acquéreur', getValue: v => v.buyer_name || '' },
+                { label: 'Appréciation', getValue: v => ratingLabels[v.rating] || '' },
+                { label: 'Commentaire', getValue: v => v.notes || '' }
+            ];
+            exportToCSV(data, columns, 'visites');
+            closeExportDropdown();
+        }
+
+        function exportCommissionsCSV() {
+            const data = sellers.filter(s => s.status === 'mandate' || s.status === 'sold');
+            if (data.length === 0) { alert('Aucun mandat ou vente à exporter.'); return; }
+
+            const columns = [
+                { label: 'Nom', getValue: s => ((s.first_name || '') + ' ' + (s.last_name || '')).trim() },
+                { label: 'Adresse', getValue: s => s.address || '' },
+                { label: 'Statut', getValue: s => SELLER_STATUS_LABELS[s.status] || s.status },
+                { label: 'Prix', getValue: s => rawAmount(s.status === 'mandate' && s.mandate_price ? s.mandate_price : s.budget) },
+                { label: 'Taux Commission', getValue: s => s.commission_rate || 4 },
+                { label: 'Montant Commission', getValue: s => {
+                    const price = parseAmount(s.status === 'mandate' && s.mandate_price ? s.mandate_price : s.budget);
+                    return s.commission_amount || Math.round(price * (s.commission_rate || 4) / 100);
+                }},
+                { label: 'Type Mandat', getValue: s => s.mandate_type || '' }
+            ];
+
+            // Build CSV manually to add total row
+            const BOM = '\uFEFF';
+            const header = columns.map(c => c.label).join(';');
+            const rows = data.map(item =>
+                columns.map(c => {
+                    let val = c.getValue(item);
+                    if (val === null || val === undefined) return '';
+                    val = String(val).replace(/"/g, '""');
+                    if (val.includes(';') || val.includes('"') || val.includes('\n')) val = '"' + val + '"';
+                    return val;
+                }).join(';')
+            );
+
+            let totalMandat = 0, totalVendu = 0;
+            data.forEach(s => {
+                const price = parseAmount(s.status === 'mandate' && s.mandate_price ? s.mandate_price : s.budget);
+                const amount = s.commission_amount || Math.round(price * (s.commission_rate || 4) / 100);
+                if (s.status === 'mandate') totalMandat += amount;
+                else if (s.status === 'sold') totalVendu += amount;
+            });
+
+            rows.push('');
+            rows.push('"Total commissions potentielles (sous mandats)";;;;;"' + totalMandat + '";');
+            rows.push('"Total commissions acquises (vendus)";;;;;"' + totalVendu + '";');
+            rows.push('"TOTAL";;;;;"' + (totalMandat + totalVendu) + '";');
+
+            const csv = BOM + header + '\n' + rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'commissions_' + new Date().toISOString().split('T')[0] + '.csv';
+            link.click();
+            URL.revokeObjectURL(link.href);
+            closeExportDropdown();
+        }
+
+        function closeExportDropdown() {
+            document.getElementById('exportDropdown').classList.remove('active');
+        }
+
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
             loadSellers();
@@ -2808,6 +3076,15 @@
 
             document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+
+            // Export dropdown toggle
+            document.getElementById('exportBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('exportDropdown').classList.toggle('active');
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.export-wrapper')) closeExportDropdown();
+            });
             document.getElementById('submitBtn').addEventListener('click', handleFormSubmit);
             document.getElementById('addVisitBtn').addEventListener('click', handleAddVisit);
 
