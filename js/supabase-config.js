@@ -172,3 +172,144 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// ===== AUTOCOMPLETE ADRESSE (api-adresse.data.gouv.fr) =====
+(function () {
+    const style = document.createElement('style');
+    style.textContent = `
+        .addr-wrapper { position: relative; }
+        .addr-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 10001;
+            display: none;
+        }
+        .addr-dropdown.active { display: block; }
+        .addr-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+            font-size: 14px;
+            color: #2C3E50;
+        }
+        .addr-option:last-child { border-bottom: none; }
+        .addr-option:hover, .addr-option.addr-sel { background: #f5f5f5; }
+        .addr-option .addr-context {
+            font-size: 12px;
+            color: #7F8C8D;
+            margin-top: 2px;
+        }
+    `;
+    document.head.appendChild(style);
+})();
+
+function setupAddressAutocomplete(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+
+    const formGroup = input.closest('.form-group');
+    formGroup.classList.add('addr-wrapper');
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'addr-dropdown';
+    formGroup.appendChild(dropdown);
+
+    let debounceTimer = null;
+    let features = [];
+    let selIdx = -1;
+
+    // Clear geo data when user types manually
+    input.addEventListener('input', () => {
+        input.dataset.latitude = '';
+        input.dataset.longitude = '';
+        input.dataset.city = '';
+        input.dataset.postalCode = '';
+
+        clearTimeout(debounceTimer);
+        const q = input.value.trim();
+        if (q.length < 3) { dropdown.classList.remove('active'); return; }
+        debounceTimer = setTimeout(() => fetchAddresses(q), 300);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (!dropdown.classList.contains('active')) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selIdx = Math.min(selIdx + 1, features.length - 1);
+            highlightAddr();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selIdx = Math.max(selIdx - 1, 0);
+            highlightAddr();
+        } else if (e.key === 'Enter' && selIdx >= 0) {
+            e.preventDefault();
+            pickAddr(features[selIdx]);
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+    });
+
+    async function fetchAddresses(query) {
+        try {
+            const url = 'https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5';
+            const resp = await fetch(url);
+            if (!resp.ok) return;
+            const json = await resp.json();
+
+            if (!json.features || json.features.length === 0) {
+                dropdown.classList.remove('active');
+                return;
+            }
+
+            features = json.features;
+            selIdx = -1;
+            dropdown.innerHTML = features.map((f, i) => {
+                const p = f.properties;
+                return `<div class="addr-option" data-i="${i}">
+                    ${escapeHtml(p.label)}
+                    ${p.context ? `<div class="addr-context">${escapeHtml(p.context)}</div>` : ''}
+                </div>`;
+            }).join('');
+            dropdown.classList.add('active');
+
+            dropdown.querySelectorAll('.addr-option').forEach(el => {
+                el.addEventListener('click', () => pickAddr(features[parseInt(el.dataset.i)]));
+            });
+        } catch (err) {
+            console.error('Erreur API adresse:', err);
+        }
+    }
+
+    function highlightAddr() {
+        dropdown.querySelectorAll('.addr-option').forEach((el, i) => {
+            el.classList.toggle('addr-sel', i === selIdx);
+        });
+    }
+
+    function pickAddr(feature) {
+        const p = feature.properties;
+        const coords = feature.geometry.coordinates;
+
+        input.value = p.label;
+        input.dataset.latitude = coords[1];
+        input.dataset.longitude = coords[0];
+        input.dataset.city = p.city || '';
+        input.dataset.postalCode = p.postcode || '';
+
+        dropdown.classList.remove('active');
+    }
+}

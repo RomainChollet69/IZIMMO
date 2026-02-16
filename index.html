@@ -1067,7 +1067,12 @@
             document.getElementById('lastName').value = seller.last_name || '';
             document.getElementById('phone').value = seller.phone || '';
             document.getElementById('email').value = seller.email || '';
-            document.getElementById('address').value = seller.address || '';
+            const addrInput = document.getElementById('address');
+            addrInput.value = seller.address || '';
+            addrInput.dataset.latitude = seller.latitude || '';
+            addrInput.dataset.longitude = seller.longitude || '';
+            addrInput.dataset.city = seller.city || '';
+            addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('notes').value = seller.notes || '';
             document.getElementById('date').value = seller.date || '';
@@ -1104,6 +1109,7 @@
                 return;
             }
 
+            const addressInput = document.getElementById('address');
             const sellerData = {
                 status,
                 source,
@@ -1111,7 +1117,11 @@
                 last_name: lastName,
                 phone: document.getElementById('phone').value.trim() || null,
                 email: document.getElementById('email').value.trim() || null,
-                address: document.getElementById('address').value.trim() || null,
+                address: addressInput.value.trim() || null,
+                latitude: parseFloat(addressInput.dataset.latitude) || null,
+                longitude: parseFloat(addressInput.dataset.longitude) || null,
+                city: addressInput.dataset.city || null,
+                postal_code: addressInput.dataset.postalCode || null,
                 description: document.getElementById('description').value.trim() || null,
                 notes: document.getElementById('notes').value.trim() || null,
                 date,
@@ -1176,6 +1186,7 @@
             loadSellers();
             setupDragAndDrop();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
+            setupAddressAutocomplete('address');
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 

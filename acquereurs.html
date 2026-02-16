@@ -1458,7 +1458,12 @@
             document.getElementById('propertyType').value = buyer.property_type || '';
             document.getElementById('rooms').value = buyer.rooms || '';
             document.getElementById('surfaceMin').value = buyer.surface_min || '';
-            document.getElementById('sector').value = buyer.sector || '';
+            const sectorInput = document.getElementById('sector');
+            sectorInput.value = buyer.sector || '';
+            sectorInput.dataset.latitude = buyer.latitude || '';
+            sectorInput.dataset.longitude = buyer.longitude || '';
+            sectorInput.dataset.city = buyer.city || '';
+            sectorInput.dataset.postalCode = buyer.postal_code || '';
             document.getElementById('budgetMin').value = buyer.budget_min || '';
             document.getElementById('budgetMax').value = buyer.budget_max || '';
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
@@ -1516,6 +1521,7 @@
 
             const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
 
+            const sectorInput = document.getElementById('sector');
             const buyerData = {
                 first_name: firstName,
                 last_name: lastName,
@@ -1525,6 +1531,10 @@
                 property_type: propertyType,
                 rooms: document.getElementById('rooms').value || null,
                 sector,
+                latitude: parseFloat(sectorInput.dataset.latitude) || null,
+                longitude: parseFloat(sectorInput.dataset.longitude) || null,
+                city: sectorInput.dataset.city || null,
+                postal_code: sectorInput.dataset.postalCode || null,
                 surface_min: parseInt(document.getElementById('surfaceMin').value) || null,
                 budget_min: parseInt(document.getElementById('budgetMin').value) || null,
                 budget_max: parseInt(document.getElementById('budgetMax').value) || null,
@@ -1598,6 +1608,7 @@
             loadBuyers();
             setupDragAndDrop();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
+            setupAddressAutocomplete('sector');
 
             document.getElementById('addBuyerBtn').addEventListener('click', openModal);
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
