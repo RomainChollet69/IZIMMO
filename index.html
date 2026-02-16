@@ -2333,7 +2333,10 @@
             }
         }
 
+        let formModified = false;
+
         function openModal(initialTab) {
+            formModified = false;
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -2530,56 +2533,89 @@
             try {
                 const text = await sellerRecorder.record();
                 if (text && text.trim()) {
-                    parseSellerDictation(text.trim());
+                    console.log('Dictée transcrite:', text.trim());
+                    await parseSellerDictation(text.trim(), btn, status);
                 }
             } catch (err) {
                 console.error('Seller dictation error:', err);
             }
         }
 
-        function parseSellerDictation(text) {
-            // Remplissage intelligent : détecte des patterns dans la phrase
-            const lower = text.toLowerCase();
-
-            // Nom : "monsieur/madame Dupont" ou "nom Dupont"
-            const nameMatch = lower.match(/(?:monsieur|madame|mme|mr|nom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
-            if (nameMatch) {
-                const ln = document.getElementById('lastName');
-                if (!ln.value) ln.value = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+        async function parseSellerDictation(text, btn, statusEl) {
+            // Show parsing state
+            if (btn) btn.innerHTML = '🧠 Analyse...';
+            if (statusEl) {
+                statusEl.textContent = '🧠 Analyse des informations...';
+                statusEl.className = 'dictate-status active transcribing';
             }
 
-            // Prénom
-            const firstMatch = lower.match(/(?:prénom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
-            if (firstMatch) {
-                const fn = document.getElementById('firstName');
-                if (!fn.value) fn.value = firstMatch[1].charAt(0).toUpperCase() + firstMatch[1].slice(1);
+            try {
+                const resp = await fetch('/api/parse-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, type: 'seller' })
+                });
+
+                if (!resp.ok) throw new Error('Erreur analyse');
+                const { fields } = await resp.json();
+                console.log('Champs extraits par Claude:', fields);
+
+                // Map fields — ONLY fill if value is not null
+                if (fields.first_name) document.getElementById('firstName').value = fields.first_name;
+                if (fields.last_name) document.getElementById('lastName').value = fields.last_name;
+                if (fields.phone) document.getElementById('phone').value = fields.phone;
+                if (fields.email) document.getElementById('email').value = fields.email;
+                if (fields.address) document.getElementById('address').value = fields.address;
+                if (fields.description) document.getElementById('description').value = fields.description;
+                if (fields.budget) document.getElementById('budget').value = fields.budget;
+
+                // Source select
+                if (fields.source) {
+                    const sourceSelect = document.getElementById('source');
+                    for (let option of sourceSelect.options) {
+                        if (option.value.toLowerCase() === fields.source.toLowerCase()) {
+                            sourceSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Status select
+                if (fields.status) {
+                    const statusSelect = document.getElementById('status');
+                    for (let option of statusSelect.options) {
+                        if (option.value.toLowerCase() === fields.status.toLowerCase()) {
+                            statusSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Reminder date
+                if (fields.reminder) document.getElementById('reminder').value = fields.reminder;
+
+                // Transcription brute dans les notes
+                const noteInput = document.getElementById('noteInput');
+                if (noteInput) noteInput.value = text;
+
+                if (statusEl) {
+                    statusEl.textContent = '✅ Champs remplis !';
+                    statusEl.className = 'dictate-status active';
+                    setTimeout(() => { statusEl.className = 'dictate-status'; }, 3000);
+                }
+            } catch (err) {
+                console.error('Parse error:', err);
+                // Fallback : mettre le texte brut dans les notes
+                const noteInput = document.getElementById('noteInput');
+                if (noteInput) noteInput.value = text;
+                if (statusEl) {
+                    statusEl.textContent = '⚠️ Analyse échouée, texte copié dans les notes';
+                    statusEl.className = 'dictate-status active';
+                    setTimeout(() => { statusEl.className = 'dictate-status'; }, 4000);
+                }
             }
 
-            // Téléphone : séquences de chiffres
-            const phoneMatch = text.match(/(?:téléphone|tel|numéro|portable|mobile)?\s*(?:le\s+)?(\d[\d\s\-.]{8,})/i);
-            if (phoneMatch) {
-                const ph = document.getElementById('phone');
-                if (!ph.value) ph.value = phoneMatch[1].replace(/[\s\-.]/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
-            }
-
-            // Budget / prix
-            const budgetMatch = text.match(/(\d[\d\s]*(?:\d{3}))\s*(?:euros?|€)/i);
-            if (budgetMatch) {
-                const b = document.getElementById('budget');
-                if (!b.value) b.value = budgetMatch[1].replace(/\s/g, '');
-            }
-
-            // Adresse : "au" ou "adresse" ou "rue"
-            const addrMatch = text.match(/(?:adresse|au|rue|avenue|boulevard|impasse|chemin|place)\s+(.+?)(?:\s+(?:téléphone|budget|prix|notes?|$))/i);
-            if (addrMatch) {
-                const addr = document.getElementById('address');
-                if (!addr.value) addr.value = addrMatch[1].trim();
-            }
-
-            // Notes : tout le texte va aussi dans les notes comme transcription brute
-            const notesField = document.getElementById('notes');
-            const current = notesField.value;
-            notesField.value = current ? current + '\n' + text : text;
+            if (btn) btn.innerHTML = '🎙️ Dicter mon lead';
         }
 
         // ===== LIENS D'ANNONCES =====
@@ -2672,7 +2708,14 @@
             }
         });
 
-        function closeModal() {
+        function closeModal(skipConfirm) {
+            if (!skipConfirm && formModified) {
+                if (!confirm('Vous avez des modifications non enregistrées. Fermer sans enregistrer ?')) {
+                    return;
+                }
+            }
+
+            formModified = false;
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
 
@@ -2848,7 +2891,8 @@
             await loadVisitCounts();
             await loadNotePreviews();
             renderSellers();
-            closeModal();
+            formModified = false;
+            closeModal(true);
         }
 
         // ===== DRAG & DROP =====
@@ -3075,7 +3119,13 @@
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
             document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
-            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('closeModalBtn').addEventListener('click', () => closeModal());
+
+            // Track form modifications
+            document.getElementById('modal').querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', () => { formModified = true; });
+                el.addEventListener('change', () => { formModified = true; });
+            });
 
             // Export dropdown toggle
             document.getElementById('exportBtn').addEventListener('click', (e) => {
@@ -3111,8 +3161,11 @@
                 if (budget > 0 && amount > 0) document.getElementById('commissionRate').value = (amount / budget * 100).toFixed(1);
             });
 
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-            document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) closeModal();
+            });
+            // Backdrop click — do NOT close (prevent accidental data loss)
+            document.getElementById('modal').addEventListener('click', e => { e.stopPropagation(); });
 
             document.getElementById('alertCounter').addEventListener('click', () => {
                 const cards = document.querySelectorAll('.lead-card');

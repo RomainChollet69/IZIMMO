@@ -1781,12 +1781,21 @@
         }
 
         // ===== MODAL =====
+        let formModified = false;
+
         function openModal() {
+            formModified = false;
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
-        function closeModal() {
+        function closeModal(skipConfirm) {
+            if (!skipConfirm && formModified) {
+                if (!confirm('Vous avez des modifications non enregistrées. Fermer sans enregistrer ?')) {
+                    return;
+                }
+            }
+            formModified = false;
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
             resetForm();
@@ -1856,56 +1865,145 @@
             try {
                 const text = await buyerRecorder.record();
                 if (text && text.trim()) {
-                    parseBuyerDictation(text.trim());
+                    console.log('Dictée transcrite:', text.trim());
+                    await parseBuyerDictation(text.trim(), btn, status);
                 }
             } catch (err) {
                 console.error('Buyer dictation error:', err);
             }
         }
 
-        function parseBuyerDictation(text) {
-            const lower = text.toLowerCase();
-
-            // Nom
-            const nameMatch = lower.match(/(?:monsieur|madame|mme|mr|nom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
-            if (nameMatch) {
-                const ln = document.getElementById('lastName');
-                if (!ln.value) ln.value = nameMatch[1].charAt(0).toUpperCase() + nameMatch[1].slice(1);
+        async function parseBuyerDictation(text, btn, statusEl) {
+            // Show parsing state
+            if (btn) btn.innerHTML = '🧠 Analyse...';
+            if (statusEl) {
+                statusEl.textContent = '🧠 Analyse des informations...';
+                statusEl.className = 'dictate-status active transcribing';
             }
 
-            // Prénom
-            const firstMatch = lower.match(/(?:prénom)\s+([a-zéèêëàâùûîïôöç\-]+)/i);
-            if (firstMatch) {
-                const fn = document.getElementById('firstName');
-                if (!fn.value) fn.value = firstMatch[1].charAt(0).toUpperCase() + firstMatch[1].slice(1);
+            try {
+                const resp = await fetch('/api/parse-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, type: 'buyer' })
+                });
+
+                if (!resp.ok) throw new Error('Erreur analyse');
+                const { fields } = await resp.json();
+                console.log('Champs extraits par Claude:', fields);
+
+                // Map fields — ONLY fill if value is not null
+                if (fields.first_name) document.getElementById('firstName').value = fields.first_name;
+                if (fields.last_name) document.getElementById('lastName').value = fields.last_name;
+                if (fields.phone) document.getElementById('phone').value = fields.phone;
+                if (fields.email) document.getElementById('email').value = fields.email;
+
+                // Source select
+                if (fields.source) {
+                    const sourceSelect = document.getElementById('source');
+                    for (let option of sourceSelect.options) {
+                        if (option.value.toLowerCase() === fields.source.toLowerCase()) {
+                            sourceSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Property type select
+                if (fields.property_type) {
+                    const ptSelect = document.getElementById('propertyType');
+                    for (let option of ptSelect.options) {
+                        if (option.value.toLowerCase() === fields.property_type.toLowerCase()) {
+                            ptSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Rooms select
+                if (fields.rooms) {
+                    const roomsSelect = document.getElementById('rooms');
+                    for (let option of roomsSelect.options) {
+                        if (option.value === fields.rooms) {
+                            roomsSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                if (fields.sector) document.getElementById('sector').value = fields.sector;
+                if (fields.surface_min) document.getElementById('surfaceMin').value = fields.surface_min;
+                if (fields.budget_min) document.getElementById('budgetMin').value = fields.budget_min;
+                if (fields.budget_max) document.getElementById('budgetMax').value = fields.budget_max;
+
+                // Criteria checkboxes
+                if (Array.isArray(fields.criteria) && fields.criteria.length > 0) {
+                    fields.criteria.forEach(c => {
+                        const cb = document.querySelector(`input[name="criteria"][value="${c}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+
+                if (fields.dealbreakers) document.getElementById('dealbreakers').value = fields.dealbreakers;
+
+                // Bank approval select
+                if (fields.bank_approval) {
+                    const baSelect = document.getElementById('bankApproval');
+                    for (let option of baSelect.options) {
+                        if (option.value === fields.bank_approval) {
+                            baSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Timeline select
+                if (fields.timeline) {
+                    const tlSelect = document.getElementById('timeline');
+                    for (let option of tlSelect.options) {
+                        if (option.value === fields.timeline) {
+                            tlSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Status select
+                if (fields.status) {
+                    const statusSelect = document.getElementById('status');
+                    for (let option of statusSelect.options) {
+                        if (option.value.toLowerCase() === fields.status.toLowerCase()) {
+                            statusSelect.value = option.value;
+                            break;
+                        }
+                    }
+                }
+
+                // Reminder date
+                if (fields.reminder) document.getElementById('reminder').value = fields.reminder;
+
+                // Transcription brute dans les notes
+                const noteInput = document.getElementById('noteInput');
+                if (noteInput) noteInput.value = text;
+
+                if (statusEl) {
+                    statusEl.textContent = '✅ Champs remplis !';
+                    statusEl.className = 'dictate-status active';
+                    setTimeout(() => { statusEl.className = 'dictate-status'; }, 3000);
+                }
+            } catch (err) {
+                console.error('Parse error:', err);
+                // Fallback : mettre le texte brut dans les notes
+                const noteInput = document.getElementById('noteInput');
+                if (noteInput) noteInput.value = text;
+                if (statusEl) {
+                    statusEl.textContent = '⚠️ Analyse échouée, texte copié dans les notes';
+                    statusEl.className = 'dictate-status active';
+                    setTimeout(() => { statusEl.className = 'dictate-status'; }, 4000);
+                }
             }
 
-            // Téléphone
-            const phoneMatch = text.match(/(\d[\d\s\-.]{8,})/i);
-            if (phoneMatch) {
-                const ph = document.getElementById('phone');
-                if (!ph.value) ph.value = phoneMatch[1].replace(/[\s\-.]/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
-            }
-
-            // Budget
-            const budgetMatch = text.match(/(\d[\d\s]*(?:\d{3}))\s*(?:euros?|€)/i);
-            if (budgetMatch) {
-                const val = budgetMatch[1].replace(/\s/g, '');
-                const bmax = document.getElementById('budgetMax');
-                if (!bmax.value) bmax.value = val;
-            }
-
-            // Secteur
-            const sectorMatch = lower.match(/(?:secteur|ville|à|sur)\s+([a-zéèêëàâùûîïôöç\s\-]+?)(?:\s+(?:budget|téléphone|notes?|$))/i);
-            if (sectorMatch) {
-                const s = document.getElementById('sector');
-                if (!s.value) s.value = sectorMatch[1].trim();
-            }
-
-            // Notes : transcription brute
-            const notesField = document.getElementById('notes');
-            const current = notesField.value;
-            notesField.value = current ? current + '\n' + text : text;
+            if (btn) btn.innerHTML = '🎙️ Dicter mon lead';
         }
 
         // ===== NOTES HORODATÉES =====
@@ -2196,7 +2294,8 @@
 
             await loadBuyerNotePreviews();
             renderBuyers();
-            closeModal();
+            formModified = false;
+            closeModal(true);
         }
 
         // ===== DRAG & DROP =====
@@ -2350,9 +2449,15 @@
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.export-wrapper')) closeExportDropdown();
             });
-            document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+            document.getElementById('closeModalBtn').addEventListener('click', () => closeModal());
             document.getElementById('submitBtn').addEventListener('click', handleSubmit);
             document.getElementById('addLinkBtn').addEventListener('click', addLink);
+
+            // Track form modifications
+            document.getElementById('modal').querySelectorAll('input, textarea, select').forEach(el => {
+                el.addEventListener('input', () => { formModified = true; });
+                el.addEventListener('change', () => { formModified = true; });
+            });
 
             // Entrée pour ajouter un lien
             document.getElementById('newLinkUrl').addEventListener('keydown', e => {
@@ -2365,8 +2470,11 @@
             });
 
             // Fermer modal
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-            document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) closeModal();
+            });
+            // Backdrop click — do NOT close (prevent accidental data loss)
+            document.getElementById('modal').addEventListener('click', e => { e.stopPropagation(); });
 
             // Clic alertes
             document.getElementById('alertCounter').addEventListener('click', () => {
