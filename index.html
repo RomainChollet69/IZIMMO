@@ -549,6 +549,180 @@
             box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
         }
 
+        /* ===== MODAL TABS ===== */
+        .modal-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .modal-tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+
+        .modal-tab:hover { color: var(--text-dark); }
+        .modal-tab.active { color: #667eea; border-bottom-color: #667eea; }
+
+        /* ===== MANDAT — BADGES CARTES ===== */
+        .mandate-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .mandate-badge.exclusif { background: #FFE0B2; color: #E65100; }
+        .mandate-badge.simple { background: #B3E5FC; color: #01579B; }
+        .mandate-badge.semi-exclusif { background: #D1C4E9; color: #4527A0; }
+
+        .mandate-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .mandate-meta-item {
+            font-size: 11px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            background: #f0f2f5;
+            padding: 3px 8px;
+            border-radius: 4px;
+        }
+
+        .mandate-expiry-warning { background: #fff3cd; color: #856404; }
+        .mandate-expiry-danger { background: #f8d7da; color: #721c24; animation: pulse 2s infinite; }
+
+        /* ===== MANDAT — ONGLET GESTION ===== */
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .mandate-countdown {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+
+        .mandate-countdown.ok { background: #d1f2eb; color: #0c5460; }
+        .mandate-countdown.warning { background: #fff3cd; color: #856404; }
+        .mandate-countdown.danger { background: #f8d7da; color: #721c24; }
+
+        /* ===== VISITES ===== */
+        .visits-section {
+            margin-top: 24px;
+            border-top: 2px solid var(--border-color);
+            padding-top: 20px;
+        }
+
+        .visits-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        .visit-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .visit-form-full { grid-column: 1 / -1; }
+
+        .visit-add-btn {
+            grid-column: 1 / -1;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+
+        .visit-add-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .visit-list { display: flex; flex-direction: column; gap: 8px; }
+
+        .visit-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+        }
+
+        .visit-item-info { flex: 1; }
+        .visit-item-buyer { font-weight: 600; font-size: 14px; color: var(--text-dark); }
+        .visit-item-date { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+        .visit-item-notes { font-size: 12px; color: var(--text-light); font-style: italic; margin-top: 2px; }
+        .visit-item-rating { font-size: 18px; margin: 0 12px; }
+
+        .visit-delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-light);
+            font-size: 16px;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .visit-delete-btn:hover { color: #dc3545; }
+
+        .visit-empty {
+            text-align: center;
+            color: var(--text-light);
+            font-size: 14px;
+            padding: 20px;
+            font-style: italic;
+        }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -674,6 +848,17 @@
             .form-section { padding: 14px; margin-bottom: 12px; }
             .form-section-title { font-size: 14px; }
             .submit-btn { padding: 14px; font-size: 15px; }
+
+            /* Tabs & mandat responsive */
+            .modal-tabs { margin-bottom: 16px; }
+            .modal-tab { padding: 10px 16px; font-size: 13px; }
+            .form-section { padding: 14px; margin-bottom: 12px; }
+            .form-section-title { font-size: 14px; }
+            .visit-form-grid { grid-template-columns: 1fr; padding: 12px; }
+            .visit-item { padding: 10px 12px; }
+            .mandate-meta { gap: 4px; }
+            .mandate-meta-item { font-size: 10px; }
+            .mandate-badge { font-size: 10px; padding: 3px 8px; }
         }
     </style>
 </head>
@@ -765,85 +950,160 @@
                 <h2 class="modal-title">Nouveau Lead</h2>
                 <button class="close-btn" id="closeModalBtn">&times;</button>
             </div>
+            <div class="modal-tabs" id="modalTabs" style="display:none">
+                <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
+                <button type="button" class="modal-tab" data-tab="mandate" onclick="switchTab('mandate')">📑 Gestion Mandat</button>
+            </div>
             <form id="leadForm">
-                <div class="form-group">
-                    <label class="form-label">Statut du Lead *</label>
-                    <select class="form-select" id="status" required>
-                        <option value="">Sélectionnez un statut</option>
-                        <option value="hot">🔥 Hot - Prêt à - 30 jours</option>
-                        <option value="warm">🟡 Warm - Entre 30 et 60 jours</option>
-                        <option value="cold">❄️ Cold - 60 jours et +</option>
-                        <option value="mandate">✅ Sous Mandats</option>
-                        <option value="sold">🏆 Vendus</option>
-                        <option value="lost">❌ Perdus</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Source du Lead *</label>
-                    <select class="form-select" id="source" required>
-                        <option value="">Sélectionnez une source</option>
-                        <option value="boitage">📬 Boîtage</option>
-                        <option value="recommandation">🤝 Recommandation</option>
-                        <option value="pige">📰 Pige</option>
-                        <option value="siteimmo">🌐 Site Immo</option>
-                        <option value="boucheaoreille">🗣️ Bouche à oreille</option>
-                        <option value="efficity">🏢 Efficity</option>
-                        <option value="autre">📌 Autre</option>
-                    </select>
-                </div>
-
-                <div class="form-row">
+                <div id="tabInfo">
                     <div class="form-group">
-                        <label class="form-label">Prénom *</label>
-                        <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
+                        <label class="form-label">Statut du Lead *</label>
+                        <select class="form-select" id="status" required>
+                            <option value="">Sélectionnez un statut</option>
+                            <option value="hot">🔥 Hot - Prêt à - 30 jours</option>
+                            <option value="warm">🟡 Warm - Entre 30 et 60 jours</option>
+                            <option value="cold">❄️ Cold - 60 jours et +</option>
+                            <option value="mandate">✅ Sous Mandats</option>
+                            <option value="sold">🏆 Vendus</option>
+                            <option value="lost">❌ Perdus</option>
+                        </select>
                     </div>
+
                     <div class="form-group">
-                        <label class="form-label">Nom *</label>
-                        <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
+                        <label class="form-label">Source du Lead *</label>
+                        <select class="form-select" id="source" required>
+                            <option value="">Sélectionnez une source</option>
+                            <option value="boitage">📬 Boîtage</option>
+                            <option value="recommandation">🤝 Recommandation</option>
+                            <option value="pige">📰 Pige</option>
+                            <option value="siteimmo">🌐 Site Immo</option>
+                            <option value="boucheaoreille">🗣️ Bouche à oreille</option>
+                            <option value="efficity">🏢 Efficity</option>
+                            <option value="autre">📌 Autre</option>
+                        </select>
                     </div>
-                </div>
 
-                <div class="form-row">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Prénom *</label>
+                            <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label class="form-label">Téléphone</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78">
+                        <label class="form-label">Adresse du bien</label>
+                        <input type="text" class="form-input" id="address" placeholder="123 Avenue Jean Monnet, Lyon">
                     </div>
+
                     <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
+                        <label class="form-label">Description du bien</label>
+                        <textarea class="form-textarea" id="description" placeholder="T4 133m² avec jardin, proche commodités..."></textarea>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label class="form-label">Adresse du bien</label>
-                    <input type="text" class="form-input" id="address" placeholder="123 Avenue Jean Monnet, Lyon">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Description du bien</label>
-                    <textarea class="form-textarea" id="description" placeholder="T4 133m² avec jardin, proche commodités..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Notes & Commentaires</label>
-                    <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend..."></textarea>
-                </div>
-
-                <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Date de contact *</label>
-                        <input type="date" class="form-input" id="date" required>
+                        <label class="form-label">Notes & Commentaires</label>
+                        <textarea class="form-textarea" id="notes" placeholder="Ex: Veut vendre rapidement, refuse les visites le weekend..."></textarea>
                     </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Date de contact *</label>
+                            <input type="date" class="form-input" id="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date de relance</label>
+                            <input type="date" class="form-input" id="reminder">
+                        </div>
+                    </div>
+
                     <div class="form-group">
-                        <label class="form-label">Date de relance</label>
-                        <input type="date" class="form-input" id="reminder">
+                        <label class="form-label">Budget / Estimation (€)</label>
+                        <input type="text" class="form-input" id="budget" placeholder="350 000 €">
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Budget / Estimation (€)</label>
-                    <input type="text" class="form-input" id="budget" placeholder="350 000 €">
+                <div id="tabMandate" style="display:none">
+                    <div class="form-section">
+                        <div class="form-section-title">Informations du mandat</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Type de mandat</label>
+                                <select class="form-select" id="mandateType">
+                                    <option value="">Sélectionnez</option>
+                                    <option value="exclusif">Exclusif</option>
+                                    <option value="simple">Simple</option>
+                                    <option value="semi-exclusif">Semi-exclusif</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Référence mandat</label>
+                                <input type="text" class="form-input" id="mandateReference" placeholder="REF-2024-001">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Date de signature</label>
+                                <input type="date" class="form-input" id="mandateStartDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date de fin</label>
+                                <input type="date" class="form-input" id="mandateEndDate">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Prix de mise en vente (€)</label>
+                            <input type="text" class="form-input" id="mandatePrice" placeholder="350 000 €">
+                        </div>
+                        <div id="mandateCountdown"></div>
+                    </div>
+
+                    <div class="visits-section">
+                        <div class="visits-title">Historique des visites</div>
+                        <div class="visit-form-grid" id="visitFormGrid">
+                            <div class="form-group visit-form-full">
+                                <label class="form-label">Acquéreur</label>
+                                <input type="text" class="form-input" id="visitBuyerName" placeholder="Rechercher un acquéreur...">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Date de visite</label>
+                                <input type="date" class="form-input" id="visitDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Ressenti</label>
+                                <select class="form-select" id="visitRating">
+                                    <option value="">—</option>
+                                    <option value="5">😍 Coup de coeur</option>
+                                    <option value="4">😊 Intéressé</option>
+                                    <option value="3">😐 Mitigé</option>
+                                    <option value="2">😕 Peu convaincu</option>
+                                    <option value="1">😞 Pas intéressé</option>
+                                </select>
+                            </div>
+                            <div class="form-group visit-form-full">
+                                <label class="form-label">Notes</label>
+                                <input type="text" class="form-input" id="visitNotes" placeholder="Observations...">
+                            </div>
+                            <button type="button" class="visit-add-btn" id="addVisitBtn">+ Ajouter une visite</button>
+                        </div>
+                        <div class="visit-list" id="visitList">
+                            <div class="visit-empty">Aucune visite enregistrée</div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="button" class="submit-btn" id="submitBtn">Créer le Lead</button>
@@ -855,6 +1115,8 @@
         // ===== DONNÉES =====
         let sellers = [];
         let draggedCard = null;
+        let visitCounts = {};
+        let currentVisits = [];
 
         // ===== AUTH HELPER =====
         async function getCurrentUserId() {
@@ -863,7 +1125,7 @@
             return session.user.id;
         }
 
-        // ===== SUPABASE CRUD =====
+        // ===== SUPABASE CRUD — SELLERS =====
         async function loadSellers() {
             const userId = await getCurrentUserId();
             if (!userId) return;
@@ -874,6 +1136,7 @@
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             sellers = data || [];
+            await loadVisitCounts();
             renderSellers();
         }
 
@@ -901,6 +1164,195 @@
             const { error } = await supabaseClient.from('sellers').delete().eq('id', id).eq('user_id', userId);
             if (error) { console.error('Erreur suppression:', error); alert('Erreur lors de la suppression.'); return false; }
             return true;
+        }
+
+        // ===== SUPABASE CRUD — VISITS =====
+        async function loadVisitCounts() {
+            const mandateSellers = sellers.filter(s => s.status === 'mandate');
+            if (mandateSellers.length === 0) { visitCounts = {}; return; }
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('visits')
+                .select('seller_id')
+                .eq('user_id', userId)
+                .in('seller_id', mandateSellers.map(s => s.id));
+            if (error || !data) { visitCounts = {}; return; }
+            visitCounts = {};
+            data.forEach(v => { visitCounts[v.seller_id] = (visitCounts[v.seller_id] || 0) + 1; });
+        }
+
+        async function loadVisits(sellerId) {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('visits')
+                .select('*')
+                .eq('seller_id', sellerId)
+                .eq('user_id', userId)
+                .order('visit_date', { ascending: false });
+            if (error) { console.error('Erreur chargement visites:', error); return; }
+            currentVisits = data || [];
+            renderVisits();
+        }
+
+        async function createVisit(visit) {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
+            visit.user_id = userId;
+            const { data, error } = await supabaseClient.from('visits').insert([visit]).select();
+            if (error) { console.error('Erreur création visite:', error); alert('Erreur: ' + error.message); return null; }
+            return data[0];
+        }
+
+        async function deleteVisitDB(id) {
+            const userId = await getCurrentUserId();
+            if (!userId) return false;
+            const { error } = await supabaseClient.from('visits').delete().eq('id', id).eq('user_id', userId);
+            if (error) { console.error('Erreur suppression visite:', error); return false; }
+            return true;
+        }
+
+        function renderVisits() {
+            const container = document.getElementById('visitList');
+            if (!container) return;
+            if (currentVisits.length === 0) {
+                container.innerHTML = '<div class="visit-empty">Aucune visite enregistrée</div>';
+                return;
+            }
+            const ratingEmojis = { 5: '😍', 4: '😊', 3: '😐', 2: '😕', 1: '😞' };
+            container.innerHTML = currentVisits.map(v => {
+                const dateStr = v.visit_date ? new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+                const emoji = ratingEmojis[v.rating] || '';
+                return `<div class="visit-item">
+                    <div class="visit-item-info">
+                        <div class="visit-item-buyer">${escapeHtml(v.buyer_name || '')}</div>
+                        <div class="visit-item-date">${dateStr}</div>
+                        ${v.notes ? `<div class="visit-item-notes">${escapeHtml(v.notes)}</div>` : ''}
+                    </div>
+                    ${emoji ? `<div class="visit-item-rating">${emoji}</div>` : ''}
+                    <button class="visit-delete-btn" onclick="confirmDeleteVisit('${v.id}')" title="Supprimer">🗑️</button>
+                </div>`;
+            }).join('');
+        }
+
+        async function handleAddVisit() {
+            const sellerId = document.getElementById('submitBtn').dataset.editId;
+            if (!sellerId) return;
+            const buyerName = document.getElementById('visitBuyerName').value.trim();
+            const visitDate = document.getElementById('visitDate').value;
+            if (!buyerName || !visitDate) {
+                alert('Veuillez renseigner l\'acquéreur et la date de visite.');
+                return;
+            }
+            const visit = {
+                seller_id: sellerId,
+                buyer_name: buyerName,
+                visit_date: visitDate,
+                rating: parseInt(document.getElementById('visitRating').value) || null,
+                notes: document.getElementById('visitNotes').value.trim() || null
+            };
+            const created = await createVisit(visit);
+            if (created) {
+                currentVisits.unshift(created);
+                renderVisits();
+                document.getElementById('visitBuyerName').value = '';
+                document.getElementById('visitDate').value = '';
+                document.getElementById('visitRating').value = '';
+                document.getElementById('visitNotes').value = '';
+                visitCounts[sellerId] = (visitCounts[sellerId] || 0) + 1;
+            }
+        }
+
+        async function confirmDeleteVisit(id) {
+            if (!confirm('Supprimer cette visite ?')) return;
+            const sellerId = document.getElementById('submitBtn').dataset.editId;
+            const ok = await deleteVisitDB(id);
+            if (ok) {
+                currentVisits = currentVisits.filter(v => v.id !== id);
+                renderVisits();
+                if (sellerId && visitCounts[sellerId]) visitCounts[sellerId]--;
+            }
+        }
+
+        // ===== BUYER AUTOCOMPLETE (visites) =====
+        function setupBuyerAutocomplete() {
+            const input = document.getElementById('visitBuyerName');
+            if (!input) return;
+            const formGroup = input.closest('.form-group');
+            formGroup.classList.add('ac-wrapper');
+            const dropdown = document.createElement('div');
+            dropdown.className = 'ac-dropdown';
+            formGroup.appendChild(dropdown);
+
+            let debounceTimer = null;
+            let results = [];
+            let selIdx = -1;
+
+            input.addEventListener('input', () => {
+                clearTimeout(debounceTimer);
+                const q = input.value.trim();
+                if (q.length < 2) { dropdown.classList.remove('active'); return; }
+                debounceTimer = setTimeout(() => searchBuyers(q), 300);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (!dropdown.classList.contains('active')) return;
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selIdx = Math.min(selIdx + 1, results.length - 1);
+                    highlight();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selIdx = Math.max(selIdx - 1, 0);
+                    highlight();
+                } else if (e.key === 'Enter' && selIdx >= 0) {
+                    e.preventDefault();
+                    pick(results[selIdx]);
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.remove('active');
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+            });
+
+            async function searchBuyers(query) {
+                const userId = await getCurrentUserId();
+                if (!userId) return;
+                const { data, error } = await supabaseClient
+                    .from('buyers')
+                    .select('id, first_name, last_name, phone')
+                    .eq('user_id', userId)
+                    .or(`last_name.ilike.%${query}%,first_name.ilike.%${query}%`)
+                    .order('last_name')
+                    .limit(8);
+                if (error || !data || data.length === 0) { dropdown.classList.remove('active'); return; }
+                results = data;
+                selIdx = -1;
+                dropdown.innerHTML = data.map((b, i) => {
+                    return `<div class="ac-item" data-i="${i}">
+                        <div class="ac-name">${escapeHtml(b.first_name + ' ' + b.last_name)}</div>
+                        ${b.phone ? `<div class="ac-details">${escapeHtml(b.phone)}</div>` : ''}
+                    </div>`;
+                }).join('');
+                dropdown.classList.add('active');
+                dropdown.querySelectorAll('.ac-item').forEach(item => {
+                    item.addEventListener('click', () => pick(data[parseInt(item.dataset.i)]));
+                });
+            }
+
+            function highlight() {
+                dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
+                    el.classList.toggle('ac-selected', i === selIdx);
+                });
+            }
+
+            function pick(buyer) {
+                input.value = buyer.first_name + ' ' + buyer.last_name;
+                dropdown.classList.remove('active');
+            }
         }
 
         // ===== RENDU =====
@@ -932,7 +1384,6 @@
             card.draggable = true;
             card.dataset.id = seller.id;
 
-            // Date formatée
             let formattedDate = '';
             if (seller.date) {
                 formattedDate = new Date(seller.date).toLocaleDateString('fr-FR', {
@@ -970,18 +1421,60 @@
                 html += '<div class="badge-alert">À RELANCER</div>';
             }
 
-            // Source tag (utilise getSourceTag du config partagé)
             if (seller.source) {
                 html += getSourceTag(seller.source);
             }
 
-            html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+            // === CARTE ENRICHIE MANDAT ===
+            if (seller.status === 'mandate') {
+                if (seller.mandate_type) {
+                    const typeLabels = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
+                    html += `<div class="mandate-badge ${seller.mandate_type}">${typeLabels[seller.mandate_type] || seller.mandate_type}</div> `;
+                }
 
-            if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
-            if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
-            if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
-            if (seller.description) html += `<div class="card-info">${seller.description}</div>`;
-            if (seller.budget) html += `<div class="card-info">💰 ${seller.budget}</div>`;
+                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                if (seller.mandate_price) html += `<div class="card-info">💰 ${seller.mandate_price}</div>`;
+                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
+                if (seller.mandate_reference) html += `<div class="card-info">📋 Réf: ${seller.mandate_reference}</div>`;
+
+                // Meta : durée + visites
+                let metaHtml = '<div class="mandate-meta">';
+                if (seller.mandate_start_date) {
+                    const start = new Date(seller.mandate_start_date);
+                    const days = Math.floor((new Date() - start) / (1000 * 60 * 60 * 24));
+                    metaHtml += `<span class="mandate-meta-item">📅 ${days}j</span>`;
+                }
+                const vc = visitCounts[seller.id] || 0;
+                metaHtml += `<span class="mandate-meta-item">👁️ ${vc} visite${vc > 1 ? 's' : ''}</span>`;
+                metaHtml += '</div>';
+                html += metaHtml;
+
+                // Alerte expiration
+                if (seller.mandate_end_date) {
+                    const end = new Date(seller.mandate_end_date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    end.setHours(0, 0, 0, 0);
+                    const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                    if (daysLeft < 0) {
+                        html += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⚠️ Mandat expiré</div>`;
+                    } else if (daysLeft <= 15) {
+                        html += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⏰ Expire dans ${daysLeft}j</div>`;
+                    } else if (daysLeft <= 30) {
+                        html += `<div class="mandate-meta-item mandate-expiry-warning" style="margin-top:6px;display:inline-flex">📆 ${daysLeft}j restants</div>`;
+                    }
+                }
+
+                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
+            } else {
+                // === CARTE STANDARD ===
+                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
+                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
+                if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
+                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
+                if (seller.description) html += `<div class="card-info">${seller.description}</div>`;
+                if (seller.budget) html += `<div class="card-info">💰 ${seller.budget}</div>`;
+            }
 
             if (seller.notes) {
                 html += `<div class="card-notes">💬 ${seller.notes}</div>`;
@@ -1028,8 +1521,48 @@
             else el.classList.remove('has-alerts');
         }
 
-        // ===== MODAL =====
-        function openModal() {
+        // ===== MODAL & TABS =====
+        function switchTab(tab) {
+            document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
+            document.getElementById('tabMandate').style.display = tab === 'mandate' ? 'block' : 'none';
+            if (tab === 'mandate') updateMandateCountdown();
+        }
+
+        function updateModalTabs() {
+            const status = document.getElementById('status').value;
+            const tabs = document.getElementById('modalTabs');
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (status === 'mandate' && editId) {
+                tabs.style.display = 'flex';
+            } else {
+                tabs.style.display = 'none';
+                switchTab('info');
+            }
+        }
+
+        function updateMandateCountdown() {
+            const container = document.getElementById('mandateCountdown');
+            if (!container) return;
+            const endDate = document.getElementById('mandateEndDate').value;
+            if (!endDate) { container.innerHTML = ''; return; }
+            const end = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            end.setHours(0, 0, 0, 0);
+            const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+            if (daysLeft < 0) {
+                container.innerHTML = `<div class="mandate-countdown danger">⚠️ Mandat expiré depuis ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? 's' : ''}</div>`;
+            } else if (daysLeft <= 15) {
+                container.innerHTML = `<div class="mandate-countdown danger">⏰ ${daysLeft} jour${daysLeft > 1 ? 's' : ''} restant${daysLeft > 1 ? 's' : ''} avant expiration</div>`;
+            } else if (daysLeft <= 30) {
+                container.innerHTML = `<div class="mandate-countdown warning">📆 ${daysLeft} jours restants</div>`;
+            } else {
+                container.innerHTML = `<div class="mandate-countdown ok">✅ ${daysLeft} jours restants</div>`;
+            }
+        }
+
+        function openModal(initialTab) {
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -1043,6 +1576,9 @@
                 document.querySelector('.modal-title').textContent = 'Nouveau Lead';
                 submitBtn.textContent = 'Créer le Lead';
             }
+
+            updateModalTabs();
+            if (initialTab) switchTab(initialTab);
         }
 
         function closeModal() {
@@ -1054,10 +1590,27 @@
             delete submitBtn.dataset.editId;
             submitBtn.textContent = 'Créer le Lead';
             document.querySelector('.modal-title').textContent = 'Nouveau Lead';
+
+            // Reset tabs
+            document.getElementById('modalTabs').style.display = 'none';
+            switchTab('info');
+
+            // Reset mandate fields
+            document.getElementById('mandateType').value = '';
+            document.getElementById('mandateReference').value = '';
+            document.getElementById('mandateStartDate').value = '';
+            document.getElementById('mandateEndDate').value = '';
+            document.getElementById('mandatePrice').value = '';
+            document.getElementById('mandateCountdown').innerHTML = '';
+
+            // Reset visits
+            currentVisits = [];
+            const visitList = document.getElementById('visitList');
+            if (visitList) visitList.innerHTML = '<div class="visit-empty">Aucune visite enregistrée</div>';
         }
 
         // ===== EDIT / DELETE =====
-        function editSeller(id) {
+        function editSeller(id, initialTab) {
             const seller = sellers.find(s => s.id === id);
             if (!seller) return;
 
@@ -1079,12 +1632,25 @@
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('budget').value = seller.budget || '';
 
+            // Mandate fields
+            document.getElementById('mandateType').value = seller.mandate_type || '';
+            document.getElementById('mandateReference').value = seller.mandate_reference || '';
+            document.getElementById('mandateStartDate').value = seller.mandate_start_date || '';
+            document.getElementById('mandateEndDate').value = seller.mandate_end_date || '';
+            document.getElementById('mandatePrice').value = seller.mandate_price || '';
+
             document.querySelector('.modal-title').textContent = 'Modifier le Lead';
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.textContent = 'Mettre à jour';
             submitBtn.dataset.editId = id;
 
-            openModal();
+            openModal(initialTab);
+
+            // Load visits if mandate
+            if (seller.status === 'mandate') {
+                loadVisits(id);
+                updateMandateCountdown();
+            }
         }
 
         async function confirmDeleteSeller(id) {
@@ -1126,7 +1692,12 @@
                 notes: document.getElementById('notes').value.trim() || null,
                 date,
                 reminder: document.getElementById('reminder').value || null,
-                budget: document.getElementById('budget').value.trim() || null
+                budget: document.getElementById('budget').value.trim() || null,
+                mandate_type: document.getElementById('mandateType').value || null,
+                mandate_reference: document.getElementById('mandateReference').value.trim() || null,
+                mandate_start_date: document.getElementById('mandateStartDate').value || null,
+                mandate_end_date: document.getElementById('mandateEndDate').value || null,
+                mandate_price: document.getElementById('mandatePrice').value.trim() || null
             };
 
             const editId = document.getElementById('submitBtn').dataset.editId;
@@ -1142,6 +1713,7 @@
                 if (created) sellers.unshift(created);
             }
 
+            await loadVisitCounts();
             renderSellers();
             closeModal();
         }
@@ -1176,6 +1748,11 @@
                         seller.status = newStatus;
                         await updateSeller(sellerId, { status: newStatus });
                         renderSellers();
+
+                        // Auto-transition : ouvre la modale sur l'onglet mandat
+                        if (newStatus === 'mandate' && !seller.mandate_start_date) {
+                            editSeller(sellerId, 'mandate');
+                        }
                     }
                 });
             });
@@ -1187,12 +1764,19 @@
             setupDragAndDrop();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('address');
+            setupBuyerAutocomplete();
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
-            document.getElementById('addLeadBtn').addEventListener('click', openModal);
+            document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
             document.getElementById('closeModalBtn').addEventListener('click', closeModal);
             document.getElementById('submitBtn').addEventListener('click', handleFormSubmit);
+            document.getElementById('addVisitBtn').addEventListener('click', handleAddVisit);
+
+            // Mise à jour onglets selon statut
+            document.getElementById('status').addEventListener('change', updateModalTabs);
+            // Mise à jour countdown selon date fin
+            document.getElementById('mandateEndDate').addEventListener('change', updateMandateCountdown);
 
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
             document.getElementById('modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
