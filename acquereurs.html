@@ -383,6 +383,19 @@
 
         .lead-card.dragging { opacity: 0.5; cursor: grabbing; }
 
+        .drop-indicator {
+            height: 3px;
+            background: #2DD4BF;
+            border-radius: 2px;
+            margin: 4px 0;
+            transition: opacity 0.15s ease;
+            pointer-events: none;
+        }
+
+        .column.drag-over {
+            background: rgba(45, 212, 191, 0.05);
+        }
+
         /* ===== BADGES ===== */
         .card-badges {
             display: flex;
@@ -1819,8 +1832,12 @@
             const buyer = buyers.find(b => b.id === buyerId);
             if (!buyer) return;
             buyer.status = newStatus;
-            await updateBuyer(buyerId, { status: newStatus });
+            buyer.position = 0;
+            await updateBuyer(buyerId, { status: newStatus, position: 0 });
             renderBuyers();
+            // Renuméroter la colonne cible
+            const targetContainer = document.getElementById(newStatus + '-container');
+            if (targetContainer) await updatePositions(targetContainer, newStatus);
             setMobileTab(newStatus);
         }
 
@@ -1880,6 +1897,7 @@
                 .from('buyers')
                 .select('*')
                 .eq('user_id', userId)
+                .order('position', { ascending: true })
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];
@@ -3008,6 +3026,47 @@
         }
 
         // ===== DRAG & DROP =====
+        function getDropPosition(container, mouseY) {
+            const cards = [...container.querySelectorAll('.lead-card:not(.dragging)')];
+            for (let i = 0; i < cards.length; i++) {
+                const rect = cards[i].getBoundingClientRect();
+                const midpoint = rect.top + rect.height / 2;
+                if (mouseY < midpoint) return { before: cards[i], index: i };
+            }
+            return { before: null, index: cards.length };
+        }
+
+        function clearDropIndicators() {
+            document.querySelectorAll('.drop-indicator').forEach(el => el.remove());
+            document.querySelectorAll('.column.drag-over').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function showDropIndicator(container, position) {
+            clearDropIndicators();
+            container.closest('.column').classList.add('drag-over');
+            const indicator = document.createElement('div');
+            indicator.className = 'drop-indicator';
+            if (position.before) {
+                container.insertBefore(indicator, position.before);
+            } else {
+                container.appendChild(indicator);
+            }
+        }
+
+        async function updatePositions(container, status) {
+            const cards = container.querySelectorAll('.lead-card');
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const updates = [];
+            cards.forEach((card, index) => {
+                const id = card.dataset.id;
+                updates.push(supabaseClient.from('buyers').update({ position: index }).eq('id', id).eq('user_id', userId));
+                const buyer = buyers.find(b => b.id === id);
+                if (buyer) buyer.position = index;
+            });
+            await Promise.all(updates);
+        }
+
         function setupDragAndDrop() {
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
@@ -3020,23 +3079,57 @@
                 if (e.target.classList.contains('lead-card')) {
                     e.target.classList.remove('dragging');
                 }
+                clearDropIndicators();
             });
 
             document.querySelectorAll('.cards-container').forEach(container => {
-                container.addEventListener('dragover', e => e.preventDefault());
+                container.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (!draggedCard) return;
+                    const position = getDropPosition(container, e.clientY);
+                    showDropIndicator(container, position);
+                });
+
+                container.addEventListener('dragleave', e => {
+                    if (!container.contains(e.relatedTarget)) {
+                        clearDropIndicators();
+                    }
+                });
 
                 container.addEventListener('drop', async e => {
                     e.preventDefault();
+                    clearDropIndicators();
                     if (!draggedCard) return;
 
                     const buyerId = draggedCard.dataset.id;
                     const newStatus = container.closest('.column').dataset.status;
                     const buyer = buyers.find(b => b.id === buyerId);
+                    if (!buyer) return;
 
-                    if (buyer && buyer.status !== newStatus) {
+                    const oldStatus = buyer.status;
+                    const position = getDropPosition(container, e.clientY);
+
+                    if (oldStatus === newStatus) {
+                        // Réordonnement dans la même colonne
+                        if (position.before) {
+                            container.insertBefore(draggedCard, position.before);
+                        } else {
+                            container.appendChild(draggedCard);
+                        }
+                        await updatePositions(container, newStatus);
+                    } else {
+                        // Déplacement entre colonnes
                         buyer.status = newStatus;
                         await updateBuyer(buyerId, { status: newStatus });
                         renderBuyers();
+                        // Insérer à la bonne position
+                        const newCard = container.querySelector(`.lead-card[data-id="${buyerId}"]`);
+                        if (newCard && position.before) {
+                            container.insertBefore(newCard, position.before);
+                        }
+                        await updatePositions(container, newStatus);
+                        const oldContainer = document.getElementById(oldStatus + '-container');
+                        if (oldContainer) await updatePositions(oldContainer, oldStatus);
                     }
                 });
             });
