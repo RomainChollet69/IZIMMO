@@ -2152,19 +2152,10 @@
         }
 
         function updateAlertCounter() {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const count = buyers.filter(b => {
-                if (!b.reminder) return false;
-                const d = new Date(b.reminder);
-                d.setHours(0, 0, 0, 0);
-                return d <= today;
-            }).length;
-
-            document.getElementById('alertNumber').textContent = count;
-            const el = document.getElementById('alertCounter');
-            if (count > 0) el.classList.add('has-alerts');
-            else el.classList.remove('has-alerts');
+            // Use cross-table counter (sellers + buyers) from relance widget
+            if (typeof updateRelanceCounter === 'function') {
+                updateRelanceCounter();
+            }
         }
 
         // ===== MODAL =====
@@ -3444,7 +3435,14 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
-            loadBuyers();
+            loadBuyers().then(() => {
+                const params = new URLSearchParams(window.location.search);
+                const openLeadId = params.get('openLead');
+                if (openLeadId && typeof editBuyer === 'function') {
+                    editBuyer(openLeadId);
+                    history.replaceState(null, '', window.location.pathname);
+                }
+            });
             setupDragAndDrop();
             initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
@@ -3543,17 +3541,7 @@
                 });
             }
 
-            document.getElementById('alertCounter').addEventListener('click', () => {
-                const cards = document.querySelectorAll('.lead-card');
-                for (let card of cards) {
-                    if (card.querySelector('.badge-alert')) {
-                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        card.style.animation = 'none';
-                        setTimeout(() => { card.style.animation = 'highlight 1s ease'; }, 10);
-                        break;
-                    }
-                }
-            });
+            // Alert counter click handled by relance-widget.js
         });
     </script>
     <div class="move-popup-overlay" id="movePopup">
@@ -3563,6 +3551,7 @@
             <button class="move-popup-cancel" id="movePopupCancel">Annuler</button>
         </div>
     </div>
+    <script src="js/relance-widget.js"></script>
     <script src="js/todo-widget.js"></script>
 </body>
 </html>
