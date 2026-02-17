@@ -953,6 +953,202 @@
         .card-notes-preview { font-size: 12px; color: var(--text-light); font-style: italic; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .card-notes-badge { font-size: 11px; color: #667eea; background: #f0f2ff; padding: 2px 6px; border-radius: 4px; display: inline-block; }
 
+        /* ===== DOCUMENTS / FICHIERS JOINTS ===== */
+        .docs-section {
+            margin-top: 20px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 16px;
+        }
+        .docs-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        .docs-section-title .docs-count {
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+            font-size: 12px;
+            color: var(--text-light);
+            text-transform: none;
+        }
+        .docs-drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafbfc;
+            margin-bottom: 12px;
+        }
+        .docs-drop-zone:hover, .docs-drop-zone.dragover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+        .docs-drop-zone-icon { font-size: 32px; margin-bottom: 6px; }
+        .docs-drop-zone-text { font-size: 13px; color: var(--text-light); }
+        .docs-drop-zone-text strong { color: #667eea; cursor: pointer; }
+        .docs-drop-zone-hint { font-size: 11px; color: #bbb; margin-top: 4px; }
+        .docs-upload-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 12px;
+            color: var(--text-dark);
+        }
+        .docs-upload-item .docs-progress-bar-outer {
+            flex: 1;
+            height: 8px;
+            background: #f0f2f5;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .docs-upload-item .docs-progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .docs-upload-item .docs-upload-status {
+            font-size: 11px;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+        .docs-file-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .docs-file-list::-webkit-scrollbar { width: 4px; }
+        .docs-file-list::-webkit-scrollbar-thumb { background: #CFD8DC; border-radius: 4px; }
+        .docs-file-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .docs-file-icon { font-size: 20px; flex-shrink: 0; }
+        .docs-file-info { flex: 1; min-width: 0; }
+        .docs-file-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .docs-file-meta { font-size: 11px; color: var(--text-light); margin-top: 2px; }
+        .docs-file-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .docs-file-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            color: var(--text-light);
+        }
+        .docs-file-btn:hover { background: #e8eaf6; }
+        .docs-file-btn.delete:hover { background: #ffebee; color: #FF4757; }
+        .docs-file-btn.ai-btn {
+            color: #667eea;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+        }
+        .docs-file-btn.ai-btn:hover { background: #f0f0ff; }
+        .docs-file-btn.ai-btn.analyzing { opacity: 0.6; pointer-events: none; }
+        .docs-ai-badge {
+            font-size: 10px;
+            background: #E8EAF6;
+            color: #667eea;
+            padding: 1px 6px;
+            border-radius: 3px;
+            margin-left: 4px;
+        }
+        .card-files-badge {
+            font-size: 11px;
+            color: #667eea;
+            background: #f0f2ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .ai-confirm-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 11000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+        .ai-confirm-panel {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 480px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 24px;
+        }
+        .ai-confirm-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+        .ai-confirm-field {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .ai-confirm-field:last-of-type { border-bottom: none; }
+        .ai-confirm-field input[type="checkbox"] { margin-top: 3px; accent-color: #667eea; }
+        .ai-confirm-field-label { font-size: 12px; color: var(--text-light); font-weight: 600; text-transform: uppercase; }
+        .ai-confirm-field-value { font-size: 14px; color: var(--text-dark); margin-top: 2px; }
+        .ai-confirm-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+        .ai-confirm-apply {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .ai-confirm-cancel {
+            padding: 10px 20px;
+            background: #f0f2f5;
+            color: var(--text-dark);
+            border: 1px solid #E1E8ED;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        @keyframes fieldFlash { 0% { background-color: #E8EAF6; } 100% { background-color: transparent; } }
+        .field-flash { animation: fieldFlash 1.5s ease; }
+
         /* ===== MOBILE-ONLY ELEMENTS (hidden on desktop) ===== */
         .mobile-tabs { display: none; }
         .mobile-move-btn { display: none !important; }
@@ -1478,6 +1674,22 @@
                             <div class="notes-empty">Aucune note pour le moment</div>
                         </div>
                     </div>
+
+                    <!-- Documents joints -->
+                    <div class="docs-section" id="docsSection">
+                        <div class="docs-section-title">📎 Documents <span class="docs-count" id="docsCount"></span></div>
+                        <div class="docs-drop-zone" id="docsDropZone">
+                            <div class="docs-drop-zone-icon">📁</div>
+                            <div class="docs-drop-zone-text">Glissez vos fichiers ici ou <strong id="docsPickBtn">parcourir</strong></div>
+                            <div class="docs-drop-zone-hint">PDF, images, Word, Excel — Max 10 Mo par fichier</div>
+                        </div>
+                        <input type="file" id="docsFileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,.doc,.docx,.xls,.xlsx" style="display:none">
+                        <div class="docs-upload-progress" id="docsUploadProgress"></div>
+                        <div class="docs-file-list" id="docsFileList">
+                            <div class="notes-empty">Aucun document</div>
+                        </div>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Date de relance</label>
@@ -1672,6 +1884,7 @@
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];
             await loadBuyerNotePreviews();
+            await loadFileCounts();
             renderBuyers();
         }
 
@@ -1808,6 +2021,12 @@
                 html += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
             }
 
+            // Documents count badge
+            const fc = fileCounts[buyer.id] || 0;
+            if (fc > 0) {
+                html += `<span class="card-files-badge">📎 ${fc}</span>`;
+            }
+
             // Compteur de liens
             const links = buyer.links || [];
             if (links.length > 0) {
@@ -1915,6 +2134,10 @@
             renderBuyerNotes();
             if (noteRecorder) noteRecorder.stop();
             document.getElementById('noteInput').value = '';
+            // Reset documents
+            currentFiles = [];
+            renderFiles();
+            document.getElementById('docsUploadProgress').innerHTML = '';
             const btn = document.getElementById('submitBtn');
             delete btn.dataset.editId;
             btn.textContent = "Créer l'Acquéreur";
@@ -2284,6 +2507,317 @@
             });
         }
 
+        // ===== DOCUMENTS / FICHIERS JOINTS =====
+        const DOCS_LEAD_TYPE = 'buyer';
+        let currentFiles = [];
+        let fileCounts = {};
+
+        const ALLOWED_FILE_TYPES = [
+            'application/pdf',
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+            'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        ];
+        const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+        function getFileIcon(fileType) {
+            if (fileType === 'application/pdf') return '📕';
+            if (fileType && fileType.startsWith('image/')) return '🖼️';
+            if (fileType && (fileType.includes('word') || fileType.includes('document'))) return '📘';
+            if (fileType && (fileType.includes('excel') || fileType.includes('spreadsheet'))) return '📗';
+            return '📄';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' o';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' Ko';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' Mo';
+        }
+
+        function formatFileDate(isoStr) {
+            const d = new Date(isoStr);
+            const months = ['janv.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function isAnalyzable(fileType) {
+            return fileType === 'application/pdf' || (fileType && fileType.startsWith('image/'));
+        }
+
+        async function loadFileCounts() {
+            const userId = await getCurrentUserId();
+            if (!userId || buyers.length === 0) { fileCounts = {}; return; }
+            const { data, error } = await supabaseClient
+                .from('lead_files')
+                .select('buyer_id')
+                .eq('user_id', userId)
+                .in('buyer_id', buyers.map(b => b.id));
+            if (error || !data) { fileCounts = {}; return; }
+            fileCounts = {};
+            data.forEach(f => { fileCounts[f.buyer_id] = (fileCounts[f.buyer_id] || 0) + 1; });
+        }
+
+        async function loadFiles(leadId, leadType) {
+            const userId = await getCurrentUserId();
+            if (!userId || !leadId) { currentFiles = []; renderFiles(); return; }
+            const column = leadType === 'buyer' ? 'buyer_id' : 'seller_id';
+            const { data, error } = await supabaseClient
+                .from('lead_files')
+                .select('*')
+                .eq('user_id', userId)
+                .eq(column, leadId)
+                .order('created_at', { ascending: false });
+            if (error) { console.error('Files load error:', error); currentFiles = []; }
+            else { currentFiles = data || []; }
+            renderFiles();
+        }
+
+        function renderFiles() {
+            const listEl = document.getElementById('docsFileList');
+            const countEl = document.getElementById('docsCount');
+            countEl.textContent = currentFiles.length > 0 ? `(${currentFiles.length})` : '';
+            if (currentFiles.length === 0) {
+                listEl.innerHTML = '<div class="notes-empty">Aucun document</div>';
+                return;
+            }
+            listEl.innerHTML = currentFiles.map(f => `
+                <div class="docs-file-item" data-id="${f.id}">
+                    <div class="docs-file-icon">${getFileIcon(f.file_type)}</div>
+                    <div class="docs-file-info">
+                        <div class="docs-file-name">${escapeHtml(f.file_name)}${f.ai_extracted ? '<span class="docs-ai-badge">IA</span>' : ''}</div>
+                        <div class="docs-file-meta">${formatFileSize(f.file_size)} — ${formatFileDate(f.created_at)}</div>
+                    </div>
+                    <div class="docs-file-actions">
+                        <button class="docs-file-btn" onclick="viewFile('${f.id}')" title="Voir">👁️</button>
+                        <button class="docs-file-btn" onclick="downloadFile('${f.id}')" title="Télécharger">📥</button>
+                        ${isAnalyzable(f.file_type) ? `<button class="docs-file-btn ai-btn" onclick="analyzeFile('${f.id}')" title="Analyser avec IA">🤖 IA</button>` : ''}
+                        <button class="docs-file-btn delete" onclick="deleteFile('${f.id}')" title="Supprimer">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function uploadFiles(files, leadId, leadType) {
+            const userId = await getCurrentUserId();
+            if (!userId || !leadId) {
+                alert('Enregistrez le lead avant d\'ajouter des documents.');
+                return;
+            }
+            const progressContainer = document.getElementById('docsUploadProgress');
+            for (const file of files) {
+                if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+                    alert(`Type non supporté : ${file.name}\nFormats acceptés : PDF, images, Word, Excel`);
+                    continue;
+                }
+                if (file.size > MAX_FILE_SIZE) {
+                    alert(`Fichier trop volumineux : ${file.name}\nTaille max : 10 Mo`);
+                    continue;
+                }
+                const progressId = 'up-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
+                const shortName = file.name.length > 25 ? file.name.substring(0, 22) + '…' : file.name;
+                progressContainer.insertAdjacentHTML('beforeend', `
+                    <div class="docs-upload-item" id="${progressId}">
+                        <span>${escapeHtml(shortName)}</span>
+                        <div class="docs-progress-bar-outer"><div class="docs-progress-bar-inner" id="${progressId}-bar" style="width:10%"></div></div>
+                        <span class="docs-upload-status" id="${progressId}-status">Envoi…</span>
+                    </div>
+                `);
+                const storagePath = `${userId}/buyer_${leadId}/${Date.now()}_${file.name}`;
+                try {
+                    document.getElementById(`${progressId}-bar`).style.width = '30%';
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('lead-files')
+                        .upload(storagePath, file, { cacheControl: '3600', upsert: false });
+                    if (uploadError) throw uploadError;
+                    document.getElementById(`${progressId}-bar`).style.width = '70%';
+                    const { data: fileRecord, error: dbError } = await supabaseClient
+                        .from('lead_files')
+                        .insert({ user_id: userId, buyer_id: leadId, file_name: file.name, file_type: file.type, file_size: file.size, storage_path: storagePath })
+                        .select()
+                        .single();
+                    if (dbError) throw dbError;
+                    document.getElementById(`${progressId}-bar`).style.width = '100%';
+                    document.getElementById(`${progressId}-status`).textContent = '✓';
+                    currentFiles.unshift(fileRecord);
+                    renderFiles();
+                    setTimeout(() => { const el = document.getElementById(progressId); if (el) el.remove(); }, 1500);
+                } catch (err) {
+                    console.error('Upload error:', err);
+                    const statusEl = document.getElementById(`${progressId}-status`);
+                    if (statusEl) statusEl.textContent = 'Erreur';
+                    const barEl = document.getElementById(`${progressId}-bar`);
+                    if (barEl) { barEl.style.background = '#FF4757'; barEl.style.width = '100%'; }
+                }
+            }
+        }
+
+        async function getSignedUrl(storagePath) {
+            const { data, error } = await supabaseClient.storage
+                .from('lead-files')
+                .createSignedUrl(storagePath, 3600);
+            if (error) { console.error('Signed URL error:', error); return null; }
+            return data.signedUrl;
+        }
+
+        async function viewFile(fileId) {
+            const file = currentFiles.find(f => f.id === fileId);
+            if (!file) return;
+            const url = await getSignedUrl(file.storage_path);
+            if (url) window.open(url, '_blank');
+        }
+
+        async function downloadFile(fileId) {
+            const file = currentFiles.find(f => f.id === fileId);
+            if (!file) return;
+            const url = await getSignedUrl(file.storage_path);
+            if (!url) return;
+            const a = document.createElement('a');
+            a.href = url; a.download = file.file_name;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+
+        async function deleteFile(fileId) {
+            if (!confirm('Supprimer ce document ?')) return;
+            const file = currentFiles.find(f => f.id === fileId);
+            if (!file) return;
+            await supabaseClient.storage.from('lead-files').remove([file.storage_path]);
+            const { error } = await supabaseClient.from('lead_files').delete().eq('id', fileId);
+            if (error) { console.error('DB delete error:', error); return; }
+            currentFiles = currentFiles.filter(f => f.id !== fileId);
+            renderFiles();
+        }
+
+        function setupDocsDropZone() {
+            const dropZone = document.getElementById('docsDropZone');
+            const fileInput = document.getElementById('docsFileInput');
+            const pickBtn = document.getElementById('docsPickBtn');
+            if (!dropZone || !fileInput) return;
+            pickBtn.addEventListener('click', (e) => { e.stopPropagation(); fileInput.click(); });
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover');
+                const files = Array.from(e.dataTransfer.files);
+                if (files.length === 0) return;
+                const leadId = document.getElementById('submitBtn').dataset.editId;
+                if (!leadId) { alert('Enregistrez le lead avant d\'ajouter des documents.'); return; }
+                uploadFiles(files, leadId, DOCS_LEAD_TYPE);
+            });
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length === 0) return;
+                const leadId = document.getElementById('submitBtn').dataset.editId;
+                if (!leadId) { alert('Enregistrez le lead avant d\'ajouter des documents.'); return; }
+                uploadFiles(files, leadId, DOCS_LEAD_TYPE);
+                e.target.value = '';
+            });
+        }
+
+        async function analyzeFile(fileId) {
+            const file = currentFiles.find(f => f.id === fileId);
+            if (!file) return;
+            const btn = document.querySelector(`.docs-file-item[data-id="${fileId}"] .ai-btn`);
+            if (btn) { btn.classList.add('analyzing'); btn.textContent = '⏳'; }
+            try {
+                const signedUrl = await getSignedUrl(file.storage_path);
+                if (!signedUrl) throw new Error('Cannot get file URL');
+                const resp = await fetch('/api/analyze-document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileUrl: signedUrl, fileType: file.file_type, leadType: DOCS_LEAD_TYPE })
+                });
+                if (!resp.ok) throw new Error('Analysis failed');
+                const { fields } = await resp.json();
+                if (!fields || Object.keys(fields).every(k => fields[k] === null)) {
+                    alert('Aucune information extraite du document.');
+                    return;
+                }
+                await supabaseClient.from('lead_files').update({ ai_extracted: fields }).eq('id', fileId);
+                const idx = currentFiles.findIndex(f => f.id === fileId);
+                if (idx >= 0) currentFiles[idx].ai_extracted = fields;
+                renderFiles();
+                showAiConfirmPopup(fields);
+            } catch (err) {
+                console.error('AI analysis error:', err);
+                alert('Erreur lors de l\'analyse : ' + err.message);
+            } finally {
+                if (btn) { btn.classList.remove('analyzing'); btn.textContent = '🤖 IA'; }
+            }
+        }
+
+        function showAiConfirmPopup(fields) {
+            const existing = document.getElementById('aiConfirmOverlay');
+            if (existing) existing.remove();
+            const fieldLabels = {
+                first_name: 'Prénom', last_name: 'Nom', phone: 'Téléphone', email: 'Email',
+                property_type: 'Type de bien', rooms: 'Typologie', sector: 'Secteur',
+                budget_min: 'Budget min', budget_max: 'Budget max', surface_min: 'Surface min',
+                surface: 'Surface', notes: 'Notes'
+            };
+            const validFields = Object.entries(fields).filter(([k, v]) => v !== null && v !== undefined && v !== '');
+            if (validFields.length === 0) { alert('Aucune information exploitable extraite.'); return; }
+            const fieldsHtml = validFields.map(([key, value]) => `
+                <div class="ai-confirm-field">
+                    <input type="checkbox" checked data-field="${key}" data-value="${escapeHtml(String(value))}">
+                    <div>
+                        <div class="ai-confirm-field-label">${escapeHtml(fieldLabels[key] || key)}</div>
+                        <div class="ai-confirm-field-value">${escapeHtml(String(value))}</div>
+                    </div>
+                </div>
+            `).join('');
+            const overlay = document.createElement('div');
+            overlay.id = 'aiConfirmOverlay';
+            overlay.className = 'ai-confirm-overlay';
+            overlay.innerHTML = `
+                <div class="ai-confirm-panel">
+                    <div class="ai-confirm-title">🤖 Informations extraites</div>
+                    <p style="font-size:13px;color:var(--text-light);margin-bottom:16px">Cochez les champs à appliquer au lead :</p>
+                    ${fieldsHtml}
+                    <div class="ai-confirm-actions">
+                        <button class="ai-confirm-cancel" onclick="closeAiConfirm()">Annuler</button>
+                        <button class="ai-confirm-apply" onclick="applyAiFields()">Appliquer</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) closeAiConfirm(); });
+        }
+
+        function closeAiConfirm() {
+            const overlay = document.getElementById('aiConfirmOverlay');
+            if (overlay) overlay.remove();
+        }
+
+        function applyAiFields() {
+            const overlay = document.getElementById('aiConfirmOverlay');
+            if (!overlay) return;
+            const fieldToInput = {
+                first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
+                property_type: 'propertyType', rooms: 'rooms', sector: 'sector',
+                budget_min: 'budgetMin', budget_max: 'budgetMax', surface_min: 'surfaceMin', surface: 'surface'
+            };
+            overlay.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+                const field = cb.dataset.field;
+                const value = cb.dataset.value;
+                if (field === 'notes') {
+                    const noteInput = document.getElementById('noteInput');
+                    if (noteInput) {
+                        noteInput.value = (noteInput.value ? noteInput.value + '\n' : '') + '[IA] ' + value;
+                        noteInput.classList.remove('field-flash'); void noteInput.offsetWidth; noteInput.classList.add('field-flash');
+                    }
+                    return;
+                }
+                const inputId = fieldToInput[field];
+                if (!inputId) return;
+                const el = document.getElementById(inputId);
+                if (!el) return;
+                el.value = value;
+                el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+            });
+            closeAiConfirm();
+        }
+
         // ===== LIENS =====
         function renderLinks() {
             const container = document.getElementById('linksContainer');
@@ -2394,6 +2928,7 @@
 
             // Load notes
             loadBuyerNotes(id);
+            loadFiles(id, 'buyer');
         }
 
         async function confirmDeleteBuyer(id) {
@@ -2466,6 +3001,7 @@
             }
 
             await loadBuyerNotePreviews();
+            await loadFileCounts();
             renderBuyers();
             formModified = false;
             closeModal(true);
@@ -2684,6 +3220,7 @@
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupAddressAutocomplete('sector');
             setupReferrerField();
+            setupDocsDropZone();
 
             // Note events
             document.getElementById('noteMicBtn').addEventListener('click', startBuyerNoteRecording);
