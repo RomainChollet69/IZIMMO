@@ -3631,21 +3631,14 @@
             if (price) compactParts.push(formatEuro(price));
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
-            // Mandate badge for compact
-            let mandateBadgeCompact = '';
-            if (seller.status === 'mandate' && seller.mandate_type) {
-                const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
-                mandateBadgeCompact = `<div class="mandate-badge ${seller.mandate_type}" style="font-size:10px;padding:2px 6px;margin-top:2px;display:inline-block">${tl[seller.mandate_type] || seller.mandate_type}</div>`;
-            }
-
             // === COMPACT VIEW ===
             let compact = '<div class="card-compact">';
             if (seller.source) compact += getSourceTag(seller.source);
+            if (seller.source === 'recommandation' && seller.referrer_name) compact += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
             compact += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
             compact += compactPropLine;
             if (seller.phone) compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             if (followupCompact) compact += followupCompact;
-            if (mandateBadgeCompact) compact += mandateBadgeCompact;
             compact += '</div>';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
@@ -3653,14 +3646,11 @@
 
             if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
-            // Referrer (only for recommandation source)
-            if (seller.source === 'recommandation' && seller.referrer_name) ext += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
-
-            // Full property details
-            ext += getPropertyLine(seller);
+            // Email
             if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
+
+            // Address
             if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
-            if (seller.budget) ext += `<div class="card-info">💰 ${formatEuro(seller.budget)}</div>`;
 
             // Commission
             const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
@@ -3670,40 +3660,15 @@
                 ext += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
-            // Mandate specifics
-            if (seller.status === 'mandate') {
-                if (seller.mandate_type) {
-                    const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
-                    ext += `<div class="mandate-badge ${seller.mandate_type}">${tl[seller.mandate_type] || seller.mandate_type}</div> `;
-                }
-                if (seller.mandate_price) ext += `<div class="card-info">💰 Mandat: ${formatEuro(seller.mandate_price)}</div>`;
-                if (seller.mandate_reference) ext += `<div class="card-info">📋 Réf: ${escapeHtml(seller.mandate_reference)}</div>`;
-                let metaHtml = '<div class="mandate-meta">';
-                if (seller.mandate_start_date) {
-                    const days = Math.floor((new Date() - new Date(seller.mandate_start_date)) / 86400000);
-                    metaHtml += `<span class="mandate-meta-item">📅 ${days}j</span>`;
-                }
-                const vc = visitCounts[seller.id] || 0;
-                metaHtml += `<span class="mandate-meta-item">👁️ ${vc} visite${vc > 1 ? 's' : ''}</span>`;
-                metaHtml += '</div>';
-                ext += metaHtml;
-                if (seller.mandate_end_date) {
-                    const end = new Date(seller.mandate_end_date); const td = new Date(); td.setHours(0,0,0,0); end.setHours(0,0,0,0);
-                    const dl = Math.ceil((end - td) / 86400000);
-                    if (dl < 0) ext += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⚠️ Mandat expiré</div>`;
-                    else if (dl <= 15) ext += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⏰ Expire dans ${dl}j</div>`;
-                    else if (dl <= 30) ext += `<div class="mandate-meta-item mandate-expiry-warning" style="margin-top:6px;display:inline-flex">📆 ${dl}j restants</div>`;
-                }
+            // Mandate type (small, only in extended — not duplicated since compact only shows for mandate status)
+            if (seller.status === 'mandate' && seller.mandate_type) {
+                const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
+                ext += `<div class="card-info" style="font-size:12px;color:var(--text-light)">${tl[seller.mandate_type] || seller.mandate_type}</div>`;
             }
 
             // Competitor specifics
             if (seller.status === 'competitor') {
                 if (seller.competitor_agency) ext += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
-                if (seller.competitor_price) ext += `<div class="card-info">💰 ${formatEuro(seller.competitor_price)}</div>`;
-                if (seller.competitor_date) {
-                    const since = Math.floor((new Date() - new Date(seller.competitor_date)) / 86400000);
-                    ext += `<div class="card-info" style="font-size:12px;color:var(--text-light)">📅 Depuis ${since} jour${since > 1 ? 's' : ''}</div>`;
-                }
                 if (seller.competitor_url) ext += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
             }
 
@@ -3714,23 +3679,6 @@
 
             // Relance
             ext += followupFull;
-
-            // Links
-            if (Array.isArray(seller.links) && seller.links.length > 0) {
-                ext += `<div class="card-links-count">🔗 ${seller.links.length} annonce${seller.links.length > 1 ? 's' : ''}</div>`;
-            }
-
-            // Notes
-            const np = notesPreviews[seller.id];
-            if (np && np.count > 0) {
-                ext += `<span class="card-notes-badge">📝 ${np.count}</span>`;
-                const preview = np.lastContent.length > 50 ? np.lastContent.substring(0, 50) + '…' : np.lastContent;
-                ext += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
-            }
-
-            // Documents
-            const fc = fileCounts[seller.id] || 0;
-            if (fc > 0) ext += `<span class="card-files-badge">📎 ${fc}</span>`;
 
             // Actions
             ext += `<div class="card-actions">
