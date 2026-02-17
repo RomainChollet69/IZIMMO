@@ -2036,6 +2036,7 @@
                             <label class="annexe-toggle"><input type="checkbox" name="annexes" value="balcon"><span>🌿 Balcon/Terrasse</span></label>
                             <label class="annexe-toggle"><input type="checkbox" name="annexes" value="jardin"><span>🌳 Jardin</span></label>
                             <label class="annexe-toggle"><input type="checkbox" name="annexes" value="garage"><span>🚗 Garage</span></label>
+                            <label class="annexe-toggle" id="annexePiscine" style="display:none"><input type="checkbox" name="annexes" value="piscine"><span>🏊 Piscine</span></label>
                         </div>
                     </div>
 
@@ -3258,7 +3259,7 @@
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
             if (seller.property_type) parts.push(typeEmojis[seller.property_type] || '📍');
             if (seller.surface) parts.push(formatSurface(seller.surface));
-            const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
+            const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗', piscine: '🏊' };
             if (Array.isArray(seller.annexes) && seller.annexes.length > 0) {
                 parts.push(seller.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
             }
@@ -3988,6 +3989,7 @@
             // Reset property fields
             document.getElementById('propertyType').value = '';
             document.getElementById('surface').value = '';
+            document.getElementById('annexePiscine').style.display = 'none';
             document.querySelectorAll('input[name="annexes"]').forEach(cb => { cb.checked = false; });
 
             // Reset mandate fields
@@ -4058,6 +4060,7 @@
             addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('propertyType').value = seller.property_type || '';
+            document.getElementById('annexePiscine').style.display = seller.property_type === 'maison' ? '' : 'none';
             document.getElementById('surface').value = seller.surface || '';
             // Annexes checkboxes
             document.querySelectorAll('input[name="annexes"]').forEach(cb => {
@@ -4586,6 +4589,15 @@
             setupImportDoc();
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
+
+            // Piscine visible uniquement pour les maisons
+            document.getElementById('propertyType').addEventListener('change', function() {
+                document.getElementById('annexePiscine').style.display = this.value === 'maison' ? '' : 'none';
+                if (this.value !== 'maison') {
+                    const cb = document.querySelector('input[name="annexes"][value="piscine"]');
+                    if (cb) cb.checked = false;
+                }
+            });
 
             document.getElementById('dictateBtn').addEventListener('click', handleDictateClick);
             document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
