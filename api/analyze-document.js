@@ -13,12 +13,18 @@ export default async function handler(req, res) {
     }
 
     const { fileUrl, fileContent, fileType, leadType } = req.body || {};
+    console.log('Request body keys:', Object.keys(req.body || {}));
+    console.log('File type:', fileType);
+    console.log('File content length:', fileContent?.length);
+    console.log('Lead type:', leadType);
+
     if (!fileUrl && !fileContent) return res.status(400).json({ error: 'No file URL or content provided' });
 
     const isImage = fileType && fileType.startsWith('image/');
     const isPdf = fileType === 'application/pdf';
-    if (!isImage && !isPdf) {
-        return res.status(400).json({ error: 'File type not supported for analysis' });
+    const isText = fileType === 'text/plain';
+    if (!isImage && !isPdf && !isText) {
+        return res.status(400).json({ error: 'File type not supported: ' + fileType });
     }
 
     const isBuyer = leadType === 'buyer';
@@ -43,7 +49,7 @@ export default async function handler(req, res) {
 - surface_min : surface minimum en m² (nombre seul)
 - notes : informations complémentaires`;
 
-    const systemPrompt = `Tu es un assistant qui extrait des informations structurées depuis un document immobilier.
+    const extractionPrompt = `Tu es un assistant qui extrait des informations structurées depuis un document immobilier.
 Analyse le document et retourne un JSON avec UNIQUEMENT les champs que tu peux identifier avec certitude.
 Ne jamais inventer de données. Si un champ n'est pas présent dans le document, mets null.
 
@@ -56,35 +62,60 @@ Retourne UNIQUEMENT le JSON, sans commentaire ni explication.`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
 
-        // Get base64 content: either from direct content or by fetching URL
-        let base64;
-        if (fileContent) {
-            base64 = fileContent;
-        } else {
-            const fileResp = await fetch(fileUrl);
-            if (!fileResp.ok) throw new Error('Failed to fetch file');
-            const fileBuffer = Buffer.from(await fileResp.arrayBuffer());
-            base64 = fileBuffer.toString('base64');
-        }
+        let messages;
 
-        let userContent;
-        if (isImage) {
-            userContent = [
-                {
-                    type: 'image',
-                    source: { type: 'base64', media_type: fileType, data: base64 }
-                },
-                { type: 'text', text: 'Analyse ce document et extrais les informations structurées.' }
-            ];
+        if (isText) {
+            // Text extracted from PDF client-side: send as plain text message
+            messages = [{
+                role: 'user',
+                content: extractionPrompt + '\n\nContenu du document :\n' + fileContent
+            }];
+        } else if (isImage) {
+            // Get base64 content
+            let base64;
+            if (fileContent) {
+                base64 = fileContent;
+            } else {
+                const fileResp = await fetch(fileUrl);
+                if (!fileResp.ok) throw new Error('Failed to fetch file');
+                const fileBuffer = Buffer.from(await fileResp.arrayBuffer());
+                base64 = fileBuffer.toString('base64');
+            }
+            messages = [{
+                role: 'user',
+                content: [
+                    { type: 'image', source: { type: 'base64', media_type: fileType, data: base64 } },
+                    { type: 'text', text: 'Analyse ce document et extrais les informations structurées.' }
+                ]
+            }];
         } else {
             // PDF via document content type
-            userContent = [
-                {
-                    type: 'document',
-                    source: { type: 'base64', media_type: 'application/pdf', data: base64 }
-                },
-                { type: 'text', text: 'Analyse ce document et extrais les informations structurées.' }
-            ];
+            let base64;
+            if (fileContent) {
+                base64 = fileContent;
+            } else {
+                const fileResp = await fetch(fileUrl);
+                if (!fileResp.ok) throw new Error('Failed to fetch file');
+                const fileBuffer = Buffer.from(await fileResp.arrayBuffer());
+                base64 = fileBuffer.toString('base64');
+            }
+            messages = [{
+                role: 'user',
+                content: [
+                    { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } },
+                    { type: 'text', text: 'Analyse ce document et extrais les informations structurées.' }
+                ]
+            }];
+        }
+
+        const requestBody = {
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: 1024,
+            messages
+        };
+        // Only set system prompt for non-text (for text, it's embedded in the user message)
+        if (!isText) {
+            requestBody.system = extractionPrompt;
         }
 
         const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -94,23 +125,21 @@ Retourne UNIQUEMENT le JSON, sans commentaire ni explication.`;
                 'x-api-key': apiKey,
                 'anthropic-version': '2023-06-01'
             },
-            body: JSON.stringify({
-                model: 'claude-haiku-4-5-20251001',
-                max_tokens: 1024,
-                system: systemPrompt,
-                messages: [{ role: 'user', content: userContent }]
-            }),
+            body: JSON.stringify(requestBody),
             signal: controller.signal
         });
         clearTimeout(timeout);
 
+        console.log('Claude response status:', response.status);
+
         if (!response.ok) {
             const errBody = await response.text();
             console.error('Anthropic error:', response.status, errBody);
-            return res.status(502).json({ error: 'Analysis failed' });
+            return res.status(502).json({ error: 'Analysis failed', detail: errBody });
         }
 
         const result = await response.json();
+        console.log('Claude response:', JSON.stringify(result).substring(0, 500));
         const content = result.content?.[0]?.text || '{}';
 
         // Extract JSON from response

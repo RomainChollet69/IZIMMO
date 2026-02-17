@@ -12,6 +12,7 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/audio-recorder.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -2436,19 +2437,61 @@
             document.getElementById('pendingFileSize').textContent = '';
         }
 
+        async function extractTextFromPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(item => item.str).join(' ') + '\n';
+            }
+            return text;
+        }
+
         async function analyzeAndFillFields(file) {
             const importBtn = document.getElementById('importDocBtn');
             importBtn.classList.add('analyzing');
             importBtn.innerHTML = '⏳ Analyse...';
             try {
-                const base64 = await fileToBase64(file);
-                const resp = await fetch('/api/analyze-document', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ fileContent: base64, fileType: file.type, leadType: 'seller' })
-                });
-                if (!resp.ok) throw new Error('Analysis failed');
-                const { fields } = await resp.json();
+                let resp;
+                if (file.type === 'application/pdf') {
+                    // PDF : extraire le texte côté client pour éviter la limite de payload Vercel
+                    const text = await extractTextFromPDF(file);
+                    resp = await fetch('/api/analyze-document', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fileContent: text.substring(0, 15000),
+                            fileType: 'text/plain',
+                            leadType: 'seller'
+                        })
+                    });
+                } else if (file.type.startsWith('image/')) {
+                    // Images : envoyer en base64 pour Claude Vision
+                    const base64 = await fileToBase64(file);
+                    resp = await fetch('/api/analyze-document', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fileContent: base64,
+                            fileType: file.type,
+                            leadType: 'seller'
+                        })
+                    });
+                } else {
+                    alert('Type de fichier non supporté pour l\'analyse IA.');
+                    return;
+                }
+
+                const result = await resp.json();
+                if (!resp.ok) {
+                    console.error('Analyze error:', result);
+                    alert('Erreur analyse : ' + (result.detail || result.error || JSON.stringify(result)));
+                    return;
+                }
+
+                const fields = result.fields;
                 if (!fields || Object.keys(fields).every(k => fields[k] === null)) {
                     alert('Aucune information extraite du document.');
                     return;
@@ -2478,7 +2521,7 @@
                 });
             } catch (err) {
                 console.error('Import analysis error:', err);
-                alert('Erreur lors de l\'analyse du document.');
+                alert('Erreur lors de l\'analyse : ' + err.message);
             } finally {
                 importBtn.classList.remove('analyzing');
                 importBtn.innerHTML = '📎 Importer un document';
