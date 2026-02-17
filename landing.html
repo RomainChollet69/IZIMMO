@@ -1,0 +1,1789 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAIMMO — CRM Immobilier pour Mandataires</title>
+    <meta name="description" content="WAIMMO : le CRM immobilier pensé pour les mandataires. Pipeline visuel, import pige, IA intégrée, matching acquéreurs. Gratuit.">
+    <meta property="og:title" content="WAIMMO — CRM Immobilier pour Mandataires">
+    <meta property="og:description" content="Gérez vos mandats vendeurs et acquéreurs avec un pipeline visuel, l'import de pige et l'IA intégrée.">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================
+           RESET & BASE
+           ============================================ */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0F1419;
+            --bg-light: #161B22;
+            --bg-card: #1C2128;
+            --bg-card-hover: #21262D;
+            --turquoise: #2DD4BF;
+            --turquoise-dim: rgba(45, 212, 191, 0.15);
+            --turquoise-glow: rgba(45, 212, 191, 0.3);
+            --gold: #D4A574;
+            --gold-dim: rgba(212, 165, 116, 0.15);
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --text-dim: #6E7681;
+            --border: #30363D;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-turquoise: linear-gradient(135deg, #2DD4BF 0%, #14B8A6 100%);
+            --gradient-gold: linear-gradient(135deg, #D4A574 0%, #C4956A 100%);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        a { text-decoration: none; color: inherit; }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ============================================
+           ANIMATIONS
+           ============================================ */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(45, 212, 191, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(45, 212, 191, 0.4); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes card-slide {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .animate-on-scroll.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .animate-on-scroll.from-left {
+            transform: translateX(-40px);
+        }
+        .animate-on-scroll.from-left.visible {
+            transform: translateX(0);
+        }
+
+        .animate-on-scroll.from-right {
+            transform: translateX(40px);
+        }
+        .animate-on-scroll.from-right.visible {
+            transform: translateX(0);
+        }
+
+        .delay-1 { transition-delay: 0.1s; }
+        .delay-2 { transition-delay: 0.2s; }
+        .delay-3 { transition-delay: 0.3s; }
+        .delay-4 { transition-delay: 0.4s; }
+
+        /* ============================================
+           NAVIGATION
+           ============================================ */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 16px 0;
+            background: rgba(15, 20, 25, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.3s, padding 0.3s;
+        }
+
+        .nav.scrolled {
+            border-bottom-color: var(--border);
+            padding: 10px 0;
+        }
+
+        .nav-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-logo {
+            height: 36px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--turquoise);
+        }
+
+        .nav-cta {
+            padding: 10px 24px;
+            background: var(--gradient-turquoise);
+            color: var(--bg) !important;
+            font-weight: 700 !important;
+            border-radius: 10px;
+            font-size: 0.9rem !important;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 212, 191, 0.3);
+            color: var(--bg) !important;
+        }
+
+        .nav-mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        /* ============================================
+           HERO
+           ============================================ */
+        .hero {
+            padding: 160px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(45, 212, 191, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(118, 75, 162, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--turquoise-dim);
+            border: 1px solid rgba(45, 212, 191, 0.3);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--turquoise);
+            margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.8s ease 0.1s forwards;
+            opacity: 0;
+        }
+
+        .hero h1 .highlight {
+            background: linear-gradient(135deg, var(--turquoise), #14B8A6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 500px;
+            margin-bottom: 36px;
+            animation: fadeInUp 0.8s ease 0.2s forwards;
+            opacity: 0;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease 0.3s forwards;
+            opacity: 0;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: var(--gradient-turquoise);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 32px rgba(45, 212, 191, 0.35);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 32px;
+            background: transparent;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: border-color 0.3s, background 0.3s;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--turquoise);
+            background: var(--turquoise-dim);
+        }
+
+        /* Phone mockup */
+        .hero-visual {
+            display: flex;
+            justify-content: center;
+            animation: fadeInRight 1s ease 0.4s forwards;
+            opacity: 0;
+        }
+
+        .phone-mockup {
+            width: 320px;
+            height: 560px;
+            background: var(--bg-card);
+            border-radius: 36px;
+            border: 3px solid var(--border);
+            padding: 16px;
+            position: relative;
+            overflow: hidden;
+            animation: float 6s ease-in-out infinite;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(45, 212, 191, 0.1);
+        }
+
+        .phone-notch {
+            width: 120px;
+            height: 28px;
+            background: var(--bg);
+            border-radius: 0 0 16px 16px;
+            margin: 0 auto 16px;
+        }
+
+        .phone-pipeline {
+            display: flex;
+            gap: 8px;
+            overflow: hidden;
+            padding: 4px;
+        }
+
+        .phone-column {
+            min-width: 110px;
+            flex-shrink: 0;
+        }
+
+        .phone-col-title {
+            font-size: 0.55rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--turquoise);
+            padding: 6px 8px;
+            background: var(--turquoise-dim);
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 6px;
+            letter-spacing: 0.05em;
+        }
+
+        .phone-card {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            border-left: 3px solid var(--turquoise);
+            animation: card-slide 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .phone-card:nth-child(2) { animation-delay: 0.8s; }
+        .phone-card:nth-child(3) { animation-delay: 1.2s; }
+        .phone-card:nth-child(4) { animation-delay: 1.6s; }
+        .phone-card:nth-child(5) { animation-delay: 2.0s; }
+
+        .phone-card-name {
+            font-size: 0.6rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+        }
+
+        .phone-card-detail {
+            font-size: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .phone-card.gold { border-left-color: var(--gold); }
+        .phone-card.purple { border-left-color: #764ba2; }
+
+        /* ============================================
+           SECTION TITLES
+           ============================================ */
+        .section-label {
+            display: inline-block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--turquoise);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            margin-bottom: 16px;
+            letter-spacing: -0.01em;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            max-width: 600px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 64px;
+        }
+
+        .section-header .section-subtitle {
+            margin: 0 auto;
+        }
+
+        /* ============================================
+           PROBLEM SECTION
+           ============================================ */
+        .problem-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .problem-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px 28px;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .problem-card:hover {
+            border-color: rgba(212, 165, 116, 0.4);
+            transform: translateY(-4px);
+        }
+
+        .problem-icon {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .problem-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+            color: var(--gold);
+        }
+
+        .problem-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           SOLUTION SECTION
+           ============================================ */
+        .solution-section {
+            padding: 100px 0;
+        }
+
+        .solution-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .solution-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px 28px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .solution-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-turquoise);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .solution-card:hover {
+            border-color: rgba(45, 212, 191, 0.4);
+            transform: translateY(-4px);
+        }
+
+        .solution-card:hover::before {
+            opacity: 1;
+        }
+
+        .solution-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--turquoise-dim);
+            border-radius: 12px;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
+
+        .solution-card h3 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+        }
+
+        .solution-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           PILLARS SECTION
+           ============================================ */
+        .pillars-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+
+        .pillar {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            margin-bottom: 100px;
+        }
+
+        .pillar:last-child {
+            margin-bottom: 0;
+        }
+
+        .pillar.reversed {
+            direction: rtl;
+        }
+
+        .pillar.reversed > * {
+            direction: ltr;
+        }
+
+        .pillar-content h3 {
+            font-size: 2rem;
+            margin-bottom: 16px;
+        }
+
+        .pillar-content p {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.7;
+        }
+
+        .pillar-features {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .pillar-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .pillar-features li::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+            background: var(--turquoise-dim);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 2px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%232DD4BF' viewBox='0 0 16 16'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        /* Comparison table */
+        .comparison-table {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th {
+            padding: 16px 20px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .comparison-table th:first-child {
+            color: var(--text-muted);
+        }
+
+        .comparison-table th:nth-child(2) {
+            color: var(--text-dim);
+        }
+
+        .comparison-table th:nth-child(3) {
+            color: var(--turquoise);
+            background: var(--turquoise-dim);
+        }
+
+        .comparison-table td {
+            padding: 14px 20px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.5);
+            color: var(--text-muted);
+        }
+
+        .comparison-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .comparison-table td:nth-child(3) {
+            color: var(--turquoise);
+            font-weight: 600;
+            background: rgba(45, 212, 191, 0.05);
+        }
+
+        .comparison-table .check { color: var(--turquoise); }
+        .comparison-table .cross { color: var(--text-dim); }
+
+        /* AI visual */
+        .ai-visual {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .ai-demo-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ai-demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--turquoise);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        .ai-demo-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--turquoise);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .ai-demo-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .ai-demo-line {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ai-demo-label {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            min-width: 80px;
+        }
+
+        .ai-demo-value {
+            background: var(--bg-light);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .ai-demo-value.extracted {
+            border-left: 3px solid var(--turquoise);
+            color: var(--turquoise);
+        }
+
+        /* Matching visual */
+        .matching-visual {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .matching-pair {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .matching-pair:last-child { margin-bottom: 0; }
+
+        .matching-lead {
+            flex: 1;
+            background: var(--bg-light);
+            border-radius: 10px;
+            padding: 14px 16px;
+            font-size: 0.85rem;
+        }
+
+        .matching-lead.seller {
+            border-left: 3px solid #667eea;
+        }
+
+        .matching-lead.buyer {
+            border-right: 3px solid var(--turquoise);
+            text-align: right;
+        }
+
+        .matching-lead-name {
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+
+        .matching-lead-detail {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .matching-score {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--turquoise-dim);
+            border-radius: 50%;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--turquoise);
+        }
+
+        /* ============================================
+           STEPS SECTION
+           ============================================ */
+        .steps-section {
+            padding: 100px 0;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+        }
+
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--turquoise), transparent);
+            opacity: 0.3;
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 2px solid var(--turquoise);
+            border-radius: 50%;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--turquoise);
+            margin: 0 auto 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .step-card p {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        /* ============================================
+           TESTIMONIALS SECTION
+           ============================================ */
+        .testimonials-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px 28px;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .testimonial-card:hover {
+            border-color: rgba(45, 212, 191, 0.3);
+            transform: translateY(-4px);
+        }
+
+        .testimonial-stars {
+            color: var(--gold);
+            font-size: 1rem;
+            margin-bottom: 16px;
+            letter-spacing: 2px;
+        }
+
+        .testimonial-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .testimonial-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .testimonial-role {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        /* ============================================
+           PRICING SECTION
+           ============================================ */
+        .pricing-section {
+            padding: 100px 0;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 32px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--turquoise);
+            position: relative;
+            box-shadow: 0 0 40px rgba(45, 212, 191, 0.1);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 6px 20px;
+            background: var(--gradient-turquoise);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            border-radius: 50px;
+        }
+
+        .pricing-plan {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .pricing-price {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price .currency {
+            font-size: 1.5rem;
+            vertical-align: super;
+        }
+
+        .pricing-price .period {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(48, 54, 61, 0.3);
+        }
+
+        .pricing-features li:last-child {
+            border-bottom: none;
+        }
+
+        .pricing-features .check-icon {
+            color: var(--turquoise);
+            font-weight: 700;
+            font-size: 1rem;
+            min-width: 20px;
+        }
+
+        .pricing-btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .pricing-btn.primary {
+            background: var(--gradient-turquoise);
+            color: var(--bg);
+        }
+
+        .pricing-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(45, 212, 191, 0.3);
+        }
+
+        .pricing-btn.outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        .pricing-btn.outline:hover {
+            border-color: var(--turquoise);
+            background: var(--turquoise-dim);
+        }
+
+        /* ============================================
+           CTA SECTION
+           ============================================ */
+        .cta-section {
+            padding: 100px 0;
+            background: var(--bg-light);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(ellipse, rgba(45, 212, 191, 0.06) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-section h2 {
+            font-size: 3rem;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 560px;
+            margin: 0 auto 36px;
+        }
+
+        /* ============================================
+           FOOTER
+           ============================================ */
+        .footer {
+            padding: 48px 0 32px;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 24px;
+        }
+
+        .footer-logo {
+            height: 28px;
+            opacity: 0.7;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .footer-links a {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--turquoise);
+        }
+
+        .footer-copy {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            width: 100%;
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 1024px) {
+            .hero h1 { font-size: 2.8rem; }
+            .section-title { font-size: 2.2rem; }
+            .pillar { gap: 40px; }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-links.open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(15, 20, 25, 0.98);
+                backdrop-filter: blur(20px);
+                padding: 24px;
+                gap: 20px;
+                border-bottom: 1px solid var(--border);
+            }
+            .nav-mobile-toggle { display: block; }
+
+            .hero { padding: 120px 0 60px; }
+            .hero-inner { grid-template-columns: 1fr; text-align: center; }
+            .hero h1 { font-size: 2.4rem; }
+            .hero-subtitle { margin: 0 auto 36px; }
+            .hero-actions { justify-content: center; }
+            .hero-visual { margin-top: 40px; }
+            .phone-mockup { width: 260px; height: 460px; }
+
+            .problem-grid,
+            .solution-grid,
+            .steps-grid,
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pillar {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .pillar.reversed {
+                direction: ltr;
+            }
+
+            .pillar-content { order: 1; }
+
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+
+            .steps-grid::before { display: none; }
+
+            .section-title { font-size: 1.8rem; }
+            .cta-section h2 { font-size: 2rem; }
+
+            .footer-inner { justify-content: center; text-align: center; }
+            .footer-links { justify-content: center; flex-wrap: wrap; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.9rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .btn-primary, .btn-secondary { width: 100%; justify-content: center; }
+            .phone-mockup { width: 220px; height: 380px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============================================
+         NAVIGATION
+         ============================================ -->
+    <nav class="nav" id="nav">
+        <div class="container nav-inner">
+            <img src="img/logo_200.png" alt="WAIMMO" class="nav-logo">
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#probleme">Le probleme</a></li>
+                <li><a href="#solution">Solution</a></li>
+                <li><a href="#fonctionnalites">Fonctionnalites</a></li>
+                <li><a href="#tarifs">Tarifs</a></li>
+                <li><a href="https://waimmo.vercel.app" class="nav-cta">Essayer gratuitement</a></li>
+            </ul>
+            <button class="nav-mobile-toggle" id="navToggle" aria-label="Menu">&#9776;</button>
+        </div>
+    </nav>
+
+    <!-- ============================================
+         HERO
+         ============================================ -->
+    <section class="hero">
+        <div class="container hero-inner">
+            <div class="hero-content">
+                <div class="hero-badge">Nouveau — 100% gratuit</div>
+                <h1>Le CRM qui <span class="highlight">accelere</span> votre activite immobiliere</h1>
+                <p class="hero-subtitle">Pipeline visuel, import de pige, IA integree et matching acquereurs. Tout ce dont un mandataire a besoin, sans la complexite.</p>
+                <div class="hero-actions">
+                    <a href="https://waimmo.vercel.app" class="btn-primary">Commencer gratuitement &rarr;</a>
+                    <a href="#fonctionnalites" class="btn-secondary">Decouvrir les fonctionnalites</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="phone-mockup">
+                    <div class="phone-notch"></div>
+                    <div class="phone-pipeline">
+                        <div class="phone-column">
+                            <div class="phone-col-title">Estimation</div>
+                            <div class="phone-card">
+                                <div class="phone-card-name">M. Dupont</div>
+                                <div class="phone-card-detail">T4 Lyon 6e — 420 000 &euro;</div>
+                            </div>
+                            <div class="phone-card gold">
+                                <div class="phone-card-name">Mme Martin</div>
+                                <div class="phone-card-detail">Maison Tassin — 580 000 &euro;</div>
+                            </div>
+                            <div class="phone-card purple">
+                                <div class="phone-card-name">M. Bernard</div>
+                                <div class="phone-card-detail">T2 Lyon 3e — 195 000 &euro;</div>
+                            </div>
+                        </div>
+                        <div class="phone-column">
+                            <div class="phone-col-title">Mandat</div>
+                            <div class="phone-card">
+                                <div class="phone-card-name">Mme Petit</div>
+                                <div class="phone-card-detail">T3 Villeurbanne — 290 000 &euro;</div>
+                            </div>
+                            <div class="phone-card gold">
+                                <div class="phone-card-name">M. Roux</div>
+                                <div class="phone-card-detail">Maison Caluire — 650 000 &euro;</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         PROBLEM SECTION
+         ============================================ -->
+    <section class="problem-section" id="probleme">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">Le probleme</div>
+                <h2 class="section-title">Excel, fichiers eparpilles, opportunites perdues</h2>
+                <p class="section-subtitle">Les outils generiques ne sont pas faits pour l'immobilier. Resultat : vous perdez du temps et des mandats.</p>
+            </div>
+            <div class="problem-grid">
+                <div class="problem-card animate-on-scroll delay-1">
+                    <div class="problem-icon">&#128466;</div>
+                    <h3>Fichiers Excel partout</h3>
+                    <p>Pige dans un fichier, acquereurs dans un autre, relances sur Post-it. Impossible d'avoir une vision claire de votre activite.</p>
+                </div>
+                <div class="problem-card animate-on-scroll delay-2">
+                    <div class="problem-icon">&#9203;</div>
+                    <h3>Relances oubliees</h3>
+                    <p>Combien de prospects ont ete oublies faute de rappel ? Chaque relance manquee est un mandat qui s'envole vers un concurrent.</p>
+                </div>
+                <div class="problem-card animate-on-scroll delay-3">
+                    <div class="problem-icon">&#128683;</div>
+                    <h3>CRM trop complexes</h3>
+                    <p>Salesforce, Hubspot, Pipedrive... Puissants mais connus pour decourager. Trop de boutons, trop de config, pas assez de terrain.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         SOLUTION SECTION
+         ============================================ -->
+    <section class="solution-section" id="solution">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">La solution</div>
+                <h2 class="section-title">Un CRM pense pour le terrain</h2>
+                <p class="section-subtitle">WAIMMO remplace vos fichiers Excel par un pipeline visuel intuitif, pensé pour les mandataires immobiliers.</p>
+            </div>
+            <div class="solution-grid">
+                <div class="solution-card animate-on-scroll delay-1">
+                    <div class="solution-icon">&#128202;</div>
+                    <h3>Pipeline visuel drag &amp; drop</h3>
+                    <p>Deplacez vos leads d'une etape a l'autre en un geste. De l'estimation a la vente, tout est visible en un coup d'oeil.</p>
+                </div>
+                <div class="solution-card animate-on-scroll delay-2">
+                    <div class="solution-icon">&#129302;</div>
+                    <h3>IA qui travaille pour vous</h3>
+                    <p>Import de pige automatique, extraction de donnees depuis vos documents PDF, analyse intelligente de vos fichiers Excel.</p>
+                </div>
+                <div class="solution-card animate-on-scroll delay-3">
+                    <div class="solution-icon">&#128276;</div>
+                    <h3>Relances automatiques</h3>
+                    <p>Plus jamais de prospect oublie. Le systeme de relances vous alerte chaque jour des contacts a recontacter.</p>
+                </div>
+                <div class="solution-card animate-on-scroll delay-1">
+                    <div class="solution-icon">&#128101;</div>
+                    <h3>Double pipeline</h3>
+                    <p>Gerez vendeurs et acquereurs dans deux pipelines separes mais connectes. Le matching se fait naturellement.</p>
+                </div>
+                <div class="solution-card animate-on-scroll delay-2">
+                    <div class="solution-icon">&#128241;</div>
+                    <h3>Mobile-first</h3>
+                    <p>Consultez et mettez a jour vos leads depuis votre telephone, entre deux rendez-vous. Pensé pour le terrain.</p>
+                </div>
+                <div class="solution-card animate-on-scroll delay-3">
+                    <div class="solution-icon">&#9889;</div>
+                    <h3>Prise en main immediate</h3>
+                    <p>Pas de formation, pas de config. Connectez-vous avec Google, importez vos contacts et commencez a travailler.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         PILLARS SECTION
+         ============================================ -->
+    <section class="pillars-section" id="fonctionnalites">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">Fonctionnalites</div>
+                <h2 class="section-title">Trois piliers pour transformer votre activite</h2>
+            </div>
+
+            <!-- Pillar 1: Pipeline visuel -->
+            <div class="pillar">
+                <div class="pillar-content animate-on-scroll from-left">
+                    <div class="section-label">Pilier 1</div>
+                    <h3>Pipeline visuel intelligent</h3>
+                    <p>Fini les tableaux Excel illisibles. Visualisez chaque lead dans un pipeline en colonnes, de la prise de contact a la signature.</p>
+                    <ul class="pillar-features">
+                        <li>6 colonnes vendeurs (Estimation &rarr; Vente)</li>
+                        <li>4 colonnes acquereurs (Contact &rarr; Offre acceptee)</li>
+                        <li>Drag &amp; drop pour deplacer les leads</li>
+                        <li>Cartes compactes ou etendues selon votre besoin</li>
+                        <li>Recherche et filtres par source, ville, budget</li>
+                    </ul>
+                </div>
+                <div class="animate-on-scroll from-right">
+                    <div class="comparison-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fonctionnalite</th>
+                                    <th>Excel</th>
+                                    <th>WAIMMO</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Vue pipeline visuelle</td>
+                                    <td class="cross">&#10007;</td>
+                                    <td class="check">&#10003;</td>
+                                </tr>
+                                <tr>
+                                    <td>Drag &amp; drop</td>
+                                    <td class="cross">&#10007;</td>
+                                    <td class="check">&#10003;</td>
+                                </tr>
+                                <tr>
+                                    <td>Relances automatiques</td>
+                                    <td class="cross">&#10007;</td>
+                                    <td class="check">&#10003;</td>
+                                </tr>
+                                <tr>
+                                    <td>Import de pige</td>
+                                    <td class="cross">&#10007;</td>
+                                    <td class="check">&#10003;</td>
+                                </tr>
+                                <tr>
+                                    <td>Analyse IA de documents</td>
+                                    <td class="cross">&#10007;</td>
+                                    <td class="check">&#10003;</td>
+                                </tr>
+                                <tr>
+                                    <td>Acces mobile</td>
+                                    <td class="cross">Penible</td>
+                                    <td class="check">Natif</td>
+                                </tr>
+                                <tr>
+                                    <td>Prix</td>
+                                    <td>~100 &euro;/an</td>
+                                    <td>Gratuit</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pillar 2: IA intégrée -->
+            <div class="pillar reversed">
+                <div class="pillar-content animate-on-scroll from-right">
+                    <div class="section-label">Pilier 2</div>
+                    <h3>Intelligence artificielle integree</h3>
+                    <p>WAIMMO utilise l'IA pour vous faire gagner du temps sur les taches repetitives. Import, extraction, analyse : tout est automatise.</p>
+                    <ul class="pillar-features">
+                        <li>Import CSV/Excel de pige avec mapping IA des colonnes</li>
+                        <li>Extraction automatique des donnees depuis les PDF</li>
+                        <li>Analyse des documents joints (estimations, mandats)</li>
+                        <li>Remplissage automatique des fiches leads</li>
+                        <li>Suggestions de champs a completer</li>
+                    </ul>
+                </div>
+                <div class="animate-on-scroll from-left">
+                    <div class="ai-visual">
+                        <div class="ai-demo-header">
+                            <div class="ai-demo-dot"></div>
+                            <div class="ai-demo-title">IA — Extraction en cours</div>
+                        </div>
+                        <div class="ai-demo-lines">
+                            <div class="ai-demo-line">
+                                <span class="ai-demo-label">Nom</span>
+                                <span class="ai-demo-value extracted">Martin</span>
+                            </div>
+                            <div class="ai-demo-line">
+                                <span class="ai-demo-label">Telephone</span>
+                                <span class="ai-demo-value extracted">06 12 34 56 78</span>
+                            </div>
+                            <div class="ai-demo-line">
+                                <span class="ai-demo-label">Adresse</span>
+                                <span class="ai-demo-value extracted">12 rue de la Paix, Lyon 6e</span>
+                            </div>
+                            <div class="ai-demo-line">
+                                <span class="ai-demo-label">Prix</span>
+                                <span class="ai-demo-value extracted">385 000 &euro;</span>
+                            </div>
+                            <div class="ai-demo-line">
+                                <span class="ai-demo-label">Surface</span>
+                                <span class="ai-demo-value extracted">78 m&sup2;</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pillar 3: Matching -->
+            <div class="pillar">
+                <div class="pillar-content animate-on-scroll from-left">
+                    <div class="section-label">Pilier 3</div>
+                    <h3>Matching vendeurs / acquereurs</h3>
+                    <p>Rapprochez automatiquement vos biens en vente avec les criteres de vos acquereurs. Ne laissez plus aucune opportunite passer.</p>
+                    <ul class="pillar-features">
+                        <li>Double pipeline connecte vendeurs + acquereurs</li>
+                        <li>Criteres : budget, surface, ville, type de bien</li>
+                        <li>Vue croisee pour identifier les correspondances</li>
+                        <li>Export CSV de vos contacts et notes</li>
+                        <li>Formulaire public pour collecter vos acquereurs</li>
+                    </ul>
+                </div>
+                <div class="animate-on-scroll from-right">
+                    <div class="matching-visual">
+                        <div class="matching-pair">
+                            <div class="matching-lead seller">
+                                <div class="matching-lead-name">T4 Lyon 6e</div>
+                                <div class="matching-lead-detail">420 000 &euro; — 92 m&sup2;</div>
+                            </div>
+                            <div class="matching-score">95%</div>
+                            <div class="matching-lead buyer">
+                                <div class="matching-lead-name">Famille Moreau</div>
+                                <div class="matching-lead-detail">Budget 450 000 &euro; — Lyon</div>
+                            </div>
+                        </div>
+                        <div class="matching-pair">
+                            <div class="matching-lead seller">
+                                <div class="matching-lead-name">Maison Tassin</div>
+                                <div class="matching-lead-detail">580 000 &euro; — 140 m&sup2;</div>
+                            </div>
+                            <div class="matching-score">82%</div>
+                            <div class="matching-lead buyer">
+                                <div class="matching-lead-name">M. et Mme Blanc</div>
+                                <div class="matching-lead-detail">Budget 600 000 &euro; — Ouest Lyon</div>
+                            </div>
+                        </div>
+                        <div class="matching-pair">
+                            <div class="matching-lead seller">
+                                <div class="matching-lead-name">T2 Lyon 3e</div>
+                                <div class="matching-lead-detail">195 000 &euro; — 45 m&sup2;</div>
+                            </div>
+                            <div class="matching-score">88%</div>
+                            <div class="matching-lead buyer">
+                                <div class="matching-lead-name">Mlle Durand</div>
+                                <div class="matching-lead-detail">Budget 200 000 &euro; — Lyon Est</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         STEPS SECTION
+         ============================================ -->
+    <section class="steps-section">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">Demarrage</div>
+                <h2 class="section-title">Operationnel en 3 minutes</h2>
+                <p class="section-subtitle">Pas de formation, pas de carte bancaire. Connectez-vous et commencez.</p>
+            </div>
+            <div class="steps-grid">
+                <div class="step-card animate-on-scroll delay-1">
+                    <div class="step-number">1</div>
+                    <h3>Connectez-vous avec Google</h3>
+                    <p>Un clic suffit. Pas de mot de passe a retenir, pas de formulaire a remplir. Votre compte est pret instantanement.</p>
+                </div>
+                <div class="step-card animate-on-scroll delay-2">
+                    <div class="step-number">2</div>
+                    <h3>Importez vos contacts</h3>
+                    <p>Glissez votre fichier Excel de pige ou de contacts. L'IA mappe automatiquement les colonnes vers votre pipeline.</p>
+                </div>
+                <div class="step-card animate-on-scroll delay-3">
+                    <div class="step-number">3</div>
+                    <h3>Gerez votre pipeline</h3>
+                    <p>Deplacez vos leads, programmez vos relances, attachez des documents. Votre activite prend forme visuellement.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         TESTIMONIALS SECTION
+         ============================================ -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">Temoignages</div>
+                <h2 class="section-title">Ce qu'en disent les mandataires</h2>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card animate-on-scroll delay-1">
+                    <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                    <p class="testimonial-text">&laquo; J'ai enfin quitte mes fichiers Excel. L'import de pige avec le mapping IA m'a fait gagner des heures chaque semaine. &raquo;</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">SL</div>
+                        <div>
+                            <div class="testimonial-name">Sophie L.</div>
+                            <div class="testimonial-role">Mandataire — Lyon</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card animate-on-scroll delay-2">
+                    <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                    <p class="testimonial-text">&laquo; Le pipeline visuel change tout. Je vois en un clin d'oeil ou en sont mes mandats et quelles relances sont en retard. Simple et efficace. &raquo;</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">MR</div>
+                        <div>
+                            <div class="testimonial-name">Marc R.</div>
+                            <div class="testimonial-role">Agent independant — Bordeaux</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card animate-on-scroll delay-3">
+                    <div class="testimonial-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+                    <p class="testimonial-text">&laquo; Gratuit et plus adapte a mon metier que les CRM generiques a 50 &euro;/mois. L'analyse IA des documents PDF est bluffante. &raquo;</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">NB</div>
+                        <div>
+                            <div class="testimonial-name">Nathalie B.</div>
+                            <div class="testimonial-role">Mandataire — Toulouse</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         PRICING SECTION
+         ============================================ -->
+    <section class="pricing-section" id="tarifs">
+        <div class="container">
+            <div class="section-header animate-on-scroll">
+                <div class="section-label">Tarifs</div>
+                <h2 class="section-title">Simple et transparent</h2>
+                <p class="section-subtitle">Commencez gratuitement, evoluez quand vous le souhaitez.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card animate-on-scroll delay-1">
+                    <div class="pricing-plan">Gratuit</div>
+                    <div class="pricing-price">0&euro;</div>
+                    <p class="pricing-desc">Pour demarrer et decouvrir WAIMMO</p>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon">&#10003;</span> Pipeline vendeurs 6 colonnes</li>
+                        <li><span class="check-icon">&#10003;</span> Pipeline acquereurs 4 colonnes</li>
+                        <li><span class="check-icon">&#10003;</span> Drag &amp; drop</li>
+                        <li><span class="check-icon">&#10003;</span> Import Excel / CSV</li>
+                        <li><span class="check-icon">&#10003;</span> Systeme de relances</li>
+                        <li><span class="check-icon">&#10003;</span> Notes et historique</li>
+                        <li><span class="check-icon">&#10003;</span> Formulaire public acquereurs</li>
+                    </ul>
+                    <a href="https://waimmo.vercel.app" class="pricing-btn outline">Commencer gratuitement</a>
+                </div>
+                <div class="pricing-card featured animate-on-scroll delay-2">
+                    <div class="pricing-badge">Recommande</div>
+                    <div class="pricing-plan">Pro</div>
+                    <div class="pricing-price">9<span class="currency">,90&euro;</span> <span class="period">/mois</span></div>
+                    <p class="pricing-desc">Pour les mandataires qui veulent aller plus loin</p>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon">&#10003;</span> Tout le plan Gratuit</li>
+                        <li><span class="check-icon">&#10003;</span> Mapping IA des colonnes d'import</li>
+                        <li><span class="check-icon">&#10003;</span> Analyse IA des documents PDF</li>
+                        <li><span class="check-icon">&#10003;</span> Extraction automatique de donnees</li>
+                        <li><span class="check-icon">&#10003;</span> Pieces jointes (PDF, images, Word)</li>
+                        <li><span class="check-icon">&#10003;</span> Export CSV avance</li>
+                        <li><span class="check-icon">&#10003;</span> Support prioritaire</li>
+                    </ul>
+                    <a href="https://waimmo.vercel.app" class="pricing-btn primary">Essayer Pro gratuitement</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         CTA SECTION
+         ============================================ -->
+    <section class="cta-section">
+        <div class="container cta-content">
+            <div class="animate-on-scroll">
+                <div class="section-label">Pret a commencer ?</div>
+                <h2 class="section-title">Lancez-vous en 30 secondes</h2>
+                <p>Connexion Google, import de vos contacts, et c'est parti. Aucune carte bancaire requise.</p>
+                <a href="https://waimmo.vercel.app" class="btn-primary">Creer mon compte gratuitement &rarr;</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================
+         FOOTER
+         ============================================ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <img src="img/logo_200.png" alt="WAIMMO" class="footer-logo">
+                <ul class="footer-links">
+                    <li><a href="#probleme">Le probleme</a></li>
+                    <li><a href="#solution">Solution</a></li>
+                    <li><a href="#fonctionnalites">Fonctionnalites</a></li>
+                    <li><a href="#tarifs">Tarifs</a></li>
+                    <li><a href="https://waimmo.vercel.app">Se connecter</a></li>
+                </ul>
+                <div class="footer-copy">&copy; 2026 WAIMMO. Tous droits reserves.</div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================
+         JAVASCRIPT
+         ============================================ -->
+    <script>
+        // Sticky nav scroll effect
+        const nav = document.getElementById('nav');
+        window.addEventListener('scroll', () => {
+            nav.classList.toggle('scrolled', window.scrollY > 50);
+        }, { passive: true });
+
+        // Mobile nav toggle
+        const navToggle = document.getElementById('navToggle');
+        const navLinks = document.getElementById('navLinks');
+        navToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('open');
+            navToggle.textContent = navLinks.classList.contains('open') ? '\u2715' : '\u2630';
+        });
+
+        // Close mobile nav on link click
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('open');
+                navToggle.textContent = '\u2630';
+            });
+        });
+
+        // Intersection Observer for scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const offset = nav.offsetHeight + 20;
+                    const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+                    window.scrollTo({ top, behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
