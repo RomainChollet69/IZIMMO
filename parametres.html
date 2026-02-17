@@ -596,6 +596,74 @@
             gap: 8px;
         }
 
+        /* ===== CONTACTS TUTORIAL ===== */
+        .tuto-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        .tuto-tab {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tuto-tab:hover { color: var(--text-dark); }
+        .tuto-tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .tuto-panel { display: none; }
+        .tuto-panel.active { display: block; }
+        .tuto-steps {
+            counter-reset: step;
+            list-style: none;
+            padding: 0;
+        }
+        .tuto-steps li {
+            counter-increment: step;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .tuto-steps li:last-child { border-bottom: none; }
+        .tuto-steps li::before {
+            content: counter(step);
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .tuto-import-zone {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .tuto-import-zone p {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 10px;
+            line-height: 1.5;
+        }
+
         /* ===== EXCEL IMPORT WIZARD ===== */
         #excelFileInput { display: none; }
 
@@ -925,6 +993,8 @@
 
             .contacts-toolbar { flex-direction: column; align-items: stretch; }
             .import-buttons { justify-content: center; }
+            .tuto-tab { padding: 10px 14px; font-size: 12px; }
+            .tuto-steps li { font-size: 13px; }
 
             .search-input { font-size: 14px; padding: 10px 12px 10px 36px; }
 
@@ -999,6 +1069,54 @@
             <div style="display:flex;align-items:center;margin-top:8px;">
                 <button class="save-btn" id="saveProfileBtn">Enregistrer</button>
                 <span class="save-success" id="saveSuccess">Enregistré</span>
+            </div>
+        </div>
+
+        <!-- Section Tutoriel Import Contacts -->
+        <div class="settings-section" id="contactsTutorial">
+            <h2 class="section-title">📱 Importer ses contacts téléphoniques</h2>
+
+            <div class="tuto-tabs">
+                <button class="tuto-tab active" onclick="switchTutoTab('iphone')"> iPhone</button>
+                <button class="tuto-tab" onclick="switchTutoTab('android')"> Android</button>
+                <button class="tuto-tab" onclick="switchTutoTab('google')">🌐 Google</button>
+            </div>
+
+            <div class="tuto-panel active" id="tutoIphone">
+                <ol class="tuto-steps">
+                    <li>Ouvrez l'app <strong>Contacts</strong> sur votre iPhone</li>
+                    <li>Allez dans <strong>Listes</strong> → sélectionnez <strong>Tous les contacts</strong></li>
+                    <li>Descendez tout en bas → touchez <strong>Exporter</strong></li>
+                    <li>Choisissez <strong>Fichier VCF</strong></li>
+                    <li>Envoyez-vous le fichier par <strong>email</strong> ou <strong>AirDrop</strong></li>
+                    <li>Importez le fichier .vcf ci-dessous 👇</li>
+                </ol>
+            </div>
+
+            <div class="tuto-panel" id="tutoAndroid">
+                <ol class="tuto-steps">
+                    <li>Ouvrez l'app <strong>Contacts</strong> sur votre téléphone</li>
+                    <li>Touchez <strong>☰</strong> (menu) → <strong>Paramètres</strong> → <strong>Exporter</strong></li>
+                    <li>Choisissez <strong>Exporter vers fichier .vcf</strong></li>
+                    <li>Le fichier sera sauvegardé sur votre téléphone</li>
+                    <li>Envoyez-vous le fichier par <strong>email</strong></li>
+                    <li>Importez le fichier .vcf ci-dessous 👇</li>
+                </ol>
+            </div>
+
+            <div class="tuto-panel" id="tutoGoogle">
+                <ol class="tuto-steps">
+                    <li>Allez sur <strong>contacts.google.com</strong> depuis un ordinateur</li>
+                    <li>Cliquez sur <strong>Exporter</strong> dans le menu de gauche</li>
+                    <li>Choisissez <strong>Format vCard (.vcf)</strong></li>
+                    <li>Cliquez <strong>Exporter</strong></li>
+                    <li>Importez le fichier .vcf ci-dessous 👇</li>
+                </ol>
+            </div>
+
+            <div class="tuto-import-zone">
+                <button class="import-btn primary" onclick="document.getElementById('vcfFileInput').click()">📂 Importer un fichier .vcf</button>
+                <p>Vos contacts seront ajoutés à votre carnet WAIMMO et pourront être utilisés pour l'autocomplétion des fiches leads.</p>
             </div>
         </div>
 
@@ -1782,12 +1900,22 @@
                 showImportSummary(inserted, { noPhone, noName, noEmail, skipped });
             }
         }
+        // ===== CONTACTS TUTORIAL TABS =====
+        function switchTutoTab(tab) {
+            document.querySelectorAll('.tuto-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tuto-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector(`.tuto-tab[onclick*="${tab}"]`).classList.add('active');
+            const panelId = { iphone: 'tutoIphone', android: 'tutoAndroid', google: 'tutoGoogle' }[tab];
+            document.getElementById(panelId).classList.add('active');
+        }
+
         // ===== EXCEL IMPORT WIZARD =====
         let excelHeaders = [];
         let excelRows = [];
         let columnMapping = {};
         let hasStatusColumn = false;
         let skippedHeaderRows = 0;
+        let headerColIndex = {}; // maps cleaned header name → original column index
 
         const CRM_FIELDS = {
             first_name: 'Prénom',
@@ -1873,6 +2001,21 @@
 
         // Detect the real header row (skip title/empty rows common in pige files)
         function findHeaderRow(data) {
+            // Pass 1: look for a row with known header keywords
+            for (let i = 0; i < Math.min(20, data.length); i++) {
+                const row = data[i];
+                if (!row || !Array.isArray(row)) continue;
+                const nonEmpty = row.filter(cell => cell !== undefined && cell !== null && cell !== '');
+                if (nonEmpty.length < 3) continue;
+                const joined = nonEmpty.map(c => String(c).replace(/[\n\r]/g, ' ')).join(' ').toLowerCase();
+                const hasKeywords = ['nom', 'prénom', 'prenom', 'tel', 'téléphone', 'telephone', 'numéro', 'numero', 'mail', 'email', 'adresse', 'prix', 'surface', 'ville', 'type de bien', 'propriétaire', 'proprietaire']
+                    .some(kw => joined.includes(kw));
+                if (hasKeywords) {
+                    console.log('[Import] Header trouvé (mots-clés) à la ligne', i, ':', nonEmpty.slice(0, 5));
+                    return i;
+                }
+            }
+            // Pass 2: fallback — first row with 3+ non-empty text cells
             for (let i = 0; i < Math.min(15, data.length); i++) {
                 const row = data[i];
                 if (!row || !Array.isArray(row)) continue;
@@ -1880,7 +2023,6 @@
                     if (cell === undefined || cell === null || cell === '') return false;
                     const str = String(cell).replace(/[\n\r]/g, ' ').trim();
                     if (!str) return false;
-                    // Pure numbers are not headers
                     if (/^\d+([.,]\d+)?(%|€)?$/.test(str)) return false;
                     return true;
                 });
@@ -1964,19 +2106,38 @@
                 skippedHeaderRows = headerRowIdx;
                 console.log('[Import] Ligne d\'en-tête détectée à l\'index:', headerRowIdx);
 
-                // Clean headers: remove newlines, normalize spaces, filter empty
+                // Clean headers: remove newlines, normalize spaces
+                // CRITICAL: maintain original column index for each header
                 const rawHeaders = data[headerRowIdx] || [];
-                excelHeaders = rawHeaders.map(h => cleanHeader(h)).filter(h => h !== '');
+                excelHeaders = [];
+                headerColIndex = {};
+                rawHeaders.forEach((h, colIdx) => {
+                    const clean = cleanHeader(h);
+                    if (!clean) return; // skip empty headers
+                    // Handle duplicate header names by appending column number
+                    let key = clean;
+                    if (headerColIndex[key] !== undefined) {
+                        key = clean + ' (' + (colIdx + 1) + ')';
+                    }
+                    excelHeaders.push(key);
+                    headerColIndex[key] = colIdx;
+                });
                 console.log('[Import] En-têtes nettoyées:', excelHeaders);
+                console.log('[Import] Index des colonnes:', headerColIndex);
 
-                // Data rows: keep track of original column count for proper alignment
-                const headerColCount = rawHeaders.length;
+                // Data rows
                 excelRows = data.slice(headerRowIdx + 1).filter(row => {
                     if (!row || !Array.isArray(row)) return false;
                     return row.some(cell => cell !== undefined && cell !== null && cell !== '');
                 });
                 console.log('[Import] Lignes de données:', excelRows.length);
-                if (excelRows.length > 0) console.log('[Import] Première ligne de données:', excelRows[0]);
+                if (excelRows.length > 0) {
+                    console.log('[Import] Première ligne brute:', excelRows[0]);
+                    // Show first row mapped to headers for debug
+                    const mapped = {};
+                    excelHeaders.forEach(h => { mapped[h] = excelRows[0][headerColIndex[h]]; });
+                    console.log('[Import] Première ligne mappée:', mapped);
+                }
 
                 if (excelHeaders.length === 0) {
                     alert('Impossible de détecter les en-têtes de colonnes.');
@@ -2009,8 +2170,9 @@
             html += '</tr></thead><tbody>';
             previewRows.forEach(row => {
                 html += '<tr>';
-                excelHeaders.forEach((_, i) => {
-                    const val = row[i] !== undefined && row[i] !== null ? String(row[i]) : '';
+                excelHeaders.forEach(h => {
+                    const colIdx = headerColIndex[h];
+                    const val = colIdx !== undefined && row[colIdx] !== undefined && row[colIdx] !== null ? String(row[colIdx]) : '';
                     html += `<td>${escapeHtml(val)}</td>`;
                 });
                 html += '</tr>';
@@ -2026,10 +2188,13 @@
             analyzing.style.display = 'flex';
             grid.innerHTML = '';
 
-            // Get sample data for AI
+            // Get sample data for AI (use correct column indices)
             const sampleRows = excelRows.slice(0, 3).map(row => {
                 const obj = {};
-                excelHeaders.forEach((h, i) => { obj[h] = row[i] !== undefined ? String(row[i]) : ''; });
+                excelHeaders.forEach(h => {
+                    const colIdx = headerColIndex[h];
+                    obj[h] = colIdx !== undefined && row[colIdx] !== undefined ? String(row[colIdx]) : '';
+                });
                 return obj;
             });
 
@@ -2133,6 +2298,7 @@
             excelHeaders = [];
             excelRows = [];
             columnMapping = {};
+            headerColIndex = {};
             hasStatusColumn = false;
             skippedHeaderRows = 0;
             // Reset steps
@@ -2171,9 +2337,9 @@
             // Check contact_note and notes columns for status keywords
             const noteHeaders = [...(reverseMap['contact_note'] || []), ...(reverseMap['notes'] || [])];
             for (const h of noteHeaders) {
-                const idx = excelHeaders.indexOf(h);
-                if (idx < 0 || !row[idx]) continue;
-                const val = String(row[idx]).toLowerCase().trim();
+                const colIdx = headerColIndex[h];
+                if (colIdx === undefined || !row[colIdx]) continue;
+                const val = String(row[colIdx]).toLowerCase().trim();
                 // Only match if the cell is PRIMARILY a status keyword (short text)
                 if (val.length > 30) continue;
                 const status = interpretStatus(val, importType);
@@ -2192,9 +2358,15 @@
 
         function parseBudget(val) {
             if (!val) return null;
-            const cleaned = val.toString().replace(/[€\s,.]/g, '').replace(/\s/g, '');
-            const num = parseInt(cleaned);
-            return isNaN(num) ? null : num;
+            let s = val.toString().trim();
+            // Remove currency symbol
+            s = s.replace(/€/g, '').trim();
+            // Remove French decimal part: "129 900,00" → "129 900"
+            s = s.replace(/[,.](\d{1,2})$/, '');
+            // Remove thousands separators (spaces and dots)
+            s = s.replace(/[\s.]/g, '');
+            const num = parseInt(s);
+            return isNaN(num) || num <= 0 ? null : num;
         }
 
         // ===== EXECUTE IMPORT =====
@@ -2254,9 +2426,9 @@
                     const headers = reverseMap[field];
                     if (!headers) return null;
                     for (const h of headers) {
-                        const idx = excelHeaders.indexOf(h);
-                        if (idx >= 0 && row[idx] !== undefined && row[idx] !== null && row[idx] !== '') {
-                            return String(row[idx]).trim();
+                        const colIdx = headerColIndex[h];
+                        if (colIdx !== undefined && row[colIdx] !== undefined && row[colIdx] !== null && row[colIdx] !== '') {
+                            return String(row[colIdx]).trim();
                         }
                     }
                     return null;
@@ -2268,9 +2440,9 @@
                     if (!headers) return [];
                     const values = [];
                     for (const h of headers) {
-                        const idx = excelHeaders.indexOf(h);
-                        if (idx >= 0 && row[idx] !== undefined && row[idx] !== null && row[idx] !== '') {
-                            values.push({ header: h, value: String(row[idx]).trim() });
+                        const colIdx = headerColIndex[h];
+                        if (colIdx !== undefined && row[colIdx] !== undefined && row[colIdx] !== null && row[colIdx] !== '') {
+                            values.push({ header: h, value: String(row[colIdx]).trim() });
                         }
                     }
                     return values;
@@ -2287,9 +2459,16 @@
 
                 const phone = getValue('phone');
 
+                // Debug first 3 rows
+                if (rowIdx < 3) {
+                    console.log(`[Import] === Ligne ${rowIdx + 1} ===`);
+                    console.log(`  firstName="${firstName}", lastName="${lastName}", fullName="${fullName || ''}", phone="${phone || ''}"`);
+                    console.log(`  Raw row (${row.length} cols):`, row.slice(0, 10));
+                }
+
                 // Accept leads with name OR phone (relaxed validation)
                 if (!firstName && !lastName && !phone) {
-                    if (rowIdx < 3) console.log(`[Import] Ligne ${rowIdx + 2 + skippedHeaderRows} ignorée (ni nom ni tél). Row data:`, row);
+                    if (rowIdx < 5) console.log(`[Import] Ligne ${rowIdx + 2 + skippedHeaderRows} ignorée (ni nom ni tél). Row:`, row.slice(0, 10));
                     skipped.push({ row: rowIdx + 2 + skippedHeaderRows, reason: 'Ni nom ni téléphone' });
                     return;
                 }
