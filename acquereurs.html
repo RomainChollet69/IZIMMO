@@ -3175,7 +3175,7 @@
             return dt.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
         }
 
-        function exportBuyersCSV(statusFilter) {
+        async function exportBuyersCSV(statusFilter) {
             let data = buyers;
             let filename = 'acquereurs';
             if (statusFilter) {
@@ -3183,6 +3183,25 @@
                 filename = 'acquereurs_' + (BUYER_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase().replace(/\s+/g, '-');
             }
             if (data.length === 0) { alert('Aucun acquéreur à exporter.'); return; }
+
+            // Charger toutes les notes
+            const userId = await getCurrentUserId();
+            const notesByBuyer = {};
+            if (userId) {
+                const { data: allNotes } = await supabaseClient.from('lead_notes').select('*').eq('user_id', userId).not('buyer_id', 'is', null).order('created_at', { ascending: true });
+                (allNotes || []).forEach(n => {
+                    if (!notesByBuyer[n.buyer_id]) notesByBuyer[n.buyer_id] = [];
+                    notesByBuyer[n.buyer_id].push(n);
+                });
+            }
+
+            function formatNotesForCSV(notes) {
+                if (!notes || notes.length === 0) return '';
+                return notes.map(n => {
+                    const date = new Date(n.created_at).toLocaleDateString('fr-FR');
+                    return `[${date}] ${n.content}`;
+                }).join('\n');
+            }
 
             const columns = [
                 { label: 'Statut', getValue: b => BUYER_STATUS_LABELS[b.status] || b.status },
@@ -3210,7 +3229,7 @@
                 { label: 'Source', getValue: b => { const c = BUYER_SOURCE_CONFIG[b.source]; return c ? c.label.replace(/^.\s*/, '') : (b.source || ''); }},
                 { label: 'Apporteur', getValue: b => b.referrer_name || '' },
                 { label: 'Date Relance', getValue: b => fmtDate(b.reminder) },
-                { label: 'Notes', getValue: b => '' }
+                { label: 'Notes', getValue: b => formatNotesForCSV(notesByBuyer[b.id]) }
             ];
             exportToCSV(data, columns, filename);
             closeExportDropdown();

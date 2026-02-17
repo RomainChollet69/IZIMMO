@@ -4501,7 +4501,7 @@
             return num === 0 ? '' : num;
         }
 
-        function exportSellersCSV(statusFilter) {
+        async function exportSellersCSV(statusFilter) {
             let data = sellers;
             let filename = 'vendeurs';
             if (statusFilter) {
@@ -4509,6 +4509,25 @@
                 filename = 'vendeurs_' + (SELLER_STATUS_LABELS[statusFilter] || statusFilter).toLowerCase().replace(/\s+/g, '-');
             }
             if (data.length === 0) { alert('Aucun lead à exporter.'); return; }
+
+            // Charger toutes les notes
+            const userId = await getCurrentUserId();
+            const notesBySeller = {};
+            if (userId) {
+                const { data: allNotes } = await supabaseClient.from('lead_notes').select('*').eq('user_id', userId).not('seller_id', 'is', null).order('created_at', { ascending: true });
+                (allNotes || []).forEach(n => {
+                    if (!notesBySeller[n.seller_id]) notesBySeller[n.seller_id] = [];
+                    notesBySeller[n.seller_id].push(n);
+                });
+            }
+
+            function formatNotesForCSV(notes) {
+                if (!notes || notes.length === 0) return '';
+                return notes.map(n => {
+                    const date = new Date(n.created_at).toLocaleDateString('fr-FR');
+                    return `[${date}] ${n.content}`;
+                }).join('\n');
+            }
 
             const columns = [
                 { label: 'Statut', getValue: s => SELLER_STATUS_LABELS[s.status] || s.status },
@@ -4535,7 +4554,7 @@
                 { label: 'Apporteur', getValue: s => s.referrer_name || '' },
                 { label: 'Date Contact', getValue: s => fmtDate(s.date) },
                 { label: 'Date Relance', getValue: s => fmtDate(s.reminder) },
-                { label: 'Notes', getValue: s => '' },
+                { label: 'Notes', getValue: s => formatNotesForCSV(notesBySeller[s.id]) },
                 { label: 'Liens Annonces', getValue: s => Array.isArray(s.links) ? s.links.join(' | ') : '' }
             ];
             exportToCSV(data, columns, filename);
