@@ -37,7 +37,9 @@ Champs CRM disponibles :
 - full_name : nom complet (si prénom et nom sont dans la même colonne)
 - phone : téléphone (principal, portable, domicile, propriétaire)
 - email : email
-- address : adresse du bien (rue, ville, commune, localisation)
+- address : adresse du bien (rue, numéro de rue)
+- postal_code : code postal (CP)
+- city : ville / commune
 - description : description du bien
 - budget : prix / estimation / budget / prix de vente / prix affiché
 - source : source du lead (pige, recommandation, etc.)
@@ -55,7 +57,9 @@ RÈGLES DE MAPPING POUR LA PIGE :
 - "Nom", "NOM", "Propriétaire", "Vendeur" → last_name (pas full_name, sauf si les données montrent prénom+nom)
 - "Prénom" → first_name
 - "Tel", "Tél", "Téléphone", "Tel propriétaire", "Mobile", "Portable" → phone
-- "Adresse", "Rue", "Ville", "Commune", "Localisation", "Secteur" → address
+- "Adresse", "Rue" → address
+- "CP", "Code postal" → postal_code
+- "Ville", "VILLE", "Commune", "Localisation", "Secteur" → city
 - "Prix", "Prix affiché", "Estimation", "Prix de vente", "Montant" → budget
 - "Surface", "m²", "M2", "Surf.", "Surface habitable" → surface
 - "Pièces", "Nb pièces", "Type", "T1/T2/T3..." → rooms
@@ -64,7 +68,10 @@ RÈGLES DE MAPPING POUR LA PIGE :
 - "Date", "Date de parution", "Date annonce", "Mise en vente" → date
 - "Statut", "État", "Avancement", "Résultat final" → status
 - "Source", "Provenance", "Origine" → source
-- "Ref", "Référence", "N°", "Lien", "URL", "Photo", "Agence", "Mandataire" → ignore
+- "Ref", "Référence", "N°", "Lien", "URL", "Photo", "Agence", "Mandataire", "Prix/m²", "formule automatique" → ignore
+- Les colonnes contenant "Caractéristiques" ou "qui expliquent" → description
+- "Numéro" (quand il contient des numéros de téléphone) → phone
+- "Typologie" ou "Nb pièces" → rooms
 
 Colonnes du fichier Excel : ${JSON.stringify(headers)}
 

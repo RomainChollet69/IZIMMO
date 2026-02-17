@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <style>
@@ -1794,7 +1795,9 @@
             full_name: 'Nom complet',
             phone: 'Téléphone',
             email: 'Email',
-            address: 'Adresse',
+            address: 'Adresse (rue)',
+            postal_code: 'Code postal',
+            city: 'Ville',
             description: 'Description',
             budget: 'Budget / Prix',
             source: 'Source',
@@ -1870,12 +1873,12 @@
 
         // Detect the real header row (skip title/empty rows common in pige files)
         function findHeaderRow(data) {
-            for (let i = 0; i < Math.min(10, data.length); i++) {
+            for (let i = 0; i < Math.min(15, data.length); i++) {
                 const row = data[i];
-                if (!row) continue;
+                if (!row || !Array.isArray(row)) continue;
                 const textCells = row.filter(cell => {
                     if (cell === undefined || cell === null || cell === '') return false;
-                    const str = String(cell).trim();
+                    const str = String(cell).replace(/[\n\r]/g, ' ').trim();
                     if (!str) return false;
                     // Pure numbers are not headers
                     if (/^\d+([.,]\d+)?(%|€)?$/.test(str)) return false;
@@ -1886,7 +1889,39 @@
             return 0;
         }
 
-        function handleExcelFile(file) {
+        // Clean header: remove newlines, normalize whitespace
+        function cleanHeader(h) {
+            if (!h) return '';
+            return h.toString()
+                .replace(/\r/g, '')
+                .replace(/\n/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        // Parse CSV with PapaParse (handles quoted newlines correctly)
+        function parseCSVFile(file) {
+            return new Promise((resolve) => {
+                Papa.parse(file, {
+                    complete: (results) => {
+                        console.log('[CSV] PapaParse rows:', results.data.length, 'errors:', results.errors.length);
+                        if (results.errors.length > 0) console.warn('[CSV] Parse errors:', results.errors.slice(0, 5));
+                        resolve(results.data);
+                    },
+                    encoding: 'UTF-8',
+                    skipEmptyLines: false
+                });
+            });
+        }
+
+        // Parse Excel with SheetJS
+        function parseExcelFile(arrayBuffer) {
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            return XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+        }
+
+        async function handleExcelFile(file) {
             const ext = file.name.split('.').pop().toLowerCase();
             if (!['xlsx', 'xls', 'csv'].includes(ext)) {
                 alert('Format non supporté. Utilisez .xlsx, .xls ou .csv');
@@ -1905,44 +1940,61 @@
                 <button class="file-info-remove" onclick="cancelImportWizard()">✕</button>
             </div>`;
 
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const workbook = XLSX.read(e.target.result, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const data = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+            try {
+                let data;
 
-                    if (data.length < 2) {
-                        alert('Le fichier semble vide ou ne contient qu\'une ligne d\'en-têtes.');
-                        return;
-                    }
-
-                    // Find the real header row (skip empty/title rows)
-                    const headerRowIdx = findHeaderRow(data);
-                    skippedHeaderRows = headerRowIdx;
-
-                    excelHeaders = (data[headerRowIdx] || []).map(h => (h || '').toString().trim()).filter(h => h !== '');
-                    excelRows = data.slice(headerRowIdx + 1).filter(row => row.some(cell => cell !== undefined && cell !== null && cell !== ''));
-
-                    if (excelHeaders.length === 0) {
-                        alert('Impossible de détecter les en-têtes de colonnes.');
-                        return;
-                    }
-
-                    // Show wizard
-                    document.getElementById('dropZone').style.display = 'none';
-                    document.getElementById('importWizard').classList.add('active');
-
-                    // Render preview
-                    renderPreview();
-                    // Auto-map columns
-                    autoMapColumns();
-                } catch (err) {
-                    console.error('Erreur lecture fichier:', err);
-                    alert('Erreur lors de la lecture du fichier.');
+                if (ext === 'csv') {
+                    // Use PapaParse for CSV (handles quoted newlines)
+                    data = await parseCSVFile(file);
+                } else {
+                    // Use SheetJS for xlsx/xls
+                    const arrayBuffer = await file.arrayBuffer();
+                    data = parseExcelFile(arrayBuffer);
                 }
-            };
-            reader.readAsArrayBuffer(file);
+
+                console.log('[Import] Nombre total de lignes brutes:', data.length);
+
+                if (data.length < 2) {
+                    alert('Le fichier semble vide ou ne contient qu\'une ligne d\'en-têtes.');
+                    return;
+                }
+
+                // Find the real header row (skip empty/title rows)
+                const headerRowIdx = findHeaderRow(data);
+                skippedHeaderRows = headerRowIdx;
+                console.log('[Import] Ligne d\'en-tête détectée à l\'index:', headerRowIdx);
+
+                // Clean headers: remove newlines, normalize spaces, filter empty
+                const rawHeaders = data[headerRowIdx] || [];
+                excelHeaders = rawHeaders.map(h => cleanHeader(h)).filter(h => h !== '');
+                console.log('[Import] En-têtes nettoyées:', excelHeaders);
+
+                // Data rows: keep track of original column count for proper alignment
+                const headerColCount = rawHeaders.length;
+                excelRows = data.slice(headerRowIdx + 1).filter(row => {
+                    if (!row || !Array.isArray(row)) return false;
+                    return row.some(cell => cell !== undefined && cell !== null && cell !== '');
+                });
+                console.log('[Import] Lignes de données:', excelRows.length);
+                if (excelRows.length > 0) console.log('[Import] Première ligne de données:', excelRows[0]);
+
+                if (excelHeaders.length === 0) {
+                    alert('Impossible de détecter les en-têtes de colonnes.');
+                    return;
+                }
+
+                // Show wizard
+                document.getElementById('dropZone').style.display = 'none';
+                document.getElementById('importWizard').classList.add('active');
+
+                // Render preview
+                renderPreview();
+                // Auto-map columns
+                autoMapColumns();
+            } catch (err) {
+                console.error('Erreur lecture fichier:', err);
+                alert('Erreur lors de la lecture du fichier: ' + err.message);
+            }
         }
 
         function renderPreview() {
@@ -1991,12 +2043,19 @@
                 if (resp.ok) {
                     columnMapping = await resp.json();
                 } else {
-                    // Fallback: set all to ignore
+                    console.error('[Mapping] API error:', resp.status);
                     excelHeaders.forEach(h => { columnMapping[h] = 'ignore'; });
                 }
             } catch (err) {
-                console.error('Mapping error:', err);
+                console.error('[Mapping] error:', err);
                 excelHeaders.forEach(h => { columnMapping[h] = 'ignore'; });
+            }
+
+            console.log('[Import] Mapping IA reçu:', columnMapping);
+            const mappedFields = Object.values(columnMapping);
+            console.log('[Import] Champs mappés:', mappedFields.filter(f => f !== 'ignore'));
+            if (!mappedFields.includes('last_name') && !mappedFields.includes('first_name') && !mappedFields.includes('full_name') && !mappedFields.includes('phone')) {
+                console.error('[Import] ATTENTION: aucun champ nom ou téléphone mappé !');
             }
 
             analyzing.style.display = 'none';
@@ -2183,6 +2242,13 @@
             // Collect contact_note column headers for note creation
             const contactNoteHeaders = reverseMap['contact_note'] || [];
 
+            console.log('[Import] Reverse mapping:', reverseMap);
+            console.log('[Import] Lignes à traiter:', excelRows.length);
+            if (excelRows.length > 0) {
+                console.log('[Import] Ligne 1 brute:', excelRows[0]);
+                console.log('[Import] Nb colonnes headers:', excelHeaders.length, 'vs données:', excelRows[0].length);
+            }
+
             excelRows.forEach((row, rowIdx) => {
                 const getValue = (field) => {
                     const headers = reverseMap[field];
@@ -2223,6 +2289,7 @@
 
                 // Accept leads with name OR phone (relaxed validation)
                 if (!firstName && !lastName && !phone) {
+                    if (rowIdx < 3) console.log(`[Import] Ligne ${rowIdx + 2 + skippedHeaderRows} ignorée (ni nom ni tél). Row data:`, row);
                     skipped.push({ row: rowIdx + 2 + skippedHeaderRows, reason: 'Ni nom ni téléphone' });
                     return;
                 }
@@ -2269,9 +2336,15 @@
                     source: getValue('source') || defaultSource || null
                 };
 
-                // Additional fields
+                // Additional fields — build address from address + postal_code + city
+                const addressParts = [];
                 const address = getValue('address');
-                if (address) lead.address = address;
+                if (address) addressParts.push(address);
+                const postalCode = getValue('postal_code');
+                if (postalCode) addressParts.push(postalCode);
+                const city = getValue('city');
+                if (city) addressParts.push(city);
+                if (addressParts.length > 0) lead.address = addressParts.join(' ');
 
                 const description = getValue('description');
                 if (description) lead.description = description;
