@@ -2519,11 +2519,28 @@
             updateCounts();
         }
 
+        function formatSurface(surface) {
+            if (!surface) return '';
+            let s = surface.toString().trim();
+            if (!s.includes('m')) s = s + ' m²';
+            s = s.replace(/m2/gi, 'm²');
+            return s;
+        }
+
+        function normalizeSurface(val) {
+            if (!val) return null;
+            let s = val.toString().trim();
+            if (!s) return null;
+            if (!s.includes('m')) s = s + ' m²';
+            s = s.replace(/m2/gi, 'm²').replace(/(\d)(m²)/i, '$1 m²');
+            return s;
+        }
+
         function getPropertyLine(seller) {
             const parts = [];
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
             if (seller.property_type) parts.push(typeEmojis[seller.property_type] || '📍');
-            if (seller.surface) parts.push(seller.surface);
+            if (seller.surface) parts.push(formatSurface(seller.surface));
             const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
             if (Array.isArray(seller.annexes) && seller.annexes.length > 0) {
                 parts.push(seller.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
@@ -3390,7 +3407,7 @@
                 postal_code: addressInput.dataset.postalCode || null,
                 description: document.getElementById('description').value.trim() || null,
                 property_type: document.getElementById('propertyType').value || null,
-                surface: document.getElementById('surface').value.trim() || null,
+                surface: normalizeSurface(document.getElementById('surface').value),
                 annexes: [...document.querySelectorAll('input[name="annexes"]:checked')].map(cb => cb.value),
                 date,
                 reminder: document.getElementById('reminder').value || null,
@@ -3623,7 +3640,7 @@
                 { label: 'Ville', getValue: s => s.city || '' },
                 { label: 'Code Postal', getValue: s => s.postal_code || '' },
                 { label: 'Type Bien', getValue: s => s.property_type || '' },
-                { label: 'Surface', getValue: s => s.surface || '' },
+                { label: 'Surface', getValue: s => formatSurface(s.surface) },
                 { label: 'Annexes', getValue: s => Array.isArray(s.annexes) ? s.annexes.join(', ') : '' },
                 { label: 'Description', getValue: s => s.description || '' },
                 { label: 'Prix Estimation', getValue: s => rawAmount(s.budget) },

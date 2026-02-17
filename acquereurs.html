@@ -1722,11 +1722,28 @@
             updateCounts();
         }
 
+        function formatSurface(surface) {
+            if (!surface) return '';
+            let s = surface.toString().trim();
+            if (!s.includes('m')) s = s + ' m²';
+            s = s.replace(/m2/gi, 'm²');
+            return s;
+        }
+
+        function normalizeSurface(val) {
+            if (!val) return null;
+            let s = val.toString().trim();
+            if (!s) return null;
+            if (!s.includes('m')) s = s + ' m²';
+            s = s.replace(/m2/gi, 'm²').replace(/(\d)(m²)/i, '$1 m²');
+            return s;
+        }
+
         function getBuyerPropertyLine(buyer) {
             const parts = [];
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
             if (buyer.property_type) parts.push(typeEmojis[buyer.property_type] || '📍');
-            if (buyer.surface) parts.push(buyer.surface);
+            if (buyer.surface) parts.push(formatSurface(buyer.surface));
             const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
             if (Array.isArray(buyer.annexes) && buyer.annexes.length > 0) {
                 parts.push(buyer.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
@@ -2422,7 +2439,7 @@
                 budget_min: parseInt(document.getElementById('budgetMin').value) || null,
                 budget_max: parseInt(document.getElementById('budgetMax').value) || null,
                 criteria,
-                surface: document.getElementById('surface').value.trim() || null,
+                surface: normalizeSurface(document.getElementById('surface').value),
                 annexes,
                 bank_approval: document.getElementById('bankApproval').value || null,
                 timeline: document.getElementById('timeline').value || null,
@@ -2547,7 +2564,7 @@
                 { label: 'Typologie', getValue: b => b.rooms || '' },
                 { label: 'Secteur', getValue: b => b.sector || '' },
                 { label: 'Surface Min', getValue: b => b.surface_min || '' },
-                { label: 'Surface', getValue: b => b.surface || '' },
+                { label: 'Surface', getValue: b => formatSurface(b.surface) },
                 { label: 'Annexes', getValue: b => Array.isArray(b.annexes) ? b.annexes.join(', ') : '' },
                 { label: 'Budget Min', getValue: b => b.budget_min || '' },
                 { label: 'Budget Max', getValue: b => b.budget_max || '' },

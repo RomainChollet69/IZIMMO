@@ -41,7 +41,7 @@ Retourne un JSON avec ces champs :
   - null (si AUCUNE source n'est mentionnée)
 - "referrer_name": string ou null — nom de l'apporteur d'affaire (ex: "recommandé par Patrick Durand" → "Patrick Durand", "recommandation de Sophie Martin" → "Sophie Martin"). Seulement si la source est "recommandation" ET qu'un nom est mentionné après.
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble" (si le type de bien est mentionné)
-- "surface": string ou null — surface du bien (ex: "65 m²", "120 m²")
+- "surface": number ou null — surface du bien en m² (nombre pur, sans unité. Ex: 65, 120)
 - "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
 - "notes": string ou null — toute information complémentaire qui ne rentre dans aucun autre champ (contexte, remarques de l'agent, etc.)
 - "status": string ou null — parmi "hot", "warm", "cold" (UNIQUEMENT si explicitement mentionné comme "chaud/chaude", "tiède", "froid/froide")
@@ -79,7 +79,7 @@ Retourne un JSON avec ces champs :
 - "budget_min": number ou null — budget minimum en euros (nombre pur)
 - "budget_max": number ou null — budget maximum en euros (nombre pur)
 - "criteria": array ou null — parmi ["jardin", "parking", "ascenseur", "balcon_terrasse", "calme", "neuf_renove"]
-- "surface": string ou null — surface du bien (ex: "65 m²", "120 m²")
+- "surface": number ou null — surface du bien en m² (nombre pur, sans unité. Ex: 65, 120)
 - "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
 - "dealbreakers": string ou null — éléments rédhibitoires mentionnés
 - "notes": string ou null — toute information complémentaire qui ne rentre dans aucun autre champ
