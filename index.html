@@ -400,6 +400,7 @@
 
         .card-extended { display: none; }
         .lead-card.expanded .card-extended { display: block; }
+        .lead-card.expanded { max-height: none; overflow: visible; }
 
         @keyframes cardAppear {
             from { opacity: 0; transform: scale(0.9); }
@@ -1344,21 +1345,63 @@
             line-height: 1.4;
             word-break: break-word;
         }
-        .note-delete-btn {
+        .note-actions {
             position: absolute;
             top: 10px;
             right: 0;
+            display: flex;
+            gap: 2px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .note-item:hover .note-actions { opacity: 1; }
+        .note-action-btn {
             background: none;
             border: none;
             cursor: pointer;
             font-size: 13px;
             color: #CFD8DC;
-            opacity: 0;
-            transition: opacity 0.2s, color 0.2s;
             padding: 2px 4px;
+            transition: color 0.2s;
         }
-        .note-item:hover .note-delete-btn { opacity: 1; }
-        .note-delete-btn:hover { color: #FF4757; }
+        .note-action-btn:hover { color: #667eea; }
+        .note-action-btn.delete:hover { color: #FF4757; }
+        .note-edit-area {
+            width: 100%;
+            min-height: 60px;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            resize: vertical;
+            margin-top: 4px;
+        }
+        .note-edit-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .note-edit-actions button {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+        }
+        .note-edit-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .note-edit-cancel {
+            background: #f0f2f5;
+            color: var(--text-dark);
+        }
+        @media (max-width: 768px) {
+            .note-actions { opacity: 1; }
+        }
         .notes-empty {
             font-size: 13px;
             color: var(--text-light);
@@ -3427,19 +3470,16 @@
             if (mandateBadgeCompact) compact += mandateBadgeCompact;
             compact += '</div>';
 
-            // === EXTENDED VIEW ===
+            // === EXTENDED VIEW (extra info only, no duplicates) ===
             let ext = '<div class="card-extended">';
 
             if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
-            if (seller.source) {
-                ext += getSourceTag(seller.source);
-                if (seller.source === 'recommandation' && seller.referrer_name) ext += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
-            }
+            // Referrer (only for recommandation source)
+            if (seller.source === 'recommandation' && seller.referrer_name) ext += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
 
-            ext += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
+            // Full property details
             ext += getPropertyLine(seller);
-            if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
             if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
             if (seller.budget) ext += `<div class="card-info">💰 ${formatEuro(seller.budget)}</div>`;
@@ -3709,9 +3749,46 @@
                 <div class="note-item" data-id="${n.id}">
                     <div class="note-date">${formatNoteDate(n.created_at)}</div>
                     <div class="note-content">${escapeHtml(n.content)}</div>
-                    <button type="button" class="note-delete-btn" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
+                    <div class="note-actions">
+                        <button type="button" class="note-action-btn" onclick="editNote('${n.id}')" title="Modifier">✏️</button>
+                        <button type="button" class="note-action-btn delete" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function editNote(noteId) {
+            const noteItem = document.querySelector(`.note-item[data-id="${noteId}"]`);
+            if (!noteItem) return;
+            const contentEl = noteItem.querySelector('.note-content');
+            const actionsEl = noteItem.querySelector('.note-actions');
+            const currentText = currentNotes.find(n => n.id === noteId)?.content || '';
+
+            if (actionsEl) actionsEl.style.display = 'none';
+            contentEl.innerHTML = `<textarea class="note-edit-area">${escapeHtml(currentText)}</textarea>
+                <div class="note-edit-actions">
+                    <button type="button" class="note-edit-save" onclick="saveNoteEdit('${noteId}')">Enregistrer</button>
+                    <button type="button" class="note-edit-cancel" onclick="renderNotes()">Annuler</button>
+                </div>`;
+            contentEl.querySelector('textarea').focus();
+        }
+
+        async function saveNoteEdit(noteId) {
+            const noteItem = document.querySelector(`.note-item[data-id="${noteId}"]`);
+            if (!noteItem) return;
+            const textarea = noteItem.querySelector('.note-edit-area');
+            const newText = textarea.value.trim();
+            if (!newText) return;
+
+            const { error } = await supabaseClient
+                .from('lead_notes')
+                .update({ content: newText })
+                .eq('id', noteId);
+            if (error) { console.error('Note update error:', error); alert('Erreur lors de la modification.'); return; }
+
+            const note = currentNotes.find(n => n.id === noteId);
+            if (note) note.content = newText;
+            renderNotes();
         }
 
         // Dictée vocale pour notes (MediaRecorder + Whisper)
