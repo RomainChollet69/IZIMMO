@@ -932,6 +932,15 @@
         }
         .wizard-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+        .mapping-summary-item { display: flex; align-items: center; gap: 10px; padding: 8px 14px; background: #f8f9fa; border-radius: 8px; font-size: 14px; margin-bottom: 6px; }
+        .mapping-summary-item .field-name { font-weight: 600; min-width: 160px; color: var(--text-dark); }
+        .mapping-summary-item .col-name { color: var(--text-light); }
+        .mapping-summary-item.ignored { opacity: 0.5; }
+        .ai-preview-title { font-weight: 700; font-size: 14px; color: #1565C0; margin-bottom: 10px; }
+        .ai-preview-field { display: flex; gap: 8px; font-size: 13px; padding: 3px 0; }
+        .ai-preview-field .label { font-weight: 600; min-width: 120px; color: var(--text-dark); }
+        .ai-preview-field .value { color: var(--text-light); }
+
         .status-distribution {
             display: flex;
             flex-wrap: wrap;
@@ -1154,11 +1163,18 @@
 
                 <!-- Step 2: Mapping -->
                 <div class="wizard-panel" id="wizardStep2">
-                    <p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">Vérifiez le mapping des colonnes :</p>
+                    <p style="font-size:14px;color:var(--text-light);margin-bottom:12px;">L'IA a analysé vos colonnes :</p>
                     <div id="mappingAnalyzing" class="mapping-analyzing" style="display:none;">
                         <span class="loading-spinner">⏳</span> Analyse IA des colonnes en cours...
                     </div>
-                    <div class="mapping-grid" id="mappingGrid"></div>
+                    <div id="mappingSummary" style="display:none;"></div>
+                    <div id="aiPreviewLead" style="display:none; margin-top:16px; padding:16px; background:#f0f8ff; border-radius:10px; border:1px solid #b3d9ff;"></div>
+                    <div id="mappingGridWrapper" style="display:none;">
+                        <p style="font-size:13px;color:var(--text-light);margin:12px 0 8px;cursor:pointer;text-decoration:underline dotted;" onclick="document.getElementById('mappingGrid').style.display=document.getElementById('mappingGrid').style.display==='none'?'block':'none'">
+                            Modifier le mapping manuellement
+                        </p>
+                        <div class="mapping-grid" id="mappingGrid" style="display:none;"></div>
+                    </div>
                     <div class="wizard-actions">
                         <button class="wizard-btn" onclick="goToStep(1)">← Retour</button>
                         <button class="wizard-btn primary" onclick="goToStep(3)">Suivant →</button>
@@ -1190,7 +1206,7 @@
                     </div>
                     <div class="wizard-actions">
                         <button class="wizard-btn" onclick="goToStep(2)">← Retour</button>
-                        <button class="wizard-btn primary" id="importBtn" onclick="executeImport()">Importer</button>
+                        <button class="wizard-btn primary" id="importBtn" onclick="importWithAI()">Importer</button>
                     </div>
                 </div>
 
@@ -2273,6 +2289,8 @@
             analyzing.style.display = 'none';
             hasStatusColumn = Object.values(columnMapping).includes('status');
             renderMapping();
+            renderMappingSummary();
+            fetchAIPreview();
         }
 
         function renderMapping() {
@@ -2297,6 +2315,108 @@
             columnMapping[header] = value;
             hasStatusColumn = Object.values(columnMapping).includes('status');
             renderMapping();
+            renderMappingSummary();
+        }
+
+        function renderMappingSummary() {
+            const summary = document.getElementById('mappingSummary');
+            const wrapper = document.getElementById('mappingGridWrapper');
+
+            const fieldToColumns = {};
+            const ignoredColumns = [];
+
+            Object.entries(columnMapping).forEach(([header, field]) => {
+                if (field === 'ignore') {
+                    ignoredColumns.push(header);
+                } else {
+                    if (!fieldToColumns[field]) fieldToColumns[field] = [];
+                    fieldToColumns[field].push(header);
+                }
+            });
+
+            let html = '<div style="display:flex;flex-direction:column;gap:4px;">';
+
+            Object.entries(fieldToColumns).forEach(([field, columns]) => {
+                const label = CRM_FIELDS[field] || field;
+                html += `<div class="mapping-summary-item">
+                    <span style="font-size:16px;flex-shrink:0;">&#x2705;</span>
+                    <span class="field-name">${escapeHtml(label)}</span>
+                    <span class="col-name">&larr; ${columns.map(c => '&laquo; ' + escapeHtml(c) + ' &raquo;').join(', ')}</span>
+                </div>`;
+            });
+
+            if (ignoredColumns.length > 0) {
+                html += `<div class="mapping-summary-item ignored">
+                    <span style="font-size:16px;flex-shrink:0;">&#x26A0;&#xFE0F;</span>
+                    <span class="field-name">${ignoredColumns.length} colonne${ignoredColumns.length > 1 ? 's' : ''} ignor&eacute;e${ignoredColumns.length > 1 ? 's' : ''}</span>
+                    <span class="col-name">${ignoredColumns.map(c => '&laquo; ' + escapeHtml(c) + ' &raquo;').join(', ')}</span>
+                </div>`;
+            }
+
+            html += '</div>';
+            summary.innerHTML = html;
+            summary.style.display = 'block';
+            wrapper.style.display = 'block';
+        }
+
+        async function fetchAIPreview() {
+            const previewDiv = document.getElementById('aiPreviewLead');
+            previewDiv.style.display = 'block';
+            previewDiv.innerHTML = '<div class="mapping-analyzing" style="display:flex;"><span class="loading-spinner">&#x23F3;</span> Aper&ccedil;u IA du premier lead...</div>';
+
+            const firstRowData = excelRows.slice(0, 1).map(row => {
+                return excelHeaders.map(h => {
+                    const colIdx = headerColIndex[h];
+                    return colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                });
+            });
+
+            try {
+                const resp = await fetch('/api/parse-import-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        headers: excelHeaders,
+                        rows: firstRowData,
+                        leadType: document.getElementById('importType').value
+                    })
+                });
+
+                if (!resp.ok) throw new Error('API error ' + resp.status);
+                const data = await resp.json();
+
+                if (data.leads && data.leads.length > 0) {
+                    const lead = data.leads[0];
+                    let html = '<div class="ai-preview-title">Aper&ccedil;u du premier lead pars&eacute; par l\'IA :</div>';
+                    const displayFields = [
+                        ['Pr\u00e9nom', lead.first_name],
+                        ['Nom', lead.last_name],
+                        ['T\u00e9l\u00e9phone', lead.phone],
+                        ['Email', lead.email],
+                        ['Adresse', lead.address],
+                        ['Budget', lead.budget ? Number(lead.budget).toLocaleString('fr-FR') + ' \u20ac' : null],
+                        ['Surface', lead.surface ? lead.surface + ' m\u00b2' : null],
+                        ['Type de bien', lead.property_type],
+                        ['Statut', lead.status],
+                        ['Date', lead.date],
+                        ['Notes', lead.notes]
+                    ];
+                    displayFields.forEach(([label, value]) => {
+                        if (value) {
+                            html += `<div class="ai-preview-field">
+                                <span class="label">${label}</span>
+                                <span class="value">${escapeHtml(String(value))}</span>
+                            </div>`;
+                        }
+                    });
+                    previewDiv.innerHTML = html;
+                } else {
+                    previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">L\'IA n\'a pas pu extraire de lead depuis la premi\u00e8re ligne.</p>';
+                }
+            } catch (err) {
+                console.error('[AI Preview]', err);
+                previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">Erreur lors de l\'aper\u00e7u IA. L\'import fonctionnera quand m\u00eame.</p>';
+            }
         }
 
         function updateImportOptions() {
@@ -2342,6 +2462,11 @@
             document.getElementById('excelFileInfo').style.display = 'none';
             document.getElementById('importResultContainer').innerHTML = '';
             document.getElementById('wizardStep4Actions').style.display = 'none';
+            document.getElementById('mappingSummary').style.display = 'none';
+            document.getElementById('mappingSummary').innerHTML = '';
+            document.getElementById('aiPreviewLead').style.display = 'none';
+            document.getElementById('aiPreviewLead').innerHTML = '';
+            document.getElementById('mappingGridWrapper').style.display = 'none';
             excelHeaders = [];
             excelRows = [];
             columnMapping = {};
@@ -2772,6 +2897,255 @@
 
             document.getElementById('importProgress').style.display = 'none';
             document.getElementById('wizardStep4Actions').style.display = 'flex';
+        }
+
+        // ===== AI-POWERED IMPORT =====
+        async function importWithAI() {
+            const importType = document.getElementById('importType').value;
+            const defaultStatus = document.getElementById('importDefaultStatus').value;
+            const defaultSource = document.getElementById('importDefaultSource').value;
+            const table = importType === 'sellers' ? 'sellers' : 'buyers';
+            const leadIdField = importType === 'sellers' ? 'seller_id' : 'buyer_id';
+
+            goToStep(4);
+
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            document.getElementById('importProgress').style.display = 'block';
+
+            // Duplicate detection: query existing phones
+            progressText.textContent = 'Vérification des doublons...';
+            const { data: existingLeads } = await supabaseClient
+                .from(table)
+                .select('phone')
+                .eq('user_id', currentUserId);
+
+            const existingPhones = new Set(
+                (existingLeads || [])
+                    .map(l => l.phone ? l.phone.replace(/[\s\-\.]/g, '') : null)
+                    .filter(Boolean)
+            );
+
+            // Prepare raw rows for AI (indexed by excelHeaders via headerColIndex)
+            const rawRowsForAI = excelRows.map(row => {
+                return excelHeaders.map(h => {
+                    const colIdx = headerColIndex[h];
+                    return colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                });
+            });
+
+            // AI batch processing
+            const AI_BATCH_SIZE = 10;
+            const allParsedLeads = [];
+            const allSkipped = [];
+            const statusCounts = {};
+            let totalProcessed = 0;
+
+            progressText.textContent = 'Analyse IA en cours...';
+            console.log('[AI Import] Début: ' + rawRowsForAI.length + ' lignes, batch size=' + AI_BATCH_SIZE);
+
+            for (let i = 0; i < rawRowsForAI.length; i += AI_BATCH_SIZE) {
+                const batchRows = rawRowsForAI.slice(i, i + AI_BATCH_SIZE);
+                const batchStartIdx = i;
+                const batchNum = Math.floor(i / AI_BATCH_SIZE) + 1;
+                const totalBatches = Math.ceil(rawRowsForAI.length / AI_BATCH_SIZE);
+
+                console.log('[AI Import] Batch ' + batchNum + '/' + totalBatches + ' (' + batchRows.length + ' lignes)');
+
+                try {
+                    const resp = await fetch('/api/parse-import-batch', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            headers: excelHeaders,
+                            rows: batchRows,
+                            leadType: importType
+                        })
+                    });
+
+                    if (!resp.ok) {
+                        console.error('[AI Import] Batch ' + batchNum + ' API error:', resp.status);
+                        for (let j = 0; j < batchRows.length; j++) {
+                            allSkipped.push({
+                                row: batchStartIdx + j + 2 + skippedHeaderRows,
+                                reason: 'Erreur API IA (batch ' + batchNum + ')'
+                            });
+                        }
+                        totalProcessed += batchRows.length;
+                        progressBar.style.width = Math.round((totalProcessed / rawRowsForAI.length) * 100) + '%';
+                        progressText.textContent = 'Analyse IA... ' + totalProcessed + '/' + rawRowsForAI.length;
+                        continue;
+                    }
+
+                    const data = await resp.json();
+                    console.log('[AI Import] Batch ' + batchNum + ' result:', (data.leads || []).length + ' leads, ' + (data.ignored || []).length + ' ignored');
+
+                    if (data.leads) {
+                        data.leads.forEach(aiLead => {
+                            const status = aiLead.status || defaultStatus;
+                            const source = aiLead.source || defaultSource || null;
+
+                            if (!aiLead.first_name && !aiLead.last_name && !aiLead.phone) {
+                                allSkipped.push({
+                                    row: batchStartIdx + (aiLead.row_index || 0) + 2 + skippedHeaderRows,
+                                    reason: 'Ni nom ni téléphone (après analyse IA)'
+                                });
+                                return;
+                            }
+
+                            if (aiLead.phone) {
+                                const normPhone = aiLead.phone.replace(/[\s\-\.]/g, '');
+                                if (existingPhones.has(normPhone)) {
+                                    allSkipped.push({
+                                        row: batchStartIdx + (aiLead.row_index || 0) + 2 + skippedHeaderRows,
+                                        reason: 'Doublon (tél: ' + aiLead.phone + ')'
+                                    });
+                                    return;
+                                }
+                                existingPhones.add(normPhone);
+                            }
+
+                            statusCounts[status] = (statusCounts[status] || 0) + 1;
+
+                            const lead = {
+                                user_id: currentUserId,
+                                first_name: aiLead.first_name || null,
+                                last_name: aiLead.last_name || null,
+                                phone: aiLead.phone || null,
+                                email: aiLead.email || null,
+                                status: status,
+                                source: source
+                            };
+
+                            if (aiLead.address) lead.address = aiLead.address;
+                            if (aiLead.description) lead.description = aiLead.description;
+                            if (aiLead.budget && typeof aiLead.budget === 'number') lead.budget = aiLead.budget;
+                            if (aiLead.property_type) lead.property_type = aiLead.property_type;
+                            if (aiLead.surface && typeof aiLead.surface === 'number') lead.surface = aiLead.surface;
+                            if (aiLead.rooms) lead.rooms = aiLead.rooms;
+                            if (aiLead.date && importType === 'sellers') lead.date = aiLead.date;
+                            if (aiLead.reminder) lead.reminder = aiLead.reminder;
+
+                            // Buyer-specific fields
+                            if (importType === 'buyers') {
+                                if (aiLead.budget_min && typeof aiLead.budget_min === 'number') lead.budget_min = aiLead.budget_min;
+                                if (aiLead.budget_max && typeof aiLead.budget_max === 'number') lead.budget_max = aiLead.budget_max;
+                                if (aiLead.sector) lead.sector = aiLead.sector;
+                            }
+
+                            const generalNotes = aiLead.notes || null;
+                            const contactNotes = aiLead.contact_notes || [];
+
+                            allParsedLeads.push({ lead, generalNotes, contactNotes });
+                        });
+                    }
+
+                    if (data.ignored) {
+                        data.ignored.forEach(ign => {
+                            allSkipped.push({
+                                row: batchStartIdx + (ign.row_index || 0) + 2 + skippedHeaderRows,
+                                reason: ign.reason || 'Ignoré par l\'IA'
+                            });
+                        });
+                    }
+
+                } catch (err) {
+                    console.error('[AI Import] Batch ' + batchNum + ' exception:', err);
+                    for (let j = 0; j < batchRows.length; j++) {
+                        allSkipped.push({
+                            row: batchStartIdx + j + 2 + skippedHeaderRows,
+                            reason: 'Exception IA: ' + err.message
+                        });
+                    }
+                }
+
+                totalProcessed += batchRows.length;
+                const pct = Math.round((totalProcessed / rawRowsForAI.length) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = 'Analyse IA... ' + totalProcessed + '/' + rawRowsForAI.length;
+            }
+
+            console.log('[AI Import] Analyse terminée: ' + allParsedLeads.length + ' leads, ' + allSkipped.length + ' ignorés');
+
+            // DB Insert
+            if (allParsedLeads.length === 0) {
+                progressText.textContent = '';
+                progressBar.style.width = '100%';
+                showImportResult(0, allSkipped, statusCounts, importType, 0, 0);
+                return;
+            }
+
+            progressText.textContent = 'Insertion en base...';
+            let inserted = 0;
+            let notesInserted = 0;
+            const DB_BATCH_SIZE = 50;
+
+            for (let i = 0; i < allParsedLeads.length; i += DB_BATCH_SIZE) {
+                const batch = allParsedLeads.slice(i, i + DB_BATCH_SIZE);
+                const batchData = batch.map(b => b.lead);
+
+                const { data: insertedLeads, error } = await supabaseClient
+                    .from(table)
+                    .insert(batchData)
+                    .select('id');
+
+                if (error) {
+                    console.error('[AI Import] DB batch error:', error);
+                    allSkipped.push({ row: '-', reason: 'Erreur batch DB: ' + error.message });
+                    continue;
+                }
+
+                inserted += batch.length;
+
+                if (insertedLeads && insertedLeads.length > 0) {
+                    const notesToInsert = [];
+
+                    insertedLeads.forEach((insertedLead, batchIdx) => {
+                        const { generalNotes, contactNotes } = batch[batchIdx];
+
+                        if (generalNotes) {
+                            notesToInsert.push({
+                                user_id: currentUserId,
+                                [leadIdField]: insertedLead.id,
+                                content: generalNotes
+                            });
+                        }
+
+                        if (contactNotes && contactNotes.length > 0) {
+                            contactNotes.forEach(cn => {
+                                const content = typeof cn === 'string' ? cn : (cn.value || String(cn));
+                                if (content && content.trim()) {
+                                    notesToInsert.push({
+                                        user_id: currentUserId,
+                                        [leadIdField]: insertedLead.id,
+                                        content: content
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                    if (notesToInsert.length > 0) {
+                        const { error: noteError } = await supabaseClient
+                            .from('lead_notes')
+                            .insert(notesToInsert);
+                        if (noteError) {
+                            console.error('[AI Import] Notes insert error:', noteError);
+                        } else {
+                            notesInserted += notesToInsert.length;
+                        }
+                    }
+                }
+
+                const pct = Math.round((inserted / allParsedLeads.length) * 100);
+                progressBar.style.width = pct + '%';
+                progressText.textContent = 'Insertion... ' + inserted + '/' + allParsedLeads.length;
+            }
+
+            progressBar.style.width = '100%';
+            progressText.textContent = 'Import terminé !';
+            console.log('[AI Import] Terminé: ' + inserted + ' insérés, ' + notesInserted + ' notes, ' + allSkipped.length + ' ignorés');
+            showImportResult(inserted, allSkipped, statusCounts, importType, notesInserted, 0);
         }
     </script>
     <script src="js/todo-widget.js"></script>
