@@ -743,6 +743,135 @@
         .modal-tab:hover { color: var(--text-dark); }
         .modal-tab.active { color: #667eea; border-bottom-color: #667eea; }
 
+        /* ===== MESSAGES IA ===== */
+        .msg-ia-section { padding: 8px 0; }
+        .msg-ia-channel-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .msg-ia-channel-btn {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .msg-ia-channel-btn:hover { border-color: #667eea; }
+        .msg-ia-channel-btn.active { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+        .msg-ia-scenario-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            align-items: end;
+        }
+        .msg-ia-scenario-row .form-group { flex: 1; margin-bottom: 0; }
+        .msg-ia-generate-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .msg-ia-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .msg-ia-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+        .msg-ia-custom-prompt {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            resize: none;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .msg-ia-custom-prompt:focus { outline: none; border-color: #667eea; }
+        .msg-ia-output {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .msg-ia-output:focus { outline: none; border-color: #667eea; }
+        .msg-ia-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            display: none;
+        }
+        .msg-ia-actions.visible { display: flex; }
+        .msg-ia-action-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .msg-ia-action-btn:hover { border-color: #667eea; background: #f8f8ff; }
+        .msg-ia-action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .msg-ia-action-btn.primary:hover { box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3); }
+        .msg-ia-loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 16px;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+        .msg-ia-loading.visible { display: flex; }
+        .msg-ia-spinner {
+            width: 20px; height: 20px;
+            border: 2px solid var(--border-color);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .msg-ia-toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 99999;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .msg-ia-toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+
         /* ===== MANDAT — BADGES CARTES ===== */
         .mandate-badge {
             display: inline-block;
@@ -1874,8 +2003,13 @@
             .submit-btn { padding: 14px; font-size: 15px; }
 
             /* Tabs & mandat responsive */
-            .modal-tabs { margin-bottom: 16px; }
-            .modal-tab { padding: 10px 16px; font-size: 13px; }
+            .modal-tabs { margin-bottom: 16px; overflow-x: auto; }
+            .modal-tab { padding: 10px 12px; font-size: 12px; white-space: nowrap; }
+            .msg-ia-channel-bar { gap: 6px; }
+            .msg-ia-channel-btn { padding: 8px 8px; font-size: 12px; }
+            .msg-ia-scenario-row { flex-direction: column; gap: 8px; }
+            .msg-ia-actions { gap: 6px; }
+            .msg-ia-action-btn { padding: 7px 10px; font-size: 12px; }
             .form-section { padding: 14px; margin-bottom: 12px; }
             .form-section-title { font-size: 14px; }
             .visit-form-grid { grid-template-columns: 1fr; padding: 12px; }
@@ -2017,6 +2151,7 @@
             <div class="modal-tabs" id="modalTabs" style="display:none">
                 <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
                 <button type="button" class="modal-tab" data-tab="mandate" onclick="switchTab('mandate')">📑 Gestion Mandat</button>
+                <button type="button" class="modal-tab" data-tab="messages" onclick="switchTab('messages')">✨ Messages IA</button>
             </div>
             <form id="leadForm">
                 <div id="tabInfo">
@@ -2274,6 +2409,48 @@
                         </div>
                         <div class="visit-list" id="visitList">
                             <div class="visit-empty">Aucune visite enregistrée</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tabMessages" style="display:none">
+                    <div class="msg-ia-section">
+                        <div class="msg-ia-channel-bar">
+                            <button type="button" class="msg-ia-channel-btn active" data-channel="sms" onclick="selectChannel('sms')">📱 SMS</button>
+                            <button type="button" class="msg-ia-channel-btn" data-channel="whatsapp" onclick="selectChannel('whatsapp')">💬 WhatsApp</button>
+                            <button type="button" class="msg-ia-channel-btn" data-channel="email" onclick="selectChannel('email')">📧 Email</button>
+                        </div>
+                        <div class="msg-ia-scenario-row">
+                            <div class="form-group">
+                                <label class="form-label">Scénario</label>
+                                <select class="form-select" id="msgScenario" onchange="onScenarioChange()">
+                                    <option value="">Choisir un scénario...</option>
+                                    <option value="confirmation_rdv">📅 Confirmation RDV</option>
+                                    <option value="compte_rendu_estimation">📊 Compte-rendu estimation</option>
+                                    <option value="relance">🔄 Relance</option>
+                                    <option value="proposition_baisse">📉 Proposition baisse de prix</option>
+                                    <option value="point_visites">👥 Point visites</option>
+                                    <option value="anniversaire_mandat">🎂 Anniversaire mandat</option>
+                                    <option value="bonne_nouvelle">🎉 Bonne nouvelle</option>
+                                    <option value="remerciement">🙏 Remerciement</option>
+                                    <option value="libre">✏️ Message libre</option>
+                                </select>
+                            </div>
+                            <button type="button" class="msg-ia-generate-btn" id="msgGenerateBtn" onclick="generateMessage()">✨ Générer</button>
+                        </div>
+                        <textarea class="msg-ia-custom-prompt" id="msgCustomPrompt" rows="2" placeholder="Décrivez le message souhaité..."></textarea>
+                        <div class="msg-ia-loading" id="msgLoading">
+                            <div class="msg-ia-spinner"></div>
+                            <span>Génération en cours...</span>
+                        </div>
+                        <textarea class="msg-ia-output" id="msgOutput" placeholder="Le message généré apparaîtra ici..."></textarea>
+                        <div class="msg-ia-actions" id="msgActions">
+                            <button type="button" class="msg-ia-action-btn primary" onclick="copyMessage()">📋 Copier</button>
+                            <button type="button" class="msg-ia-action-btn" onclick="openSMS()">📱 SMS</button>
+                            <button type="button" class="msg-ia-action-btn" onclick="openWhatsApp()">💬 WhatsApp</button>
+                            <button type="button" class="msg-ia-action-btn" onclick="openEmail()">📧 Email</button>
+                            <button type="button" class="msg-ia-action-btn" onclick="generateMessage()">🔄 Régénérer</button>
+                            <button type="button" class="msg-ia-action-btn" onclick="saveMessageAsNote()">💾 Sauver en note</button>
                         </div>
                     </div>
                 </div>
@@ -3590,6 +3767,7 @@
             document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tabMandate').style.display = tab === 'mandate' ? 'block' : 'none';
+            document.getElementById('tabMessages').style.display = tab === 'messages' ? 'block' : 'none';
             if (tab === 'mandate') updateMandateCountdown();
         }
 
@@ -3597,8 +3775,12 @@
             const status = document.getElementById('status').value;
             const tabs = document.getElementById('modalTabs');
             const editId = document.getElementById('submitBtn').dataset.editId;
-            if (status === 'mandate' && editId) {
+            const mandateTab = tabs.querySelector('[data-tab="mandate"]');
+            const messagesTab = tabs.querySelector('[data-tab="messages"]');
+            if (editId) {
                 tabs.style.display = 'flex';
+                mandateTab.style.display = status === 'mandate' ? '' : 'none';
+                messagesTab.style.display = '';
             } else {
                 tabs.style.display = 'none';
                 switchTab('info');
@@ -4142,6 +4324,9 @@
             // Reset tabs
             document.getElementById('modalTabs').style.display = 'none';
             switchTab('info');
+
+            // Reset messages IA
+            resetMessagesIA();
 
             // Reset referrer
             document.getElementById('referrerGroup').classList.remove('active');
@@ -4993,6 +5178,151 @@
 
             // Alert counter click handled by relance-widget.js
         });
+
+        // ===== MESSAGES IA =====
+        let currentChannel = 'sms';
+
+        function selectChannel(channel) {
+            currentChannel = channel;
+            document.querySelectorAll('.msg-ia-channel-btn').forEach(b => b.classList.toggle('active', b.dataset.channel === channel));
+        }
+
+        function onScenarioChange() {
+            const scenario = document.getElementById('msgScenario').value;
+            document.getElementById('msgCustomPrompt').style.display = scenario === 'libre' ? 'block' : 'none';
+        }
+
+        function getSellerLeadData() {
+            return {
+                first_name: document.getElementById('firstName').value,
+                last_name: document.getElementById('lastName').value,
+                phone: document.getElementById('phone').value,
+                email: document.getElementById('email').value,
+                address: document.getElementById('address').value,
+                budget: document.getElementById('budget').value,
+                property_type: document.getElementById('propertyType').value,
+                surface: document.getElementById('surface').value,
+                mandate_type: document.getElementById('mandateType').value,
+                mandate_price: document.getElementById('mandatePrice').value
+            };
+        }
+
+        async function generateMessage() {
+            const scenario = document.getElementById('msgScenario').value;
+            if (!scenario) { alert('Choisissez un scénario'); return; }
+
+            const btn = document.getElementById('msgGenerateBtn');
+            const loading = document.getElementById('msgLoading');
+            const output = document.getElementById('msgOutput');
+            const actions = document.getElementById('msgActions');
+
+            btn.disabled = true;
+            loading.classList.add('visible');
+            output.style.display = 'none';
+            actions.classList.remove('visible');
+
+            const leadData = getSellerLeadData();
+            const notes = currentNotes.slice(0, 5).map(n => n.content);
+            const customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
+
+            try {
+                const resp = await fetch('/api/generate-message', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller' })
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Erreur');
+
+                output.value = data.message;
+                output.style.display = 'block';
+                actions.classList.add('visible');
+            } catch (err) {
+                alert('Erreur de génération : ' + err.message);
+            } finally {
+                btn.disabled = false;
+                loading.classList.remove('visible');
+            }
+        }
+
+        function copyMessage() {
+            const text = document.getElementById('msgOutput').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => showMsgToast('Message copié !'));
+        }
+
+        function openSMS() {
+            const phone = document.getElementById('phone').value.replace(/\s/g, '');
+            const text = document.getElementById('msgOutput').value;
+            if (!phone) { alert('Pas de numéro de téléphone'); return; }
+            window.open(`sms:${phone}?body=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function openWhatsApp() {
+            let phone = document.getElementById('phone').value.replace(/\s/g, '');
+            if (!phone) { alert('Pas de numéro de téléphone'); return; }
+            if (phone.startsWith('0')) phone = '33' + phone.slice(1);
+            const text = document.getElementById('msgOutput').value;
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        function openEmail() {
+            const email = document.getElementById('email').value;
+            const text = document.getElementById('msgOutput').value;
+            if (!email) { alert('Pas d\'adresse email'); return; }
+            let subject = '';
+            let body = text;
+            const subjectMatch = text.match(/^Objet\s*:\s*(.+)\n/i);
+            if (subjectMatch) {
+                subject = subjectMatch[1].trim();
+                body = text.slice(subjectMatch[0].length).trim();
+            }
+            window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+        }
+
+        async function saveMessageAsNote() {
+            const text = document.getElementById('msgOutput').value;
+            if (!text) return;
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (!editId) { alert('Enregistrez le lead d\'abord'); return; }
+            const channelLabel = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'Email' }[currentChannel] || currentChannel;
+            const noteText = `[Message IA - ${channelLabel}] ${text}`;
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { data, error } = await supabaseClient
+                .from('lead_notes')
+                .insert({ user_id: userId, seller_id: editId, content: noteText })
+                .select()
+                .single();
+            if (error) { console.error('Note insert error:', error); return; }
+            currentNotes.unshift(data);
+            renderNotes();
+            showMsgToast('Message sauvegardé en note !');
+        }
+
+        function resetMessagesIA() {
+            currentChannel = 'sms';
+            document.querySelectorAll('.msg-ia-channel-btn').forEach(b => b.classList.toggle('active', b.dataset.channel === 'sms'));
+            document.getElementById('msgScenario').value = '';
+            document.getElementById('msgCustomPrompt').value = '';
+            document.getElementById('msgCustomPrompt').style.display = 'none';
+            document.getElementById('msgOutput').value = '';
+            document.getElementById('msgOutput').style.display = 'none';
+            document.getElementById('msgActions').classList.remove('visible');
+            document.getElementById('msgLoading').classList.remove('visible');
+        }
+
+        function showMsgToast(text) {
+            let toast = document.querySelector('.msg-ia-toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.className = 'msg-ia-toast';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = text;
+            toast.classList.add('visible');
+            setTimeout(() => toast.classList.remove('visible'), 2500);
+        }
     </script>
     <!-- Move Popup -->
     <div class="move-popup-overlay" id="movePopup">
