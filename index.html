@@ -2021,6 +2021,116 @@
             .commission-inline-input.amount { width: 60px; }
             .commission-inline-input.rate { width: 28px; }
         }
+
+        /* Onboarding */
+        .onboarding-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .onboarding-screen h1 { font-size: 28px; margin-bottom: 8px; }
+        .onboarding-screen > p { color: #6B7280; font-size: 16px; margin-bottom: 32px; }
+
+        .example-box {
+            background: #F0FDFA;
+            border: 1px solid #99F6E4;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 32px;
+            text-align: left;
+            width: 100%;
+        }
+        .example-label { font-weight: 600; font-size: 13px; color: #0D9488; margin-bottom: 8px; }
+        .example-text { font-size: 14px; color: #374151; font-style: italic; line-height: 1.5; }
+
+        .onboarding-mic-btn {
+            width: 200px; height: 200px; border-radius: 50%;
+            border: 3px solid #2DD4BF; background: white; cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(45, 212, 191, 0.2);
+            margin-bottom: 24px;
+        }
+        .onboarding-mic-btn:hover { transform: scale(1.05); box-shadow: 0 8px 30px rgba(45, 212, 191, 0.3); }
+        .onboarding-mic-btn .mic-icon { font-size: 48px; }
+        .onboarding-mic-btn span { font-size: 13px; color: #6B7280; max-width: 140px; }
+        .onboarding-mic-btn.recording {
+            border-color: #EF4444; animation: ob-pulse 1.5s infinite; background: #FEF2F2;
+        }
+        @keyframes ob-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.3); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .onboarding-alternatives {
+            display: flex; align-items: center; gap: 12px; color: #9CA3AF; font-size: 14px;
+        }
+        .onboarding-alternatives button {
+            background: none; border: 1px solid #E5E7EB; border-radius: 8px;
+            padding: 8px 16px; cursor: pointer; font-size: 13px; color: #6B7280;
+        }
+        .onboarding-alternatives button:hover { border-color: #2DD4BF; color: #0D9488; }
+
+        .onboarding-status {
+            font-size: 14px; color: #6B7280; margin: 12px 0; min-height: 24px;
+        }
+
+        .onboarding-review, .onboarding-preview { width: 100%; text-align: left; }
+        .onboarding-review h2, .onboarding-preview h2 { font-size: 18px; margin-bottom: 12px; }
+
+        .transcription-text {
+            width: 100%; padding: 12px; border: 1.5px solid #E5E7EB; border-radius: 10px;
+            font-size: 14px; font-family: Inter, sans-serif; resize: vertical; line-height: 1.5;
+        }
+        .transcription-text:focus { border-color: #2DD4BF; outline: none; }
+        .review-hint { font-size: 12px; color: #9CA3AF; margin: 8px 0 16px; }
+
+        .onboarding-review-actions, .preview-actions {
+            display: flex; gap: 12px; margin-top: 16px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+            border: none; border-radius: 10px; padding: 10px 24px; font-size: 14px; font-weight: 600; cursor: pointer;
+        }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-secondary {
+            background: white; border: 1px solid #E5E7EB; border-radius: 10px;
+            padding: 10px 24px; font-size: 14px; cursor: pointer; color: #6B7280;
+        }
+        .btn-secondary:hover { border-color: #2DD4BF; color: #0D9488; }
+
+        .preview-fields {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+            margin: 20px 0; text-align: left; width: 100%;
+        }
+        .preview-field label { font-size: 12px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+        .preview-field input {
+            width: 100%; padding: 8px 12px; border: 1.5px solid #E5E7EB; border-radius: 8px;
+            font-size: 14px; box-sizing: border-box;
+        }
+        .preview-field input:focus { border-color: #2DD4BF; outline: none; }
+        .preview-field input.ai-filled { animation: fieldFlash 1.5s ease; }
+        @keyframes fieldFlash {
+            0% { background-color: #D1FAE5; }
+            100% { background-color: white; }
+        }
+
+        .onboarding-success h2 { font-size: 24px; margin-bottom: 8px; }
+        .onboarding-success p { color: #6B7280; font-size: 14px; }
+
+        @media (max-width: 768px) {
+            .onboarding-mic-btn { width: 150px; height: 150px; }
+            .onboarding-mic-btn .mic-icon { font-size: 36px; }
+            .preview-fields { grid-template-columns: 1fr; }
+            .onboarding-alternatives { flex-wrap: wrap; justify-content: center; }
+        }
     </style>
 </head>
 <body>
@@ -2138,6 +2248,58 @@
             <div class="column-title">Leads perdus / Abandonnés</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="lost-container"></div>
+        </div>
+    </div>
+
+    <!-- Onboarding screen (0 leads) -->
+    <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
+        <h1>Bienvenue sur WAIMMO 👋</h1>
+        <p>Créez votre premier lead en le dictant à voix haute.</p>
+
+        <div class="example-box">
+            <p class="example-label">💡 Exemple de ce que vous pouvez dire :</p>
+            <p class="example-text">"J'ai rencontré Monsieur Dupont, son numéro c'est le 06 12 34 56 78, il veut vendre sa maison au 15 rue des Lilas à Lyon, c'est un T4 de 90m² avec garage et jardin, il en veut 350 000 euros, c'est une recommandation de Julie Martin"</p>
+        </div>
+
+        <button class="onboarding-mic-btn" id="onboardingMicBtn">
+            <span class="mic-icon">🎙️</span>
+            <span>Appuyez et dictez votre premier lead</span>
+        </button>
+
+        <!-- Step 2: transcription review -->
+        <div class="onboarding-review" id="onboardingReview" style="display:none;">
+            <h2>🎙️ Voici ce que j'ai compris :</h2>
+            <textarea class="transcription-text" id="onboardingTranscription" rows="4"></textarea>
+            <p class="review-hint">Vous pouvez corriger la transcription si nécessaire</p>
+            <div class="onboarding-review-actions">
+                <button class="btn-primary" id="onboardingAnalyzeBtn">✨ Analyser avec l'IA</button>
+                <button class="btn-secondary" id="onboardingRestartBtn">🎙️ Recommencer</button>
+            </div>
+        </div>
+
+        <!-- Step 3: parsed fields preview -->
+        <div class="onboarding-preview" id="onboardingPreview" style="display:none;">
+            <h2>✨ Lead détecté :</h2>
+            <div class="preview-fields" id="onboardingFields"></div>
+            <div class="preview-actions">
+                <button class="btn-primary" id="onboardingSaveBtn">✅ Créer ce lead</button>
+                <button class="btn-secondary" id="onboardingRestartBtn2">🎙️ Recommencer</button>
+            </div>
+        </div>
+
+        <!-- Step 4: success -->
+        <div class="onboarding-success" id="onboardingSuccess" style="display:none;">
+            <h2>🎉 Votre premier lead a été créé !</h2>
+            <p>Redirection vers le pipeline...</p>
+        </div>
+
+        <!-- Status indicator -->
+        <div class="onboarding-status" id="onboardingStatus"></div>
+
+        <div class="onboarding-alternatives" id="onboardingAlternatives">
+            <span>ou</span>
+            <button onclick="hideOnboarding(); openModal();">✏️ Saisie manuelle</button>
+            <button onclick="goToSettings()">📂 Importer un fichier Excel</button>
         </div>
     </div>
 
@@ -3600,6 +3762,17 @@
             return `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${parts.join(' · ')}</div>`;
         }
 
+        function extractCity(address) {
+            if (!address) return null;
+            const trimmed = address.trim();
+            const cpMatch = trimmed.match(/\d{5}\s+(.+)$/);
+            if (cpMatch) return cpMatch[1].trim();
+            const commaMatch = trimmed.match(/,\s*([^,]+)$/);
+            if (commaMatch) return commaMatch[1].trim();
+            if (trimmed.split(/\s+/).length <= 3) return trimmed;
+            return null;
+        }
+
         function createSellerCard(seller) {
             const card = document.createElement('div');
             card.className = 'lead-card';
@@ -3637,7 +3810,12 @@
             if (seller.source === 'recommandation' && seller.referrer_name) compact += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
             compact += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
             compact += compactPropLine;
-            if (seller.phone) compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            const city = extractCity(seller.address);
+            if (city) {
+                compact += `<div class="card-info" style="font-size:13px;color:#6B7280">📍 ${escapeHtml(city)}</div>`;
+            } else if (seller.phone) {
+                compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            }
             if (followupCompact) compact += followupCompact;
             compact += '</div>';
 
@@ -3646,11 +3824,14 @@
 
             if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
+            // Address (full)
+            if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
+
+            // Phone
+            if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+
             // Email
             if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
-
-            // Address
-            if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
 
             // Commission
             const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
@@ -4979,9 +5160,243 @@
             }
         }
 
+        // ===== ONBOARDING =====
+        let onboardingRecorder = null;
+        let onboardingParsedFields = null;
+
+        function showOnboarding() {
+            document.querySelector('.pipeline').style.display = 'none';
+            document.getElementById('mobileTabs').style.display = 'none';
+            document.getElementById('onboardingScreen').style.display = 'flex';
+        }
+
+        function hideOnboarding() {
+            document.getElementById('onboardingScreen').style.display = 'none';
+            document.querySelector('.pipeline').style.display = '';
+            document.getElementById('mobileTabs').style.display = '';
+        }
+
+        function goToSettings() {
+            window.location.href = 'parametres.html';
+        }
+
+        function resetOnboardingToMic() {
+            document.getElementById('onboardingMicBtn').style.display = '';
+            document.getElementById('onboardingReview').style.display = 'none';
+            document.getElementById('onboardingPreview').style.display = 'none';
+            document.getElementById('onboardingSuccess').style.display = 'none';
+            document.getElementById('onboardingAlternatives').style.display = '';
+            document.getElementById('onboardingStatus').textContent = '';
+            const micBtn = document.getElementById('onboardingMicBtn');
+            micBtn.classList.remove('recording');
+            micBtn.querySelector('.mic-icon').textContent = '🎙️';
+        }
+
+        async function handleOnboardingMic() {
+            const micBtn = document.getElementById('onboardingMicBtn');
+            const statusEl = document.getElementById('onboardingStatus');
+
+            if (onboardingRecorder && onboardingRecorder.isRecording) {
+                onboardingRecorder.stop();
+                return;
+            }
+
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch (err) {
+                const msg = (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')
+                    ? 'Micro bloqué — autorisez le micro dans les réglages'
+                    : 'Impossible d\'accéder au micro';
+                statusEl.textContent = '⚠️ ' + msg;
+                setTimeout(() => { statusEl.textContent = ''; }, 4000);
+                return;
+            }
+
+            onboardingRecorder = new AudioRecorder({
+                maxDuration: 30000,
+                silenceTimeout: 5000,
+                onStateChange: (state, msg) => {
+                    if (state === 'recording') {
+                        micBtn.classList.add('recording');
+                        micBtn.querySelector('.mic-icon').textContent = '⏹️';
+                        statusEl.textContent = '🔴 Écoute en cours… Parlez naturellement.';
+                    } else if (state === 'transcribing') {
+                        micBtn.classList.remove('recording');
+                        micBtn.querySelector('.mic-icon').textContent = '⏳';
+                        statusEl.textContent = '⏳ Transcription en cours...';
+                    } else if (state === 'error') {
+                        micBtn.classList.remove('recording');
+                        micBtn.querySelector('.mic-icon').textContent = '🎙️';
+                        if (msg) { statusEl.textContent = '⚠️ ' + msg; setTimeout(() => { statusEl.textContent = ''; }, 4000); }
+                    } else {
+                        micBtn.classList.remove('recording');
+                        micBtn.querySelector('.mic-icon').textContent = '🎙️';
+                        statusEl.textContent = '';
+                    }
+                }
+            });
+
+            try {
+                const text = await onboardingRecorder.record(stream);
+                if (text && text.trim()) {
+                    // Show transcription review
+                    document.getElementById('onboardingTranscription').value = text.trim();
+                    document.getElementById('onboardingMicBtn').style.display = 'none';
+                    document.getElementById('onboardingAlternatives').style.display = 'none';
+                    document.getElementById('onboardingReview').style.display = 'block';
+                    statusEl.textContent = '';
+                }
+            } catch (err) {
+                console.error('Onboarding dictation error:', err);
+            }
+        }
+
+        async function analyzeOnboardingTranscription() {
+            const text = document.getElementById('onboardingTranscription').value.trim();
+            if (!text) return;
+
+            const statusEl = document.getElementById('onboardingStatus');
+            const analyzeBtn = document.getElementById('onboardingAnalyzeBtn');
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = '🧠 Analyse...';
+            statusEl.textContent = '🧠 Analyse des informations...';
+
+            try {
+                const resp = await fetch('/api/parse-lead', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, type: 'seller' })
+                });
+
+                if (!resp.ok) throw new Error('Erreur analyse');
+                const { fields } = await resp.json();
+                onboardingParsedFields = fields;
+
+                // Build preview fields
+                const fieldDefs = [
+                    { key: 'last_name', label: 'Nom', val: fields.last_name },
+                    { key: 'first_name', label: 'Prénom', val: fields.first_name },
+                    { key: 'phone', label: 'Téléphone', val: fields.phone },
+                    { key: 'email', label: 'Email', val: fields.email },
+                    { key: 'address', label: 'Adresse', val: fields.address },
+                    { key: 'property_type', label: 'Type de bien', val: fields.property_type },
+                    { key: 'surface', label: 'Surface (m²)', val: fields.surface },
+                    { key: 'budget', label: 'Prix (€)', val: fields.budget },
+                    { key: 'source', label: 'Source', val: fields.source },
+                    { key: 'referrer_name', label: 'Apporteur', val: fields.referrer_name },
+                    { key: 'notes', label: 'Notes', val: fields.notes }
+                ];
+
+                const container = document.getElementById('onboardingFields');
+                container.innerHTML = fieldDefs.filter(f => f.val).map(f =>
+                    `<div class="preview-field">
+                        <label>${f.label}</label>
+                        <input type="text" id="ob-${f.key}" value="${escapeHtml(String(f.val))}" class="ai-filled">
+                    </div>`
+                ).join('');
+
+                document.getElementById('onboardingReview').style.display = 'none';
+                document.getElementById('onboardingPreview').style.display = 'block';
+                statusEl.textContent = '';
+            } catch (err) {
+                console.error('Parse error:', err);
+                statusEl.textContent = '⚠️ Analyse échouée. Réessayez.';
+                setTimeout(() => { statusEl.textContent = ''; }, 4000);
+            }
+
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = '✨ Analyser avec l\'IA';
+        }
+
+        async function saveOnboardingLead() {
+            const saveBtn = document.getElementById('onboardingSaveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ Création...';
+
+            const getVal = (key) => {
+                const el = document.getElementById('ob-' + key);
+                return el ? el.value.trim() : null;
+            };
+
+            const userId = await getCurrentUserId();
+            if (!userId) { saveBtn.disabled = false; saveBtn.textContent = '✅ Créer ce lead'; return; }
+
+            const lead = {
+                user_id: userId,
+                first_name: getVal('first_name') || null,
+                last_name: getVal('last_name') || null,
+                phone: getVal('phone') || null,
+                email: getVal('email') || null,
+                address: getVal('address') || null,
+                description: null,
+                budget: null,
+                property_type: getVal('property_type') || null,
+                surface: null,
+                source: getVal('source') || null,
+                referrer_name: getVal('referrer_name') || null,
+                status: 'hot',
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            const budgetVal = getVal('budget');
+            if (budgetVal) {
+                const num = parseInt(budgetVal.toString().replace(/[^\d]/g, ''));
+                if (!isNaN(num) && num > 0) lead.budget = num;
+            }
+
+            const surfaceVal = getVal('surface');
+            if (surfaceVal) {
+                const num = parseInt(surfaceVal.toString().replace(/[^\d]/g, ''));
+                if (!isNaN(num) && num > 0) lead.surface = num;
+            }
+
+            const notesVal = getVal('notes');
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('sellers')
+                    .insert(lead)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Insert note if present
+                if (notesVal && data) {
+                    await supabaseClient.from('lead_notes').insert({
+                        user_id: userId,
+                        seller_id: data.id,
+                        content: notesVal
+                    });
+                }
+
+                // Show success
+                document.getElementById('onboardingPreview').style.display = 'none';
+                document.getElementById('onboardingSuccess').style.display = 'block';
+
+                // Reload and transition to pipeline
+                setTimeout(async () => {
+                    await loadSellers();
+                    hideOnboarding();
+                }, 2000);
+
+            } catch (err) {
+                console.error('Save error:', err);
+                document.getElementById('onboardingStatus').textContent = '⚠️ Erreur lors de la création';
+                saveBtn.disabled = false;
+                saveBtn.textContent = '✅ Créer ce lead';
+            }
+        }
+
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
             loadSellers().then(() => {
+                // Onboarding if 0 leads
+                if (sellers.length === 0) {
+                    showOnboarding();
+                    return;
+                }
                 // Open lead from relance widget cross-page navigation
                 const params = new URLSearchParams(window.location.search);
                 const openLeadId = params.get('openLead');
@@ -5014,6 +5429,13 @@
             document.getElementById('dictateBtn').addEventListener('click', handleDictateClick);
             document.getElementById('addLeadBtn').addEventListener('click', () => openModal());
             document.getElementById('closeModalBtn').addEventListener('click', () => closeModal());
+
+            // Onboarding events
+            document.getElementById('onboardingMicBtn').addEventListener('click', handleOnboardingMic);
+            document.getElementById('onboardingAnalyzeBtn').addEventListener('click', analyzeOnboardingTranscription);
+            document.getElementById('onboardingRestartBtn').addEventListener('click', resetOnboardingToMic);
+            document.getElementById('onboardingRestartBtn2').addEventListener('click', resetOnboardingToMic);
+            document.getElementById('onboardingSaveBtn').addEventListener('click', saveOnboardingLead);
 
             // Track form modifications
             document.getElementById('modal').querySelectorAll('input, textarea, select').forEach(el => {
