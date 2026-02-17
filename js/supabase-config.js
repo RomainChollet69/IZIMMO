@@ -12,6 +12,7 @@ const SOURCE_CONFIG = {
     siteimmo: { label: '🌐 Site Immo', bg: '#D1C4E9', color: '#4527A0' },
     boucheaoreille: { label: '🗣️ Bouche à oreille', bg: '#FFE0B2', color: '#E65100' },
     efficity: { label: '🏢 Efficity', bg: '#B2DFDB', color: '#004D40' },
+    internet: { label: '💻 Internet', bg: '#E1BEE7', color: '#6A1B9A' },
     autre: { label: '📌 Autre', bg: '#CFD8DC', color: '#37474F' }
 };
 
