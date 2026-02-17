@@ -27,36 +27,42 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'File type not supported: ' + fileType });
     }
 
-    const isBuyer = leadType === 'buyer';
+    const extractionPrompt = buildDocPrompt(leadType);
 
-    const sellerFields = `- first_name, last_name : nom du propriétaire
-- phone : téléphone
-- email : email
-- address : adresse du bien
-- property_type : type de bien (appartement/maison/terrain/immeuble)
-- surface : surface en m² (nombre seul, ex: 90)
-- budget : prix/estimation en euros (nombre seul)
-- description : description du bien
-- notes : informations complémentaires`;
+    function buildDocPrompt(lt) {
+        return `Tu analyses un document lié à un lead immobilier (${lt === 'buyer' ? 'acquéreur' : 'vendeur'}).
+Extrais UNIQUEMENT les informations présentes dans le document. Retourne un JSON valide.
 
-    const buyerFields = `- first_name, last_name : nom de l'acquéreur
-- phone : téléphone
-- email : email
-- property_type : type de bien recherché (appartement/maison/terrain/immeuble)
-- rooms : typologie (T1/T2/T3/T4/T5+)
-- sector : secteur/ville recherché
-- budget_min, budget_max : fourchette budget en euros (nombres seuls)
-- surface_min : surface minimum en m² (nombre seul)
-- notes : informations complémentaires`;
+Champs à extraire :
+- first_name (string) : prénom du propriétaire/vendeur (PAS l'agent immobilier qui a fait le rapport)
+- last_name (string) : nom du propriétaire/vendeur (PAS l'agent immobilier)
+- phone (string) : téléphone du propriétaire (PAS celui de l'agent)
+- email (string) : email du propriétaire (PAS celui de l'agent)
+- address (string) : adresse complète du bien
+- description (string) : description courte (type, pièces, étages, état)
+- budget (number) : prix estimé ou prix de vente en euros (nombre entier). Si une fourchette est donnée (ex: "de 750 000 € à 780 000 €"), prendre la moyenne.
+- surface (string) : surface habitable en m²
+- property_type (string) : "appartement", "maison", "terrain" ou "immeuble"
+- annexes (array) : tableau avec les éléments trouvés parmi ces valeurs EXACTES : "parking", "cave", "balcon", "terrasse", "jardin", "garage", "piscine"
+  IMPORTANT pour les annexes :
+  - Si le document mentionne "piscine" → inclure "piscine"
+  - Si le document mentionne "terrain", "verger", "potager", "extérieur" → inclure "jardin"
+  - Si le document mentionne "garage" → inclure "garage"
+  - Si le document mentionne "parking" ou "place de stationnement" → inclure "parking"
+  - Si le document mentionne "cave", "cellier", "sous-sol" → inclure "cave"
+  - Si le document mentionne "terrasse" → inclure "terrasse"
+  - Si le document mentionne "balcon", "loggia" → inclure "balcon"
+- rooms (string) : nombre de pièces ou type (ex: "7 pièces", "T3")
+- contact_date (string) : date au format YYYY-MM-DD. Utiliser la date du document/rapport/estimation si présente (ex: "Établi le 07 mars 2025" → "2025-03-07"). Sinon null.
+- notes (string) : informations complémentaires importantes qui ne rentrent dans aucun autre champ (état du bien, DPE, points forts, points faibles, chauffage, etc.)
 
-    const extractionPrompt = `Tu es un assistant qui extrait des informations structurées depuis un document immobilier.
-Analyse le document et retourne un JSON avec UNIQUEMENT les champs que tu peux identifier avec certitude.
-Ne jamais inventer de données. Si un champ n'est pas présent dans le document, mets null.
-
-Champs à extraire (lead ${isBuyer ? 'acquéreur' : 'vendeur'}) :
-${isBuyer ? buyerFields : sellerFields}
-
-Retourne UNIQUEMENT le JSON, sans commentaire ni explication.`;
+RÈGLES IMPORTANTES :
+- Distinguer le PROPRIÉTAIRE (client vendeur) de l'AGENT IMMOBILIER qui a rédigé le rapport. Ne pas confondre leurs coordonnées.
+- Si le document est un avis de valeur ou une estimation, le nom en haut avec la photo est souvent l'agent. Le propriétaire est mentionné comme "À la demande de M. XXX".
+- Si un champ n'est pas dans le document, mets null.
+- Ne JAMAIS inventer d'informations.
+- Retourne UNIQUEMENT le JSON, sans commentaire ni explication.`;
+    }
 
     try {
         const controller = new AbortController();

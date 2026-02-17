@@ -2501,7 +2501,7 @@
                 const fieldToInput = {
                     first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
                     address: 'address', property_type: 'propertyType', surface: 'surface',
-                    budget: 'budget', description: 'description'
+                    budget: 'budget', description: 'description', contact_date: 'date'
                 };
                 Object.entries(fields).forEach(([key, value]) => {
                     if (value === null || value === undefined || value === '') return;
@@ -2513,12 +2513,30 @@
                         }
                         return;
                     }
+                    if (key === 'annexes' && Array.isArray(value)) {
+                        value.forEach(annexe => {
+                            const cb = document.querySelector(`input[name="annexes"][value="${annexe}"]`);
+                            if (cb) {
+                                cb.checked = true;
+                                cb.closest('.annexe-toggle').classList.remove('field-flash'); void cb.closest('.annexe-toggle').offsetWidth; cb.closest('.annexe-toggle').classList.add('field-flash');
+                            }
+                        });
+                        // Afficher piscine si property_type = maison
+                        if (fields.property_type === 'maison') {
+                            document.getElementById('annexePiscine').style.display = '';
+                        }
+                        return;
+                    }
                     const inputId = fieldToInput[key];
                     if (!inputId) return;
                     const el = document.getElementById(inputId);
                     if (!el) return;
                     el.value = value;
                     el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+                    // Si property_type = maison, afficher l'option piscine
+                    if (key === 'property_type' && value === 'maison') {
+                        document.getElementById('annexePiscine').style.display = '';
+                    }
                 });
             } catch (err) {
                 console.error('Import analysis error:', err);
@@ -2788,19 +2806,22 @@
                 first_name: 'Prénom', last_name: 'Nom', phone: 'Téléphone', email: 'Email',
                 address: 'Adresse', property_type: 'Type de bien', surface: 'Surface',
                 budget: 'Budget / Estimation', description: 'Description', notes: 'Notes',
-                mandate_price: 'Prix mandat', rooms: 'Pièces'
+                mandate_price: 'Prix mandat', rooms: 'Pièces', annexes: 'Annexes',
+                contact_date: 'Date de contact'
             };
-            const validFields = Object.entries(fields).filter(([k, v]) => v !== null && v !== undefined && v !== '');
+            const validFields = Object.entries(fields).filter(([k, v]) => v !== null && v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0));
             if (validFields.length === 0) { alert('Aucune information exploitable extraite.'); return; }
-            const fieldsHtml = validFields.map(([key, value]) => `
-                <div class="ai-confirm-field">
-                    <input type="checkbox" checked data-field="${key}" data-value="${escapeHtml(String(value))}">
+            const fieldsHtml = validFields.map(([key, value]) => {
+                const displayValue = Array.isArray(value) ? value.join(', ') : String(value);
+                const dataValue = Array.isArray(value) ? JSON.stringify(value) : String(value);
+                return `<div class="ai-confirm-field">
+                    <input type="checkbox" checked data-field="${key}" data-value="${escapeHtml(dataValue)}">
                     <div>
                         <div class="ai-confirm-field-label">${escapeHtml(fieldLabels[key] || key)}</div>
-                        <div class="ai-confirm-field-value">${escapeHtml(String(value))}</div>
+                        <div class="ai-confirm-field-value">${escapeHtml(displayValue)}</div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
             const overlay = document.createElement('div');
             overlay.id = 'aiConfirmOverlay';
             overlay.className = 'ai-confirm-overlay';
@@ -2830,7 +2851,8 @@
             const fieldToInput = {
                 first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
                 address: 'address', property_type: 'propertyType', surface: 'surface',
-                budget: 'budget', description: 'description', mandate_price: 'mandatePrice'
+                budget: 'budget', description: 'description', mandate_price: 'mandatePrice',
+                contact_date: 'date'
             };
             overlay.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
                 const field = cb.dataset.field;
@@ -2843,12 +2865,33 @@
                     }
                     return;
                 }
+                if (field === 'annexes') {
+                    try {
+                        const annexes = JSON.parse(value);
+                        if (Array.isArray(annexes)) {
+                            annexes.forEach(annexe => {
+                                const acb = document.querySelector(`input[name="annexes"][value="${annexe}"]`);
+                                if (acb) {
+                                    acb.checked = true;
+                                    acb.closest('.annexe-toggle').classList.remove('field-flash'); void acb.closest('.annexe-toggle').offsetWidth; acb.closest('.annexe-toggle').classList.add('field-flash');
+                                }
+                            });
+                            // Afficher piscine si maison sélectionné
+                            const pt = document.getElementById('propertyType');
+                            if (pt && pt.value === 'maison') document.getElementById('annexePiscine').style.display = '';
+                        }
+                    } catch(e) {}
+                    return;
+                }
                 const inputId = fieldToInput[field];
                 if (!inputId) return;
                 const el = document.getElementById(inputId);
                 if (!el) return;
                 el.value = value;
                 el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+                if (field === 'property_type' && value === 'maison') {
+                    document.getElementById('annexePiscine').style.display = '';
+                }
             });
             closeAiConfirm();
         }
