@@ -56,20 +56,26 @@ Champs CRM disponibles :
 RÈGLES DE MAPPING POUR LA PIGE :
 - "Nom", "NOM", "Propriétaire", "Vendeur" → last_name (pas full_name, sauf si les données montrent prénom+nom)
 - "Prénom" → first_name
+- "NOM / PRENOM", "Nom / Prénom", "Nom Prénom", "NOM PRENOM" → full_name (prénom+nom dans la même colonne)
 - "Tel", "Tél", "Téléphone", "Tel propriétaire", "Mobile", "Portable" → phone
+- "TEL / MOBILE", "Tel / Mobile", "Tel/Mobile", "Tél/Portable" → phone
 - "Adresse", "Rue" → address
+- "ADRESSE DU BIEN", "Adresse du bien", "Adresse bien" → address
 - "CP", "Code postal" → postal_code
 - "Ville", "VILLE", "Commune", "Localisation", "Secteur" → city
 - "Prix", "Prix affiché", "Estimation", "Prix de vente", "Montant" → budget
-- "Surface", "m²", "M2", "Surf.", "Surface habitable" → surface
+- "Surface", "m²", "M2", "Surf.", "Surface habitable", "TAILLE", "Taille" → surface
 - "Pièces", "Nb pièces", "Type", "T1/T2/T3..." → rooms
 - "Type de bien", "Nature", "Catégorie" → property_type
 - "1er contact", "2ème contact", "3ème contact", "Contact 1", "Contact 2", "Relance", "Suivi", "Résultat", "Commentaire", "Historique", "RDV", "Action" → contact_note
-- "Date", "Date de parution", "Date annonce", "Mise en vente" → date
+- "commentaires plus", "Commentaires plus", "Commentaires", "observations" → contact_note
+- "date dernière appel", "Date dernier appel", "Date dernier contact" → contact_note
+- "Date", "Date de parution", "Date annonce", "Mise en vente", "Date de pige" → date
 - "Statut", "État", "Avancement", "Résultat final" → status
 - "Source", "Provenance", "Origine" → source
 - "Ref", "Référence", "N°", "Lien", "URL", "Photo", "Agence", "Mandataire", "Prix/m²", "formule automatique" → ignore
 - Les colonnes contenant "Caractéristiques" ou "qui expliquent" → description
+- "COMMENTAIRE" (singulier, sans précision) → description (description générale du bien)
 - "Numéro" (quand il contient des numéros de téléphone) → phone
 - "Typologie" ou "Nb pièces" → rooms
 

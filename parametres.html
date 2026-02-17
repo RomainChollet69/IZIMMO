@@ -2041,6 +2041,51 @@
                 .trim();
         }
 
+        // Strip columns that have no header (empty columns between data)
+        // This re-indexes data so column indices match header indices directly
+        function cleanParsedData(rows) {
+            if (!rows || rows.length === 0) return rows;
+
+            // Find the header row first
+            const headerIndex = findHeaderRow(rows);
+            const headerRow = rows[headerIndex];
+            if (!headerRow || !Array.isArray(headerRow)) return rows;
+
+            // Identify column indices that have a non-empty header
+            const validColumns = [];
+            headerRow.forEach((cell, index) => {
+                const cleaned = cleanHeader(cell);
+                if (cleaned.length > 0) {
+                    validColumns.push(index);
+                }
+            });
+
+            console.log('[Import] === NETTOYAGE COLONNES ===');
+            console.log('[Import] Header row raw (' + headerRow.length + ' cols):', JSON.stringify(headerRow));
+            console.log('[Import] Colonnes avec en-tête:', validColumns.length, '/', headerRow.length);
+            console.log('[Import] Indices gardés:', validColumns);
+            console.log('[Import] En-têtes gardées:', validColumns.map(i => cleanHeader(headerRow[i])));
+
+            if (rows[headerIndex + 1]) {
+                console.log('[Import] Data row 1 raw:', JSON.stringify(rows[headerIndex + 1]));
+            }
+
+            // Rebuild all rows keeping only valid columns
+            const cleanedRows = rows.map(row => {
+                if (!row || !Array.isArray(row)) return [];
+                return validColumns.map(colIndex => {
+                    const val = row[colIndex];
+                    return val !== undefined ? val : null;
+                });
+            });
+
+            if (cleanedRows[headerIndex + 1]) {
+                console.log('[Import] Data row 1 clean:', JSON.stringify(cleanedRows[headerIndex + 1]));
+            }
+
+            return cleanedRows;
+        }
+
         // Parse CSV with PapaParse (handles quoted newlines correctly)
         function parseCSVFile(file) {
             return new Promise((resolve) => {
@@ -2101,20 +2146,22 @@
                     return;
                 }
 
+                // Strip empty columns (common in Excel files with gaps between data)
+                data = cleanParsedData(data);
+
                 // Find the real header row (skip empty/title rows)
                 const headerRowIdx = findHeaderRow(data);
                 skippedHeaderRows = headerRowIdx;
                 console.log('[Import] Ligne d\'en-tête détectée à l\'index:', headerRowIdx);
 
-                // Clean headers: remove newlines, normalize spaces
-                // CRITICAL: maintain original column index for each header
+                // After cleanParsedData, indices are contiguous — build headers directly
                 const rawHeaders = data[headerRowIdx] || [];
                 excelHeaders = [];
                 headerColIndex = {};
                 rawHeaders.forEach((h, colIdx) => {
                     const clean = cleanHeader(h);
-                    if (!clean) return; // skip empty headers
-                    // Handle duplicate header names by appending column number
+                    if (!clean) return;
+                    // Handle duplicate header names
                     let key = clean;
                     if (headerColIndex[key] !== undefined) {
                         key = clean + ' (' + (colIdx + 1) + ')';
@@ -2125,15 +2172,15 @@
                 console.log('[Import] En-têtes nettoyées:', excelHeaders);
                 console.log('[Import] Index des colonnes:', headerColIndex);
 
-                // Data rows
+                // Data rows: require at least 2 non-empty cells
                 excelRows = data.slice(headerRowIdx + 1).filter(row => {
                     if (!row || !Array.isArray(row)) return false;
-                    return row.some(cell => cell !== undefined && cell !== null && cell !== '');
+                    const nonEmpty = row.filter(cell => cell !== undefined && cell !== null && cell !== '');
+                    return nonEmpty.length >= 2;
                 });
                 console.log('[Import] Lignes de données:', excelRows.length);
                 if (excelRows.length > 0) {
-                    console.log('[Import] Première ligne brute:', excelRows[0]);
-                    // Show first row mapped to headers for debug
+                    console.log('[Import] Première ligne:', excelRows[0]);
                     const mapped = {};
                     excelHeaders.forEach(h => { mapped[h] = excelRows[0][headerColIndex[h]]; });
                     console.log('[Import] Première ligne mappée:', mapped);
@@ -2349,11 +2396,46 @@
         }
 
         function splitName(fullName) {
-            const parts = (fullName || '').trim().split(/\s+/);
+            if (!fullName) return { first_name: '', last_name: '' };
+            let name = fullName.toString().trim();
+            // Remove civilité
+            name = name.replace(/^(Mme|Mlle|Mr|Mre?\.?|Monsieur|Madame|Mademoiselle)\s+/i, '').trim();
+            const parts = name.split(/\s+/);
             if (parts.length === 0 || !parts[0]) return { first_name: '', last_name: '' };
-            if (parts.length === 1) return { first_name: parts[0], last_name: '' };
+            if (parts.length === 1) return { first_name: '', last_name: parts[0] };
+            // Last word = last name, rest = first name
             const last_name = parts.pop();
             return { first_name: parts.join(' '), last_name };
+        }
+
+        function parseExcelDate(value) {
+            if (!value) return null;
+            // Excel serial date (number)
+            if (typeof value === 'number') {
+                const date = new Date((value - 25569) * 86400 * 1000);
+                if (!isNaN(date.getTime())) return date.toISOString().split('T')[0];
+                return null;
+            }
+            const str = value.toString().trim();
+            if (!str) return null;
+            // ISO format "2021-09-07" or "2021-09-07T..."
+            if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.split('T')[0];
+            // French abbreviated: "7-sept.", "18-sept.", "3-oct."
+            const frMonths = { 'janv': '01', 'fév': '02', 'févr': '02', 'mars': '03', 'avr': '04', 'mai': '05', 'juin': '06',
+                'juil': '07', 'août': '08', 'sept': '09', 'oct': '10', 'nov': '11', 'déc': '12' };
+            const frMatch = str.match(/(\d{1,2})[- ](janv|fév|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)\.?(?:\s*(\d{4}))?/i);
+            if (frMatch) {
+                const day = frMatch[1].padStart(2, '0');
+                const month = frMonths[frMatch[2].toLowerCase()];
+                const year = frMatch[3] || new Date().getFullYear();
+                return `${year}-${month}-${day}`;
+            }
+            // DD/MM/YYYY or DD-MM-YYYY
+            const dmyMatch = str.match(/^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/);
+            if (dmyMatch) {
+                return `${dmyMatch[3]}-${dmyMatch[2].padStart(2, '0')}-${dmyMatch[1].padStart(2, '0')}`;
+            }
+            return str;
         }
 
         function parseBudget(val) {
@@ -2534,17 +2616,20 @@
                     if (parsed) lead.budget = parsed;
                 }
 
-                const date = getValue('date');
+                const date = parseExcelDate(getValue('date'));
                 if (date && importType === 'sellers') lead.date = date;
 
-                const reminder = getValue('reminder');
+                const reminder = parseExcelDate(getValue('reminder'));
                 if (reminder) lead.reminder = reminder;
 
                 const propertyType = getValue('property_type');
                 if (propertyType) lead.property_type = propertyType.toLowerCase();
 
-                const surface = getValue('surface');
-                if (surface) lead.surface = surface;
+                const rawSurface = getValue('surface');
+                if (rawSurface) {
+                    const surfNum = parseInt(rawSurface.toString().replace(/[^\d]/g, ''));
+                    if (!isNaN(surfNum) && surfNum > 0) lead.surface = surfNum;
+                }
 
                 const rooms = getValue('rooms');
                 if (rooms) lead.rooms = rooms;
