@@ -1134,33 +1134,43 @@
             display: inline-block;
         }
 
-        /* ===== BOUTON DICTÉE VOCALE ===== */
-        .dictate-btn {
+        /* ===== BOUTONS D'ACTION MODALE ===== */
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .modal-action-btn {
+            flex: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            width: 100%;
-            padding: 12px 20px;
-            margin-bottom: 20px;
+            gap: 6px;
+            padding: 10px 12px;
             background: #f0f2f5;
             border: 1px dashed #CFD8DC;
             border-radius: 10px;
             font-family: 'Inter', sans-serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-dark);
             cursor: pointer;
             transition: all 0.2s;
         }
-        .dictate-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
-        .dictate-status.transcribing { display: block; color: #667eea; }
-        .dictate-btn.recording {
+        .modal-action-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .modal-action-btn.recording {
             background: #FFEBEE;
             border-color: #FF4757;
             border-style: solid;
             color: #FF4757;
             animation: dictatePulse 1.2s infinite;
+        }
+        .modal-action-btn.analyzing {
+            background: #E8EAF6;
+            border-color: #667eea;
+            border-style: solid;
+            color: #667eea;
+            pointer-events: none;
         }
         @keyframes dictatePulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.3); }
@@ -1170,10 +1180,39 @@
             font-size: 12px;
             color: #FF4757;
             text-align: center;
-            margin-top: -14px;
-            margin-bottom: 16px;
+            margin-top: -10px;
+            margin-bottom: 12px;
             font-weight: 500;
             display: none;
+        }
+        .dictate-status.transcribing { display: block; color: #667eea; }
+
+        /* Bandeau fichier en attente */
+        .pending-file-bar {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #E8F5E9;
+            border: 1px solid #A5D6A7;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+        .pending-file-bar.active { display: flex; }
+        .pending-file-bar .pending-file-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pending-file-bar .pending-file-size { color: var(--text-light); font-size: 11px; flex-shrink: 0; }
+        .pending-file-bar .pending-file-remove {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-light);
+            padding: 0 2px;
+            flex-shrink: 0;
+        }
+        .pending-file-bar .pending-file-remove:hover { color: #e74c3c; }
         }
         .dictate-status.active { display: block; }
 
@@ -1900,8 +1939,18 @@
             </div>
             <form id="leadForm">
                 <div id="tabInfo">
-                    <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
+                    <div class="modal-actions" id="modalActions">
+                        <button type="button" class="modal-action-btn" id="dictateBtn">🎙️ Dicter</button>
+                        <button type="button" class="modal-action-btn" id="importDocBtn">📎 Importer un document</button>
+                    </div>
                     <div class="dictate-status" id="dictateStatus"></div>
+                    <div class="pending-file-bar" id="pendingFileBar">
+                        <span>📎</span>
+                        <span class="pending-file-name" id="pendingFileName"></span>
+                        <span class="pending-file-size" id="pendingFileSize"></span>
+                        <button type="button" class="pending-file-remove" id="pendingFileRemove" title="Retirer">&times;</button>
+                    </div>
+                    <input type="file" id="importDocInput" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" style="display:none">
                     <div class="form-group">
                         <label class="form-label">Statut du Lead *</label>
                         <select class="form-select" id="status" required>
@@ -2344,6 +2393,104 @@
                     notesPreviews[n.seller_id] = { count: 0, lastContent: n.content };
                 }
                 notesPreviews[n.seller_id].count++;
+            });
+        }
+
+        // ===== IMPORT DOCUMENT (PRE-CREATION) =====
+        let pendingFile = null;
+
+        function setupImportDoc() {
+            const importBtn = document.getElementById('importDocBtn');
+            const fileInput = document.getElementById('importDocInput');
+            const removeBtn = document.getElementById('pendingFileRemove');
+            if (!importBtn || !fileInput) return;
+
+            importBtn.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                e.target.value = '';
+                if (!file) return;
+                if (file.size > 10 * 1024 * 1024) { alert('Fichier trop volumineux (max 10 Mo)'); return; }
+                pendingFile = file;
+                showPendingFile(file);
+                await analyzeAndFillFields(file);
+            });
+
+            removeBtn.addEventListener('click', () => {
+                pendingFile = null;
+                hidePendingFile();
+            });
+        }
+
+        function showPendingFile(file) {
+            const bar = document.getElementById('pendingFileBar');
+            document.getElementById('pendingFileName').textContent = file.name;
+            document.getElementById('pendingFileSize').textContent = formatFileSize(file.size);
+            bar.classList.add('active');
+        }
+
+        function hidePendingFile() {
+            document.getElementById('pendingFileBar').classList.remove('active');
+            document.getElementById('pendingFileName').textContent = '';
+            document.getElementById('pendingFileSize').textContent = '';
+        }
+
+        async function analyzeAndFillFields(file) {
+            const importBtn = document.getElementById('importDocBtn');
+            importBtn.classList.add('analyzing');
+            importBtn.innerHTML = '⏳ Analyse...';
+            try {
+                const base64 = await fileToBase64(file);
+                const resp = await fetch('/api/analyze-document', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fileContent: base64, fileType: file.type, leadType: 'seller' })
+                });
+                if (!resp.ok) throw new Error('Analysis failed');
+                const { fields } = await resp.json();
+                if (!fields || Object.keys(fields).every(k => fields[k] === null)) {
+                    alert('Aucune information extraite du document.');
+                    return;
+                }
+                // Fill fields directly (no confirmation popup for pre-creation import)
+                const fieldToInput = {
+                    first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
+                    address: 'address', property_type: 'propertyType', surface: 'surface',
+                    budget: 'budget', description: 'description'
+                };
+                Object.entries(fields).forEach(([key, value]) => {
+                    if (value === null || value === undefined || value === '') return;
+                    if (key === 'notes') {
+                        const noteInput = document.getElementById('noteInput');
+                        if (noteInput) {
+                            noteInput.value = (noteInput.value ? noteInput.value + '\n' : '') + '[IA] ' + value;
+                            noteInput.classList.remove('field-flash'); void noteInput.offsetWidth; noteInput.classList.add('field-flash');
+                        }
+                        return;
+                    }
+                    const inputId = fieldToInput[key];
+                    if (!inputId) return;
+                    const el = document.getElementById(inputId);
+                    if (!el) return;
+                    el.value = value;
+                    el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+                });
+            } catch (err) {
+                console.error('Import analysis error:', err);
+                alert('Erreur lors de l\'analyse du document.');
+            } finally {
+                importBtn.classList.remove('analyzing');
+                importBtn.innerHTML = '📎 Importer un document';
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
             });
         }
 
@@ -3537,7 +3684,7 @@
                         status.className = 'dictate-status active transcribing';
                     } else if (state === 'error') {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        btn.innerHTML = '🎙️ Dicter';
                         if (msg) {
                             status.textContent = '⚠️ ' + msg;
                             status.className = 'dictate-status active';
@@ -3547,7 +3694,7 @@
                         }
                     } else {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        btn.innerHTML = '🎙️ Dicter';
                         status.className = 'dictate-status';
                     }
                 }
@@ -3667,7 +3814,7 @@
                 }
             }
 
-            if (btn) btn.innerHTML = '🎙️ Dicter mon lead';
+            if (btn) btn.innerHTML = '🎙️ Dicter';
         }
 
         // ===== LIENS D'ANNONCES =====
@@ -3785,6 +3932,10 @@
             // Reset referrer
             document.getElementById('referrerGroup').classList.remove('active');
             document.getElementById('referrerName').value = '';
+
+            // Reset pending file
+            pendingFile = null;
+            hidePendingFile();
 
             // Reset documents
             currentFiles = [];
@@ -3991,7 +4142,13 @@
                 }
             } else {
                 const created = await createSeller(sellerData);
-                if (created) sellers.unshift(created);
+                if (created) {
+                    sellers.unshift(created);
+                    if (pendingFile) {
+                        await uploadFiles([pendingFile], created.id, 'seller');
+                        pendingFile = null;
+                    }
+                }
             }
 
             await loadVisitCounts();
@@ -4383,6 +4540,7 @@
             setupNoteEvents();
             setupReferrerField();
             setupDocsDropZone();
+            setupImportDoc();
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 

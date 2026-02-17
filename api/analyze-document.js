@@ -12,8 +12,8 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
     }
 
-    const { fileUrl, fileType, leadType } = req.body || {};
-    if (!fileUrl) return res.status(400).json({ error: 'No file URL provided' });
+    const { fileUrl, fileContent, fileType, leadType } = req.body || {};
+    if (!fileUrl && !fileContent) return res.status(400).json({ error: 'No file URL or content provided' });
 
     const isImage = fileType && fileType.startsWith('image/');
     const isPdf = fileType === 'application/pdf';
@@ -56,11 +56,16 @@ Retourne UNIQUEMENT le JSON, sans commentaire ni explication.`;
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 30000);
 
-        // Fetch the file from signed URL
-        const fileResp = await fetch(fileUrl);
-        if (!fileResp.ok) throw new Error('Failed to fetch file');
-        const fileBuffer = Buffer.from(await fileResp.arrayBuffer());
-        const base64 = fileBuffer.toString('base64');
+        // Get base64 content: either from direct content or by fetching URL
+        let base64;
+        if (fileContent) {
+            base64 = fileContent;
+        } else {
+            const fileResp = await fetch(fileUrl);
+            if (!fileResp.ok) throw new Error('Failed to fetch file');
+            const fileBuffer = Buffer.from(await fileResp.arrayBuffer());
+            base64 = fileBuffer.toString('base64');
+        }
 
         let userContent;
         if (isImage) {
