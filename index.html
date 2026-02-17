@@ -317,7 +317,7 @@
         .column-header.header-warm { background-image: url('img/tiede_fond_carte_pipe_vente.png'); }
         .column-header.header-cold { background-image: url('img/froid_fond_carte_pipe_vente.png'); }
         .column-header.header-mandate { background-image: url('img/mandat_fond_carte_pipe_vente.png'); }
-        .column-header.header-competitor { background: linear-gradient(135deg, #78909C 0%, #546E7A 50%, #455A64 100%); }
+        .column-header.header-competitor { background-image: url('img/concurrence.png'); }
         .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
         .column-header.header-lost { background-image: url('img/perdu_fond_carte_pipe_vente.png'); }
 
@@ -1863,7 +1863,7 @@
         <button class="mobile-tab" data-status="warm">🟠 Tièdes <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="cold">🔵 Froides <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="mandate">📋 Mandats <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="competitor">🏢 Concurrent <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="competitor">🏢 Concurrents / PAP <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="sold">✅ Vendus <span class="tab-count">(0)</span></button>
         <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
     </div>
@@ -1909,10 +1909,10 @@
             <div class="cards-container" id="mandate-container"></div>
         </div>
 
-        <!-- Colonne Chez Concurrent -->
+        <!-- Colonne Concurrents / PAP -->
         <div class="column" data-status="competitor">
             <div class="column-header header-competitor">
-                <div class="column-label">🏢 CHEZ CONCURRENT</div>
+                <div class="column-label">🏢 CONCURRENTS / PAP</div>
             </div>
             <div class="column-title">Biens chez la concurrence</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -1973,7 +1973,7 @@
                             <option value="warm">🟡 Warm - Entre 30 et 60 jours</option>
                             <option value="cold">❄️ Cold - 60 jours et +</option>
                             <option value="mandate">✅ Sous Mandats</option>
-                            <option value="competitor">🏢 Chez Concurrent</option>
+                            <option value="competitor">🏢 Concurrents / PAP</option>
                             <option value="sold">🏆 Vendus</option>
                             <option value="lost">❌ Perdus</option>
                         </select>
@@ -2228,7 +2228,7 @@
             { status: 'warm', icon: '🟠', label: 'Tièdes' },
             { status: 'cold', icon: '🔵', label: 'Froides' },
             { status: 'mandate', icon: '📋', label: 'Mandats' },
-            { status: 'competitor', icon: '🏢', label: 'Concurrent' },
+            { status: 'competitor', icon: '🏢', label: 'Concurrents / PAP' },
             { status: 'sold', icon: '✅', label: 'Vendus' },
             { status: 'lost', icon: '❌', label: 'Perdus' }
         ];
@@ -4462,7 +4462,7 @@
         // ===== EXPORT CSV =====
         const SELLER_STATUS_LABELS = {
             hot: 'Lead Chaude', warm: 'Lead Tiède', cold: 'Lead Froide',
-            mandate: 'Sous Mandat', competitor: 'Chez Concurrent', sold: 'Vendu', lost: 'Perdu'
+            mandate: 'Sous Mandat', competitor: 'Concurrents / PAP', sold: 'Vendu', lost: 'Perdu'
         };
 
         function exportToCSV(data, columns, filename) {
