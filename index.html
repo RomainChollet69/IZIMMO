@@ -367,14 +367,39 @@
         .lead-card {
             background: white;
             border-radius: 12px;
-            padding: 16px;
+            padding: 10px 12px;
             box-shadow: var(--shadow);
-            transition: all 0.3s ease;
-            cursor: grab;
+            transition: max-height 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
+            cursor: pointer;
             border: 2px solid transparent;
+            border-left: 3px solid #ccc;
             animation: cardAppear 0.4s ease;
             position: relative;
+            overflow: hidden;
+            max-height: 120px;
         }
+
+        .lead-card.expanded {
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .column[data-status="hot"] .lead-card { border-left-color: #FF6B6B; }
+        .column[data-status="warm"] .lead-card { border-left-color: #FFA726; }
+        .column[data-status="cold"] .lead-card { border-left-color: #42A5F5; }
+        .column[data-status="mandate"] .lead-card { border-left-color: #66BB6A; }
+        .column[data-status="competitor"] .lead-card { border-left-color: #78909C; }
+        .column[data-status="sold"] .lead-card { border-left-color: #AB47BC; }
+        .column[data-status="lost"] .lead-card { border-left-color: #BDBDBD; }
+
+        .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
+
+        .card-compact .card-name { font-size: 15px; margin-bottom: 4px; }
+        .card-compact .card-info { font-size: 13px; margin-bottom: 2px; }
+        .card-compact .card-tag { padding: 2px 8px; font-size: 10px; margin-bottom: 4px; }
+
+        .card-extended { display: none; }
+        .lead-card.expanded .card-extended { display: block; }
 
         @keyframes cardAppear {
             from { opacity: 0; transform: scale(0.9); }
@@ -387,7 +412,6 @@
         }
 
         .lead-card:hover {
-            transform: translateY(-4px);
             box-shadow: var(--shadow-hover);
         }
 
@@ -3295,7 +3319,34 @@
                 }
             });
 
+            setupCardToggles();
             updateCounts();
+        }
+
+        function setupCardToggles() {
+            document.querySelectorAll('.lead-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (e.target.closest('a, button, .card-commission')) return;
+                    const column = card.closest('.column');
+                    if (column) {
+                        const prev = column.querySelector('.lead-card.expanded');
+                        if (prev && prev !== card) {
+                            prev.classList.remove('expanded');
+                            prev.style.maxHeight = '120px';
+                            prev.querySelector('.card-expand-arrow').textContent = '▼';
+                        }
+                    }
+                    card.classList.toggle('expanded');
+                    const arrow = card.querySelector('.card-expand-arrow');
+                    if (card.classList.contains('expanded')) {
+                        card.style.maxHeight = card.scrollHeight + 'px';
+                        if (arrow) arrow.textContent = '▲';
+                    } else {
+                        card.style.maxHeight = '120px';
+                        if (arrow) arrow.textContent = '▼';
+                    }
+                });
+            });
         }
 
         function formatSurface(surface) {
@@ -3334,155 +3385,144 @@
             card.draggable = true;
             card.dataset.id = seller.id;
 
-            let formattedDate = '';
-            if (seller.date) {
-                formattedDate = new Date(seller.date).toLocaleDateString('fr-FR', {
-                    day: '2-digit', month: 'short', year: 'numeric'
-                });
-            }
-
             // Relance
-            let followupStatus = '';
+            let followupCompact = '';
+            let followupFull = '';
             let showAlert = false;
             if (seller.reminder) {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const reminderDate = new Date(seller.reminder);
-                reminderDate.setHours(0, 0, 0, 0);
-                const diffDays = Math.ceil((reminderDate - today) / (1000 * 60 * 60 * 24));
-                const formatted = reminderDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-
-                if (diffDays < 0) {
-                    followupStatus = `<div class="card-followup followup-overdue">⚠️ Relance en retard (${formatted})</div>`;
-                    showAlert = true;
-                } else if (diffDays === 0) {
-                    followupStatus = `<div class="card-followup followup-due">🔔 À relancer aujourd'hui</div>`;
-                    showAlert = true;
-                } else if (diffDays <= 3) {
-                    followupStatus = `<div class="card-followup followup-due">📅 Relance ${formatted}</div>`;
-                } else {
-                    followupStatus = `<div class="card-followup followup-ok">📅 Relance ${formatted}</div>`;
-                }
+                const today = new Date(); today.setHours(0,0,0,0);
+                const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
+                const diff = Math.ceil((rd - today) / 86400000);
+                const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+                if (diff < 0) { followupCompact = `<div class="card-followup followup-overdue">⚠️ Relance ${fmt}</div>`; followupFull = followupCompact; showAlert = true; }
+                else if (diff === 0) { followupCompact = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; followupFull = `<div class="card-followup followup-due">🔔 À relancer aujourd'hui</div>`; showAlert = true; }
+                else if (diff <= 3) { followupFull = `<div class="card-followup followup-due">📅 Relance ${fmt}</div>`; }
+                else { followupFull = `<div class="card-followup followup-ok">📅 Relance ${fmt}</div>`; }
             }
 
-            let html = '';
+            // Property summary line for compact
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const typeIcon = seller.property_type ? (typeEmojis[seller.property_type] || '') : '';
+            const compactParts = [];
+            if (typeIcon) compactParts.push(typeIcon);
+            if (seller.surface) compactParts.push(formatSurface(seller.surface));
+            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            if (price) compactParts.push(formatEuro(price));
+            const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
-            if (showAlert) {
-                html += '<div class="badge-alert">À RELANCER</div>';
+            // Mandate badge for compact
+            let mandateBadgeCompact = '';
+            if (seller.status === 'mandate' && seller.mandate_type) {
+                const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
+                mandateBadgeCompact = `<div class="mandate-badge ${seller.mandate_type}" style="font-size:10px;padding:2px 6px;margin-top:2px;display:inline-block">${tl[seller.mandate_type] || seller.mandate_type}</div>`;
             }
+
+            // === COMPACT VIEW ===
+            let compact = '<div class="card-compact">';
+            if (seller.source) compact += getSourceTag(seller.source);
+            compact += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
+            compact += compactPropLine;
+            if (seller.phone) compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            if (followupCompact) compact += followupCompact;
+            if (mandateBadgeCompact) compact += mandateBadgeCompact;
+            compact += '</div>';
+
+            // === EXTENDED VIEW ===
+            let ext = '<div class="card-extended">';
+
+            if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
             if (seller.source) {
-                html += getSourceTag(seller.source);
-                if (seller.source === 'recommandation' && seller.referrer_name) {
-                    html += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
-                }
+                ext += getSourceTag(seller.source);
+                if (seller.source === 'recommandation' && seller.referrer_name) ext += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
             }
 
-            // === CARTE ENRICHIE MANDAT ===
-            if (seller.status === 'mandate') {
-                if (seller.mandate_type) {
-                    const typeLabels = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
-                    html += `<div class="mandate-badge ${seller.mandate_type}">${typeLabels[seller.mandate_type] || seller.mandate_type}</div> `;
-                }
-
-                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
-                html += getPropertyLine(seller);
-                if (seller.mandate_price) html += `<div class="card-info">💰 ${formatEuro(seller.mandate_price)}</div>`;
-                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
-                if (seller.mandate_reference) html += `<div class="card-info">📋 Réf: ${seller.mandate_reference}</div>`;
-
-                // Meta : durée + visites
-                let metaHtml = '<div class="mandate-meta">';
-                if (seller.mandate_start_date) {
-                    const start = new Date(seller.mandate_start_date);
-                    const days = Math.floor((new Date() - start) / (1000 * 60 * 60 * 24));
-                    metaHtml += `<span class="mandate-meta-item">📅 ${days}j</span>`;
-                }
-                const vc = visitCounts[seller.id] || 0;
-                metaHtml += `<span class="mandate-meta-item">👁️ ${vc} visite${vc > 1 ? 's' : ''}</span>`;
-                metaHtml += '</div>';
-                html += metaHtml;
-
-                // Alerte expiration
-                if (seller.mandate_end_date) {
-                    const end = new Date(seller.mandate_end_date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    end.setHours(0, 0, 0, 0);
-                    const daysLeft = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
-                    if (daysLeft < 0) {
-                        html += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⚠️ Mandat expiré</div>`;
-                    } else if (daysLeft <= 15) {
-                        html += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⏰ Expire dans ${daysLeft}j</div>`;
-                    } else if (daysLeft <= 30) {
-                        html += `<div class="mandate-meta-item mandate-expiry-warning" style="margin-top:6px;display:inline-flex">📆 ${daysLeft}j restants</div>`;
-                    }
-                }
-
-                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
-            } else if (seller.status === 'competitor') {
-                // === CARTE CONCURRENT ===
-                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
-                html += getPropertyLine(seller);
-                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
-                if (seller.competitor_agency) html += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
-                if (seller.competitor_price) html += `<div class="card-info">💰 ${formatEuro(seller.competitor_price)}</div>`;
-                if (seller.competitor_date) {
-                    const since = Math.floor((new Date() - new Date(seller.competitor_date)) / (1000 * 60 * 60 * 24));
-                    html += `<div class="card-info" style="font-size:12px;color:var(--text-light)">📅 Depuis ${since} jour${since > 1 ? 's' : ''}</div>`;
-                }
-                if (seller.competitor_url) html += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
-                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
-            } else {
-                // === CARTE STANDARD ===
-                html += `<div class="card-name">${seller.first_name} ${seller.last_name}</div>`;
-                html += getPropertyLine(seller);
-                if (seller.phone) html += `<div class="card-info">📞 ${seller.phone}</div>`;
-                if (seller.email) html += `<div class="card-info">📧 ${seller.email}</div>`;
-                if (seller.address) html += `<div class="card-info">📍 ${seller.address}</div>`;
-                if (seller.budget) html += `<div class="card-info">💰 ${formatEuro(seller.budget)}</div>`;
-            }
+            ext += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
+            ext += getPropertyLine(seller);
+            if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
+            if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
+            if (seller.budget) ext += `<div class="card-info">💰 ${formatEuro(seller.budget)}</div>`;
 
             // Commission
             const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
             if (priceForComm > 0) {
                 const cRate = seller.commission_rate || 4;
                 const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
-                html += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
+                ext += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
-            // Links count
+            // Mandate specifics
+            if (seller.status === 'mandate') {
+                if (seller.mandate_type) {
+                    const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
+                    ext += `<div class="mandate-badge ${seller.mandate_type}">${tl[seller.mandate_type] || seller.mandate_type}</div> `;
+                }
+                if (seller.mandate_price) ext += `<div class="card-info">💰 Mandat: ${formatEuro(seller.mandate_price)}</div>`;
+                if (seller.mandate_reference) ext += `<div class="card-info">📋 Réf: ${escapeHtml(seller.mandate_reference)}</div>`;
+                let metaHtml = '<div class="mandate-meta">';
+                if (seller.mandate_start_date) {
+                    const days = Math.floor((new Date() - new Date(seller.mandate_start_date)) / 86400000);
+                    metaHtml += `<span class="mandate-meta-item">📅 ${days}j</span>`;
+                }
+                const vc = visitCounts[seller.id] || 0;
+                metaHtml += `<span class="mandate-meta-item">👁️ ${vc} visite${vc > 1 ? 's' : ''}</span>`;
+                metaHtml += '</div>';
+                ext += metaHtml;
+                if (seller.mandate_end_date) {
+                    const end = new Date(seller.mandate_end_date); const td = new Date(); td.setHours(0,0,0,0); end.setHours(0,0,0,0);
+                    const dl = Math.ceil((end - td) / 86400000);
+                    if (dl < 0) ext += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⚠️ Mandat expiré</div>`;
+                    else if (dl <= 15) ext += `<div class="mandate-meta-item mandate-expiry-danger" style="margin-top:6px;display:inline-flex">⏰ Expire dans ${dl}j</div>`;
+                    else if (dl <= 30) ext += `<div class="mandate-meta-item mandate-expiry-warning" style="margin-top:6px;display:inline-flex">📆 ${dl}j restants</div>`;
+                }
+            }
+
+            // Competitor specifics
+            if (seller.status === 'competitor') {
+                if (seller.competitor_agency) ext += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
+                if (seller.competitor_price) ext += `<div class="card-info">💰 ${formatEuro(seller.competitor_price)}</div>`;
+                if (seller.competitor_date) {
+                    const since = Math.floor((new Date() - new Date(seller.competitor_date)) / 86400000);
+                    ext += `<div class="card-info" style="font-size:12px;color:var(--text-light)">📅 Depuis ${since} jour${since > 1 ? 's' : ''}</div>`;
+                }
+                if (seller.competitor_url) ext += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
+            }
+
+            // Date de contact
+            if (seller.date) {
+                ext += `<div class="card-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
+            }
+
+            // Relance
+            ext += followupFull;
+
+            // Links
             if (Array.isArray(seller.links) && seller.links.length > 0) {
-                html += `<div class="card-links-count">🔗 ${seller.links.length} annonce${seller.links.length > 1 ? 's' : ''}</div>`;
+                ext += `<div class="card-links-count">🔗 ${seller.links.length} annonce${seller.links.length > 1 ? 's' : ''}</div>`;
             }
 
-            // Notes horodatées
+            // Notes
             const np = notesPreviews[seller.id];
             if (np && np.count > 0) {
-                html += `<span class="card-notes-badge">📝 ${np.count}</span>`;
+                ext += `<span class="card-notes-badge">📝 ${np.count}</span>`;
                 const preview = np.lastContent.length > 50 ? np.lastContent.substring(0, 50) + '…' : np.lastContent;
-                html += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
+                ext += `<div class="card-notes-preview">💬 ${escapeHtml(preview)}</div>`;
             }
 
-            // Documents count badge
+            // Documents
             const fc = fileCounts[seller.id] || 0;
-            if (fc > 0) {
-                html += `<span class="card-files-badge">📎 ${fc}</span>`;
-            }
+            if (fc > 0) ext += `<span class="card-files-badge">📎 ${fc}</span>`;
 
-            if (formattedDate) {
-                html += `<div class="card-date">📅 ${formattedDate}</div>`;
-            }
-
-            html += followupStatus;
-
-            html += `<div class="card-actions">
+            // Actions
+            ext += `<div class="card-actions">
                 <button class="card-btn mobile-move-btn" onclick="openMovePopup('${seller.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
                 <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
             </div>`;
+            ext += '</div>';
 
-            card.innerHTML = html;
+            card.innerHTML = compact + ext + '<div class="card-expand-arrow">▼</div>';
             return card;
         }
 
@@ -4379,6 +4419,13 @@
                 if (e.target.classList.contains('lead-card')) {
                     draggedCard = e.target;
                     e.target.classList.add('dragging');
+                    // Auto-compact on drag
+                    if (e.target.classList.contains('expanded')) {
+                        e.target.classList.remove('expanded');
+                        e.target.style.maxHeight = '120px';
+                        const arrow = e.target.querySelector('.card-expand-arrow');
+                        if (arrow) arrow.textContent = '▼';
+                    }
                 }
             });
 
