@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', 'https://waimmo.vercel.app');
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -29,24 +29,42 @@ export default async function handler(req, res) {
                 messages: [{
                     role: 'user',
                     content: `Tu es un assistant qui mappe les colonnes d'un fichier Excel vers les champs d'un CRM immobilier.
+Le fichier peut provenir d'une PIGE IMMOBILIÈRE (prospection téléphonique de biens en vente).
 
 Champs CRM disponibles :
-- first_name : prénom
-- last_name : nom de famille
+- first_name : prénom du propriétaire / vendeur
+- last_name : nom de famille du propriétaire / vendeur
 - full_name : nom complet (si prénom et nom sont dans la même colonne)
-- phone : téléphone
+- phone : téléphone (principal, portable, domicile, propriétaire)
 - email : email
-- address : adresse du bien
+- address : adresse du bien (rue, ville, commune, localisation)
 - description : description du bien
-- budget : prix / estimation / budget
+- budget : prix / estimation / budget / prix de vente / prix affiché
 - source : source du lead (pige, recommandation, etc.)
-- notes : notes / commentaires / observations
-- date : date de contact / date de création
+- notes : notes / commentaires / observations générales
+- date : date de contact / date de création / date de pige / date de parution
 - reminder : date de relance / date de rappel
-- property_type : type de bien (appartement, maison, etc.)
-- surface : surface en m²
-- status : statut du lead / température / avancement / colonne pipeline. Valeurs possibles : chaud/hot, tiède/warm, froid/cold, mandat/mandate, concurrent/competitor, vendu/sold, perdu/lost
-- ignore : colonne à ignorer (non pertinente)
+- property_type : type de bien (appartement, maison, terrain, immeuble)
+- surface : surface en m² (surface habitable)
+- rooms : nombre de pièces (T1, T2, 3 pièces, etc.)
+- status : statut du lead / température / avancement / colonne pipeline
+- contact_note : colonnes d'historique de contacts (1er contact, 2ème contact, 3ème contact, relance 1, relance 2, suivi, commentaire contact, résultat appel, etc.). Plusieurs colonnes peuvent être mappées sur contact_note.
+- ignore : colonne à ignorer (non pertinente : numéro de ligne, référence annonce, lien URL, photo, agence, etc.)
+
+RÈGLES DE MAPPING POUR LA PIGE :
+- "Nom", "NOM", "Propriétaire", "Vendeur" → last_name (pas full_name, sauf si les données montrent prénom+nom)
+- "Prénom" → first_name
+- "Tel", "Tél", "Téléphone", "Tel propriétaire", "Mobile", "Portable" → phone
+- "Adresse", "Rue", "Ville", "Commune", "Localisation", "Secteur" → address
+- "Prix", "Prix affiché", "Estimation", "Prix de vente", "Montant" → budget
+- "Surface", "m²", "M2", "Surf.", "Surface habitable" → surface
+- "Pièces", "Nb pièces", "Type", "T1/T2/T3..." → rooms
+- "Type de bien", "Nature", "Catégorie" → property_type
+- "1er contact", "2ème contact", "3ème contact", "Contact 1", "Contact 2", "Relance", "Suivi", "Résultat", "Commentaire", "Historique", "RDV", "Action" → contact_note
+- "Date", "Date de parution", "Date annonce", "Mise en vente" → date
+- "Statut", "État", "Avancement", "Résultat final" → status
+- "Source", "Provenance", "Origine" → source
+- "Ref", "Référence", "N°", "Lien", "URL", "Photo", "Agence", "Mandataire" → ignore
 
 Colonnes du fichier Excel : ${JSON.stringify(headers)}
 
