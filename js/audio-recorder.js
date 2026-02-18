@@ -210,9 +210,11 @@ window.AudioRecorder = class AudioRecorder {
         const timeout = setTimeout(() => controller.abort(), this.apiTimeout);
 
         try {
+            const authHeaders = await getAuthHeaders(null);
+            authHeaders['Content-Type'] = mimeType;
             const response = await fetch('/api/transcribe', {
                 method: 'POST',
-                headers: { 'Content-Type': mimeType },
+                headers: authHeaders,
                 body: blob,
                 signal: controller.signal
             });

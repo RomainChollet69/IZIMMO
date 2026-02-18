@@ -1,0 +1,24 @@
+{
+  "name": "izimmo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RomainChollet69/IZIMMO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/RomainChollet69/IZIMMO/issues"
+  },
+  "homepage": "https://github.com/RomainChollet69/IZIMMO#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.97.0"
+  }
+}

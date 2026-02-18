@@ -2886,7 +2886,7 @@
                     const text = await extractTextFromPDF(file);
                     resp = await fetch('/api/analyze-document', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthHeaders(),
                         body: JSON.stringify({
                             fileContent: text.substring(0, 15000),
                             fileType: 'text/plain',
@@ -2898,7 +2898,7 @@
                     const base64 = await fileToBase64(file);
                     resp = await fetch('/api/analyze-document', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthHeaders(),
                         body: JSON.stringify({
                             fileContent: base64,
                             fileType: file.type,
@@ -3202,7 +3202,7 @@
                 if (!signedUrl) throw new Error('Cannot get file URL');
                 const resp = await fetch('/api/analyze-document', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ fileUrl: signedUrl, fileType: file.file_type, leadType: DOCS_LEAD_TYPE })
                 });
                 if (!resp.ok) throw new Error('Analysis failed');
@@ -4247,7 +4247,7 @@
             try {
                 const resp = await fetch('/api/parse-lead', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ text, type: 'seller' })
                 });
 
@@ -4723,7 +4723,7 @@
             try {
                 const resp = await fetch('/api/scrape-listing', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ url })
                 });
 
@@ -5273,7 +5273,7 @@
             try {
                 const resp = await fetch('/api/parse-lead', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ text, type: 'seller' })
                 });
 
@@ -5606,7 +5606,7 @@
             try {
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller' })
                 });
                 const data = await resp.json();

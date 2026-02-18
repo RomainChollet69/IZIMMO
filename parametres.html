@@ -2264,7 +2264,7 @@
             try {
                 const resp = await fetch('/api/map-columns', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ headers: excelHeaders, sampleRows })
                 });
 
@@ -2374,7 +2374,7 @@
             try {
                 const resp = await fetch('/api/parse-import-batch', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({
                         headers: excelHeaders,
                         rows: firstRowData,
@@ -2955,7 +2955,7 @@
                 try {
                     const resp = await fetch('/api/parse-import-batch', {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: await getAuthHeaders(),
                         body: JSON.stringify({
                             headers: excelHeaders,
                             rows: batchRows,

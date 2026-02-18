@@ -2492,7 +2492,7 @@
             try {
                 const resp = await fetch('/api/parse-lead', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ text, type: 'buyer' })
                 });
 
@@ -3013,7 +3013,7 @@
                 if (!signedUrl) throw new Error('Cannot get file URL');
                 const resp = await fetch('/api/analyze-document', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ fileUrl: signedUrl, fileType: file.file_type, leadType: DOCS_LEAD_TYPE })
                 });
                 if (!resp.ok) throw new Error('Analysis failed');
@@ -3761,7 +3761,7 @@
             try {
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: await getAuthHeaders(),
                     body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'buyer' })
                 });
                 const data = await resp.json();

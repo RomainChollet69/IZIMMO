@@ -204,6 +204,14 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+// ===== AUTH HEADERS POUR EDGE FUNCTIONS =====
+async function getAuthHeaders(contentType = 'application/json') {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    const headers = { 'Authorization': `Bearer ${session?.access_token || ''}` };
+    if (contentType) headers['Content-Type'] = contentType;
+    return headers;
+}
+
 // ===== FORMATAGE MONTANTS =====
 function parseAmount(val) {
     if (!val && val !== 0) return 0;
