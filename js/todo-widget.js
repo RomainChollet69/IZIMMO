@@ -237,6 +237,7 @@
             padding: 10px 0;
             border-bottom: 1px solid #f0f2f5;
             animation: todoSlideIn 0.3s ease;
+            position: relative;
         }
         @keyframes todoSlideIn {
             from { opacity: 0; transform: translateX(20px); }
@@ -244,6 +245,34 @@
         }
         .todo-item.done {
             opacity: 0.5;
+        }
+        .todo-drag-handle {
+            cursor: grab;
+            color: #CFD8DC;
+            font-size: 16px;
+            padding: 4px 2px;
+            flex-shrink: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .todo-drag-handle:hover {
+            color: #667eea;
+        }
+        .todo-item.dragging {
+            opacity: 0.4;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+        .todo-item.drag-over-top {
+            border-top: 2px solid #667eea;
+            padding-top: 8px;
+        }
+        .todo-item.drag-over-bottom {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
         }
         .todo-item.done .todo-item-text {
             text-decoration: line-through;
@@ -447,6 +476,7 @@
 
         if (error) { console.error('Todo load error:', error); return; }
         todos = data || [];
+        applyStoredOrder();
         renderTodos();
     }
 
@@ -558,6 +588,7 @@
 
         listEl.innerHTML = todos.map(t => `
             <div class="todo-item ${t.done ? 'done' : ''}" data-id="${t.id}">
+                <div class="todo-drag-handle" title="Glisser pour réordonner">⠿</div>
                 <div class="todo-checkbox" data-action="toggle"></div>
                 <span class="todo-item-text">${escapeHtml(t.text)}</span>
                 <button class="todo-delete-btn" data-action="delete" title="Supprimer">🗑️</button>
@@ -614,6 +645,131 @@
                 });
             });
         });
+
+        // Drag & drop sur les handles
+        setupDragAndDrop();
+
+        // Sauvegarder l'ordre
+        saveOrder();
+    }
+
+    // ===== DRAG & DROP =====
+    let dragItem = null;
+
+    function setupDragAndDrop() {
+        listEl.querySelectorAll('.todo-drag-handle').forEach(handle => {
+            // Mouse
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startDrag(handle.closest('.todo-item'));
+            });
+            // Touch
+            handle.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startDrag(handle.closest('.todo-item'));
+            }, { passive: false });
+        });
+    }
+
+    function startDrag(item) {
+        dragItem = item;
+        dragItem.classList.add('dragging');
+
+        const onMove = (clientY) => {
+            const items = [...listEl.querySelectorAll('.todo-item:not(.dragging)')];
+            items.forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+
+            for (const el of items) {
+                const rect = el.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (clientY < midY) {
+                    el.classList.add('drag-over-top');
+                    break;
+                } else if (clientY >= midY && clientY < rect.bottom) {
+                    el.classList.add('drag-over-bottom');
+                    break;
+                }
+            }
+        };
+
+        const onMouseMove = (e) => onMove(e.clientY);
+        const onTouchMove = (e) => { e.preventDefault(); onMove(e.touches[0].clientY); };
+
+        const onEnd = (clientY) => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+
+            const items = [...listEl.querySelectorAll('.todo-item:not(.dragging)')];
+            items.forEach(el => el.classList.remove('drag-over-top', 'drag-over-bottom'));
+            dragItem.classList.remove('dragging');
+
+            // Trouver la position de drop
+            const dragId = dragItem.dataset.id;
+            const dragIdx = todos.findIndex(t => t.id === dragId);
+            if (dragIdx === -1) return;
+
+            let dropIdx = todos.length; // Par défaut : à la fin
+            for (let i = 0; i < items.length; i++) {
+                const rect = items[i].getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const itemId = items[i].dataset.id;
+                const itemIdx = todos.findIndex(t => t.id === itemId);
+                if (clientY < midY) {
+                    dropIdx = itemIdx;
+                    break;
+                }
+            }
+
+            // Réordonner le tableau
+            const [moved] = todos.splice(dragIdx, 1);
+            const newIdx = dropIdx > dragIdx ? dropIdx - 1 : dropIdx;
+            todos.splice(newIdx, 0, moved);
+            renderTodos();
+
+            dragItem = null;
+        };
+
+        const onMouseUp = (e) => onEnd(e.clientY);
+        const onTouchEnd = (e) => onEnd(e.changedTouches[0].clientY);
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+    }
+
+    // ===== PERSISTANCE ORDRE (localStorage) =====
+    function getOrderKey() {
+        return 'todo_order';
+    }
+
+    function saveOrder() {
+        try {
+            const ids = todos.map(t => t.id);
+            localStorage.setItem(getOrderKey(), JSON.stringify(ids));
+        } catch (e) { /* quota exceeded */ }
+    }
+
+    function applyStoredOrder() {
+        try {
+            const stored = JSON.parse(localStorage.getItem(getOrderKey()) || '[]');
+            if (!stored.length) return;
+            const idSet = new Set(todos.map(t => t.id));
+            const validOrder = stored.filter(id => idSet.has(id));
+            if (validOrder.length === 0) return;
+
+            const todoMap = new Map(todos.map(t => [t.id, t]));
+            const ordered = [];
+            validOrder.forEach(id => {
+                const t = todoMap.get(id);
+                if (t) { ordered.push(t); todoMap.delete(id); }
+            });
+            // Ajouter les items non présents dans l'ordre stocké (nouveaux)
+            todoMap.forEach(t => ordered.unshift(t));
+            todos = ordered;
+        } catch (e) { /* invalid JSON */ }
     }
 
     // ===== AJOUT PAR TEXTE =====
