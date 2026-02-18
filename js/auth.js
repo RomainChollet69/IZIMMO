@@ -96,13 +96,17 @@ function renderUserProfile(user) {
     if (!container) return;
 
     const meta = user.user_metadata;
-    const name = meta.full_name || meta.name || user.email;
+    const name = meta.full_name || meta.name || user.email.split('@')[0];
     const avatar = meta.avatar_url || meta.picture || '';
+
+    const avatarHTML = avatar
+        ? `<img src="${avatar}" alt="" class="user-avatar" referrerpolicy="no-referrer">`
+        : `<div class="user-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border-radius:50%">${name.charAt(0).toUpperCase()}</div>`;
 
     container.innerHTML = `
         <div class="profile-menu-wrapper">
             <div class="profile-menu-trigger" onclick="toggleProfileMenu(event)">
-                <img src="${avatar}" alt="" class="user-avatar" referrerpolicy="no-referrer">
+                ${avatarHTML}
                 <span class="user-name">${name}</span>
             </div>
             <div class="profile-dropdown" id="profileDropdown">
