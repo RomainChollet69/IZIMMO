@@ -281,6 +281,25 @@
             color: #2C3E50;
             line-height: 1.4;
             word-break: break-word;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 2px 4px;
+            transition: background 0.2s;
+        }
+        .todo-item:not(.done) .todo-item-text:hover {
+            background: #f0f2f5;
+        }
+        .todo-edit-input {
+            flex: 1;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #2C3E50;
+            line-height: 1.4;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            padding: 4px 8px;
+            outline: none;
+            background: #f8f9ff;
         }
         .todo-delete-btn {
             background: none;
@@ -478,6 +497,22 @@
         renderTodos();
     }
 
+    async function updateTodoText(id, newText) {
+        const trimmed = newText.trim();
+        if (!trimmed) return;
+
+        const { error } = await supabaseClient
+            .from('todos')
+            .update({ text: trimmed })
+            .eq('id', id);
+
+        if (error) { console.error('Todo update error:', error); return; }
+
+        const todo = todos.find(t => t.id === id);
+        if (todo) todo.text = trimmed;
+        renderTodos();
+    }
+
     async function clearDoneTodos() {
         const userId = await getUserId();
         if (!userId) return;
@@ -543,6 +578,40 @@
             el.addEventListener('click', () => {
                 const id = el.closest('.todo-item').dataset.id;
                 deleteTodo(id);
+            });
+        });
+
+        // Édition inline par clic sur le texte
+        listEl.querySelectorAll('.todo-item-text').forEach(el => {
+            el.addEventListener('click', () => {
+                const item = el.closest('.todo-item');
+                if (item.classList.contains('done')) return;
+                const id = item.dataset.id;
+                const todo = todos.find(t => t.id === id);
+                if (!todo) return;
+
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'todo-edit-input';
+                input.value = todo.text;
+                el.replaceWith(input);
+                input.focus();
+                input.select();
+
+                const save = () => {
+                    const newText = input.value.trim();
+                    if (newText && newText !== todo.text) {
+                        updateTodoText(id, newText);
+                    } else {
+                        renderTodos();
+                    }
+                };
+
+                input.addEventListener('blur', save);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') input.blur();
+                    if (e.key === 'Escape') { input.value = todo.text; input.blur(); }
+                });
             });
         });
     }
