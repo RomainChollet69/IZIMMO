@@ -1789,15 +1789,9 @@
                         <label class="form-label">Secteur / Villes *</label>
                         <input type="text" class="form-input" id="sector" placeholder="Lyon 3, Villeurbanne..." required>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Budget min (€)</label>
-                            <input type="number" class="form-input" id="budgetMin" placeholder="200000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Budget max (€)</label>
-                            <input type="number" class="form-input" id="budgetMax" placeholder="350000">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Budget maximum HFN (€)</label>
+                        <input type="number" class="form-input" id="budgetMax" placeholder="350000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Critères</label>
@@ -1808,20 +1802,6 @@
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="balcon_terrasse"><span>☀️ Balcon/Terrasse</span></label>
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="calme"><span>🤫 Calme</span></label>
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="neuf_renove"><span>✨ Neuf/Rénové</span></label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Surface (m²)</label>
-                        <input type="text" class="form-input" id="surface" placeholder="65 m²">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Annexes</label>
-                        <div class="criteria-toggles">
-                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="parking"><span>🅿️ Parking</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="cave"><span>📦 Cave</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="balcon"><span>🌿 Balcon</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="jardin"><span>🌳 Jardin</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="annexes" value="garage"><span>🚗 Garage</span></label>
                         </div>
                     </div>
                 </div>
@@ -2103,9 +2083,8 @@
 
         // ===== HELPERS =====
         function formatBudget(min, max) {
-            if (min && max) return formatEuro(min) + ' - ' + formatEuro(max);
-            if (max) return '< ' + formatEuro(max);
-            if (min) return '> ' + formatEuro(min);
+            if (max) return formatEuro(max) + ' HFN';
+            if (min) return formatEuro(min) + ' HFN';
             return '';
         }
 
@@ -2246,11 +2225,7 @@
             const parts = [];
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
             if (buyer.property_type) parts.push(typeEmojis[buyer.property_type] || '📍');
-            if (buyer.surface) parts.push(formatSurface(buyer.surface));
-            const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗' };
-            if (Array.isArray(buyer.annexes) && buyer.annexes.length > 0) {
-                parts.push(buyer.annexes.map(a => annexeEmojis[a] || '').filter(Boolean).join(' '));
-            }
+            if (buyer.surface_min) parts.push(formatSurface(buyer.surface_min) + ' min');
             if (parts.length === 0) return '';
             return `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${parts.join(' · ')}</div>`;
         }
@@ -2268,7 +2243,7 @@
             const compactParts = [];
             if (buyer.property_type) compactParts.push(typeEmojis[buyer.property_type] || '');
             if (buyer.rooms) compactParts.push(buyer.rooms);
-            const budgetLabel = formatBudget(buyer.budget_min, buyer.budget_max);
+            const budgetLabel = formatBudget(null, buyer.budget_max);
             if (budgetLabel) compactParts.push(budgetLabel);
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
@@ -2301,6 +2276,12 @@
 
             // Sector
             if (buyer.sector) ext += `<div class="card-info">📍 ${escapeHtml(buyer.sector)}</div>`;
+
+            // Surface min
+            if (buyer.surface_min) ext += `<div class="card-info">📐 ${buyer.surface_min} m² min</div>`;
+
+            // Budget max
+            if (buyer.budget_max) ext += `<div class="card-info">💰 ${formatEuro(buyer.budget_max)} HFN</div>`;
 
             // Relance
             ext += followup.html;
@@ -2570,8 +2551,7 @@
 
                 if (fields.sector) document.getElementById('sector').value = fields.sector;
                 if (fields.surface_min) document.getElementById('surfaceMin').value = fields.surface_min;
-                if (fields.budget_min) document.getElementById('budgetMin').value = fields.budget_min;
-                if (fields.budget_max) document.getElementById('budgetMax').value = fields.budget_max;
+                if (fields.budget_max || fields.budget_min) document.getElementById('budgetMax').value = fields.budget_max || fields.budget_min;
 
                 // Criteria checkboxes
                 if (Array.isArray(fields.criteria) && fields.criteria.length > 0) {
@@ -2583,19 +2563,6 @@
 
                 if (fields.dealbreakers) document.getElementById('dealbreakers').value = fields.dealbreakers;
 
-                // Surface
-                if (fields.surface) {
-                    const surfaceInput = document.getElementById('surface');
-                    if (surfaceInput) surfaceInput.value = fields.surface;
-                }
-
-                // Annexes
-                if (Array.isArray(fields.annexes) && fields.annexes.length > 0) {
-                    fields.annexes.forEach(a => {
-                        const cb = document.querySelector(`input[name="annexes"][value="${a}"]`);
-                        if (cb) cb.checked = true;
-                    });
-                }
 
                 // Bank approval select
                 if (fields.bank_approval) {
@@ -3210,7 +3177,6 @@
             sectorInput.dataset.longitude = buyer.longitude || '';
             sectorInput.dataset.city = buyer.city || '';
             sectorInput.dataset.postalCode = buyer.postal_code || '';
-            document.getElementById('budgetMin').value = buyer.budget_min || '';
             document.getElementById('budgetMax').value = buyer.budget_max || '';
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
             document.getElementById('timeline').value = buyer.timeline || '';
@@ -3223,11 +3189,6 @@
                 cb.checked = (buyer.criteria || []).includes(cb.value);
             });
 
-            // Surface & Annexes
-            document.getElementById('surface').value = buyer.surface || '';
-            document.querySelectorAll('input[name="annexes"]').forEach(cb => {
-                cb.checked = (buyer.annexes || []).includes(cb.value);
-            });
 
             // Vendeur toggle
             const isSeller = buyer.is_seller || false;
@@ -3275,7 +3236,6 @@
             }
 
             const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
-            const annexes = Array.from(document.querySelectorAll('input[name="annexes"]:checked')).map(cb => cb.value);
 
             const sectorInput = document.getElementById('sector');
             const buyerData = {
@@ -3293,11 +3253,8 @@
                 city: sectorInput.dataset.city || null,
                 postal_code: sectorInput.dataset.postalCode || null,
                 surface_min: parseInt(document.getElementById('surfaceMin').value) || null,
-                budget_min: parseInt(document.getElementById('budgetMin').value) || null,
                 budget_max: parseInt(document.getElementById('budgetMax').value) || null,
                 criteria,
-                surface: normalizeSurface(document.getElementById('surface').value),
-                annexes,
                 bank_approval: document.getElementById('bankApproval').value || null,
                 timeline: document.getElementById('timeline').value || null,
                 is_seller: document.getElementById('isSeller').checked,
@@ -3311,6 +3268,7 @@
 
             const editId = document.getElementById('submitBtn').dataset.editId;
 
+            let savedId = editId;
             if (editId) {
                 const updated = await updateBuyer(editId, buyerData);
                 if (updated) {
@@ -3319,7 +3277,16 @@
                 }
             } else {
                 const created = await createBuyer(buyerData);
-                if (created) buyers.unshift(created);
+                if (created) {
+                    buyers.unshift(created);
+                    savedId = created.id;
+                }
+            }
+
+            // Auto-save note si non vide
+            const pendingNote = document.getElementById('noteInput').value.trim();
+            if (pendingNote && savedId) {
+                await addBuyerNote(savedId);
             }
 
             await loadBuyerNotePreviews();

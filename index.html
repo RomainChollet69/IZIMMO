@@ -4655,6 +4655,7 @@
             }
 
             const editId = document.getElementById('submitBtn').dataset.editId;
+            let savedId = editId;
 
             if (editId) {
                 // Premier enregistrement du prix de mise en vente → historique initial
@@ -4674,11 +4675,18 @@
                 const created = await createSeller(sellerData);
                 if (created) {
                     sellers.unshift(created);
+                    savedId = created.id;
                     if (pendingFile) {
                         await uploadFiles([pendingFile], created.id, 'seller');
                         pendingFile = null;
                     }
                 }
+            }
+
+            // Auto-save note si non vide
+            const pendingNote = document.getElementById('noteInput').value.trim();
+            if (pendingNote && savedId) {
+                await addNote(savedId);
             }
 
             await loadVisitCounts();
