@@ -3668,7 +3668,7 @@
             });
 
             document.getElementById('dictateBtn').addEventListener('click', handleBuyerDictateClick);
-            document.getElementById('addBuyerBtn').addEventListener('click', openModal);
+            document.getElementById('addBuyerBtn').addEventListener('click', () => openModal());
 
             // Export dropdown toggle
             document.getElementById('exportBtn').addEventListener('click', (e) => {
