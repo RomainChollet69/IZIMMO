@@ -2683,25 +2683,57 @@
 
         // ===== MATCHING =====
         function calculateMatchScore(seller, buyer) {
-            let score = 0, maxScore = 0;
             const details = [];
+            const elim = { score: 0, maxScore: 100, percent: 0, details: [], eliminated: true };
+
+            // === CRITÈRES ÉLIMINATOIRES ===
+            // 1. Budget : prix > budget_max + 20% → éliminatoire
+            if (seller.budget && buyer.budget_max) {
+                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
+                if (sb > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
+            }
+            // 2. Localisation : acquéreur a des villes ET le vendeur n'y est pas → éliminatoire
+            const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
+            const bs = (buyer.sector || '').toLowerCase();
+            const sc = (seller.city || '').toLowerCase().trim();
+            if (buyerCities.length > 0 && sc) {
+                const cityMatch = buyerCities.includes(sc) || bs.includes(sc);
+                if (!cityMatch) {
+                    // Check département fallback
+                    const buyerDepts = (buyer.postal_code || '').split(',').map(p => p.trim().substring(0,2)).filter(Boolean);
+                    const sellerDept = (seller.postal_code || '').substring(0,2);
+                    if (buyerDepts.length > 0 && sellerDept && !buyerDepts.includes(sellerDept)) {
+                        return { ...elim, reason: 'Localisation incompatible' };
+                    }
+                }
+            }
+            // 3. Type de bien : maison vs appartement → éliminatoire
+            if (seller.property_type && buyer.property_type) {
+                const st = seller.property_type.toLowerCase(), bt = buyer.property_type.toLowerCase();
+                const isHouse = t => ['maison'].includes(t);
+                const isApt = t => ['appartement'].includes(t);
+                if ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st))) {
+                    return { ...elim, reason: 'Type de bien incompatible' };
+                }
+            }
+
+            // === CALCUL DU SCORE ===
+            let score = 0, maxScore = 0;
 
             // Budget (30pts)
             if (seller.budget && buyer.budget_max) {
                 maxScore += 30;
                 const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
                 if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
-                else if (sb <= bm * 1.1) { score += 15; details.push({ label: 'Budget', score: 15, max: 30 }); }
+                else if (sb <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
+                else if (sb <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
                 else { details.push({ label: 'Budget', score: 0, max: 30 }); }
             }
 
             // Localisation (25pts)
-            if (seller.city && (buyer.city || buyer.sector)) {
+            if (sc && (buyerCities.length > 0 || bs)) {
                 maxScore += 25;
-                const sc = (seller.city || '').toLowerCase().trim();
-                const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
-                const bs = (buyer.sector || '').toLowerCase();
-                if (sc && (buyerCities.includes(sc) || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                if (buyerCities.includes(sc) || bs.includes(sc)) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
                 else if (seller.postal_code && buyer.postal_code) {
                     const buyerDepts = buyer.postal_code.split(',').map(p => p.trim().substring(0,2));
                     if (buyerDepts.includes(seller.postal_code.substring(0,2))) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
@@ -2714,23 +2746,24 @@
             if (seller.property_type && buyer.property_type) {
                 maxScore += 15;
                 if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
-                else { details.push({ label: 'Type', score: 0, max: 15 }); }
+                else { score += 8; details.push({ label: 'Type', score: 8, max: 15 }); }
             }
 
             // Surface (15pts)
             if (seller.surface && buyer.surface_min) {
                 maxScore += 15;
                 if (seller.surface >= buyer.surface_min) { score += 15; details.push({ label: 'Surface', score: 15, max: 15 }); }
-                else if (seller.surface >= buyer.surface_min * 0.9) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
+                else if (seller.surface >= buyer.surface_min * 0.85) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
                 else { details.push({ label: 'Surface', score: 0, max: 15 }); }
             }
 
-            // Pieces (10pts)
+            // Pièces (10pts)
             if (seller.rooms && buyer.rooms) {
                 maxScore += 10;
                 const sn = parseInt(seller.rooms.replace(/\D/g, '')) || 0;
                 const bn = parseInt(buyer.rooms.replace(/\D/g, '')) || 0;
                 if (sn >= bn) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else if (sn === bn - 1) { score += 5; details.push({ label: 'Pièces', score: 5, max: 10 }); }
                 else { details.push({ label: 'Pièces', score: 0, max: 10 }); }
             }
 
@@ -2740,13 +2773,13 @@
             if (ba.length > 0 && sa.length > 0) {
                 maxScore += 15;
                 const matched = ba.filter(a => sa.includes(a)).length;
-                const as = Math.round((matched / ba.length) * 15);
+                const as = Math.min(Math.round((matched / ba.length) * 15), 15);
                 score += as;
                 details.push({ label: 'Annexes', score: as, max: 15 });
             }
 
             const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-            return { score, maxScore, percent, details };
+            return { score, maxScore, percent, details, eliminated: false };
         }
 
         function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
@@ -2764,7 +2797,7 @@
             const buyers = await loadBuyersForMatching();
             const counts = {};
             sellers.forEach(seller => {
-                const mc = buyers.filter(b => calculateMatchScore(seller, b).percent >= 40).length;
+                const mc = buyers.filter(b => { const r = calculateMatchScore(seller, b); return !r.eliminated && r.percent >= 50; }).length;
                 if (mc > 0) counts[seller.id] = mc;
             });
             sellerMatchCounts = counts;
@@ -2782,11 +2815,11 @@
 
             const matches = buyers
                 .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
-                .filter(m => m.percent >= 40)
+                .filter(m => !m.eliminated && m.percent >= 50)
                 .sort((a, b) => b.percent - a.percent);
 
             if (matches.length === 0) {
-                container.innerHTML = '<div class="match-empty">Aucun acquéreur correspondant (seuil : 40%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
+                container.innerHTML = '<div class="match-empty">Aucun acquéreur correspondant (seuil : 50%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
                 return;
             }
 
@@ -2829,7 +2862,7 @@
 
             const matches = buyers
                 .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
-                .filter(m => m.percent >= 60)
+                .filter(m => !m.eliminated && m.percent >= 70)
                 .sort((a, b) => b.percent - a.percent)
                 .slice(0, 3);
 

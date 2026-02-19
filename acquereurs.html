@@ -1635,6 +1635,8 @@
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
         .off-market-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(155, 89, 182, 0.12); color: #8E44AD; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
+        .match-indicator { position: absolute; top: 8px; right: 8px; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid #A7F3D0; cursor: pointer; z-index: 2; transition: background 0.2s; }
+        .match-indicator:hover { background: #D1FAE5; }
 
         /* Sector tags */
         .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
@@ -2005,26 +2007,55 @@
         let currentLinks = [];
         let draggedCard = null;
         let matchSellers = null;
+        let buyerMatchCounts = {};
 
         // ===== MATCHING =====
         function calculateMatchScore(seller, buyer) {
-            let score = 0, maxScore = 0;
             const details = [];
+            const elim = { score: 0, maxScore: 100, percent: 0, details: [], eliminated: true };
+
+            // === CRITÈRES ÉLIMINATOIRES ===
+            if (seller.budget && buyer.budget_max) {
+                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
+                if (sb > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
+            }
+            const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
+            const bs = (buyer.sector || '').toLowerCase();
+            const sc = (seller.city || '').toLowerCase().trim();
+            if (buyerCities.length > 0 && sc) {
+                const cityMatch = buyerCities.includes(sc) || bs.includes(sc);
+                if (!cityMatch) {
+                    const buyerDepts = (buyer.postal_code || '').split(',').map(p => p.trim().substring(0,2)).filter(Boolean);
+                    const sellerDept = (seller.postal_code || '').substring(0,2);
+                    if (buyerDepts.length > 0 && sellerDept && !buyerDepts.includes(sellerDept)) {
+                        return { ...elim, reason: 'Localisation incompatible' };
+                    }
+                }
+            }
+            if (seller.property_type && buyer.property_type) {
+                const st = seller.property_type.toLowerCase(), bt = buyer.property_type.toLowerCase();
+                const isHouse = t => ['maison'].includes(t);
+                const isApt = t => ['appartement'].includes(t);
+                if ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st))) {
+                    return { ...elim, reason: 'Type de bien incompatible' };
+                }
+            }
+
+            // === CALCUL DU SCORE ===
+            let score = 0, maxScore = 0;
 
             if (seller.budget && buyer.budget_max) {
                 maxScore += 30;
                 const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
                 if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
-                else if (sb <= bm * 1.1) { score += 15; details.push({ label: 'Budget', score: 15, max: 30 }); }
+                else if (sb <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
+                else if (sb <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
                 else { details.push({ label: 'Budget', score: 0, max: 30 }); }
             }
 
-            if (seller.city && (buyer.city || buyer.sector)) {
+            if (sc && (buyerCities.length > 0 || bs)) {
                 maxScore += 25;
-                const sc = (seller.city || '').toLowerCase().trim();
-                const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
-                const bs = (buyer.sector || '').toLowerCase();
-                if (sc && (buyerCities.includes(sc) || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                if (buyerCities.includes(sc) || bs.includes(sc)) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
                 else if (seller.postal_code && buyer.postal_code) {
                     const buyerDepts = buyer.postal_code.split(',').map(p => p.trim().substring(0,2));
                     if (buyerDepts.includes(seller.postal_code.substring(0,2))) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
@@ -2036,13 +2067,13 @@
             if (seller.property_type && buyer.property_type) {
                 maxScore += 15;
                 if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
-                else { details.push({ label: 'Type', score: 0, max: 15 }); }
+                else { score += 8; details.push({ label: 'Type', score: 8, max: 15 }); }
             }
 
             if (seller.surface && buyer.surface_min) {
                 maxScore += 15;
                 if (seller.surface >= buyer.surface_min) { score += 15; details.push({ label: 'Surface', score: 15, max: 15 }); }
-                else if (seller.surface >= buyer.surface_min * 0.9) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
+                else if (seller.surface >= buyer.surface_min * 0.85) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
                 else { details.push({ label: 'Surface', score: 0, max: 15 }); }
             }
 
@@ -2051,6 +2082,7 @@
                 const sn = parseInt(seller.rooms.replace(/\D/g, '')) || 0;
                 const bn = parseInt(buyer.rooms.replace(/\D/g, '')) || 0;
                 if (sn >= bn) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else if (sn === bn - 1) { score += 5; details.push({ label: 'Pièces', score: 5, max: 10 }); }
                 else { details.push({ label: 'Pièces', score: 0, max: 10 }); }
             }
 
@@ -2059,16 +2091,27 @@
             if (ba.length > 0 && sa.length > 0) {
                 maxScore += 15;
                 const matched = ba.filter(a => sa.includes(a)).length;
-                const as = Math.round((matched / ba.length) * 15);
+                const as = Math.min(Math.round((matched / ba.length) * 15), 15);
                 score += as;
                 details.push({ label: 'Annexes', score: as, max: 15 });
             }
 
             const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
-            return { score, maxScore, percent, details };
+            return { score, maxScore, percent, details, eliminated: false };
         }
 
         function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
+
+        async function computeBuyerMatchCounts() {
+            const allSellers = await loadSellersForMatching();
+            const activeSellers = allSellers.filter(s => s.status !== 'sold' && s.status !== 'lost');
+            const counts = {};
+            buyers.forEach(buyer => {
+                const mc = activeSellers.filter(s => { const r = calculateMatchScore(s, buyer); return !r.eliminated && r.percent >= 50; }).length;
+                if (mc > 0) counts[buyer.id] = mc;
+            });
+            buyerMatchCounts = counts;
+        }
 
         async function loadSellersForMatching() {
             if (matchSellers !== null) return matchSellers;
@@ -2101,12 +2144,13 @@
             if (!buyer) { container.innerHTML = '<div class="match-empty">Acquéreur introuvable</div>'; return; }
 
             const matches = allSellers
+                .filter(s => s.status !== 'sold' && s.status !== 'lost')
                 .map(s => ({ seller: s, ...calculateMatchScore(s, buyer) }))
-                .filter(m => m.percent >= 40)
+                .filter(m => !m.eliminated && m.percent >= 50)
                 .sort((a, b) => b.percent - a.percent);
 
             if (matches.length === 0) {
-                container.innerHTML = '<div class="match-empty">Aucun vendeur correspondant (seuil : 40%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
+                container.innerHTML = '<div class="match-empty">Aucun vendeur correspondant (seuil : 50%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
                 return;
             }
 
@@ -2455,7 +2499,23 @@
             </div>`;
             ext += '</div>';
 
-            card.innerHTML = compact + ext + '<div class="card-expand-arrow">▼</div>';
+            // Match indicator badge
+            const matchCount = buyerMatchCounts[buyer.id] || 0;
+            const matchIndicator = matchCount > 0
+                ? `<div class="match-indicator" data-match-buyer="${buyer.id}">🎯 ${matchCount} bien${matchCount > 1 ? 's' : ''}</div>`
+                : '';
+
+            card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
+
+            // Click handler on match indicator → open modal on matching tab
+            const matchEl = card.querySelector('.match-indicator');
+            if (matchEl) {
+                matchEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editBuyer(buyer.id, 'matching');
+                });
+            }
+
             return card;
         }
 
@@ -3339,7 +3399,7 @@
         }
 
         // ===== EDIT =====
-        function editBuyer(id) {
+        function editBuyer(id, initialTab) {
             const buyer = buyers.find(b => b.id === id);
             if (!buyer) return;
 
@@ -3405,7 +3465,7 @@
             btn.textContent = 'Mettre à jour';
             document.querySelector('.modal-title').textContent = "Modifier l'Acquéreur";
 
-            openModal();
+            openModal(initialTab);
 
             // Load notes
             loadBuyerNotes(id);
@@ -3809,6 +3869,8 @@
                     editBuyer(openLeadId);
                     history.replaceState(null, '', window.location.pathname);
                 }
+                // Compute match counts in background, then re-render
+                computeBuyerMatchCounts().then(() => renderBuyers()).catch(() => {});
             });
             setupDragAndDrop();
             initMobileTabs();
