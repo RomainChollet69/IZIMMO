@@ -1198,41 +1198,59 @@
             });
         });
 
-        // ===== DVF API (data.gouv.fr) =====
-        function normalizeSale(item, centerLat, centerLng, radius) {
-            const lat = parseFloat(item.latitude);
-            const lng = parseFloat(item.longitude);
+        // ===== DVF API (CEREMA in_bbox) =====
+        function polygonCentroid(coords) {
+            if (!coords || !coords[0] || coords[0].length === 0) return null;
+            const ring = coords[0];
+            const n = ring.length;
+            let latSum = 0, lngSum = 0;
+            for (let i = 0; i < n; i++) { lngSum += ring[i][0]; latSum += ring[i][1]; }
+            return { lat: latSum / n, lng: lngSum / n };
+        }
+
+        function normalizeSale(feature, centerLat, centerLng, radius) {
+            const props = feature.properties || {};
+            const geom = feature.geometry || {};
+
+            let lat = null, lng = null;
+            if (geom.type === 'Polygon') {
+                const c = polygonCentroid(geom.coordinates);
+                if (c) { lat = c.lat; lng = c.lng; }
+            } else if (geom.type === 'MultiPolygon' && geom.coordinates[0]) {
+                const c = polygonCentroid(geom.coordinates[0]);
+                if (c) { lat = c.lat; lng = c.lng; }
+            } else if (geom.type === 'Point') {
+                lng = geom.coordinates[0]; lat = geom.coordinates[1];
+            }
             if (!lat || !lng) return null;
 
             const dist = haversine(centerLat, centerLng, lat, lng);
             if (dist > radius) return null;
 
-            const typeLocal = (item.type_local || '').toLowerCase();
+            const typeBien = (props.libtypbien || '').toLowerCase();
+            const nbMaisons = parseInt(props.nblocmai) || 0;
+            const nbApparts = parseInt(props.nblocapt) || 0;
             let type_local = '';
-            if (typeLocal.includes('maison')) type_local = 'Maison';
-            else if (typeLocal.includes('appartement')) type_local = 'Appartement';
-            else if (typeLocal.includes('terrain') || typeLocal.includes('dépendance')) type_local = 'Terrain';
-            else type_local = item.nature_mutation || 'Autre';
+            if (typeBien.includes('maison') || nbMaisons > 0) type_local = 'Maison';
+            else if (typeBien.includes('appartement') || nbApparts > 0) type_local = 'Appartement';
+            else if (typeBien.includes('terrain') || typeBien.includes('dépendance')) type_local = 'Terrain';
+            else type_local = props.libnatmut || 'Autre';
 
-            // Adresse
-            const num = item.adresse_numero ? String(item.adresse_numero).replace(/\.0$/, '') : '';
-            const voie = item.adresse_nom_voie || '';
-            const cp = item.code_postal || '';
-            const commune = item.nom_commune || '';
-            const adresse = [num, voie].filter(Boolean).join(' ');
-            const adresseComplete = [adresse, cp, commune].filter(Boolean).join(', ');
+            // Commune from l_codinsee
+            const communes = (props.l_codinsee || []).join(', ');
 
             return {
                 lat, lng,
-                valeur_fonciere: parseFloat(item.valeur_fonciere) || 0,
-                date_mutation: item.date_mutation || null,
+                valeur_fonciere: parseFloat(props.valeurfonc) || 0,
+                date_mutation: props.datemut || null,
                 type_local,
-                surface_reelle_bati: parseFloat(item.surface_reelle_bati) || 0,
-                surface_terrain: parseFloat(item.surface_terrain) || 0,
-                nombre_pieces_principales: parseInt(item.nombre_pieces_principales) || 0,
-                nature_mutation: item.nature_mutation || '',
-                nombre_lots: parseInt(item.nombre_lots) || 0,
-                adresse: adresseComplete,
+                surface_reelle_bati: parseFloat(props.sbati) || 0,
+                surface_terrain: parseFloat(props.sterr) || 0,
+                nombre_pieces_principales: parseInt(props.nbppmut) || 0,
+                nature_mutation: props.libnatmut || '',
+                nombre_lots: parseInt(props.nblot) || 0,
+                libtypbien: props.libtypbien || '',
+                adresse: communes,
                 distance: Math.round(dist)
             };
         }
@@ -1245,6 +1263,23 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
+        // Convert lat/lng + radius(m) to a bounding box (capped at 0.02° for CEREMA API)
+        function radiusToBBox(lat, lng, radius) {
+            const degPerMeterLat = 1 / 111320;
+            const degPerMeterLng = 1 / (111320 * Math.cos(lat * Math.PI / 180));
+            let dLat = radius * degPerMeterLat;
+            let dLng = radius * degPerMeterLng;
+            // CEREMA max: 0.02° x 0.02°
+            dLat = Math.min(dLat, 0.0099);
+            dLng = Math.min(dLng, 0.0099);
+            return {
+                minLng: (lng - dLng).toFixed(6),
+                minLat: (lat - dLat).toFixed(6),
+                maxLng: (lng + dLng).toFixed(6),
+                maxLat: (lat + dLat).toFixed(6)
+            };
+        }
+
         async function fetchDVFData(lat, lng, radius) {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('active');
@@ -1253,17 +1288,18 @@
             allSales = [];
 
             try {
-                const url = `https://api.dvf.data.gouv.fr/mutations/?lat=${lat}&lon=${lng}&dist_m=${radius}&page_size=100&ordering=-date_mutation`;
+                const bbox = radiusToBBox(lat, lng, radius);
+                const url = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=100&ordering=-datemut`;
                 console.log('DVF API URL:', url);
 
                 const resp = await fetch(url);
                 if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
                 const data = await resp.json();
-                const results = data.results || [];
-                console.log(`DVF API: ${data.count} total, ${results.length} retournées`);
+                const features = data.features || [];
+                console.log(`DVF API: ${data.count} total, ${features.length} retournées`);
 
-                allSales = results
-                    .map(r => normalizeSale(r, lat, lng, radius))
+                allSales = features
+                    .map(f => normalizeSale(f, lat, lng, radius))
                     .filter(s => s && s.valeur_fonciere > 0);
 
                 console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m`);
