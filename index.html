@@ -2684,10 +2684,14 @@
             if (seller.city && (buyer.city || buyer.sector)) {
                 maxScore += 25;
                 const sc = (seller.city || '').toLowerCase().trim();
-                const bc = (buyer.city || '').toLowerCase().trim();
+                const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
                 const bs = (buyer.sector || '').toLowerCase();
-                if (sc && (sc === bc || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
-                else if (seller.postal_code && buyer.postal_code && seller.postal_code.substring(0,2) === buyer.postal_code.substring(0,2)) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                if (sc && (buyerCities.includes(sc) || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                else if (seller.postal_code && buyer.postal_code) {
+                    const buyerDepts = buyer.postal_code.split(',').map(p => p.trim().substring(0,2));
+                    if (buyerDepts.includes(seller.postal_code.substring(0,2))) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                    else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
+                }
                 else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
             }
 

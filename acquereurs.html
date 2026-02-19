@@ -1634,6 +1634,15 @@
         .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
+
+        /* Sector tags */
+        .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
+        .sector-tags-wrap:focus-within { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+        .sector-tag { display: inline-flex; align-items: center; gap: 4px; background: #E8EAF6; color: #283593; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 500; }
+        .sector-tag-remove { background: none; border: none; color: #5C6BC0; cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; }
+        .sector-tag-remove:hover { color: #C62828; }
+        .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 14px; padding: 4px 0; background: transparent; }
+        .sector-tags-input::placeholder { color: #bbb; }
     </style>
 </head>
 <body>
@@ -1806,7 +1815,10 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Secteur / Villes *</label>
-                        <input type="text" class="form-input" id="sector" placeholder="Lyon 3, Villeurbanne..." required>
+                        <div class="sector-tags-wrap" id="sectorTagsWrap" onclick="document.getElementById('sectorInput').focus()">
+                            <input type="text" class="sector-tags-input" id="sectorInput" placeholder="Tapez une ville..." autocomplete="off">
+                        </div>
+                        <input type="hidden" id="sector">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Budget maximum HFN (€)</label>
@@ -2009,10 +2021,14 @@
             if (seller.city && (buyer.city || buyer.sector)) {
                 maxScore += 25;
                 const sc = (seller.city || '').toLowerCase().trim();
-                const bc = (buyer.city || '').toLowerCase().trim();
+                const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
                 const bs = (buyer.sector || '').toLowerCase();
-                if (sc && (sc === bc || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
-                else if (seller.postal_code && buyer.postal_code && seller.postal_code.substring(0,2) === buyer.postal_code.substring(0,2)) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                if (sc && (buyerCities.includes(sc) || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                else if (seller.postal_code && buyer.postal_code) {
+                    const buyerDepts = buyer.postal_code.split(',').map(p => p.trim().substring(0,2));
+                    if (buyerDepts.includes(seller.postal_code.substring(0,2))) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                    else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
+                }
                 else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
             }
 
@@ -2418,7 +2434,7 @@
             if (buyer.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(buyer.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(buyer.email)}</a></div>`;
 
             // Sector
-            if (buyer.sector) ext += `<div class="card-info">📍 ${escapeHtml(buyer.sector)}</div>`;
+            if (buyer.sector) ext += `<div class="card-info">📍 ${escapeHtml(buyer.sector.replace(/ \| /g, ', '))}</div>`;
 
             // Surface min
             if (buyer.surface_min) ext += `<div class="card-info">📐 ${buyer.surface_min} m² min</div>`;
@@ -2533,6 +2549,7 @@
             document.getElementById('sellerFields').style.display = 'none';
             document.getElementById('referrerGroup').classList.remove('active');
             document.getElementById('referrerName').value = '';
+            if (typeof setSectorEntries === 'function') setSectorEntries([]);
             currentLinks = [];
             renderLinks();
             if (buyerRecorder) buyerRecorder.stop();
@@ -2694,7 +2711,13 @@
                     }
                 }
 
-                if (fields.sector) document.getElementById('sector').value = fields.sector;
+                if (fields.sector) {
+                    document.getElementById('sector').value = fields.sector;
+                    // Create a tag entry from dictated city
+                    if (typeof setSectorEntries === 'function') {
+                        setSectorEntries([{ label: fields.sector, city: fields.sector, postalCode: '', lat: null, lng: null }]);
+                    }
+                }
                 if (fields.surface_min) document.getElementById('surfaceMin').value = fields.surface_min;
                 if (fields.budget_max || fields.budget_min) document.getElementById('budgetMax').value = fields.budget_max || fields.budget_min;
 
@@ -3242,6 +3265,14 @@
                     }
                     return;
                 }
+                if (field === 'sector') {
+                    if (typeof setSectorEntries === 'function') {
+                        const current = typeof getSectorEntries === 'function' ? getSectorEntries() : [];
+                        current.push({ label: value, city: value, postalCode: '', lat: null, lng: null });
+                        setSectorEntries(current);
+                    }
+                    return;
+                }
                 const inputId = fieldToInput[field];
                 if (!inputId) return;
                 const el = document.getElementById(inputId);
@@ -3316,12 +3347,20 @@
             document.getElementById('propertyType').value = buyer.property_type || '';
             document.getElementById('rooms').value = buyer.rooms || '';
             document.getElementById('surfaceMin').value = buyer.surface_min || '';
-            const sectorInput = document.getElementById('sector');
-            sectorInput.value = buyer.sector || '';
-            sectorInput.dataset.latitude = buyer.latitude || '';
-            sectorInput.dataset.longitude = buyer.longitude || '';
-            sectorInput.dataset.city = buyer.city || '';
-            sectorInput.dataset.postalCode = buyer.postal_code || '';
+            // Sector tags
+            const sectorEntries = [];
+            if (buyer.city && buyer.city.includes(',')) {
+                const cities = buyer.city.split(',');
+                const postals = (buyer.postal_code || '').split(',');
+                const labels = (buyer.sector || '').split(' | ');
+                cities.forEach((c, i) => {
+                    sectorEntries.push({ label: labels[i] || c, city: c, postalCode: postals[i] || '', lat: i === 0 ? buyer.latitude : null, lng: i === 0 ? buyer.longitude : null });
+                });
+            } else if (buyer.sector) {
+                sectorEntries.push({ label: buyer.sector, city: buyer.city || '', postalCode: buyer.postal_code || '', lat: buyer.latitude, lng: buyer.longitude });
+            }
+            if (typeof setSectorEntries === 'function') setSectorEntries(sectorEntries);
+            document.getElementById('sector').value = buyer.sector || '';
             document.getElementById('budgetMax').value = buyer.budget_max || '';
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
             document.getElementById('timeline').value = buyer.timeline || '';
@@ -3373,7 +3412,8 @@
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const propertyType = document.getElementById('propertyType').value;
-            const sector = document.getElementById('sector').value.trim();
+            const entries = typeof getSectorEntries === 'function' ? getSectorEntries() : [];
+            const sector = entries.length > 0 ? entries.map(e => e.label).join(' | ') : document.getElementById('sector').value.trim();
 
             if (!firstName || !lastName || !propertyType || !sector) {
                 alert('Veuillez remplir les champs obligatoires (*)');
@@ -3382,7 +3422,7 @@
 
             const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
 
-            const sectorInput = document.getElementById('sector');
+            const firstEntry = entries[0] || {};
             const buyerData = {
                 first_name: firstName,
                 last_name: lastName,
@@ -3393,10 +3433,10 @@
                 property_type: propertyType,
                 rooms: document.getElementById('rooms').value || null,
                 sector,
-                latitude: parseFloat(sectorInput.dataset.latitude) || null,
-                longitude: parseFloat(sectorInput.dataset.longitude) || null,
-                city: sectorInput.dataset.city || null,
-                postal_code: sectorInput.dataset.postalCode || null,
+                latitude: firstEntry.lat || null,
+                longitude: firstEntry.lng || null,
+                city: entries.length > 0 ? entries.map(e => e.city).filter(Boolean).join(',') : null,
+                postal_code: entries.length > 0 ? entries.map(e => e.postalCode).filter(Boolean).join(',') : null,
                 surface_min: parseInt(document.getElementById('surfaceMin').value) || null,
                 budget_max: parseInt(document.getElementById('budgetMax').value) || null,
                 criteria,
@@ -3632,7 +3672,7 @@
                 { label: 'Email', getValue: b => b.email || '' },
                 { label: 'Type Bien', getValue: b => b.property_type || '' },
                 { label: 'Typologie', getValue: b => b.rooms || '' },
-                { label: 'Secteur', getValue: b => b.sector || '' },
+                { label: 'Secteur', getValue: b => (b.sector || '').replace(/ \| /g, ', ') },
                 { label: 'Surface Min', getValue: b => b.surface_min || '' },
                 { label: 'Surface', getValue: b => formatSurface(b.surface) },
                 { label: 'Annexes', getValue: b => Array.isArray(b.annexes) ? b.annexes.join(', ') : '' },
@@ -3759,7 +3799,7 @@
             setupDragAndDrop();
             initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
-            setupAddressAutocomplete('sector');
+            setupSectorAutocomplete();
             setupReferrerField();
             setupDocsDropZone();
 

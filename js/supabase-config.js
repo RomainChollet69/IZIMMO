@@ -366,3 +366,115 @@ function setupAddressAutocomplete(inputId) {
         dropdown.classList.remove('active');
     }
 }
+
+// Multi-city sector autocomplete (for buyers)
+function setupSectorAutocomplete() {
+    const wrap = document.getElementById('sectorTagsWrap');
+    const input = document.getElementById('sectorInput');
+    const hidden = document.getElementById('sector');
+    if (!wrap || !input) return;
+
+    let sectorEntries = [];
+    let features = [];
+    let selIdx = -1;
+    let debounceTimer = null;
+
+    const formGroup = wrap.closest('.form-group');
+    formGroup.classList.add('addr-wrapper');
+    const dropdown = document.createElement('div');
+    dropdown.className = 'addr-dropdown';
+    formGroup.appendChild(dropdown);
+
+    input.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = input.value.trim();
+        if (q.length < 3) { dropdown.classList.remove('active'); return; }
+        debounceTimer = setTimeout(() => fetchCities(q), 300);
+    });
+
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !input.value && sectorEntries.length > 0) {
+            removeSectorEntry(sectorEntries.length - 1);
+            return;
+        }
+        if (!dropdown.classList.contains('active')) return;
+        if (e.key === 'ArrowDown') { e.preventDefault(); selIdx = Math.min(selIdx + 1, features.length - 1); highlight(); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); selIdx = Math.max(selIdx - 1, 0); highlight(); }
+        else if (e.key === 'Enter' && selIdx >= 0) { e.preventDefault(); pickCity(features[selIdx]); }
+        else if (e.key === 'Escape') { dropdown.classList.remove('active'); }
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+    });
+
+    async function fetchCities(query) {
+        try {
+            const url = 'https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5&type=municipality';
+            const resp = await fetch(url);
+            if (!resp.ok) return;
+            const json = await resp.json();
+            if (!json.features || json.features.length === 0) { dropdown.classList.remove('active'); return; }
+            features = json.features;
+            selIdx = -1;
+            dropdown.innerHTML = features.map((f, i) => {
+                const p = f.properties;
+                return `<div class="addr-option" data-i="${i}">${escapeHtml(p.label)}${p.context ? `<div class="addr-context">${escapeHtml(p.context)}</div>` : ''}</div>`;
+            }).join('');
+            dropdown.classList.add('active');
+            dropdown.querySelectorAll('.addr-option').forEach(el => {
+                el.addEventListener('click', () => pickCity(features[parseInt(el.dataset.i)]));
+            });
+        } catch (err) { console.error('Erreur API adresse:', err); }
+    }
+
+    function highlight() {
+        dropdown.querySelectorAll('.addr-option').forEach((el, i) => el.classList.toggle('addr-sel', i === selIdx));
+    }
+
+    function pickCity(feature) {
+        const p = feature.properties;
+        const coords = feature.geometry.coordinates;
+        const entry = { label: p.city || p.label, city: p.city || '', postalCode: p.postcode || '', lat: coords[1], lng: coords[0] };
+        if (sectorEntries.some(e => e.city === entry.city && e.postalCode === entry.postalCode)) {
+            input.value = '';
+            dropdown.classList.remove('active');
+            return;
+        }
+        sectorEntries.push(entry);
+        input.value = '';
+        dropdown.classList.remove('active');
+        renderTags();
+        syncHidden();
+    }
+
+    function removeSectorEntry(index) {
+        sectorEntries.splice(index, 1);
+        renderTags();
+        syncHidden();
+    }
+
+    function renderTags() {
+        wrap.querySelectorAll('.sector-tag').forEach(t => t.remove());
+        sectorEntries.forEach((e, i) => {
+            const tag = document.createElement('span');
+            tag.className = 'sector-tag';
+            tag.innerHTML = `${escapeHtml(e.label)} <button type="button" class="sector-tag-remove" onclick="event.stopPropagation()">&times;</button>`;
+            tag.querySelector('.sector-tag-remove').addEventListener('click', () => removeSectorEntry(i));
+            wrap.insertBefore(tag, input);
+        });
+        input.placeholder = sectorEntries.length > 0 ? 'Ajouter une ville...' : 'Tapez une ville...';
+    }
+
+    function syncHidden() {
+        hidden.value = sectorEntries.map(e => e.label).join(' | ');
+        hidden.dataset.entries = JSON.stringify(sectorEntries);
+    }
+
+    window.setSectorEntries = function(entries) {
+        sectorEntries = entries;
+        renderTags();
+        syncHidden();
+    };
+    window.getSectorEntries = function() { return sectorEntries; };
+}
