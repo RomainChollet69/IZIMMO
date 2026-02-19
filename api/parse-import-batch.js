@@ -32,7 +32,7 @@ export default async function handler(req, res) {
 - "rooms": string ou null — nombre de pièces (T1, T2, T3...)
 - "date": string ou null — date au format "YYYY-MM-DD" (convertir depuis tout format)
 - "reminder": string ou null — date de relance au format "YYYY-MM-DD"
-- "status": string ou null — parmi "hot", "warm", "cold", "mandate", "competitor", "sold", "lost"
+- "status": string ou null — parmi "hot", "warm", "cold", "off_market", "mandate", "competitor", "sold", "lost"
 - "notes": string ou null — informations complémentaires, commentaires généraux
 - "contact_notes": array de strings ou null — historique de contacts (chaque entrée = "[Nom colonne] contenu")` : `
 - "first_name": string ou null — prénom (retirer civilité)
@@ -56,6 +56,7 @@ Pour le status, déduis à partir des notes/commentaires :
 - "chaud", "intéressé", "RDV", "urgent", "très intéressé", "à rappeler" → "hot"
 - "tiède", "moyen", "en cours", "à suivre" → "warm"
 - "froid", "NRP", "injoignable", "absent", "long terme" → "cold"
+- "off market", "hors mandat", "visitable", "off-market" → "off_market"
 - "mandat", "signé", "exclusif" → "mandate"
 - "concurrent", "PAP", "autre agence", "pris" → "competitor"
 - "vendu", "acte" → "sold"

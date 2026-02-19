@@ -47,7 +47,7 @@ Retourne un JSON avec ces champs :
 - "surface": number ou null — surface du bien en m² (nombre pur, sans unité. Ex: 65, 120)
 - "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage"] (UNIQUEMENT celles explicitement mentionnées)
 - "notes": string ou null — toute information complémentaire qui ne rentre dans aucun autre champ (contexte, remarques de l'agent, etc.)
-- "status": string ou null — parmi "hot", "warm", "cold" (UNIQUEMENT si explicitement mentionné comme "chaud/chaude", "tiède", "froid/froide")
+- "status": string ou null — parmi "hot", "warm", "cold", "off_market" (UNIQUEMENT si explicitement mentionné comme "chaud/chaude", "tiède", "froid/froide", "off market/hors mandat")
 - "reminder": string ou null — date de relance au format AAAA-MM-JJ (si mentionnée)
 
 Règles :

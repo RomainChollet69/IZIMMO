@@ -316,6 +316,7 @@
         .column-header.header-hot { background-image: url('img/chaud_fond_carte_pipe_vente.png'); }
         .column-header.header-warm { background-image: url('img/tiede_fond_carte_pipe_vente.png'); }
         .column-header.header-cold { background-image: url('img/froid_fond_carte_pipe_vente.png'); }
+        .column-header.header-off_market { background-image: url('img/offmarket.png'); }
         .column-header.header-mandate { background-image: url('img/mandat_fond_carte_pipe_vente.png'); }
         .column-header.header-competitor { background-image: url('img/concurrence.png'); }
         .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
@@ -387,6 +388,7 @@
         .column[data-status="hot"] .lead-card { border-left-color: #FF6B6B; }
         .column[data-status="warm"] .lead-card { border-left-color: #FFA726; }
         .column[data-status="cold"] .lead-card { border-left-color: #42A5F5; }
+        .column[data-status="off_market"] .lead-card { border-left-color: #9B59B6; }
         .column[data-status="mandate"] .lead-card { border-left-color: #66BB6A; }
         .column[data-status="competitor"] .lead-card { border-left-color: #78909C; }
         .column[data-status="sold"] .lead-card { border-left-color: #AB47BC; }
@@ -2150,6 +2152,7 @@
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
         .match-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(102, 126, 234, 0.12); color: #667eea; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-top: 4px; }
+        .off-market-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(155, 89, 182, 0.12); color: #8E44AD; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-top: 4px; }
         .match-notification { position: fixed; bottom: 24px; right: 24px; background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 20px; max-width: 380px; z-index: 10000; animation: matchSlideUp 0.3s ease; }
         @keyframes matchSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .match-notification-header { font-weight: 700; font-size: 15px; color: #2C3E50; margin-bottom: 12px; }
@@ -2236,6 +2239,16 @@
             <div class="column-title">Prospects à 60 Jours et +</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="cold-container"></div>
+        </div>
+
+        <!-- Colonne Off Market -->
+        <div class="column" data-status="off_market">
+            <div class="column-header header-off_market">
+                <div class="column-label">🔒 OFF MARKET</div>
+            </div>
+            <div class="column-title">Biens visitables hors mandats</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
+            <div class="cards-container" id="off_market-container"></div>
         </div>
 
         <!-- Colonne Sous Mandats -->
@@ -2365,6 +2378,7 @@
                             <option value="hot">🔥 Hot - Prêt à - 30 jours</option>
                             <option value="warm">🟡 Warm - Entre 30 et 60 jours</option>
                             <option value="cold">❄️ Cold - 60 jours et +</option>
+                            <option value="off_market">🔒 Off Market</option>
                             <option value="mandate">✅ Sous Mandats</option>
                             <option value="competitor">🏢 Concurrents / PAP</option>
                             <option value="sold">🏆 Vendus</option>
@@ -2847,6 +2861,7 @@
             { status: 'hot', icon: '🔥', label: 'Chaudes' },
             { status: 'warm', icon: '🟠', label: 'Tièdes' },
             { status: 'cold', icon: '🔵', label: 'Froides' },
+            { status: 'off_market', icon: '🔒', label: 'Off Market' },
             { status: 'mandate', icon: '📋', label: 'Mandats' },
             { status: 'competitor', icon: '🏢', label: 'Concurrents / PAP' },
             { status: 'sold', icon: '✅', label: 'Vendus' },
@@ -4032,6 +4047,7 @@
                 compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
             if (followupCompact) compact += followupCompact;
+            if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
             if (sellerMatchCounts[seller.id]) compact += `<div class="match-badge">🎯 ${sellerMatchCounts[seller.id]}</div>`;
             compact += '</div>';
 
@@ -4090,7 +4106,7 @@
         }
 
         function updateCounts() {
-            const statuses = ['hot', 'warm', 'cold', 'mandate', 'competitor', 'sold', 'lost'];
+            const statuses = ['hot', 'warm', 'cold', 'off_market', 'mandate', 'competitor', 'sold', 'lost'];
             statuses.forEach(status => {
                 const count = sellers.filter(s => s.status === status).length;
                 const col = document.querySelector(`.column[data-status="${status}"] .count`);
@@ -5124,7 +5140,7 @@
         // ===== EXPORT CSV =====
         const SELLER_STATUS_LABELS = {
             hot: 'Lead Chaude', warm: 'Lead Tiède', cold: 'Lead Froide',
-            mandate: 'Sous Mandat', competitor: 'Concurrents / PAP', sold: 'Vendu', lost: 'Perdu'
+            off_market: 'Off Market', mandate: 'Sous Mandat', competitor: 'Concurrents / PAP', sold: 'Vendu', lost: 'Perdu'
         };
 
         function exportToCSV(data, columns, filename) {

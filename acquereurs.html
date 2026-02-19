@@ -1634,6 +1634,7 @@
         .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
+        .off-market-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(155, 89, 182, 0.12); color: #8E44AD; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
 
         /* Sector tags */
         .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
@@ -2121,7 +2122,8 @@
                     const color = pct >= 70 ? '#43A047' : pct >= 50 ? '#FB8C00' : '#E53935';
                     return '<div class="match-detail-bar"><span class="bar-label">' + d.label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
                 }).join('');
-                return '<div class="match-card" onclick="window.open(\'index.html\',\'_blank\')"><div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
+                const offBadge = s.status === 'off_market' ? ' <span class="off-market-badge">🔒 Off Market</span>' : '';
+                return '<div class="match-card" onclick="window.open(\'index.html\',\'_blank\')"><div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
             }).join('')}</div>`;
         }
 
