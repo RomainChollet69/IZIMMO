@@ -1289,7 +1289,9 @@
 
             try {
                 const bbox = radiusToBBox(lat, lng, radius);
-                const url = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=100&ordering=-datemut`;
+                const yearMin = parseInt(document.querySelector('#yearRange .range-min').value) || 2014;
+                const yearMax = parseInt(document.querySelector('#yearRange .range-max').value) || 2025;
+                const url = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=100&ordering=-datemut&anneemut_min=${yearMin}&anneemut_max=${yearMax}`;
                 console.log('DVF API URL:', url);
 
                 const resp = await fetch(url);
