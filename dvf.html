@@ -1036,7 +1036,28 @@
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }
             });
             infoWindow = new google.maps.InfoWindow();
-            geolocateUser();
+
+            // Paramètre URL ?adresse= : recherche auto depuis le pipeline vendeurs
+            const params = new URLSearchParams(window.location.search);
+            const adresseParam = params.get('adresse');
+            if (adresseParam) {
+                searchInput.value = adresseParam;
+                searchFromAddress(adresseParam);
+            } else {
+                geolocateUser();
+            }
+        }
+
+        async function searchFromAddress(query) {
+            try {
+                const resp = await fetch('https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=1');
+                const json = await resp.json();
+                if (json.features && json.features.length > 0) {
+                    selectAddress(json.features[0]);
+                }
+            } catch (err) {
+                console.error('Erreur géocodage adresse:', err);
+            }
         }
 
         // ===== GEOLOCATION =====

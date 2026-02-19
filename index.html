@@ -2366,6 +2366,7 @@
                     <div class="modal-actions" id="modalActions">
                         <button type="button" class="modal-action-btn" id="dictateBtn">🎙️ Dicter</button>
                         <button type="button" class="modal-action-btn" id="importDocBtn">📎 Importer un document</button>
+                        <button type="button" class="modal-action-btn" id="dvfBtn" style="display:none" onclick="openDVF()">📊 Marché local</button>
                     </div>
                     <div class="dictate-status" id="dictateStatus"></div>
                     <div class="pending-file-bar" id="pendingFileBar">
@@ -4279,6 +4280,7 @@
             if (isNewLead) {
                 document.querySelector('.modal-title').textContent = 'Nouveau Lead';
                 submitBtn.textContent = 'Créer le Lead';
+                document.getElementById('dvfBtn').style.display = 'none';
             }
 
             updateModalTabs();
@@ -4844,6 +4846,7 @@
             addrInput.dataset.longitude = seller.longitude || '';
             addrInput.dataset.city = seller.city || '';
             addrInput.dataset.postalCode = seller.postal_code || '';
+            document.getElementById('dvfBtn').style.display = seller.address ? '' : 'none';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('propertyType').value = seller.property_type || '';
             document.getElementById('annexePiscine').style.display = seller.property_type === 'maison' ? '' : 'none';
@@ -4889,6 +4892,14 @@
                 loadPriceHistory(id);
                 updateMandateCountdown();
             }
+        }
+
+        function openDVF() {
+            const addrInput = document.getElementById('address');
+            const address = addrInput.value.trim();
+            if (!address) return;
+            const url = 'dvf.html?adresse=' + encodeURIComponent(address);
+            window.open(url, '_blank');
         }
 
         async function confirmDeleteSeller(id) {
