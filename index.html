@@ -272,23 +272,24 @@
 
         /* ===== PIPELINE ===== */
         .pipeline {
-            display: grid;
-            grid-template-columns: repeat(7, minmax(320px, 1fr));
-            grid-auto-flow: column;
-            gap: 20px;
+            display: flex;
+            gap: 16px;
             overflow-x: auto;
             overflow-y: visible;
-            padding-bottom: 20px;
+            padding-bottom: 16px;
             cursor: grab;
+            -webkit-overflow-scrolling: touch;
         }
         .pipeline.grabbing { cursor: grabbing; }
 
-        .pipeline::-webkit-scrollbar { height: 12px; }
+        .pipeline::-webkit-scrollbar { height: 8px; }
         .pipeline::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
         .pipeline::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
         .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
         .column {
+            min-width: 280px;
+            flex: 0 0 280px;
             background: rgba(255, 255, 255, 0.75);
             border-radius: 16px;
             padding: 20px;
@@ -1937,6 +1938,7 @@
                 display: none !important;
                 min-width: 100% !important;
                 width: 100% !important;
+                flex: none !important;
                 padding: 0 !important;
                 min-height: auto;
             }
