@@ -716,7 +716,8 @@
             searchDropdown.classList.remove('active');
 
             currentCenter = { lat, lng, cityCode };
-            map.setView([lat, lng], 16);
+            map.setCenter({ lat, lng });
+            map.setZoom(16);
 
             const radius = parseInt(document.getElementById('radiusSlider').value);
             fetchDVFData(lat, lng, radius, cityCode);
@@ -1101,6 +1102,6 @@
         // ===== INIT =====
         // Google Maps calls initMap() automatically via callback parameter
     </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4quq3xYzOf5Kd0DrWxC1sdkLpknCM3Jc&callback=initMap"></script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4quq3xYzOf5Kd0DrWxC1sdkLpknCM3Jc&v=weekly&callback=initMap"></script>
 </body>
 </html>
