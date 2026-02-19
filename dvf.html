@@ -258,34 +258,133 @@
             text-align: right;
         }
 
-        /* Filter chips */
-        .filter-section {
-            padding: 12px 20px;
+        /* Filter panel */
+        .filter-panel {
+            padding: 16px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
+            overflow-y: auto;
+            max-height: 50vh;
         }
 
-        .filter-chip {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
+        .filter-panel::-webkit-scrollbar { width: 4px; }
+        .filter-panel::-webkit-scrollbar-track { background: transparent; }
+        .filter-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+        .fp-section { margin-bottom: 16px; }
+        .fp-section:last-child { margin-bottom: 0; }
+
+        .fp-label {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .fp-label-value {
+            font-weight: 600;
+            color: #667eea;
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 11px;
+        }
+
+        /* Type buttons */
+        .fp-type-grid {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .fp-type-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.12);
             background: transparent;
-            color: rgba(255,255,255,0.6);
-            transition: all 0.2s;
+            color: rgba(255,255,255,0.55);
+            transition: all 0.15s;
             font-family: 'Inter', sans-serif;
         }
 
-        .filter-chip:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
-        .filter-chip.active {
+        .fp-type-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+        .fp-type-btn.active {
             background: #667eea;
             border-color: #667eea;
             color: #fff;
         }
+
+        /* Min/max input rows */
+        .fp-minmax-row {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .fp-minmax-row:last-child { margin-bottom: 0; }
+
+        .fp-input {
+            width: 100%;
+            padding: 7px 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+        .fp-input::placeholder { color: rgba(255,255,255,0.25); }
+        .fp-input:focus { border-color: #667eea; }
+
+        .fp-input::-webkit-outer-spin-button,
+        .fp-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .fp-input[type=number] { -moz-appearance: textfield; }
+
+        .fp-minmax-sep {
+            font-size: 11px;
+            color: rgba(255,255,255,0.25);
+        }
+
+        /* Filter counter + reset */
+        .fp-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .fp-counter {
+            font-size: 13px;
+            font-weight: 700;
+            color: #667eea;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+        }
+
+        .fp-reset-btn {
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: rgba(244,67,54,0.15);
+            color: #EF5350;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s;
+        }
+        .fp-reset-btn:hover { background: rgba(244,67,54,0.25); }
 
         /* Stats section */
         .stats-section {
@@ -408,64 +507,7 @@
         .price-high { background: rgba(244,67,54,0.2); color: #EF5350; }
         .price-very-high { background: rgba(156,39,176,0.2); color: #AB47BC; }
 
-        /* Advanced filters */
-        .advanced-filters-toggle {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px dashed rgba(255,255,255,0.3);
-            background: transparent;
-            color: rgba(255,255,255,0.6);
-            transition: all 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .advanced-filters-toggle:hover { border-color: #667eea; color: #667eea; }
-        .advanced-filters-toggle.active {
-            border-color: #667eea;
-            border-style: solid;
-            color: #667eea;
-            background: rgba(102,126,234,0.1);
-        }
-
-        .advanced-filters-panel {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .advanced-filters-panel.open {
-            max-height: 500px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
-        }
-
-        .advanced-filters-inner { padding: 16px 20px; }
-
-        .filter-group { margin-bottom: 14px; }
-        .filter-group:last-of-type { margin-bottom: 0; }
-
-        .filter-group-label {
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .filter-group-values {
-            font-weight: 600;
-            color: #667eea;
-            text-transform: none;
-            letter-spacing: 0;
-            font-size: 12px;
-        }
-
+        /* Dual range (year & price/m²) */
         .dual-range {
             position: relative;
             height: 32px;
@@ -477,8 +519,8 @@
             transform: translateY(-50%);
             left: 0;
             right: 0;
-            height: 6px;
-            background: rgba(255,255,255,0.12);
+            height: 5px;
+            background: rgba(255,255,255,0.1);
             border-radius: 3px;
         }
 
@@ -486,7 +528,7 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            height: 6px;
+            height: 5px;
             background: #667eea;
             border-radius: 3px;
             pointer-events: none;
@@ -508,8 +550,8 @@
 
         .dual-range input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             background: #667eea;
             border: 2px solid #fff;
             border-radius: 50%;
@@ -521,36 +563,6 @@
 
         .dual-range .range-min { z-index: 3; }
         .dual-range .range-max { z-index: 4; }
-
-        .filter-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            border: none;
-        }
-
-        .filter-btn-apply { flex: 1; background: #667eea; color: #fff; }
-        .filter-btn-apply:hover { background: #5a6fd6; }
-
-        .filter-btn-reset {
-            background: transparent;
-            color: rgba(255,255,255,0.5);
-            border: 1px solid rgba(255,255,255,0.15) !important;
-        }
-        .filter-btn-reset:hover {
-            border-color: rgba(255,255,255,0.3) !important;
-            color: rgba(255,255,255,0.7);
-        }
 
         /* Sale detail */
         .sale-detail { padding: 16px; }
@@ -829,7 +841,7 @@
 
             .side-panel.collapsed .search-section,
             .side-panel.collapsed .radius-section,
-            .side-panel.collapsed .filter-section,
+            .side-panel.collapsed .filter-panel,
             .side-panel.collapsed .stats-section { display: flex; }
             .side-panel.collapsed .sales-section { display: none; }
 
@@ -873,69 +885,65 @@
                 <span class="radius-value" id="radiusValue">1 km</span>
             </div>
 
-            <div class="filter-section">
-                <button class="filter-chip active" data-filter="all">Tout</button>
-                <button class="filter-chip" data-filter="maison">🏡 Maisons</button>
-                <button class="filter-chip" data-filter="appartement">🏢 Apparts</button>
-                <button class="filter-chip" data-filter="terrain">🏗️ Terrains</button>
-                <button class="filter-chip" data-filter="recent">📅 &lt; 1 an</button>
-                <button class="advanced-filters-toggle" id="advFiltersToggle">⚙️ Filtres</button>
-            </div>
+            <div class="filter-panel" id="filterPanel">
+                <!-- Année de vente -->
+                <div class="fp-section">
+                    <div class="fp-label">Année de vente <span class="fp-label-value" id="yearValues">2014 → 2025</span></div>
+                    <div class="dual-range" id="yearRange">
+                        <div class="dual-range-track"></div>
+                        <div class="dual-range-fill"></div>
+                        <input type="range" min="2014" max="2025" value="2014" step="1" class="range-min">
+                        <input type="range" min="2014" max="2025" value="2025" step="1" class="range-max">
+                    </div>
+                </div>
 
-            <div class="advanced-filters-panel" id="advFiltersPanel">
-                <div class="advanced-filters-inner">
-                    <div class="filter-group">
-                        <div class="filter-group-label">
-                            Période
-                            <span class="filter-group-values" id="periodValues">2014 — 2026</span>
-                        </div>
-                        <div class="dual-range" id="periodRange">
-                            <div class="dual-range-track"></div>
-                            <div class="dual-range-fill"></div>
-                            <input type="range" min="2014" max="2026" value="2014" step="1" class="range-min">
-                            <input type="range" min="2014" max="2026" value="2026" step="1" class="range-max">
-                        </div>
+                <!-- Type de bien -->
+                <div class="fp-section">
+                    <div class="fp-label">Type de bien</div>
+                    <div class="fp-type-grid" id="typeGrid">
+                        <button class="fp-type-btn active" data-type="all">Tout</button>
+                        <button class="fp-type-btn" data-type="maison">Maison</button>
+                        <button class="fp-type-btn" data-type="appartement">Appartement</button>
+                        <button class="fp-type-btn" data-type="terrain">Terrain</button>
+                        <button class="fp-type-btn" data-type="local">Local pro</button>
                     </div>
-                    <div class="filter-group">
-                        <div class="filter-group-label">
-                            Surface
-                            <span class="filter-group-values" id="surfaceValues">0 — 300 m²</span>
-                        </div>
-                        <div class="dual-range" id="surfaceRange">
-                            <div class="dual-range-track"></div>
-                            <div class="dual-range-fill"></div>
-                            <input type="range" min="0" max="300" value="0" step="5" class="range-min">
-                            <input type="range" min="0" max="300" value="300" step="5" class="range-max">
-                        </div>
+                </div>
+
+                <!-- Caractéristiques min/max -->
+                <div class="fp-section">
+                    <div class="fp-label">Caractéristiques</div>
+                    <div class="fp-minmax-row">
+                        <input type="number" class="fp-input" id="surfTerrainMin" placeholder="Terrain min m²" min="0">
+                        <span class="fp-minmax-sep">→</span>
+                        <input type="number" class="fp-input" id="surfTerrainMax" placeholder="max m²" min="0">
                     </div>
-                    <div class="filter-group">
-                        <div class="filter-group-label">
-                            Prix
-                            <span class="filter-group-values" id="priceValues">0 — 2 000 000 €</span>
-                        </div>
-                        <div class="dual-range" id="priceRange">
-                            <div class="dual-range-track"></div>
-                            <div class="dual-range-fill"></div>
-                            <input type="range" min="0" max="2000000" value="0" step="10000" class="range-min">
-                            <input type="range" min="0" max="2000000" value="2000000" step="10000" class="range-max">
-                        </div>
+                    <div class="fp-minmax-row">
+                        <input type="number" class="fp-input" id="surfHabitMin" placeholder="Habit. min m²" min="0">
+                        <span class="fp-minmax-sep">→</span>
+                        <input type="number" class="fp-input" id="surfHabitMax" placeholder="max m²" min="0">
                     </div>
-                    <div class="filter-group">
-                        <div class="filter-group-label">
-                            Prix au m²
-                            <span class="filter-group-values" id="priceM2Values">0 — 15 000 €/m²</span>
-                        </div>
-                        <div class="dual-range" id="priceM2Range">
-                            <div class="dual-range-track"></div>
-                            <div class="dual-range-fill"></div>
-                            <input type="range" min="0" max="15000" value="0" step="100" class="range-min">
-                            <input type="range" min="0" max="15000" value="15000" step="100" class="range-max">
-                        </div>
+                    <div class="fp-minmax-row">
+                        <input type="number" class="fp-input" id="priceMin" placeholder="Prix min €" min="0">
+                        <span class="fp-minmax-sep">→</span>
+                        <input type="number" class="fp-input" id="priceMax" placeholder="max €" min="0">
                     </div>
-                    <div class="filter-actions">
-                        <button class="filter-btn filter-btn-apply" id="advFiltersApply">Appliquer</button>
-                        <button class="filter-btn filter-btn-reset" id="advFiltersReset">Réinitialiser</button>
+                </div>
+
+                <!-- Prix au m² -->
+                <div class="fp-section">
+                    <div class="fp-label">Prix au m² <span class="fp-label-value" id="priceM2Values">0 → 15 000 €/m²</span></div>
+                    <div class="dual-range" id="priceM2Range">
+                        <div class="dual-range-track"></div>
+                        <div class="dual-range-fill"></div>
+                        <input type="range" min="0" max="15000" value="0" step="100" class="range-min">
+                        <input type="range" min="0" max="15000" value="15000" step="100" class="range-max">
                     </div>
+                </div>
+
+                <!-- Footer: counter + reset -->
+                <div class="fp-footer">
+                    <span class="fp-counter" id="filterCounter">— ventes trouvées</span>
+                    <button class="fp-reset-btn" id="filterReset">Réinitialiser</button>
                 </div>
             </div>
 
@@ -1179,12 +1187,12 @@
             }
         });
 
-        // ===== FILTER CHIPS =====
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                currentFilter = chip.dataset.filter;
+        // ===== TYPE FILTER BUTTONS =====
+        document.querySelectorAll('.fp-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.fp-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.type;
                 renderFilteredSales();
             });
         });
@@ -1330,47 +1338,67 @@
         }
 
         // ===== RENDER =====
+        function getFilterValues() {
+            const v = (id) => { const el = document.getElementById(id); return el.value ? parseFloat(el.value) : null; };
+            return {
+                yearMin: parseInt(document.querySelector('#yearRange .range-min').value),
+                yearMax: parseInt(document.querySelector('#yearRange .range-max').value),
+                surfTerrainMin: v('surfTerrainMin'),
+                surfTerrainMax: v('surfTerrainMax'),
+                surfHabitMin: v('surfHabitMin'),
+                surfHabitMax: v('surfHabitMax'),
+                priceMin: v('priceMin'),
+                priceMax: v('priceMax'),
+                priceM2Min: parseInt(document.querySelector('#priceM2Range .range-min').value),
+                priceM2Max: parseInt(document.querySelector('#priceM2Range .range-max').value)
+            };
+        }
+
         function renderFilteredSales() {
             let filtered = [...allSales];
+            const f = getFilterValues();
 
+            // Type filter
             if (currentFilter === 'maison') {
                 filtered = filtered.filter(s => getType(s) === 'maison');
             } else if (currentFilter === 'appartement') {
                 filtered = filtered.filter(s => getType(s) === 'appartement');
             } else if (currentFilter === 'terrain') {
                 filtered = filtered.filter(s => getType(s) === 'terrain');
-            } else if (currentFilter === 'recent') {
-                const oneYearAgo = new Date();
-                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-                filtered = filtered.filter(s => {
-                    const d = new Date(s.date_mutation);
-                    return d >= oneYearAgo;
-                });
+            } else if (currentFilter === 'local') {
+                filtered = filtered.filter(s => getType(s) === 'autre');
             }
 
-            // Apply advanced filters
+            // Apply all filters
             filtered = filtered.filter(s => {
-                // Period
+                // Year
                 if (s.date_mutation) {
                     const year = new Date(s.date_mutation).getFullYear();
-                    if (year < advancedFilters.periodMin || year > advancedFilters.periodMax) return false;
+                    if (year < f.yearMin || year > f.yearMax) return false;
                 }
-                // Surface
-                const surface = parseFloat(s.surface_reelle_bati || s.surface_terrain || 0);
-                if (surface > 0) {
-                    if (surface < advancedFilters.surfaceMin || surface > advancedFilters.surfaceMax) return false;
-                }
+                // Surface terrain
+                const surfTerrain = parseFloat(s.surface_terrain) || 0;
+                if (f.surfTerrainMin !== null && surfTerrain < f.surfTerrainMin) return false;
+                if (f.surfTerrainMax !== null && surfTerrain > f.surfTerrainMax) return false;
+                // Surface habitable
+                const surfHabit = parseFloat(s.surface_reelle_bati) || 0;
+                if (f.surfHabitMin !== null && surfHabit < f.surfHabitMin) return false;
+                if (f.surfHabitMax !== null && surfHabit > f.surfHabitMax) return false;
                 // Price
-                const price = parseFloat(s.valeur_fonciere || 0);
-                if (price < advancedFilters.priceMin || price > advancedFilters.priceMax) return false;
+                const price = parseFloat(s.valeur_fonciere) || 0;
+                if (f.priceMin !== null && price < f.priceMin) return false;
+                if (f.priceMax !== null && price > f.priceMax) return false;
                 // Price per m²
                 const priceM2 = getPricePerM2(s);
-                if (priceM2 && (priceM2 < advancedFilters.priceM2Min || priceM2 > advancedFilters.priceM2Max)) return false;
+                if (priceM2 && (priceM2 < f.priceM2Min || priceM2 > f.priceM2Max)) return false;
                 return true;
             });
 
             // Sort by date desc
             filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
+
+            // Update counter
+            document.getElementById('filterCounter').textContent = `${filtered.length} vente${filtered.length > 1 ? 's' : ''} trouvée${filtered.length > 1 ? 's' : ''}`;
 
             currentFilteredSales = filtered;
             updateStats(filtered);
@@ -1644,24 +1672,8 @@
             return div.innerHTML;
         }
 
-        // ===== ADVANCED FILTERS =====
-        const advFiltersToggle = document.getElementById('advFiltersToggle');
-        const advFiltersPanel = document.getElementById('advFiltersPanel');
-
-        let advancedFilters = {
-            periodMin: 2014, periodMax: 2026,
-            surfaceMin: 0, surfaceMax: 300,
-            priceMin: 0, priceMax: 2000000,
-            priceM2Min: 0, priceM2Max: 15000
-        };
-        const defaultAdvancedFilters = { ...advancedFilters };
-
-        advFiltersToggle.addEventListener('click', () => {
-            advFiltersToggle.classList.toggle('active');
-            advFiltersPanel.classList.toggle('open');
-        });
-
-        function initDualRange(containerId, valuesId, formatter, onUpdate) {
+        // ===== FILTER PANEL INIT =====
+        function initDualRange(containerId, valuesId, formatter) {
             const container = document.getElementById(containerId);
             const valuesEl = document.getElementById(valuesId);
             const minInput = container.querySelector('.range-min');
@@ -1688,27 +1700,22 @@
                 fill.style.width = (rightPct - leftPct) + '%';
 
                 valuesEl.textContent = formatter(minVal, maxVal);
-                if (onUpdate) onUpdate(minVal, maxVal);
 
-                // Ensure min slider is accessible when near max
                 if (parseInt(minInput.value) >= parseInt(maxInput.max) - parseInt(minInput.step || 1) * 2) {
                     minInput.style.zIndex = 5;
                 } else {
                     minInput.style.zIndex = 3;
                 }
+
+                renderFilteredSales();
             }
 
             minInput.addEventListener('input', () => {
-                if (parseInt(minInput.value) > parseInt(maxInput.value)) {
-                    minInput.value = maxInput.value;
-                }
+                if (parseInt(minInput.value) > parseInt(maxInput.value)) minInput.value = maxInput.value;
                 update();
             });
-
             maxInput.addEventListener('input', () => {
-                if (parseInt(maxInput.value) < parseInt(minInput.value)) {
-                    maxInput.value = minInput.value;
-                }
+                if (parseInt(maxInput.value) < parseInt(minInput.value)) maxInput.value = minInput.value;
                 update();
             });
 
@@ -1723,37 +1730,31 @@
             };
         }
 
-        const periodSlider = initDualRange('periodRange', 'periodValues',
-            (min, max) => `${min} — ${max}`,
-            (min, max) => { advancedFilters.periodMin = min; advancedFilters.periodMax = max; }
-        );
-
-        const surfaceSlider = initDualRange('surfaceRange', 'surfaceValues',
-            (min, max) => `${min} — ${max} m²`,
-            (min, max) => { advancedFilters.surfaceMin = min; advancedFilters.surfaceMax = max; }
-        );
-
-        const priceSlider = initDualRange('priceRange', 'priceValues',
-            (min, max) => `${formatNumber(min)} — ${formatNumber(max)} €`,
-            (min, max) => { advancedFilters.priceMin = min; advancedFilters.priceMax = max; }
+        const yearSlider = initDualRange('yearRange', 'yearValues',
+            (min, max) => `${min} → ${max}`
         );
 
         const priceM2Slider = initDualRange('priceM2Range', 'priceM2Values',
-            (min, max) => `${formatNumber(min)} — ${formatNumber(max)} €/m²`,
-            (min, max) => { advancedFilters.priceM2Min = min; advancedFilters.priceM2Max = max; }
+            (min, max) => `${formatNumber(min)} → ${formatNumber(max)} €/m²`
         );
 
-        document.getElementById('advFiltersApply').addEventListener('click', () => {
-            renderFilteredSales();
+        // Live filtering on input fields
+        let inputDebounce = null;
+        document.querySelectorAll('.fp-input').forEach(input => {
+            input.addEventListener('input', () => {
+                clearTimeout(inputDebounce);
+                inputDebounce = setTimeout(() => renderFilteredSales(), 300);
+            });
         });
 
-        document.getElementById('advFiltersReset').addEventListener('click', () => {
-            advancedFilters = { ...defaultAdvancedFilters };
-            periodSlider.reset();
-            surfaceSlider.reset();
-            priceSlider.reset();
+        // Reset button
+        document.getElementById('filterReset').addEventListener('click', () => {
+            currentFilter = 'all';
+            document.querySelectorAll('.fp-type-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.fp-type-btn[data-type="all"]').classList.add('active');
+            document.querySelectorAll('.fp-input').forEach(i => { i.value = ''; });
+            yearSlider.reset();
             priceM2Slider.reset();
-            renderFilteredSales();
         });
 
         // ===== MAP TYPE TOGGLE =====
