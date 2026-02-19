@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAIMMO — Marché DVF</title>
+    <meta property="og:title" content="WAIMMO — Marché DVF">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 24px;
+            background: url('img/header_bg.png') center / cover no-repeat;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+            position: relative;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 140px;
+            height: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .nav-tab:hover {
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-container {
+            display: flex;
+            height: calc(100vh - 65px);
+        }
+
+        /* ===== SIDE PANEL ===== */
+        .side-panel {
+            width: 380px;
+            min-width: 380px;
+            background: #16213e;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .search-section {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 16px 14px 44px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-input::placeholder { color: rgba(255,255,255,0.4); }
+        .search-input:focus {
+            border-color: #667eea;
+            background: rgba(255,255,255,0.12);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            opacity: 0.5;
+        }
+
+        .search-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1e2d4a;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 0 0 12px 12px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 10001;
+            display: none;
+        }
+
+        .search-dropdown.active { display: block; }
+
+        .search-option {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s;
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+
+        .search-option:hover { background: rgba(102,126,234,0.2); }
+        .search-option:last-child { border-bottom: none; }
+        .search-context { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+        /* Radius selector */
+        .radius-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .radius-label {
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+            white-space: nowrap;
+        }
+
+        .radius-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 6px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .radius-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .radius-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* Filter chips */
+        .filter-section {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .filter-chip:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+        .filter-chip.active {
+            background: #667eea;
+            border-color: #667eea;
+            color: #fff;
+        }
+
+        /* Stats section */
+        .stats-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value.price { color: #667eea; }
+        .stat-value.houses { color: #4CAF50; }
+        .stat-value.apartments { color: #FF9800; }
+        .stat-value.land { color: #9C27B0; }
+
+        /* Sales list */
+        .sales-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+        }
+
+        .sales-section::-webkit-scrollbar { width: 6px; }
+        .sales-section::-webkit-scrollbar-track { background: transparent; }
+        .sales-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        .sales-header {
+            padding: 8px 8px 12px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sale-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .sale-card:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateX(2px);
+        }
+
+        .sale-card.maison { border-left-color: #4CAF50; }
+        .sale-card.appartement { border-left-color: #FF9800; }
+        .sale-card.terrain { border-left-color: #9C27B0; }
+        .sale-card.autre { border-left-color: #607D8B; }
+
+        .sale-type {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .sale-type.maison { color: #4CAF50; }
+        .sale-type.appartement { color: #FF9800; }
+        .sale-type.terrain { color: #9C27B0; }
+        .sale-type.autre { color: #607D8B; }
+
+        .sale-price {
+            font-size: 18px;
+            font-weight: 800;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            color: #fff;
+        }
+
+        .sale-details {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 4px;
+            line-height: 1.5;
+        }
+
+        .sale-price-m2 {
+            display: inline-block;
+            margin-top: 6px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* Price per m² color coding */
+        .price-low { background: rgba(76,175,80,0.2); color: #66BB6A; }
+        .price-medium { background: rgba(255,152,0,0.2); color: #FFA726; }
+        .price-high { background: rgba(244,67,54,0.2); color: #EF5350; }
+        .price-very-high { background: rgba(156,39,176,0.2); color: #AB47BC; }
+
+        /* ===== MAP ===== */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Dark theme for Leaflet */
+        .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.2) saturate(0.3); }
+        .leaflet-control-zoom a {
+            background: #16213e !important;
+            color: #e0e0e0 !important;
+            border-color: rgba(255,255,255,0.15) !important;
+        }
+        .leaflet-control-zoom a:hover {
+            background: #1e2d4a !important;
+        }
+        .leaflet-control-attribution {
+            background: rgba(22,33,62,0.8) !important;
+            color: rgba(255,255,255,0.4) !important;
+            font-size: 10px !important;
+        }
+        .leaflet-control-attribution a { color: rgba(255,255,255,0.5) !important; }
+
+        /* Map legend */
+        .map-legend {
+            position: absolute;
+            bottom: 30px;
+            right: 16px;
+            background: rgba(22,33,62,0.95);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 10px;
+            padding: 12px 16px;
+            z-index: 1000;
+            font-size: 12px;
+        }
+
+        .legend-title {
+            font-weight: 700;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 8px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(22,33,62,0.95);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 12px;
+            padding: 20px 30px;
+            z-index: 1000;
+            display: none;
+            text-align: center;
+        }
+
+        .loading-overlay.active { display: block; }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .loading-text { font-size: 13px; color: rgba(255,255,255,0.6); }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
+        .empty-state-text { font-size: 14px; line-height: 1.6; }
+
+        /* Toggle panel button (mobile) */
+        .toggle-panel-btn {
+            display: none;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1001;
+            background: rgba(22,33,62,0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 10px 14px;
+            color: #fff;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body { overflow: auto; }
+
+            .header {
+                padding: 10px 16px;
+                display: grid;
+                grid-template-columns: auto 1fr auto;
+                gap: 8px;
+                align-items: center;
+            }
+
+            .logo img { width: 100px; }
+
+            .nav-tabs {
+                grid-column: 1 / -1;
+                grid-row: 2;
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .nav-text { display: none; }
+            .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
+
+            .main-container {
+                flex-direction: column;
+                height: auto;
+                min-height: calc(100vh - 100px);
+            }
+
+            .side-panel {
+                width: 100%;
+                min-width: 100%;
+                max-height: none;
+                border-right: none;
+                border-bottom: 1px solid rgba(255,255,255,0.08);
+            }
+
+            .side-panel.collapsed .search-section,
+            .side-panel.collapsed .radius-section,
+            .side-panel.collapsed .filter-section,
+            .side-panel.collapsed .stats-section { display: flex; }
+            .side-panel.collapsed .sales-section { display: none; }
+
+            .map-container {
+                height: 60vh;
+                min-height: 400px;
+            }
+
+            .toggle-panel-btn { display: block; }
+            .map-legend { bottom: 10px; right: 10px; font-size: 11px; padding: 8px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="logo"><img src="img/logo_200.png" alt="WAIMMO"></a>
+        <nav class="nav-tabs">
+            <a href="index.html" class="nav-tab">🏠 <span class="nav-text">Pipeline Vendeurs</span></a>
+            <a href="acquereurs.html" class="nav-tab">🔑 <span class="nav-text">Pipeline Acquéreurs</span></a>
+            <a href="dvf.html" class="nav-tab active">🗺️ <span class="nav-text">Marché DVF</span></a>
+        </nav>
+        <div class="header-actions">
+            <div id="userProfile" class="user-profile"></div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <!-- Side Panel -->
+        <div class="side-panel" id="sidePanel">
+            <div class="search-section">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="searchInput" placeholder="Rechercher une adresse..." autocomplete="off">
+                    <div class="search-dropdown" id="searchDropdown"></div>
+                </div>
+            </div>
+
+            <div class="radius-section">
+                <span class="radius-label">Rayon</span>
+                <input type="range" class="radius-slider" id="radiusSlider" min="200" max="3000" step="100" value="1000">
+                <span class="radius-value" id="radiusValue">1 km</span>
+            </div>
+
+            <div class="filter-section">
+                <button class="filter-chip active" data-filter="all">Tout</button>
+                <button class="filter-chip" data-filter="maison">🏡 Maisons</button>
+                <button class="filter-chip" data-filter="appartement">🏢 Apparts</button>
+                <button class="filter-chip" data-filter="terrain">🏗️ Terrains</button>
+                <button class="filter-chip" data-filter="recent">📅 &lt; 1 an</button>
+            </div>
+
+            <div class="stats-section" id="statsSection" style="display:none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value price" id="statMedianPrice">—</div>
+                        <div class="stat-label">Prix médian /m²</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Ventes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value houses" id="statHouses">—</div>
+                        <div class="stat-label">Maisons</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value apartments" id="statApartments">—</div>
+                        <div class="stat-label">Appartements</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sales-section" id="salesSection">
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-icon">🗺️</div>
+                    <div class="empty-state-text">Recherchez une adresse pour voir<br>les ventes immobilières à proximité</div>
+                </div>
+                <div class="sales-header" id="salesHeader" style="display:none;">
+                    <span id="salesCount">0</span> ventes trouvées
+                </div>
+                <div id="salesList"></div>
+            </div>
+        </div>
+
+        <!-- Map -->
+        <div class="map-container">
+            <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
+            <div id="map"></div>
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Chargement des ventes...</div>
+            </div>
+            <div class="map-legend">
+                <div class="legend-title">Prix au m²</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> &lt; 2 000 €/m²</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#FFC107"></div> 2 000 - 4 000 €/m²</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#FF9800"></div> 4 000 - 6 000 €/m²</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> 6 000 - 8 000 €/m²</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> &gt; 8 000 €/m²</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== MAP INITIALIZATION =====
+        let map;
+        let markers = [];
+        let radiusCircle = null;
+        let allSales = [];
+        let currentFilter = 'all';
+        let currentCenter = null;
+
+        // Default: Lyon center
+        const DEFAULT_LAT = 45.764;
+        const DEFAULT_LNG = 4.8357;
+        const DEFAULT_ZOOM = 13;
+
+        function initMap() {
+            map = L.map('map', {
+                center: [DEFAULT_LAT, DEFAULT_LNG],
+                zoom: DEFAULT_ZOOM,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
+            }).addTo(map);
+        }
+
+        // ===== SEARCH WITH AUTOCOMPLETE =====
+        const searchInput = document.getElementById('searchInput');
+        const searchDropdown = document.getElementById('searchDropdown');
+        let searchDebounce = null;
+
+        searchInput.addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            const q = searchInput.value.trim();
+            if (q.length < 3) {
+                searchDropdown.classList.remove('active');
+                return;
+            }
+            searchDebounce = setTimeout(() => fetchAddressSuggestions(q), 300);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') searchDropdown.classList.remove('active');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!document.querySelector('.search-wrapper').contains(e.target)) {
+                searchDropdown.classList.remove('active');
+            }
+        });
+
+        async function fetchAddressSuggestions(query) {
+            try {
+                const url = 'https://api-adresse.data.gouv.fr/search/?q=' + encodeURIComponent(query) + '&limit=5';
+                const resp = await fetch(url);
+                if (!resp.ok) return;
+                const json = await resp.json();
+
+                if (!json.features || json.features.length === 0) {
+                    searchDropdown.classList.remove('active');
+                    return;
+                }
+
+                searchDropdown.innerHTML = json.features.map((f, i) => {
+                    const p = f.properties;
+                    return `<div class="search-option" data-index="${i}">
+                        ${escapeHtml(p.label)}
+                        ${p.context ? `<div class="search-context">${escapeHtml(p.context)}</div>` : ''}
+                    </div>`;
+                }).join('');
+                searchDropdown.classList.add('active');
+
+                // Store features for click handler
+                searchDropdown._features = json.features;
+
+                searchDropdown.querySelectorAll('.search-option').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const feature = searchDropdown._features[parseInt(el.dataset.index)];
+                        selectAddress(feature);
+                    });
+                });
+            } catch (err) {
+                console.error('Erreur recherche adresse:', err);
+            }
+        }
+
+        function selectAddress(feature) {
+            const coords = feature.geometry.coordinates;
+            const lat = coords[1];
+            const lng = coords[0];
+            const label = feature.properties.label;
+
+            searchInput.value = label;
+            searchDropdown.classList.remove('active');
+
+            currentCenter = { lat, lng };
+            map.setView([lat, lng], 16);
+
+            const radius = parseInt(document.getElementById('radiusSlider').value);
+            fetchDVFData(lat, lng, radius);
+        }
+
+        // ===== RADIUS SLIDER =====
+        const radiusSlider = document.getElementById('radiusSlider');
+        const radiusValue = document.getElementById('radiusValue');
+
+        radiusSlider.addEventListener('input', () => {
+            const val = parseInt(radiusSlider.value);
+            radiusValue.textContent = val >= 1000 ? (val / 1000).toFixed(1).replace('.0', '') + ' km' : val + ' m';
+        });
+
+        radiusSlider.addEventListener('change', () => {
+            if (currentCenter) {
+                const radius = parseInt(radiusSlider.value);
+                fetchDVFData(currentCenter.lat, currentCenter.lng, radius);
+            }
+        });
+
+        // ===== FILTER CHIPS =====
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentFilter = chip.dataset.filter;
+                renderFilteredSales();
+            });
+        });
+
+        // ===== DVF API =====
+        async function fetchDVFData(lat, lng, radius) {
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            // Clear existing
+            clearMarkers();
+            allSales = [];
+
+            try {
+                // Compute bounding box from center + radius
+                const latOffset = radius / 111320;
+                const lngOffset = radius / (111320 * Math.cos(lat * Math.PI / 180));
+
+                const url = `https://api.dvf.etalab.gouv.fr/mutations?bbox=${(lng - lngOffset).toFixed(6)},${(lat - latOffset).toFixed(6)},${(lng + lngOffset).toFixed(6)},${(lat + latOffset).toFixed(6)}`;
+
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
+                const data = await resp.json();
+
+                allSales = (data.features || data || [])
+                    .map(f => {
+                        // Handle both GeoJSON and flat format
+                        if (f.properties) {
+                            return { ...f.properties, lat: f.geometry?.coordinates?.[1], lng: f.geometry?.coordinates?.[0] };
+                        }
+                        return f;
+                    })
+                    .filter(s => s.lat && s.lng && s.valeur_fonciere);
+
+                // Draw radius circle
+                if (radiusCircle) map.removeLayer(radiusCircle);
+                radiusCircle = L.circle([lat, lng], {
+                    radius: radius,
+                    color: '#667eea',
+                    fillColor: '#667eea',
+                    fillOpacity: 0.08,
+                    weight: 1.5,
+                    dashArray: '6,4'
+                }).addTo(map);
+
+                map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+
+                renderFilteredSales();
+
+            } catch (err) {
+                console.error('Erreur DVF:', err);
+                document.getElementById('salesList').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Erreur de chargement des données DVF.<br>Réessayez avec une autre adresse.</div></div>`;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ===== RENDER =====
+        function renderFilteredSales() {
+            let filtered = [...allSales];
+
+            if (currentFilter === 'maison') {
+                filtered = filtered.filter(s => getType(s) === 'maison');
+            } else if (currentFilter === 'appartement') {
+                filtered = filtered.filter(s => getType(s) === 'appartement');
+            } else if (currentFilter === 'terrain') {
+                filtered = filtered.filter(s => getType(s) === 'terrain');
+            } else if (currentFilter === 'recent') {
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+                filtered = filtered.filter(s => {
+                    const d = new Date(s.date_mutation);
+                    return d >= oneYearAgo;
+                });
+            }
+
+            // Sort by date desc
+            filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
+
+            updateStats(filtered);
+            renderMarkers(filtered);
+            renderSalesList(filtered);
+        }
+
+        function getType(sale) {
+            const t = (sale.type_local || sale.nature_mutation || '').toLowerCase();
+            if (t.includes('maison')) return 'maison';
+            if (t.includes('appartement') || t.includes('appart')) return 'appartement';
+            if (t.includes('terrain') || t.includes('dépendance')) return 'terrain';
+            return 'autre';
+        }
+
+        function getPricePerM2(sale) {
+            const price = parseFloat(sale.valeur_fonciere);
+            const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+            if (!price || !surface || surface === 0) return null;
+            return Math.round(price / surface);
+        }
+
+        function getPriceColor(priceM2) {
+            if (!priceM2) return '#607D8B';
+            if (priceM2 < 2000) return '#4CAF50';
+            if (priceM2 < 4000) return '#FFC107';
+            if (priceM2 < 6000) return '#FF9800';
+            if (priceM2 < 8000) return '#F44336';
+            return '#9C27B0';
+        }
+
+        function getPriceClass(priceM2) {
+            if (!priceM2) return '';
+            if (priceM2 < 2000) return 'price-low';
+            if (priceM2 < 4000) return 'price-medium';
+            if (priceM2 < 6000) return 'price-medium';
+            if (priceM2 < 8000) return 'price-high';
+            return 'price-very-high';
+        }
+
+        function updateStats(sales) {
+            const statsSection = document.getElementById('statsSection');
+            if (sales.length === 0) {
+                statsSection.style.display = 'none';
+                return;
+            }
+            statsSection.style.display = 'block';
+
+            // Median price per m²
+            const pricesM2 = sales.map(s => getPricePerM2(s)).filter(p => p && p > 0);
+            pricesM2.sort((a, b) => a - b);
+            const median = pricesM2.length > 0 ? pricesM2[Math.floor(pricesM2.length / 2)] : 0;
+
+            document.getElementById('statMedianPrice').textContent = median ? formatNumber(median) + ' €' : '—';
+            document.getElementById('statTotal').textContent = sales.length;
+            document.getElementById('statHouses').textContent = sales.filter(s => getType(s) === 'maison').length;
+            document.getElementById('statApartments').textContent = sales.filter(s => getType(s) === 'appartement').length;
+        }
+
+        function renderMarkers(sales) {
+            clearMarkers();
+
+            sales.forEach(sale => {
+                const lat = parseFloat(sale.lat);
+                const lng = parseFloat(sale.lng);
+                if (!lat || !lng) return;
+
+                const priceM2 = getPricePerM2(sale);
+                const color = getPriceColor(priceM2);
+                const type = getType(sale);
+                const typeEmoji = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' }[type];
+
+                const price = parseFloat(sale.valeur_fonciere);
+                const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+                const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+
+                // Custom circle marker
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: 'rgba(255,255,255,0.4)',
+                    weight: 1.5,
+                    fillOpacity: 0.85
+                }).addTo(map);
+
+                // Popup
+                marker.bindPopup(`
+                    <div style="font-family:Inter,sans-serif;min-width:180px">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
+                        <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
+                        ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
+                        <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
+                        ${sale.adresse_nom_voie ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 ${escapeHtml(sale.adresse_numero || '')} ${escapeHtml(sale.adresse_nom_voie || '')}</div>` : ''}
+                    </div>
+                `);
+
+                markers.push(marker);
+            });
+        }
+
+        function renderSalesList(sales) {
+            const salesList = document.getElementById('salesList');
+            const salesHeader = document.getElementById('salesHeader');
+            const emptyState = document.getElementById('emptyState');
+            const salesCount = document.getElementById('salesCount');
+
+            if (sales.length === 0 && allSales.length === 0) {
+                emptyState.style.display = 'block';
+                salesHeader.style.display = 'none';
+                salesList.innerHTML = '';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            salesHeader.style.display = 'block';
+            salesCount.textContent = sales.length;
+
+            if (sales.length === 0) {
+                salesList.innerHTML = `<div class="empty-state" style="padding:20px"><div class="empty-state-text">Aucune vente ne correspond au filtre sélectionné</div></div>`;
+                return;
+            }
+
+            salesList.innerHTML = sales.slice(0, 100).map((sale, i) => {
+                const type = getType(sale);
+                const price = parseFloat(sale.valeur_fonciere);
+                const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+                const priceM2 = getPricePerM2(sale);
+                const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+                const rooms = sale.nombre_pieces_principales ? sale.nombre_pieces_principales + 'p' : '';
+                const address = [sale.adresse_numero, sale.adresse_nom_voie].filter(Boolean).join(' ');
+
+                return `<div class="sale-card ${type}" data-index="${i}" onclick="focusSale(${sale.lat}, ${sale.lng})">
+                    <div class="sale-type ${type}">${capitalize(type)}${rooms ? ' — ' + rooms : ''}</div>
+                    <div class="sale-price">${formatPrice(price)}</div>
+                    <div class="sale-details">
+                        ${surface ? surface + ' m²' : ''}${surface && date ? ' — ' : ''}${date}
+                        ${address ? '<br>📍 ' + escapeHtml(address) : ''}
+                    </div>
+                    ${priceM2 ? `<span class="sale-price-m2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
+                </div>`;
+            }).join('');
+        }
+
+        function focusSale(lat, lng) {
+            if (!lat || !lng) return;
+            map.setView([lat, lng], 18);
+            // Find and open the matching marker popup
+            markers.forEach(m => {
+                const pos = m.getLatLng();
+                if (Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001) {
+                    m.openPopup();
+                }
+            });
+        }
+
+        function clearMarkers() {
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+        }
+
+        // ===== UTILS =====
+        function formatPrice(amount) {
+            if (!amount) return '—';
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(amount);
+        }
+
+        function formatNumber(n) {
+            return new Intl.NumberFormat('fr-FR').format(n);
+        }
+
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ===== TOGGLE PANEL (MOBILE) =====
+        document.getElementById('togglePanelBtn').addEventListener('click', () => {
+            document.getElementById('sidePanel').classList.toggle('collapsed');
+        });
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initMap();
+        });
+    </script>
+</body>
+</html>
