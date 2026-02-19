@@ -775,25 +775,29 @@
             allSales = [];
 
             try {
-                // Compute bounding box from center + radius
-                const latOffset = radius / 111320;
-                const lngOffset = radius / (111320 * Math.cos(lat * Math.PI / 180));
+                const url = `https://api.dvf.data.gouv.fr/dvf/mutations/?lat=${lat}&lon=${lng}&rayon=${radius}&page_size=50`;
+                console.log('DVF API URL:', url);
 
-                const url = `https://api.dvf.etalab.gouv.fr/mutations?bbox=${(lng - lngOffset).toFixed(6)},${(lat - latOffset).toFixed(6)},${(lng + lngOffset).toFixed(6)},${(lat + latOffset).toFixed(6)}`;
-
-                const resp = await fetch(url);
+                const resp = await fetch(url, { mode: 'cors' });
                 if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
                 const data = await resp.json();
+                console.log('DVF API response:', data);
 
-                allSales = (data.features || data || [])
-                    .map(f => {
-                        // Handle both GeoJSON and flat format
-                        if (f.properties) {
-                            return { ...f.properties, lat: f.geometry?.coordinates?.[1], lng: f.geometry?.coordinates?.[0] };
-                        }
-                        return f;
-                    })
-                    .filter(s => s.lat && s.lng && s.valeur_fonciere);
+                const results = data.results || data.mutations || data || [];
+
+                allSales = results
+                    .map(m => ({
+                        ...m,
+                        lat: parseFloat(m.latitude) || null,
+                        lng: parseFloat(m.longitude) || null,
+                        valeur_fonciere: parseFloat(m.valeur_fonciere) || 0,
+                        surface_reelle_bati: parseFloat(m.surface_reelle_bati) || 0,
+                        surface_terrain: parseFloat(m.surface_terrain) || 0,
+                        nombre_pieces_principales: m.nombre_pieces_principales ? parseInt(m.nombre_pieces_principales) : null
+                    }))
+                    .filter(s => s.lat && s.lng && s.valeur_fonciere > 0);
+
+                console.log(`DVF: ${allSales.length} ventes trouvées sur ${results.length} résultats`);
 
                 // Draw radius circle
                 if (radiusCircle) map.removeLayer(radiusCircle);
@@ -930,7 +934,7 @@
                         <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
                         ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
                         <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
-                        ${sale.adresse_nom_voie ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 ${escapeHtml(sale.adresse_numero || '')} ${escapeHtml(sale.adresse_nom_voie || '')}</div>` : ''}
+                        ${sale.adresse_nom_voie ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 ${escapeHtml(cleanNumero(sale.adresse_numero))} ${escapeHtml(sale.adresse_nom_voie || '')}</div>` : ''}
                     </div>
                 `);
 
@@ -967,7 +971,7 @@
                 const priceM2 = getPricePerM2(sale);
                 const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
                 const rooms = sale.nombre_pieces_principales ? sale.nombre_pieces_principales + 'p' : '';
-                const address = [sale.adresse_numero, sale.adresse_nom_voie].filter(Boolean).join(' ');
+                const address = [cleanNumero(sale.adresse_numero), sale.adresse_nom_voie].filter(Boolean).join(' ');
 
                 return `<div class="sale-card ${type}" data-index="${i}" onclick="focusSale(${sale.lat}, ${sale.lng})">
                     <div class="sale-type ${type}">${capitalize(type)}${rooms ? ' — ' + rooms : ''}</div>
@@ -1006,6 +1010,11 @@
 
         function formatNumber(n) {
             return new Intl.NumberFormat('fr-FR').format(n);
+        }
+
+        function cleanNumero(num) {
+            if (!num || num === 'None' || num === 'null') return '';
+            return String(num).replace(/\.0$/, '');
         }
 
         function capitalize(str) {
