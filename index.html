@@ -2131,6 +2131,34 @@
             .preview-fields { grid-template-columns: 1fr; }
             .onboarding-alternatives { flex-wrap: wrap; justify-content: center; }
         }
+
+        /* Matching */
+        .match-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .match-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8f9fa; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+        .match-card:hover { background: #e8eaf6; }
+        .match-score-circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+        .match-score-high { background: linear-gradient(135deg, #43A047, #66BB6A); }
+        .match-score-medium { background: linear-gradient(135deg, #FB8C00, #FFA726); }
+        .match-score-low { background: linear-gradient(135deg, #E53935, #EF5350); }
+        .match-info { flex: 1; min-width: 0; }
+        .match-info .match-name { font-weight: 600; font-size: 14px; color: #2C3E50; }
+        .match-info .match-detail { font-size: 12px; color: #78909C; margin-top: 2px; }
+        .match-detail-bars { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .match-detail-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .match-detail-bar .bar-label { min-width: 80px; color: #78909C; }
+        .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
+        .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
+        .match-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(102, 126, 234, 0.12); color: #667eea; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-top: 4px; }
+        .match-notification { position: fixed; bottom: 24px; right: 24px; background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 20px; max-width: 380px; z-index: 10000; animation: matchSlideUp 0.3s ease; }
+        @keyframes matchSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .match-notification-header { font-weight: 700; font-size: 15px; color: #2C3E50; margin-bottom: 12px; }
+        .match-notification .match-card { padding: 8px 12px; }
+        .match-notification-close { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 18px; cursor: pointer; color: #999; }
+        .match-notification-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .match-notification-actions button { flex: 1; padding: 8px; border-radius: 8px; border: none; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .match-notif-btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .match-notif-btn-secondary { background: #f0f2f5; color: #666; }
     </style>
 </head>
 <body>
@@ -2314,6 +2342,7 @@
                 <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
                 <button type="button" class="modal-tab" data-tab="mandate" onclick="switchTab('mandate')">📑 Gestion Mandat</button>
                 <button type="button" class="modal-tab" data-tab="messages" onclick="switchTab('messages')">✨ Messages IA</button>
+                <button type="button" class="modal-tab" data-tab="matching" onclick="switchTab('matching')">🎯 Matching</button>
             </div>
             <form id="leadForm">
                 <div id="tabInfo">
@@ -2617,6 +2646,12 @@
                     </div>
                 </div>
 
+                <div id="tabMatching" style="display:none">
+                    <div id="matchingContent">
+                        <div class="match-empty">Chargement...</div>
+                    </div>
+                </div>
+
                 <button type="button" class="submit-btn" id="submitBtn">Créer le Lead</button>
             </form>
         </div>
@@ -2628,6 +2663,180 @@
         let draggedCard = null;
         let visitCounts = {};
         let currentVisits = [];
+        let matchBuyers = null;
+        let sellerMatchCounts = {};
+
+        // ===== MATCHING =====
+        function calculateMatchScore(seller, buyer) {
+            let score = 0, maxScore = 0;
+            const details = [];
+
+            // Budget (30pts)
+            if (seller.budget && buyer.budget_max) {
+                maxScore += 30;
+                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
+                if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
+                else if (sb <= bm * 1.1) { score += 15; details.push({ label: 'Budget', score: 15, max: 30 }); }
+                else { details.push({ label: 'Budget', score: 0, max: 30 }); }
+            }
+
+            // Localisation (25pts)
+            if (seller.city && (buyer.city || buyer.sector)) {
+                maxScore += 25;
+                const sc = (seller.city || '').toLowerCase().trim();
+                const bc = (buyer.city || '').toLowerCase().trim();
+                const bs = (buyer.sector || '').toLowerCase();
+                if (sc && (sc === bc || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                else if (seller.postal_code && buyer.postal_code && seller.postal_code.substring(0,2) === buyer.postal_code.substring(0,2)) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
+            }
+
+            // Type de bien (15pts)
+            if (seller.property_type && buyer.property_type) {
+                maxScore += 15;
+                if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                else { details.push({ label: 'Type', score: 0, max: 15 }); }
+            }
+
+            // Surface (15pts)
+            if (seller.surface && buyer.surface_min) {
+                maxScore += 15;
+                if (seller.surface >= buyer.surface_min) { score += 15; details.push({ label: 'Surface', score: 15, max: 15 }); }
+                else if (seller.surface >= buyer.surface_min * 0.9) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
+                else { details.push({ label: 'Surface', score: 0, max: 15 }); }
+            }
+
+            // Pieces (10pts)
+            if (seller.rooms && buyer.rooms) {
+                maxScore += 10;
+                const sn = parseInt(seller.rooms.replace(/\D/g, '')) || 0;
+                const bn = parseInt(buyer.rooms.replace(/\D/g, '')) || 0;
+                if (sn >= bn) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else { details.push({ label: 'Pièces', score: 0, max: 10 }); }
+            }
+
+            // Annexes (bonus 15pts)
+            const sa = Array.isArray(seller.annexes) ? seller.annexes : [];
+            const ba = Array.isArray(buyer.criteria) ? buyer.criteria : [];
+            if (ba.length > 0 && sa.length > 0) {
+                maxScore += 15;
+                const matched = ba.filter(a => sa.includes(a)).length;
+                const as = Math.round((matched / ba.length) * 15);
+                score += as;
+                details.push({ label: 'Annexes', score: as, max: 15 });
+            }
+
+            const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+            return { score, maxScore, percent, details };
+        }
+
+        function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
+
+        async function loadBuyersForMatching() {
+            if (matchBuyers !== null) return matchBuyers;
+            const userId = await getCurrentUserId();
+            if (!userId) return [];
+            const { data } = await supabaseClient.from('buyers').select('*').eq('user_id', userId);
+            matchBuyers = data || [];
+            return matchBuyers;
+        }
+
+        async function computeMatchCounts() {
+            const buyers = await loadBuyersForMatching();
+            const counts = {};
+            sellers.forEach(seller => {
+                const mc = buyers.filter(b => calculateMatchScore(seller, b).percent >= 40).length;
+                if (mc > 0) counts[seller.id] = mc;
+            });
+            sellerMatchCounts = counts;
+        }
+
+        async function loadMatchingBuyers() {
+            const container = document.getElementById('matchingContent');
+            container.innerHTML = '<div class="match-empty">Chargement des acquéreurs...</div>';
+
+            matchBuyers = null; // Force refresh
+            const buyers = await loadBuyersForMatching();
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            const seller = sellers.find(s => s.id === editId);
+            if (!seller) { container.innerHTML = '<div class="match-empty">Vendeur introuvable</div>'; return; }
+
+            const matches = buyers
+                .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
+                .filter(m => m.percent >= 40)
+                .sort((a, b) => b.percent - a.percent);
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="match-empty">Aucun acquéreur correspondant (seuil : 40%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
+                return;
+            }
+
+            container.innerHTML = `<div style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div><div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer')).join('')}</div>`;
+        }
+
+        function renderMatchCard(m, type) {
+            const person = type === 'buyer' ? m.buyer : m.seller;
+            const name = escapeHtml((person.first_name || '') + ' ' + (person.last_name || ''));
+            const detailParts = [];
+            if (type === 'buyer') {
+                if (person.budget_max) detailParts.push(formatEuro(person.budget_max) + ' max');
+                if (person.sector) detailParts.push('📍 ' + escapeHtml(person.sector));
+                if (person.property_type) detailParts.push(person.property_type);
+            } else {
+                if (person.budget) detailParts.push(formatEuro(person.budget));
+                if (person.address) detailParts.push('📍 ' + escapeHtml(extractCity(person.address) || person.address));
+                if (person.surface) detailParts.push(person.surface + ' m²');
+            }
+            const barsHTML = m.details.map(d => {
+                const pct = d.max > 0 ? Math.round((d.score / d.max) * 100) : 0;
+                const color = pct >= 70 ? '#43A047' : pct >= 50 ? '#FB8C00' : '#E53935';
+                return `<div class="match-detail-bar"><span class="bar-label">${d.label}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+            }).join('');
+
+            return `<div class="match-card" onclick="window.open('${type === 'buyer' ? 'acquereurs' : 'index'}.html','_blank')">
+                <div class="match-score-circle ${getScoreClass(m.percent)}">${m.percent}%</div>
+                <div class="match-info">
+                    <div class="match-name">${name}</div>
+                    <div class="match-detail">${detailParts.join(' · ')}</div>
+                    <div class="match-detail-bars">${barsHTML}</div>
+                </div>
+            </div>`;
+        }
+
+        async function showMatchNotification(sellerId) {
+            const buyers = await loadBuyersForMatching();
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+
+            const matches = buyers
+                .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
+                .filter(m => m.percent >= 60)
+                .sort((a, b) => b.percent - a.percent)
+                .slice(0, 3);
+
+            if (matches.length === 0) return;
+
+            // Remove existing notification
+            const existing = document.getElementById('matchNotification');
+            if (existing) existing.remove();
+
+            const notif = document.createElement('div');
+            notif.className = 'match-notification';
+            notif.id = 'matchNotification';
+            notif.innerHTML = `
+                <button class="match-notification-close" onclick="this.parentElement.remove()">&times;</button>
+                <div class="match-notification-header">🎯 ${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspond${matches.length > 1 ? 'ent' : ''} !</div>
+                <div class="match-list" style="max-height:200px">${matches.map(m => renderMatchCard(m, 'buyer')).join('')}</div>
+                <div class="match-notification-actions">
+                    <button class="match-notif-btn-primary" onclick="editSeller('${sellerId}','matching');this.closest('.match-notification').remove()">Voir les matchs</button>
+                    <button class="match-notif-btn-secondary" onclick="this.closest('.match-notification').remove()">Fermer</button>
+                </div>
+            `;
+            document.body.appendChild(notif);
+
+            // Auto-close after 15s
+            setTimeout(() => { if (document.getElementById('matchNotification')) notif.remove(); }, 15000);
+        }
 
         // ===== MOBILE TABS =====
         const SELLER_TABS = [
@@ -2757,6 +2966,8 @@
             await loadNotePreviews();
             await loadFileCounts();
             renderSellers();
+            // Recompute matching badges (non-blocking)
+            if (matchBuyers !== null) computeMatchCounts().then(() => renderSellers()).catch(() => {});
         }
 
         async function createSeller(seller) {
@@ -3817,6 +4028,7 @@
                 compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
             if (followupCompact) compact += followupCompact;
+            if (sellerMatchCounts[seller.id]) compact += `<div class="match-badge">🎯 ${sellerMatchCounts[seller.id]}</div>`;
             compact += '</div>';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
@@ -3897,7 +4109,9 @@
             document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tabMandate').style.display = tab === 'mandate' ? 'block' : 'none';
             document.getElementById('tabMessages').style.display = tab === 'messages' ? 'block' : 'none';
+            document.getElementById('tabMatching').style.display = tab === 'matching' ? 'block' : 'none';
             if (tab === 'mandate') updateMandateCountdown();
+            if (tab === 'matching') loadMatchingBuyers();
         }
 
         function updateModalTabs() {
@@ -3906,10 +4120,12 @@
             const editId = document.getElementById('submitBtn').dataset.editId;
             const mandateTab = tabs.querySelector('[data-tab="mandate"]');
             const messagesTab = tabs.querySelector('[data-tab="messages"]');
+            const matchingTab = tabs.querySelector('[data-tab="matching"]');
             if (editId) {
                 tabs.style.display = 'flex';
                 mandateTab.style.display = status === 'mandate' ? '' : 'none';
                 messagesTab.style.display = '';
+                matchingTab.style.display = '';
             } else {
                 tabs.style.display = 'none';
                 switchTab('info');
@@ -4888,6 +5104,10 @@
                         if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
                             editSeller(sellerId, 'mandate');
                         }
+                        // Notification matching au passage en mandat
+                        if (newStatus === 'mandate') {
+                            showMatchNotification(sellerId);
+                        }
                         // Auto-ouverture popup concurrent UNIQUEMENT si pas encore de lien
                         if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
                             showCompetitorPopup(sellerId);
@@ -5399,12 +5619,14 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
-            loadSellers().then(() => {
+            loadSellers().then(async () => {
                 // Onboarding if 0 leads
                 if (sellers.length === 0) {
                     showOnboarding();
                     return;
                 }
+                // Compute match counts for badges (async, non-blocking)
+                computeMatchCounts().then(() => renderSellers()).catch(() => {});
                 // Open lead from relance widget cross-page navigation
                 const params = new URLSearchParams(window.location.search);
                 const openLeadId = params.get('openLead');

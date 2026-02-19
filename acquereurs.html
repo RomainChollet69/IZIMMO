@@ -1616,6 +1616,24 @@
 
             .submit-btn { padding: 14px; font-size: 15px; }
         }
+
+        /* Matching */
+        .match-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .match-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8f9fa; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+        .match-card:hover { background: #e8eaf6; }
+        .match-score-circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+        .match-score-high { background: linear-gradient(135deg, #43A047, #66BB6A); }
+        .match-score-medium { background: linear-gradient(135deg, #FB8C00, #FFA726); }
+        .match-score-low { background: linear-gradient(135deg, #E53935, #EF5350); }
+        .match-info { flex: 1; min-width: 0; }
+        .match-info .match-name { font-weight: 600; font-size: 14px; color: #2C3E50; }
+        .match-info .match-detail { font-size: 12px; color: #78909C; margin-top: 2px; }
+        .match-detail-bars { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+        .match-detail-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .match-detail-bar .bar-label { min-width: 80px; color: #78909C; }
+        .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
+        .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -1707,6 +1725,7 @@
             <div class="modal-tabs" id="modalTabs" style="display:none">
                 <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
                 <button type="button" class="modal-tab" data-tab="messages" onclick="switchTab('messages')">✨ Messages IA</button>
+                <button type="button" class="modal-tab" data-tab="matching" onclick="switchTab('matching')">🎯 Matching</button>
             </div>
             <form id="buyerForm">
                 <div id="tabInfo">
@@ -1794,14 +1813,15 @@
                         <input type="number" class="form-input" id="budgetMax" placeholder="350000">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Critères</label>
+                        <label class="form-label">Annexes souhaitées</label>
                         <div class="criteria-toggles">
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="jardin"><span>🌿 Jardin</span></label>
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="parking"><span>🅿️ Parking</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="cave"><span>📦 Cave</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="balcon"><span>☀️ Balcon/Terrasse</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="jardin"><span>🌳 Jardin</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="garage"><span>🚗 Garage</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="piscine"><span>🏊 Piscine</span></label>
                             <label class="criteria-toggle"><input type="checkbox" name="criteria" value="ascenseur"><span>🛗 Ascenseur</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="balcon_terrasse"><span>☀️ Balcon/Terrasse</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="calme"><span>🤫 Calme</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="neuf_renove"><span>✨ Neuf/Rénové</span></label>
                         </div>
                     </div>
                 </div>
@@ -1955,6 +1975,12 @@
                     </div>
                 </div>
 
+                <div id="tabMatching" style="display:none">
+                    <div id="matchingContent">
+                        <div class="match-empty">Chargement...</div>
+                    </div>
+                </div>
+
                 <button type="button" class="submit-btn" id="submitBtn">Créer l'Acquéreur</button>
             </form>
         </div>
@@ -1965,6 +1991,123 @@
         let buyers = [];
         let currentLinks = [];
         let draggedCard = null;
+        let matchSellers = null;
+
+        // ===== MATCHING =====
+        function calculateMatchScore(seller, buyer) {
+            let score = 0, maxScore = 0;
+            const details = [];
+
+            if (seller.budget && buyer.budget_max) {
+                maxScore += 30;
+                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
+                if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
+                else if (sb <= bm * 1.1) { score += 15; details.push({ label: 'Budget', score: 15, max: 30 }); }
+                else { details.push({ label: 'Budget', score: 0, max: 30 }); }
+            }
+
+            if (seller.city && (buyer.city || buyer.sector)) {
+                maxScore += 25;
+                const sc = (seller.city || '').toLowerCase().trim();
+                const bc = (buyer.city || '').toLowerCase().trim();
+                const bs = (buyer.sector || '').toLowerCase();
+                if (sc && (sc === bc || bs.includes(sc))) { score += 25; details.push({ label: 'Localisation', score: 25, max: 25 }); }
+                else if (seller.postal_code && buyer.postal_code && seller.postal_code.substring(0,2) === buyer.postal_code.substring(0,2)) { score += 12; details.push({ label: 'Localisation', score: 12, max: 25 }); }
+                else { details.push({ label: 'Localisation', score: 0, max: 25 }); }
+            }
+
+            if (seller.property_type && buyer.property_type) {
+                maxScore += 15;
+                if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                else { details.push({ label: 'Type', score: 0, max: 15 }); }
+            }
+
+            if (seller.surface && buyer.surface_min) {
+                maxScore += 15;
+                if (seller.surface >= buyer.surface_min) { score += 15; details.push({ label: 'Surface', score: 15, max: 15 }); }
+                else if (seller.surface >= buyer.surface_min * 0.9) { score += 8; details.push({ label: 'Surface', score: 8, max: 15 }); }
+                else { details.push({ label: 'Surface', score: 0, max: 15 }); }
+            }
+
+            if (seller.rooms && buyer.rooms) {
+                maxScore += 10;
+                const sn = parseInt(seller.rooms.replace(/\D/g, '')) || 0;
+                const bn = parseInt(buyer.rooms.replace(/\D/g, '')) || 0;
+                if (sn >= bn) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else { details.push({ label: 'Pièces', score: 0, max: 10 }); }
+            }
+
+            const sa = Array.isArray(seller.annexes) ? seller.annexes : [];
+            const ba = Array.isArray(buyer.criteria) ? buyer.criteria : [];
+            if (ba.length > 0 && sa.length > 0) {
+                maxScore += 15;
+                const matched = ba.filter(a => sa.includes(a)).length;
+                const as = Math.round((matched / ba.length) * 15);
+                score += as;
+                details.push({ label: 'Annexes', score: as, max: 15 });
+            }
+
+            const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+            return { score, maxScore, percent, details };
+        }
+
+        function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
+
+        async function loadSellersForMatching() {
+            if (matchSellers !== null) return matchSellers;
+            const userId = await getCurrentUserId();
+            if (!userId) return [];
+            const { data } = await supabaseClient.from('sellers').select('*').eq('user_id', userId);
+            matchSellers = data || [];
+            return matchSellers;
+        }
+
+        function extractCity(address) {
+            if (!address) return null;
+            const trimmed = address.trim();
+            const cpMatch = trimmed.match(/\d{5}\s+(.+)/);
+            if (cpMatch) return cpMatch[1].trim();
+            const commaMatch = trimmed.match(/,\s*([^,]+)$/);
+            if (commaMatch) return commaMatch[1].trim();
+            if (trimmed.split(/\s+/).length <= 3) return trimmed;
+            return null;
+        }
+
+        async function loadMatchingSellers() {
+            const container = document.getElementById('matchingContent');
+            container.innerHTML = '<div class="match-empty">Chargement des vendeurs...</div>';
+
+            matchSellers = null; // Force refresh
+            const allSellers = await loadSellersForMatching();
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            const buyer = buyers.find(b => b.id === editId);
+            if (!buyer) { container.innerHTML = '<div class="match-empty">Acquéreur introuvable</div>'; return; }
+
+            const matches = allSellers
+                .map(s => ({ seller: s, ...calculateMatchScore(s, buyer) }))
+                .filter(m => m.percent >= 40)
+                .sort((a, b) => b.percent - a.percent);
+
+            if (matches.length === 0) {
+                container.innerHTML = '<div class="match-empty">Aucun vendeur correspondant (seuil : 40%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
+                return;
+            }
+
+            container.innerHTML = `<div style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} vendeur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div><div class="match-list">${matches.map(m => {
+                const s = m.seller;
+                const name = escapeHtml((s.first_name || '') + ' ' + (s.last_name || ''));
+                const detailParts = [];
+                if (s.budget) detailParts.push(formatEuro(s.budget));
+                if (s.address) detailParts.push('📍 ' + escapeHtml(extractCity(s.address) || s.address));
+                if (s.surface) detailParts.push(s.surface + ' m²');
+                const barsHTML = m.details.map(d => {
+                    const pct = d.max > 0 ? Math.round((d.score / d.max) * 100) : 0;
+                    const color = pct >= 70 ? '#43A047' : pct >= 50 ? '#FB8C00' : '#E53935';
+                    return '<div class="match-detail-bar"><span class="bar-label">' + d.label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+                }).join('');
+                return '<div class="match-card" onclick="window.open(\'index.html\',\'_blank\')"><div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
+            }).join('')}</div>`;
+        }
 
         // ===== MOBILE TABS =====
         const BUYER_TABS = [
@@ -2357,6 +2500,8 @@
             document.querySelectorAll('.modal-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
             document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tabMessages').style.display = tab === 'messages' ? 'block' : 'none';
+            document.getElementById('tabMatching').style.display = tab === 'matching' ? 'block' : 'none';
+            if (tab === 'matching') loadMatchingSellers();
         }
 
         function updateModalTabs() {
@@ -3420,7 +3565,7 @@
 
         const BANK_LABELS = { oui: 'Oui', non: 'Non', en_cours: 'En cours', ne_sait_pas: 'Ne sait pas' };
         const TIMELINE_LABELS = { immediat: 'Immédiat', court_terme: 'Court terme', moyen_terme: 'Moyen terme', long_terme: 'Long terme' };
-        const CRITERIA_LABELS = { jardin: 'Jardin', parking: 'Parking', ascenseur: 'Ascenseur', balcon_terrasse: 'Balcon/Terrasse', calme: 'Calme', neuf_renove: 'Neuf/Rénové' };
+        const CRITERIA_LABELS = { parking: 'Parking', cave: 'Cave', balcon: 'Balcon/Terrasse', jardin: 'Jardin', garage: 'Garage', piscine: 'Piscine', ascenseur: 'Ascenseur' };
 
         function exportToCSV(data, columns, filename) {
             const BOM = '\uFEFF';
