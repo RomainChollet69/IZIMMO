@@ -513,6 +513,26 @@
             color: rgba(255,255,255,0.7);
         }
 
+        /* Map type toggle */
+        .map-type-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            background: rgba(255,255,255,0.95);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+            color: #333;
+        }
+        .map-type-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
         /* ===== MAP ===== */
         .map-container {
             flex: 1;
@@ -804,6 +824,7 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
+            <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
             <div id="map"></div>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="loading-spinner"></div>
@@ -826,13 +847,15 @@
         let markers = [];
         let infoWindow = null;
         let radiusCircle = null;
+        let userMarker = null;
         let allSales = [];
         let currentFilter = 'all';
         let currentCenter = null;
+        let currentMapType = 'roadmap';
 
-        // Default: Lyon center
-        const DEFAULT_LAT = 45.764;
-        const DEFAULT_LNG = 4.8357;
+        // Default: Paris (fallback si géolocalisation refusée)
+        const DEFAULT_LAT = 48.8566;
+        const DEFAULT_LNG = 2.3522;
         const DEFAULT_ZOOM = 13;
 
         function initMap() {
@@ -845,6 +868,72 @@
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_TOP }
             });
             infoWindow = new google.maps.InfoWindow();
+            geolocateUser();
+        }
+
+        // ===== GEOLOCATION =====
+        function geolocateUser() {
+            if (!navigator.geolocation) return;
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                map.setCenter({ lat, lng });
+                map.setZoom(15);
+
+                // Marqueur bleu "Ma position"
+                if (userMarker) userMarker.setMap(null);
+                userMarker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: '#4285F4',
+                        fillOpacity: 1,
+                        strokeColor: '#fff',
+                        strokeWeight: 3,
+                        scale: 10
+                    },
+                    title: 'Ma position',
+                    zIndex: 1000
+                });
+
+                // Reverse geocode pour adresse + cityCode
+                try {
+                    const resp = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${lng}&lat=${lat}&limit=1`);
+                    const data = await resp.json();
+                    if (data.features && data.features.length > 0) {
+                        const feature = data.features[0];
+                        const label = feature.properties.label || 'Ma position';
+                        const cityCode = feature.properties.citycode || null;
+
+                        searchInput.value = label;
+                        currentCenter = { lat, lng, cityCode };
+
+                        const radius = parseInt(document.getElementById('radiusSlider').value);
+                        fetchDVFData(lat, lng, radius, cityCode);
+                    } else {
+                        searchInput.value = 'Ma position';
+                        currentCenter = { lat, lng, cityCode: null };
+                        const radius = parseInt(document.getElementById('radiusSlider').value);
+                        fetchDVFData(lat, lng, radius, null);
+                    }
+                } catch (err) {
+                    console.log('Reverse geocode failed:', err);
+                    searchInput.value = 'Ma position';
+                    currentCenter = { lat, lng, cityCode: null };
+                    const radius = parseInt(document.getElementById('radiusSlider').value);
+                    fetchDVFData(lat, lng, radius, null);
+                }
+            }, () => {
+                // Géolocalisation refusée — on reste sur Paris par défaut
+                console.log('Géolocalisation non disponible');
+            }, {
+                enableHighAccuracy: false,
+                timeout: 8000,
+                maximumAge: 300000
+            });
         }
 
         // ===== SEARCH WITH AUTOCOMPLETE =====
@@ -1427,6 +1516,13 @@
             priceSlider.reset();
             priceM2Slider.reset();
             renderFilteredSales();
+        });
+
+        // ===== MAP TYPE TOGGLE =====
+        document.getElementById('mapTypeToggle').addEventListener('click', () => {
+            currentMapType = currentMapType === 'roadmap' ? 'hybrid' : 'roadmap';
+            map.setMapTypeId(currentMapType);
+            document.getElementById('mapTypeToggle').textContent = currentMapType === 'roadmap' ? '🛰️ Satellite' : '🗺️ Plan';
         });
 
         // ===== TOGGLE PANEL (MOBILE) =====
