@@ -369,6 +369,150 @@
         .price-high { background: rgba(244,67,54,0.2); color: #EF5350; }
         .price-very-high { background: rgba(156,39,176,0.2); color: #AB47BC; }
 
+        /* Advanced filters */
+        .advanced-filters-toggle {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px dashed rgba(255,255,255,0.3);
+            background: transparent;
+            color: rgba(255,255,255,0.6);
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .advanced-filters-toggle:hover { border-color: #667eea; color: #667eea; }
+        .advanced-filters-toggle.active {
+            border-color: #667eea;
+            border-style: solid;
+            color: #667eea;
+            background: rgba(102,126,234,0.1);
+        }
+
+        .advanced-filters-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .advanced-filters-panel.open {
+            max-height: 500px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .advanced-filters-inner { padding: 16px 20px; }
+
+        .filter-group { margin-bottom: 14px; }
+        .filter-group:last-of-type { margin-bottom: 0; }
+
+        .filter-group-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filter-group-values {
+            font-weight: 600;
+            color: #667eea;
+            text-transform: none;
+            letter-spacing: 0;
+            font-size: 12px;
+        }
+
+        .dual-range {
+            position: relative;
+            height: 32px;
+        }
+
+        .dual-range-track {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 3px;
+        }
+
+        .dual-range-fill {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 6px;
+            background: #667eea;
+            border-radius: 3px;
+            pointer-events: none;
+        }
+
+        .dual-range input[type="range"] {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            pointer-events: none;
+            outline: none;
+            margin: 0;
+        }
+
+        .dual-range input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #667eea;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+            pointer-events: all;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .dual-range .range-min { z-index: 3; }
+        .dual-range .range-max { z-index: 4; }
+
+        .filter-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .filter-btn-apply { flex: 1; background: #667eea; color: #fff; }
+        .filter-btn-apply:hover { background: #5a6fd6; }
+
+        .filter-btn-reset {
+            background: transparent;
+            color: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.15) !important;
+        }
+        .filter-btn-reset:hover {
+            border-color: rgba(255,255,255,0.3) !important;
+            color: rgba(255,255,255,0.7);
+        }
+
         /* ===== MAP ===== */
         .map-container {
             flex: 1;
@@ -564,6 +708,64 @@
                 <button class="filter-chip" data-filter="appartement">🏢 Apparts</button>
                 <button class="filter-chip" data-filter="terrain">🏗️ Terrains</button>
                 <button class="filter-chip" data-filter="recent">📅 &lt; 1 an</button>
+                <button class="advanced-filters-toggle" id="advFiltersToggle">⚙️ Filtres</button>
+            </div>
+
+            <div class="advanced-filters-panel" id="advFiltersPanel">
+                <div class="advanced-filters-inner">
+                    <div class="filter-group">
+                        <div class="filter-group-label">
+                            Période
+                            <span class="filter-group-values" id="periodValues">2014 — 2026</span>
+                        </div>
+                        <div class="dual-range" id="periodRange">
+                            <div class="dual-range-track"></div>
+                            <div class="dual-range-fill"></div>
+                            <input type="range" min="2014" max="2026" value="2014" step="1" class="range-min">
+                            <input type="range" min="2014" max="2026" value="2026" step="1" class="range-max">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">
+                            Surface
+                            <span class="filter-group-values" id="surfaceValues">0 — 300 m²</span>
+                        </div>
+                        <div class="dual-range" id="surfaceRange">
+                            <div class="dual-range-track"></div>
+                            <div class="dual-range-fill"></div>
+                            <input type="range" min="0" max="300" value="0" step="5" class="range-min">
+                            <input type="range" min="0" max="300" value="300" step="5" class="range-max">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">
+                            Prix
+                            <span class="filter-group-values" id="priceValues">0 — 2 000 000 €</span>
+                        </div>
+                        <div class="dual-range" id="priceRange">
+                            <div class="dual-range-track"></div>
+                            <div class="dual-range-fill"></div>
+                            <input type="range" min="0" max="2000000" value="0" step="10000" class="range-min">
+                            <input type="range" min="0" max="2000000" value="2000000" step="10000" class="range-max">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <div class="filter-group-label">
+                            Prix au m²
+                            <span class="filter-group-values" id="priceM2Values">0 — 15 000 €/m²</span>
+                        </div>
+                        <div class="dual-range" id="priceM2Range">
+                            <div class="dual-range-track"></div>
+                            <div class="dual-range-fill"></div>
+                            <input type="range" min="0" max="15000" value="0" step="100" class="range-min">
+                            <input type="range" min="0" max="15000" value="15000" step="100" class="range-max">
+                        </div>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="filter-btn filter-btn-apply" id="advFiltersApply">Appliquer</button>
+                        <button class="filter-btn filter-btn-reset" id="advFiltersReset">Réinitialiser</button>
+                    </div>
+                </div>
             </div>
 
             <div class="stats-section" id="statsSection" style="display:none;">
@@ -895,6 +1097,27 @@
                 });
             }
 
+            // Apply advanced filters
+            filtered = filtered.filter(s => {
+                // Period
+                if (s.date_mutation) {
+                    const year = new Date(s.date_mutation).getFullYear();
+                    if (year < advancedFilters.periodMin || year > advancedFilters.periodMax) return false;
+                }
+                // Surface
+                const surface = parseFloat(s.surface_reelle_bati || s.surface_terrain || 0);
+                if (surface > 0) {
+                    if (surface < advancedFilters.surfaceMin || surface > advancedFilters.surfaceMax) return false;
+                }
+                // Price
+                const price = parseFloat(s.valeur_fonciere || 0);
+                if (price < advancedFilters.priceMin || price > advancedFilters.priceMax) return false;
+                // Price per m²
+                const priceM2 = getPricePerM2(s);
+                if (priceM2 && (priceM2 < advancedFilters.priceM2Min || priceM2 > advancedFilters.priceM2Max)) return false;
+                return true;
+            });
+
             // Sort by date desc
             filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
 
@@ -1093,6 +1316,118 @@
             div.textContent = str;
             return div.innerHTML;
         }
+
+        // ===== ADVANCED FILTERS =====
+        const advFiltersToggle = document.getElementById('advFiltersToggle');
+        const advFiltersPanel = document.getElementById('advFiltersPanel');
+
+        let advancedFilters = {
+            periodMin: 2014, periodMax: 2026,
+            surfaceMin: 0, surfaceMax: 300,
+            priceMin: 0, priceMax: 2000000,
+            priceM2Min: 0, priceM2Max: 15000
+        };
+        const defaultAdvancedFilters = { ...advancedFilters };
+
+        advFiltersToggle.addEventListener('click', () => {
+            advFiltersToggle.classList.toggle('active');
+            advFiltersPanel.classList.toggle('open');
+        });
+
+        function initDualRange(containerId, valuesId, formatter, onUpdate) {
+            const container = document.getElementById(containerId);
+            const valuesEl = document.getElementById(valuesId);
+            const minInput = container.querySelector('.range-min');
+            const maxInput = container.querySelector('.range-max');
+            const fill = container.querySelector('.dual-range-fill');
+
+            function update() {
+                let minVal = parseInt(minInput.value);
+                let maxVal = parseInt(maxInput.value);
+
+                if (minVal > maxVal) {
+                    const tmp = minVal;
+                    minInput.value = maxVal;
+                    maxInput.value = tmp;
+                    minVal = parseInt(minInput.value);
+                    maxVal = parseInt(maxInput.value);
+                }
+
+                const min = parseInt(minInput.min);
+                const max = parseInt(minInput.max);
+                const leftPct = ((minVal - min) / (max - min)) * 100;
+                const rightPct = ((maxVal - min) / (max - min)) * 100;
+                fill.style.left = leftPct + '%';
+                fill.style.width = (rightPct - leftPct) + '%';
+
+                valuesEl.textContent = formatter(minVal, maxVal);
+                if (onUpdate) onUpdate(minVal, maxVal);
+
+                // Ensure min slider is accessible when near max
+                if (parseInt(minInput.value) >= parseInt(maxInput.max) - parseInt(minInput.step || 1) * 2) {
+                    minInput.style.zIndex = 5;
+                } else {
+                    minInput.style.zIndex = 3;
+                }
+            }
+
+            minInput.addEventListener('input', () => {
+                if (parseInt(minInput.value) > parseInt(maxInput.value)) {
+                    minInput.value = maxInput.value;
+                }
+                update();
+            });
+
+            maxInput.addEventListener('input', () => {
+                if (parseInt(maxInput.value) < parseInt(minInput.value)) {
+                    maxInput.value = minInput.value;
+                }
+                update();
+            });
+
+            update();
+
+            return {
+                reset: () => {
+                    minInput.value = minInput.min;
+                    maxInput.value = maxInput.max;
+                    update();
+                }
+            };
+        }
+
+        const periodSlider = initDualRange('periodRange', 'periodValues',
+            (min, max) => `${min} — ${max}`,
+            (min, max) => { advancedFilters.periodMin = min; advancedFilters.periodMax = max; }
+        );
+
+        const surfaceSlider = initDualRange('surfaceRange', 'surfaceValues',
+            (min, max) => `${min} — ${max} m²`,
+            (min, max) => { advancedFilters.surfaceMin = min; advancedFilters.surfaceMax = max; }
+        );
+
+        const priceSlider = initDualRange('priceRange', 'priceValues',
+            (min, max) => `${formatNumber(min)} — ${formatNumber(max)} €`,
+            (min, max) => { advancedFilters.priceMin = min; advancedFilters.priceMax = max; }
+        );
+
+        const priceM2Slider = initDualRange('priceM2Range', 'priceM2Values',
+            (min, max) => `${formatNumber(min)} — ${formatNumber(max)} €/m²`,
+            (min, max) => { advancedFilters.priceM2Min = min; advancedFilters.priceM2Max = max; }
+        );
+
+        document.getElementById('advFiltersApply').addEventListener('click', () => {
+            renderFilteredSales();
+        });
+
+        document.getElementById('advFiltersReset').addEventListener('click', () => {
+            advancedFilters = { ...defaultAdvancedFilters };
+            periodSlider.reset();
+            surfaceSlider.reset();
+            priceSlider.reset();
+            priceM2Slider.reset();
+            renderFilteredSales();
+        });
 
         // ===== TOGGLE PANEL (MOBILE) =====
         document.getElementById('togglePanelBtn').addEventListener('click', () => {
