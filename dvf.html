@@ -8,8 +8,6 @@
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
@@ -382,39 +380,23 @@
             height: 100%;
         }
 
-        /* Dark theme for Leaflet */
-        .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(1.2) saturate(0.3); }
-        .leaflet-control-zoom a {
-            background: #16213e !important;
-            color: #e0e0e0 !important;
-            border-color: rgba(255,255,255,0.15) !important;
-        }
-        .leaflet-control-zoom a:hover {
-            background: #1e2d4a !important;
-        }
-        .leaflet-control-attribution {
-            background: rgba(22,33,62,0.8) !important;
-            color: rgba(255,255,255,0.4) !important;
-            font-size: 10px !important;
-        }
-        .leaflet-control-attribution a { color: rgba(255,255,255,0.5) !important; }
-
         /* Map legend */
         .map-legend {
             position: absolute;
             bottom: 30px;
             right: 16px;
-            background: rgba(22,33,62,0.95);
-            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.95);
+            border: 1px solid rgba(0,0,0,0.1);
             border-radius: 10px;
             padding: 12px 16px;
             z-index: 1000;
             font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
 
         .legend-title {
             font-weight: 700;
-            color: rgba(255,255,255,0.7);
+            color: #2C3E50;
             margin-bottom: 8px;
             font-size: 11px;
             text-transform: uppercase;
@@ -426,7 +408,7 @@
             align-items: center;
             gap: 8px;
             margin-bottom: 4px;
-            color: rgba(255,255,255,0.6);
+            color: #555;
         }
 
         .legend-dot {
@@ -640,6 +622,7 @@
         // ===== MAP INITIALIZATION =====
         let map;
         let markers = [];
+        let infoWindow = null;
         let radiusCircle = null;
         let allSales = [];
         let currentFilter = 'all';
@@ -651,16 +634,15 @@
         const DEFAULT_ZOOM = 13;
 
         function initMap() {
-            map = L.map('map', {
-                center: [DEFAULT_LAT, DEFAULT_LNG],
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: DEFAULT_LAT, lng: DEFAULT_LNG },
                 zoom: DEFAULT_ZOOM,
-                zoomControl: true
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_TOP }
             });
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap',
-                maxZoom: 19
-            }).addTo(map);
+            infoWindow = new google.maps.InfoWindow();
         }
 
         // ===== SEARCH WITH AUTOCOMPLETE =====
@@ -869,17 +851,19 @@
                 console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m`);
 
                 // Draw radius circle
-                if (radiusCircle) map.removeLayer(radiusCircle);
-                radiusCircle = L.circle([lat, lng], {
+                if (radiusCircle) radiusCircle.setMap(null);
+                radiusCircle = new google.maps.Circle({
+                    center: { lat, lng },
                     radius: radius,
-                    color: '#667eea',
+                    strokeColor: '#667eea',
+                    strokeOpacity: 0.6,
+                    strokeWeight: 1.5,
                     fillColor: '#667eea',
                     fillOpacity: 0.08,
-                    weight: 1.5,
-                    dashArray: '6,4'
-                }).addTo(map);
+                    map: map
+                });
 
-                map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+                map.fitBounds(radiusCircle.getBounds());
 
                 renderFilteredSales();
 
@@ -987,17 +971,22 @@
                 const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
                 const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
 
-                // Custom circle marker
-                const marker = L.circleMarker([lat, lng], {
-                    radius: 8,
-                    fillColor: color,
-                    color: 'rgba(255,255,255,0.4)',
-                    weight: 1.5,
-                    fillOpacity: 0.85
-                }).addTo(map);
+                // SVG circle marker
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: color,
+                        fillOpacity: 0.85,
+                        strokeColor: '#fff',
+                        strokeWeight: 1.5,
+                        scale: 8
+                    }
+                });
 
-                // Popup
-                marker.bindPopup(`
+                // InfoWindow on click
+                const content = `
                     <div style="font-family:Inter,sans-serif;min-width:180px">
                         <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
                         <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
@@ -1005,8 +994,13 @@
                         <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
                         ${sale.distance ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
                     </div>
-                `);
+                `;
+                marker.addListener('click', () => {
+                    infoWindow.setContent(content);
+                    infoWindow.open(map, marker);
+                });
 
+                marker._saleData = sale;
                 markers.push(marker);
             });
         }
@@ -1055,19 +1049,21 @@
 
         function focusSale(lat, lng) {
             if (!lat || !lng) return;
-            map.setView([lat, lng], 18);
-            // Find and open the matching marker popup
+            map.setCenter({ lat, lng });
+            map.setZoom(18);
+            // Find and open the matching marker's InfoWindow
             markers.forEach(m => {
-                const pos = m.getLatLng();
-                if (Math.abs(pos.lat - lat) < 0.0001 && Math.abs(pos.lng - lng) < 0.0001) {
-                    m.openPopup();
+                const pos = m.getPosition();
+                if (Math.abs(pos.lat() - lat) < 0.0001 && Math.abs(pos.lng() - lng) < 0.0001) {
+                    google.maps.event.trigger(m, 'click');
                 }
             });
         }
 
         function clearMarkers() {
-            markers.forEach(m => map.removeLayer(m));
+            markers.forEach(m => m.setMap(null));
             markers = [];
+            if (infoWindow) infoWindow.close();
         }
 
         // ===== UTILS =====
@@ -1103,9 +1099,8 @@
         });
 
         // ===== INIT =====
-        document.addEventListener('DOMContentLoaded', () => {
-            initMap();
-        });
+        // Google Maps calls initMap() automatically via callback parameter
     </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4quq3xYzOf5Kd0DrWxC1sdkLpknCM3Jc&callback=initMap"></script>
 </body>
 </html>
