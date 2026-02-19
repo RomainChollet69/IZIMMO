@@ -552,6 +552,112 @@
             color: rgba(255,255,255,0.7);
         }
 
+        /* Sale detail */
+        .sale-detail { padding: 16px; }
+
+        .sale-detail-back {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #667eea;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            background: none;
+            padding: 4px 0;
+            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
+        }
+        .sale-detail-back:hover { text-decoration: underline; }
+
+        .sale-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .sale-detail-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .sale-detail-type-badge.maison { background: rgba(76,175,80,0.2); color: #66BB6A; }
+        .sale-detail-type-badge.appartement { background: rgba(255,152,0,0.2); color: #FFA726; }
+        .sale-detail-type-badge.terrain { background: rgba(156,39,176,0.2); color: #AB47BC; }
+        .sale-detail-type-badge.autre { background: rgba(96,125,139,0.2); color: #90A4AE; }
+
+        .sale-detail-date {
+            font-size: 12px;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .sale-detail-price {
+            font-size: 28px;
+            font-weight: 800;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .sale-detail-pricem2 {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .sale-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .sale-detail-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+
+        .sale-detail-item-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 4px;
+        }
+
+        .sale-detail-item-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+        }
+
+        .sale-detail-info {
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 12px;
+        }
+
+        .sale-detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .sale-detail-row:last-child { border-bottom: none; }
+        .sale-detail-row-label { color: rgba(255,255,255,0.5); }
+        .sale-detail-row-value { color: #fff; font-weight: 600; text-align: right; max-width: 60%; }
+
         /* Map type toggle */
         .map-type-toggle {
             position: absolute;
@@ -894,6 +1000,7 @@
         let radiusCircle = null;
         let userMarker = null;
         let allSales = [];
+        let currentFilteredSales = [];
         let currentFilter = 'all';
         let currentCenter = null;
         let currentMapType = 'roadmap';
@@ -1140,10 +1247,12 @@
                 type_local,
                 surface_reelle_bati: parseFloat(props.sbati) || 0,
                 surface_terrain: parseFloat(props.sterr) || 0,
-                nombre_pieces_principales: null,
-                adresse_numero: null,
-                adresse_nom_voie: null,
+                nombre_pieces_principales: parseInt(props.nbppmut) || 0,
                 libtypbien: props.libtypbien || '',
+                libnatmut: props.libnatmut || '',
+                nblot: parseInt(props.nblot) || 0,
+                nblocmai: parseInt(props.nblocmai) || 0,
+                nblocapt: parseInt(props.nblocapt) || 0,
                 distance: Math.round(dist)
             };
         }
@@ -1262,6 +1371,7 @@
             // Sort by date desc
             filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
 
+            currentFilteredSales = filtered;
             updateStats(filtered);
             renderMarkers(filtered);
             renderSalesList(filtered);
@@ -1322,7 +1432,7 @@
         function renderMarkers(sales) {
             clearMarkers();
 
-            sales.forEach(sale => {
+            sales.forEach((sale, idx) => {
                 const lat = parseFloat(sale.lat);
                 const lng = parseFloat(sale.lng);
                 if (!lat || !lng) return;
@@ -1350,7 +1460,7 @@
                     }
                 });
 
-                // InfoWindow on click
+                // InfoWindow + detail on click
                 const content = `
                     <div style="font-family:Inter,sans-serif;min-width:180px">
                         <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
@@ -1363,6 +1473,7 @@
                 marker.addListener('click', () => {
                     infoWindow.setContent(content);
                     infoWindow.open(map, marker);
+                    showSaleDetail(idx, true);
                 });
 
                 marker._saleData = sale;
@@ -1400,7 +1511,7 @@
                 const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
                 const distText = sale.distance ? `à ${sale.distance} m` : '';
 
-                return `<div class="sale-card ${type}" data-index="${i}" onclick="focusSale(${sale.lat}, ${sale.lng})">
+                return `<div class="sale-card ${type}" data-index="${i}" onclick="showSaleDetail(${i})">
                     <div class="sale-type ${type}">${capitalize(type)}</div>
                     <div class="sale-price">${formatPrice(price)}</div>
                     <div class="sale-details">
@@ -1412,17 +1523,84 @@
             }).join('');
         }
 
-        function focusSale(lat, lng) {
-            if (!lat || !lng) return;
-            map.setCenter({ lat, lng });
-            map.setZoom(18);
-            // Find and open the matching marker's InfoWindow
-            markers.forEach(m => {
-                const pos = m.getPosition();
-                if (Math.abs(pos.lat() - lat) < 0.0001 && Math.abs(pos.lng() - lng) < 0.0001) {
-                    google.maps.event.trigger(m, 'click');
-                }
-            });
+        function showSaleDetail(index, skipMapCenter) {
+            const sale = currentFilteredSales[index];
+            if (!sale) return;
+
+            const salesSection = document.getElementById('salesSection');
+            const type = getType(sale);
+            const price = parseFloat(sale.valeur_fonciere);
+            const surfaceBati = parseFloat(sale.surface_reelle_bati) || 0;
+            const surfaceTerrain = parseFloat(sale.surface_terrain) || 0;
+            const priceM2 = getPricePerM2(sale);
+            const date = sale.date_mutation
+                ? new Date(sale.date_mutation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                : '—';
+            const pieces = sale.nombre_pieces_principales;
+            const natmut = sale.libnatmut || '—';
+            const nblot = sale.nblot;
+            const typeEmoji = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' }[type] || '📍';
+
+            // Build grid items
+            let gridItems = '';
+            if (surfaceBati) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Surface bâtie</div><div class="sale-detail-item-value">${surfaceBati} m²</div></div>`;
+            if (surfaceTerrain) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Surface terrain</div><div class="sale-detail-item-value">${surfaceTerrain} m²</div></div>`;
+            if (pieces) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Pièces</div><div class="sale-detail-item-value">${pieces}</div></div>`;
+            if (nblot) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Lots</div><div class="sale-detail-item-value">${nblot}</div></div>`;
+
+            // Build info rows
+            let infoRows = '';
+            infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Date de vente</span><span class="sale-detail-row-value">📅 ${date}</span></div>`;
+            infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Nature mutation</span><span class="sale-detail-row-value">${escapeHtml(natmut)}</span></div>`;
+            if (sale.libtypbien) infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Type détaillé</span><span class="sale-detail-row-value">${escapeHtml(sale.libtypbien)}</span></div>`;
+            if (sale.distance) infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Distance</span><span class="sale-detail-row-value">📍 ${sale.distance} m</span></div>`;
+
+            salesSection.innerHTML = `
+                <div class="sale-detail">
+                    <button class="sale-detail-back" onclick="hideSaleDetail()">← Retour à la liste</button>
+                    <div class="sale-detail-header">
+                        <span class="sale-detail-type-badge ${type}">${typeEmoji} ${capitalize(type)}</span>
+                        ${pieces ? `<span class="sale-detail-date">${pieces} pièce${pieces > 1 ? 's' : ''}</span>` : ''}
+                    </div>
+                    <div class="sale-detail-price">${formatPrice(price)}</div>
+                    ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
+                    ${gridItems ? `<div class="sale-detail-grid">${gridItems}</div>` : ''}
+                    <div class="sale-detail-info">${infoRows}</div>
+                </div>
+            `;
+
+            // Center map on this sale
+            if (!skipMapCenter && sale.lat && sale.lng) {
+                map.setCenter({ lat: sale.lat, lng: sale.lng });
+                map.setZoom(18);
+                markers.forEach(m => {
+                    const pos = m.getPosition();
+                    if (Math.abs(pos.lat() - sale.lat) < 0.0001 && Math.abs(pos.lng() - sale.lng) < 0.0001) {
+                        infoWindow.setContent(`
+                            <div style="font-family:Inter,sans-serif;min-width:180px">
+                                <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
+                                <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
+                            </div>
+                        `);
+                        infoWindow.open(map, m);
+                    }
+                });
+            }
+        }
+
+        function hideSaleDetail() {
+            const salesSection = document.getElementById('salesSection');
+            salesSection.innerHTML = `
+                <div class="empty-state" id="emptyState" style="display:none">
+                    <div class="empty-state-icon">🗺️</div>
+                    <div class="empty-state-text">Recherchez une adresse pour voir<br>les ventes immobilières à proximité</div>
+                </div>
+                <div class="sales-header" id="salesHeader" style="display:none;">
+                    <span id="salesCount">0</span> ventes trouvées
+                </div>
+                <div id="salesList"></div>
+            `;
+            renderSalesList(currentFilteredSales);
         }
 
         function clearMarkers() {
