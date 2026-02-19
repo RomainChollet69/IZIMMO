@@ -1291,16 +1291,24 @@
                 const bbox = radiusToBBox(lat, lng, radius);
                 const yearMin = parseInt(document.querySelector('#yearRange .range-min').value) || 2014;
                 const yearMax = parseInt(document.querySelector('#yearRange .range-max').value) || 2025;
-                const url = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=100&ordering=-datemut&anneemut_min=${yearMin}&anneemut_max=${yearMax}`;
-                console.log('DVF API URL:', url);
+                const baseUrl = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=500&ordering=-datemut&anneemut_min=${yearMin}&anneemut_max=${yearMax}`;
 
-                const resp = await fetch(url);
-                if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
-                const data = await resp.json();
-                const features = data.features || [];
-                console.log(`DVF API: ${data.count} total, ${features.length} retournées`);
+                // Pagination : jusqu'à 3 pages (max 1500 ventes)
+                let allFeatures = [];
+                const MAX_PAGES = 3;
+                for (let page = 1; page <= MAX_PAGES; page++) {
+                    const url = page === 1 ? baseUrl : `${baseUrl}&page=${page}`;
+                    console.log(`DVF API page ${page}:`, url);
+                    const resp = await fetch(url);
+                    if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
+                    const data = await resp.json();
+                    const features = data.features || [];
+                    allFeatures = allFeatures.concat(features);
+                    console.log(`DVF page ${page}: ${features.length} / ${data.count} total`);
+                    if (!data.next || features.length === 0) break;
+                }
 
-                allSales = features
+                allSales = allFeatures
                     .map(f => normalizeSale(f, lat, lng, radius))
                     .filter(s => s && s.valeur_fonciere > 0);
 
@@ -1712,7 +1720,7 @@
         }
 
         // ===== FILTER PANEL INIT =====
-        function initDualRange(containerId, valuesId, formatter) {
+        function initDualRange(containerId, valuesId, formatter, onRelease) {
             const container = document.getElementById(containerId);
             const valuesEl = document.getElementById(valuesId);
             const minInput = container.querySelector('.range-min');
@@ -1758,6 +1766,12 @@
                 update();
             });
 
+            // onRelease : callback au relâchement (pour relancer l'API)
+            if (onRelease) {
+                minInput.addEventListener('change', onRelease);
+                maxInput.addEventListener('change', onRelease);
+            }
+
             update();
 
             return {
@@ -1765,12 +1779,21 @@
                     minInput.value = minInput.min;
                     maxInput.value = maxInput.max;
                     update();
+                    if (onRelease) onRelease();
                 }
             };
         }
 
+        function refetchDVF() {
+            if (currentCenter) {
+                const r = parseInt(radiusSlider.value);
+                fetchDVFData(currentCenter.lat, currentCenter.lng, r);
+            }
+        }
+
         const yearSlider = initDualRange('yearRange', 'yearValues',
-            (min, max) => `${min} → ${max}`
+            (min, max) => `${min} → ${max}`,
+            refetchDVF
         );
 
         const priceM2Slider = initDualRange('priceM2Range', 'priceM2Values',
