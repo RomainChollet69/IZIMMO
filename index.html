@@ -2151,7 +2151,8 @@
         .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
-        .match-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(102, 126, 234, 0.12); color: #667eea; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-top: 4px; }
+        .match-indicator { position: absolute; top: 8px; right: 8px; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid #A7F3D0; cursor: pointer; z-index: 2; transition: background 0.2s; }
+        .match-indicator:hover { background: #D1FAE5; }
         .off-market-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(155, 89, 182, 0.12); color: #8E44AD; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; margin-top: 4px; }
         .match-notification { position: fixed; bottom: 24px; right: 24px; background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); padding: 20px; max-width: 380px; z-index: 10000; animation: matchSlideUp 0.3s ease; }
         @keyframes matchSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
@@ -4062,7 +4063,6 @@
             }
             if (followupCompact) compact += followupCompact;
             if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
-            if (sellerMatchCounts[seller.id]) compact += `<div class="match-badge">🎯 ${sellerMatchCounts[seller.id]}</div>`;
             compact += '</div>';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
@@ -4115,7 +4115,23 @@
             </div>`;
             ext += '</div>';
 
-            card.innerHTML = compact + ext + '<div class="card-expand-arrow">▼</div>';
+            // Match indicator badge (absolute positioned)
+            const matchCount = sellerMatchCounts[seller.id] || 0;
+            const matchIndicator = matchCount > 0
+                ? `<div class="match-indicator" data-match-seller="${seller.id}">🎯 ${matchCount} match${matchCount > 1 ? 's' : ''}</div>`
+                : '';
+
+            card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
+
+            // Click handler on match indicator → open modal on matching tab
+            const matchEl = card.querySelector('.match-indicator');
+            if (matchEl) {
+                matchEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    editSeller(seller.id, 'matching');
+                });
+            }
+
             return card;
         }
 
