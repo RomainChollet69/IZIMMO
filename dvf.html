@@ -728,15 +728,16 @@
             const lat = coords[1];
             const lng = coords[0];
             const label = feature.properties.label;
+            const cityCode = feature.properties.citycode || null;
 
             searchInput.value = label;
             searchDropdown.classList.remove('active');
 
-            currentCenter = { lat, lng };
+            currentCenter = { lat, lng, cityCode };
             map.setView([lat, lng], 16);
 
             const radius = parseInt(document.getElementById('radiusSlider').value);
-            fetchDVFData(lat, lng, radius);
+            fetchDVFData(lat, lng, radius, cityCode);
         }
 
         // ===== RADIUS SLIDER =====
@@ -751,7 +752,7 @@
         radiusSlider.addEventListener('change', () => {
             if (currentCenter) {
                 const radius = parseInt(radiusSlider.value);
-                fetchDVFData(currentCenter.lat, currentCenter.lng, radius);
+                fetchDVFData(currentCenter.lat, currentCenter.lng, radius, currentCenter.cityCode);
             }
         });
 
@@ -765,39 +766,107 @@
             });
         });
 
-        // ===== DVF API =====
-        async function fetchDVFData(lat, lng, radius) {
+        // ===== DVF API (CEREMA) =====
+        function polygonCentroid(coords) {
+            if (!coords || !coords[0] || coords[0].length === 0) return null;
+            const ring = coords[0];
+            const n = ring.length;
+            let latSum = 0, lngSum = 0;
+            for (let i = 0; i < n; i++) {
+                lngSum += ring[i][0];
+                latSum += ring[i][1];
+            }
+            return { lat: latSum / n, lng: lngSum / n };
+        }
+
+        function normalizeSale(feature, centerLat, centerLng, radius) {
+            const props = feature.properties || {};
+            const geom = feature.geometry || {};
+
+            // Compute centroid from polygon geometry
+            let lat = null, lng = null;
+            if (geom.type === 'Polygon') {
+                const c = polygonCentroid(geom.coordinates);
+                if (c) { lat = c.lat; lng = c.lng; }
+            } else if (geom.type === 'MultiPolygon' && geom.coordinates[0]) {
+                const c = polygonCentroid(geom.coordinates[0]);
+                if (c) { lat = c.lat; lng = c.lng; }
+            } else if (geom.type === 'Point') {
+                lng = geom.coordinates[0];
+                lat = geom.coordinates[1];
+            }
+
+            if (!lat || !lng) return null;
+
+            // Filter by actual distance from center
+            const dist = haversine(centerLat, centerLng, lat, lng);
+            if (dist > radius) return null;
+
+            // Map CEREMA fields to our internal format
+            const typeBien = (props.libtypbien || '').toLowerCase();
+            let type_local = '';
+            if (typeBien.includes('appartement')) type_local = 'Appartement';
+            else if (typeBien.includes('maison')) type_local = 'Maison';
+            else if (typeBien.includes('terrain') || typeBien.includes('dépendance')) type_local = 'Terrain';
+            else type_local = props.libnatmut || 'Autre';
+
+            return {
+                lat, lng,
+                valeur_fonciere: parseFloat(props.valeurfonc) || 0,
+                date_mutation: props.datemut || null,
+                type_local,
+                surface_reelle_bati: parseFloat(props.sbati) || 0,
+                surface_terrain: parseFloat(props.sterr) || 0,
+                nombre_pieces_principales: null,
+                adresse_numero: null,
+                adresse_nom_voie: null,
+                libtypbien: props.libtypbien || '',
+                distance: Math.round(dist)
+            };
+        }
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        async function fetchDVFData(lat, lng, radius, cityCode) {
             const loading = document.getElementById('loadingOverlay');
             loading.classList.add('active');
 
-            // Clear existing
             clearMarkers();
             allSales = [];
 
             try {
-                const url = `https://api.dvf.data.gouv.fr/dvf/mutations/?lat=${lat}&lon=${lng}&rayon=${radius}&page_size=50`;
+                // Step 1: resolve cityCode if not provided
+                if (!cityCode) {
+                    const geoResp = await fetch(`https://geo.api.gouv.fr/communes?lat=${lat}&lon=${lng}&fields=code&limit=1`);
+                    const geoData = await geoResp.json();
+                    cityCode = geoData[0]?.code || null;
+                }
+                if (!cityCode) throw new Error('Impossible de déterminer la commune');
+
+                console.log(`DVF: commune ${cityCode}, rayon ${radius}m`);
+
+                // Step 2: fetch DVF geomutations from CEREMA
+                const pageSize = 50;
+                const url = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?code_insee=${cityCode}&page_size=${pageSize}&ordering=-datemut`;
                 console.log('DVF API URL:', url);
 
                 const resp = await fetch(url, { mode: 'cors' });
                 if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
                 const data = await resp.json();
-                console.log('DVF API response:', data);
+                console.log(`DVF API: ${data.count} total, ${(data.features || []).length} retournées`);
 
-                const results = data.results || data.mutations || data || [];
+                const features = data.features || [];
+                allSales = features
+                    .map(f => normalizeSale(f, lat, lng, radius))
+                    .filter(s => s && s.valeur_fonciere > 0);
 
-                allSales = results
-                    .map(m => ({
-                        ...m,
-                        lat: parseFloat(m.latitude) || null,
-                        lng: parseFloat(m.longitude) || null,
-                        valeur_fonciere: parseFloat(m.valeur_fonciere) || 0,
-                        surface_reelle_bati: parseFloat(m.surface_reelle_bati) || 0,
-                        surface_terrain: parseFloat(m.surface_terrain) || 0,
-                        nombre_pieces_principales: m.nombre_pieces_principales ? parseInt(m.nombre_pieces_principales) : null
-                    }))
-                    .filter(s => s.lat && s.lng && s.valeur_fonciere > 0);
-
-                console.log(`DVF: ${allSales.length} ventes trouvées sur ${results.length} résultats`);
+                console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m`);
 
                 // Draw radius circle
                 if (radiusCircle) map.removeLayer(radiusCircle);
@@ -934,7 +1003,7 @@
                         <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
                         ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
                         <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
-                        ${sale.adresse_nom_voie ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 ${escapeHtml(cleanNumero(sale.adresse_numero))} ${escapeHtml(sale.adresse_nom_voie || '')}</div>` : ''}
+                        ${sale.distance ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
                     </div>
                 `);
 
@@ -970,15 +1039,14 @@
                 const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
                 const priceM2 = getPricePerM2(sale);
                 const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                const rooms = sale.nombre_pieces_principales ? sale.nombre_pieces_principales + 'p' : '';
-                const address = [cleanNumero(sale.adresse_numero), sale.adresse_nom_voie].filter(Boolean).join(' ');
+                const distText = sale.distance ? `à ${sale.distance} m` : '';
 
                 return `<div class="sale-card ${type}" data-index="${i}" onclick="focusSale(${sale.lat}, ${sale.lng})">
-                    <div class="sale-type ${type}">${capitalize(type)}${rooms ? ' — ' + rooms : ''}</div>
+                    <div class="sale-type ${type}">${capitalize(type)}</div>
                     <div class="sale-price">${formatPrice(price)}</div>
                     <div class="sale-details">
                         ${surface ? surface + ' m²' : ''}${surface && date ? ' — ' : ''}${date}
-                        ${address ? '<br>📍 ' + escapeHtml(address) : ''}
+                        ${distText ? '<br>📍 ' + distText : ''}
                     </div>
                     ${priceM2 ? `<span class="sale-price-m2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
                 </div>`;
