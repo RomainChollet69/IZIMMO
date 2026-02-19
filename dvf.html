@@ -25,9 +25,11 @@
         body {
             font-family: 'Inter', sans-serif;
             background: #1a1a2e;
-            min-height: 100vh;
+            height: 100vh;
             color: #e0e0e0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ===== HEADER & NAVIGATION ===== */
@@ -35,11 +37,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 24px;
+            padding: 16px 30px;
             background: url('img/header_bg.png') center / cover no-repeat;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             z-index: 1000;
             position: relative;
+            flex-shrink: 0;
         }
 
         .logo {
@@ -49,7 +52,7 @@
         }
 
         .logo img {
-            width: 140px;
+            width: 160px;
             height: auto;
         }
 
@@ -83,7 +86,7 @@
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
         }
 
         .user-profile {
@@ -92,10 +95,46 @@
             gap: 10px;
         }
 
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e8eaf6;
+            object-fit: cover;
+        }
+
+        .user-name {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            color: var(--text-light);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
         /* ===== MAIN LAYOUT ===== */
         .main-container {
             display: flex;
-            height: calc(100vh - 65px);
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         /* ===== SIDE PANEL ===== */
@@ -640,17 +679,23 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            body { overflow: auto; }
+            body { overflow: auto; height: auto; }
 
             .header {
-                padding: 10px 16px;
                 display: grid;
-                grid-template-columns: auto 1fr auto;
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto auto;
                 gap: 8px;
-                align-items: center;
+                padding: 10px 14px;
             }
 
-            .logo img { width: 100px; }
+            .logo { grid-column: 1; grid-row: 1; align-self: center; }
+            .logo img { width: 60px; }
+
+            .header-actions { display: contents; }
+            .user-profile { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
+            .user-avatar { width: 32px; height: 32px; }
+            .user-name { display: none; }
 
             .nav-tabs {
                 grid-column: 1 / -1;
@@ -1078,9 +1123,11 @@
 
             // Map CEREMA fields to our internal format
             const typeBien = (props.libtypbien || '').toLowerCase();
+            const nbMaisons = parseInt(props.nblocmai) || 0;
+            const nbApparts = parseInt(props.nblocapt) || 0;
             let type_local = '';
-            if (typeBien.includes('appartement')) type_local = 'Appartement';
-            else if (typeBien.includes('maison')) type_local = 'Maison';
+            if (typeBien.includes('maison') || nbMaisons > 0) type_local = 'Maison';
+            else if (typeBien.includes('appartement') || nbApparts > 0) type_local = 'Appartement';
             else if (typeBien.includes('terrain') || typeBien.includes('dépendance')) type_local = 'Terrain';
             else type_local = props.libnatmut || 'Autre';
 
@@ -1136,6 +1183,9 @@
                 console.log(`DVF API: ${data.count} total, ${(data.features || []).length} retournées`);
 
                 const features = data.features || [];
+                if (features.length > 0) {
+                    console.log('DVF sample properties:', JSON.stringify(features[0].properties));
+                }
                 allSales = features
                     .map(f => normalizeSale(f, lat, lng, radius))
                     .filter(s => s && s.valeur_fonciere > 0);
