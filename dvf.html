@@ -11,6 +11,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/maps-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1770,8 +1771,19 @@
         });
 
         // ===== INIT =====
-        // Google Maps calls initMap() automatically via callback parameter
+        // Google Maps loaded dynamically via maps-config.js
+        (function() {
+            const key = window.GOOGLE_MAPS_KEY;
+            if (!key || key === 'VOTRE_CLE_GOOGLE_MAPS_ICI') {
+                document.getElementById('map').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#EF5350;font-weight:600;text-align:center;padding:20px">Clé Google Maps manquante.<br>Copiez js/maps-config.example.js → js/maps-config.js</div>';
+                return;
+            }
+            const s = document.createElement('script');
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&v=weekly&callback=initMap`;
+            s.async = true;
+            s.defer = true;
+            document.body.appendChild(s);
+        })();
     </script>
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC4quq3xYzOf5Kd0DrWxC1sdkLpknCM3Jc&v=weekly&callback=initMap"></script>
 </body>
 </html>
