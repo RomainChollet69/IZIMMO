@@ -3072,26 +3072,38 @@
                     alert(`Fichier trop volumineux : ${file.name}\nTaille max : 10 Mo`);
                     continue;
                 }
+
+                // Compression automatique des images
+                const prepared = await prepareFileForUpload(file);
+                const fileToUpload = prepared.file;
+                if (fileToUpload.size > MAX_FILE_SIZE) {
+                    alert(`Le fichier ${file.name} est trop volumineux même après compression.`);
+                    continue;
+                }
+
                 const progressId = 'up-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5);
                 const shortName = file.name.length > 25 ? file.name.substring(0, 22) + '…' : file.name;
+                const compressionInfo = prepared.compressed
+                    ? `<span style="color:#43A047;font-size:10px;margin-left:4px">(-${Math.round((1 - fileToUpload.size / prepared.originalSize) * 100)}%)</span>`
+                    : '';
                 progressContainer.insertAdjacentHTML('beforeend', `
                     <div class="docs-upload-item" id="${progressId}">
-                        <span>${escapeHtml(shortName)}</span>
+                        <span>${escapeHtml(shortName)}${compressionInfo}</span>
                         <div class="docs-progress-bar-outer"><div class="docs-progress-bar-inner" id="${progressId}-bar" style="width:10%"></div></div>
                         <span class="docs-upload-status" id="${progressId}-status">Envoi…</span>
                     </div>
                 `);
-                const storagePath = `${userId}/buyer_${leadId}/${Date.now()}_${file.name}`;
+                const storagePath = `${userId}/buyer_${leadId}/${Date.now()}_${fileToUpload.name}`;
                 try {
                     document.getElementById(`${progressId}-bar`).style.width = '30%';
                     const { error: uploadError } = await supabaseClient.storage
                         .from('lead-files')
-                        .upload(storagePath, file, { cacheControl: '3600', upsert: false });
+                        .upload(storagePath, fileToUpload, { cacheControl: '3600', upsert: false });
                     if (uploadError) throw uploadError;
                     document.getElementById(`${progressId}-bar`).style.width = '70%';
                     const { data: fileRecord, error: dbError } = await supabaseClient
                         .from('lead_files')
-                        .insert({ user_id: userId, buyer_id: leadId, file_name: file.name, file_type: file.type, file_size: file.size, storage_path: storagePath })
+                        .insert({ user_id: userId, buyer_id: leadId, file_name: file.name, file_type: fileToUpload.type, file_size: fileToUpload.size, storage_path: storagePath })
                         .select()
                         .single();
                     if (dbError) throw dbError;

@@ -478,3 +478,42 @@ function setupSectorAutocomplete() {
     };
     window.getSectorEntries = function() { return sectorEntries; };
 }
+
+// ===== COMPRESSION IMAGES AVANT UPLOAD =====
+async function compressImage(file, maxWidth = 1600, quality = 0.7) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > maxWidth) {
+                height = Math.round(height * (maxWidth / width));
+                width = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob((blob) => {
+                const compressedFile = new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {
+                    type: 'image/jpeg',
+                    lastModified: Date.now()
+                });
+                console.log(`Image compressée : ${(file.size / 1024).toFixed(0)} Ko → ${(compressedFile.size / 1024).toFixed(0)} Ko`);
+                resolve(compressedFile);
+            }, 'image/jpeg', quality);
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+async function prepareFileForUpload(file) {
+    const imageTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (imageTypes.includes(file.type)) {
+        const compressed = await compressImage(file);
+        const gain = file.size - compressed.size;
+        return { file: compressed, originalSize: file.size, compressed: gain > 0 };
+    }
+    return { file, originalSize: file.size, compressed: false };
+}
