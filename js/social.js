@@ -894,8 +894,8 @@
 
         if (!audioRecorder) {
             audioRecorder = new AudioRecorder({
-                maxDuration: 60000,
-                silenceTimeout: 3000,
+                maxDuration: 120000,
+                silenceTimeout: 5000,
                 onStateChange: (state, message) => {
                     console.log('[Social] Voice state:', state, message);
 
@@ -976,8 +976,8 @@
 
         if (!audioRecorder) {
             audioRecorder = new AudioRecorder({
-                maxDuration: 60000,
-                silenceTimeout: 3000,
+                maxDuration: 120000,
+                silenceTimeout: 5000,
                 onStateChange: (state, message) => {
                     console.log('[Social] Voice state:', state, message);
 
