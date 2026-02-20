@@ -2411,14 +2411,19 @@
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-group" id="fullNameGroup">
+                        <label class="form-label">Nom du contact *</label>
+                        <input type="text" class="form-input" id="fullName" placeholder="Christian Chapotton" required>
+                        <a href="#" id="toggleSeparateNames" style="font-size:12px;color:#667eea;text-decoration:none;display:inline-block;margin-top:4px" onclick="event.preventDefault();toggleNameFields()">✏️ Corriger prénom / nom séparément</a>
+                    </div>
+                    <div class="form-row" id="separateNamesGroup" style="display:none">
                         <div class="form-group">
-                            <label class="form-label">Prénom *</label>
-                            <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
+                            <label class="form-label">Prénom</label>
+                            <input type="text" class="form-input" id="firstName" placeholder="Jean">
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Nom *</label>
-                            <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
+                            <label class="form-label">Nom</label>
+                            <input type="text" class="form-input" id="lastName" placeholder="Dupont">
                         </div>
                     </div>
 
@@ -4561,8 +4566,19 @@
                 console.log('Champs extraits par Claude:', fields);
 
                 // Map fields — ONLY fill if value is not null
-                if (fields.first_name) document.getElementById('firstName').value = fields.first_name;
-                if (fields.last_name) document.getElementById('lastName').value = fields.last_name;
+                // Check if separate name fields are visible
+                const separateNamesVisible = document.getElementById('separateNamesGroup').style.display !== 'none';
+                if (separateNamesVisible) {
+                    // Populate separate fields
+                    if (fields.first_name) document.getElementById('firstName').value = fields.first_name;
+                    if (fields.last_name) document.getElementById('lastName').value = fields.last_name;
+                } else {
+                    // Populate unified fullName field
+                    if (fields.first_name || fields.last_name) {
+                        const fullNameValue = [fields.first_name, fields.last_name].filter(Boolean).join(' ');
+                        document.getElementById('fullName').value = fullNameValue;
+                    }
+                }
                 if (fields.phone) document.getElementById('phone').value = fields.phone;
                 if (fields.email) document.getElementById('email').value = fields.email;
                 if (fields.address) document.getElementById('address').value = fields.address;
@@ -4755,6 +4771,11 @@
             submitBtn.textContent = 'Créer le Lead';
             document.querySelector('.modal-title').textContent = 'Nouveau Lead';
 
+            // Reset nom : champ unique visible, champs séparés cachés
+            document.getElementById('fullNameGroup').style.display = '';
+            document.getElementById('separateNamesGroup').style.display = 'none';
+            document.getElementById('toggleSeparateNames').innerHTML = '✏️ Corriger prénom / nom séparément';
+
             // Reset tabs
             document.getElementById('modalTabs').style.display = 'none';
             switchTab('info');
@@ -4837,8 +4858,15 @@
                 referrerGroup.classList.remove('active');
                 referrerInput.value = '';
             }
-            document.getElementById('firstName').value = seller.first_name || '';
-            document.getElementById('lastName').value = seller.last_name || '';
+            // Nom : champ unique par défaut, champs séparés cachés mais pré-remplis
+            const firstName = seller.first_name || '';
+            const lastName = seller.last_name || '';
+            document.getElementById('fullName').value = [firstName, lastName].filter(Boolean).join(' ');
+            document.getElementById('firstName').value = firstName;
+            document.getElementById('lastName').value = lastName;
+            document.getElementById('fullNameGroup').style.display = '';
+            document.getElementById('separateNamesGroup').style.display = 'none';
+            document.getElementById('toggleSeparateNames').innerHTML = '✏️ Corriger prénom / nom séparément';
             document.getElementById('phone').value = seller.phone || '';
             document.getElementById('email').value = seller.email || '';
             const addrInput = document.getElementById('address');
@@ -4903,6 +4931,38 @@
             window.open(url, '_blank');
         }
 
+        function toggleNameFields() {
+            const fullNameGroup = document.getElementById('fullNameGroup');
+            const separateGroup = document.getElementById('separateNamesGroup');
+            const link = document.getElementById('toggleSeparateNames');
+            const isVisible = separateGroup.style.display !== 'none';
+
+            if (isVisible) {
+                // Cacher les champs séparés, re-afficher le champ unique
+                separateGroup.style.display = 'none';
+                fullNameGroup.style.display = '';
+                link.innerHTML = '✏️ Corriger prénom / nom séparément';
+            } else {
+                // Afficher les champs séparés, cacher le champ unique
+                // Pré-remplir avec le parsing du fullName si vide
+                const fullName = document.getElementById('fullName').value.trim();
+                const firstNameInput = document.getElementById('firstName');
+                const lastNameInput = document.getElementById('lastName');
+                if (fullName && !firstNameInput.value && !lastNameInput.value) {
+                    const parts = fullName.trim().split(/\s+/);
+                    if (parts.length === 1) {
+                        lastNameInput.value = parts[0];
+                    } else {
+                        firstNameInput.value = parts[0];
+                        lastNameInput.value = parts.slice(1).join(' ');
+                    }
+                }
+                separateGroup.style.display = '';
+                fullNameGroup.style.display = 'none';
+                link.innerHTML = '↩️ Revenir au champ unique';
+            }
+        }
+
         async function confirmDeleteSeller(id) {
             if (!confirm('Êtes-vous sûr de vouloir supprimer ce lead ?')) return;
             const ok = await deleteSellerDB(id);
@@ -4916,11 +4976,33 @@
         async function handleFormSubmit() {
             const status = document.getElementById('status').value;
             const source = document.getElementById('source').value;
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
             const date = document.getElementById('date').value;
 
-            if (!status || !source || !firstName || !lastName || !date) {
+            // Récupération du nom : champs séparés si visibles, sinon parsing du fullName
+            let firstName, lastName;
+            const separateGroup = document.getElementById('separateNamesGroup');
+            if (separateGroup.style.display !== 'none') {
+                // Champs séparés visibles : utiliser directement
+                firstName = document.getElementById('firstName').value.trim();
+                lastName = document.getElementById('lastName').value.trim();
+            } else {
+                // Champ unique : parser
+                const fullName = document.getElementById('fullName').value.trim();
+                if (!fullName) {
+                    alert('Veuillez remplir le nom du contact');
+                    return;
+                }
+                const parts = fullName.split(/\s+/);
+                if (parts.length === 1) {
+                    firstName = '';
+                    lastName = parts[0];
+                } else {
+                    firstName = parts[0];
+                    lastName = parts.slice(1).join(' ');
+                }
+            }
+
+            if (!status || !source || (!firstName && !lastName) || !date) {
                 alert('Veuillez remplir tous les champs obligatoires (*)');
                 return;
             }
