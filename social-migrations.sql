@@ -23,8 +23,17 @@ ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
 CREATE INDEX IF NOT EXISTS idx_social_profiles_user_id ON social_profiles(user_id);
 
 -- Ajouter une contrainte unique sur user_id (un seul profil par user)
-ALTER TABLE social_profiles
-ADD CONSTRAINT IF NOT EXISTS social_profiles_user_id_unique UNIQUE (user_id);
+-- Utilise un bloc DO pour vérifier l'existence avant d'ajouter
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'social_profiles_user_id_unique'
+    ) THEN
+        ALTER TABLE social_profiles
+        ADD CONSTRAINT social_profiles_user_id_unique UNIQUE (user_id);
+    END IF;
+END $$;
 
 
 -- ===== 2. Mise à jour de la table social_posts =====
