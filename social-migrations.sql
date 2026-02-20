@@ -30,7 +30,8 @@ ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS objectives TEXT[],
 ADD COLUMN IF NOT EXISTS time_available TEXT,
 ADD COLUMN IF NOT EXISTS voice_profile_set BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS content_style TEXT[];
+ADD COLUMN IF NOT EXISTS content_style TEXT[],
+ADD COLUMN IF NOT EXISTS calendar_seen BOOLEAN DEFAULT false;
 
 -- Ajouter un index sur user_id pour les requêtes rapides
 CREATE INDEX IF NOT EXISTS idx_social_profiles_user_id ON social_profiles(user_id);

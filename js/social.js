@@ -105,7 +105,15 @@
             } else {
                 currentProfile = data;
                 console.log('[Social] Profile loaded:', data);
-                showMainInterface();
+
+                // Check if calendar confirmation was seen
+                if (!data.calendar_seen) {
+                    // Show calendar confirmation (first access after onboarding)
+                    showCalendarConfirmation();
+                } else {
+                    // Show normal interface
+                    showMainInterface();
+                }
             }
         } catch (err) {
             console.error('[Social] Error loading profile:', err);
@@ -147,6 +155,7 @@
                 time_available: '1h',
                 content_style: ['balanced'],
                 voice_profile_set: false,
+                calendar_seen: false,
                 onboarding_completed: false,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
@@ -1228,10 +1237,8 @@
             await saveProfile(profileData);
 
             if (isFirstTime) {
-                // First-time setup: show main interface
-                showMainInterface();
-                renderCalendar();
-                alert('✅ Profil créé ! Bienvenue sur ton calendrier social.');
+                // First-time setup: show calendar confirmation page
+                showCalendarConfirmation();
             } else {
                 // Regular update: just close modal and refresh
                 closeStrategyModal();
@@ -1242,6 +1249,146 @@
             alert('Erreur lors de la sauvegarde: ' + err.message);
         }
     }
+
+    // ===== CALENDAR CONFIRMATION =====
+    function showCalendarConfirmation() {
+        // Hide strategy modal
+        document.getElementById('strategyBackdrop').classList.remove('active', 'fullscreen-mode');
+
+        // Show confirmation page
+        document.getElementById('calendarConfirmation').classList.remove('hidden');
+
+        // Render week calendar preview
+        renderWeekCalendarPreview();
+
+        // Render today's template
+        renderTodayTemplate();
+    }
+
+    function renderWeekCalendarPreview() {
+        if (!currentProfile) return;
+
+        const container = document.getElementById('weekCalendarPreview');
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday
+        const frequency = currentProfile.publishing_frequency || 'regular';
+        const activeDays = getActiveDaysForFrequency(frequency);
+
+        let html = '';
+        const daysLabels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+        const daysNames = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
+
+        for (let i = 0; i < 5; i++) {
+            const dayName = daysNames[i];
+            const isToday = dayOfWeek === i + 1; // Monday = 1
+            const isActive = activeDays.includes(dayName);
+
+            if (!isActive) continue;
+
+            // Get date
+            const dayDate = new Date(today);
+            dayDate.setDate(today.getDate() + (i + 1 - dayOfWeek));
+            const dateStr = `${daysLabels[i]} ${dayDate.getDate()}/${dayDate.getMonth() + 1}`;
+
+            // Get templates for this day
+            const templates = CALENDAR[dayName] || {};
+            const platforms = currentProfile.platforms_active || [];
+
+            let templatesHtml = '';
+            for (const platform of platforms) {
+                if (templates[platform]) {
+                    const emoji = getTemplateEmoji(templates[platform]);
+                    templatesHtml += `<div class="preview-template-item"><span>${emoji}</span><span>${templates[platform]}</span></div>`;
+                }
+            }
+
+            html += `
+                <div class="preview-day ${isToday ? 'today' : ''}">
+                    <div class="preview-day-header">${dateStr}</div>
+                    <div class="preview-templates">${templatesHtml || '<span style="color:#9ca3af">Aucun post</span>'}</div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function renderTodayTemplate() {
+        if (!currentProfile) return;
+
+        const today = DAYS_FR[new Date().getDay()];
+        const templates = CALENDAR[today] || {};
+        const platforms = currentProfile.platforms_active || [];
+        const firstPlatform = platforms[0];
+
+        if (!firstPlatform || !templates[firstPlatform]) {
+            document.getElementById('todayMain').innerHTML = '<span style="color:#9ca3af">Aucun post prévu aujourd\'hui</span>';
+            return;
+        }
+
+        const templateName = templates[firstPlatform];
+        const platformColors = {
+            linkedin: '#0077B5',
+            instagram: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%)',
+            facebook: '#1877F2',
+            tiktok: '#010101'
+        };
+
+        const platformColor = platformColors[firstPlatform] || '#667eea';
+        const platformName = firstPlatform.charAt(0).toUpperCase() + firstPlatform.slice(1);
+
+        document.getElementById('todayMain').innerHTML = `
+            ${templateName} sur <span style="color:${platformColor};font-weight:800">${platformName}</span>
+        `;
+    }
+
+    function getTemplateEmoji(templateName) {
+        const emojiMap = {
+            'Analyse marché': '📊',
+            'Carrousel éducatif': '📋',
+            'Stat marché': '📊',
+            'Visite minute': '🏠',
+            'Reel quartier': '📍',
+            'Coup de cœur local': '📍',
+            'Conseil express': '💬',
+            'Étude de cas': '🏠',
+            'Carrousel listing': '🏠',
+            'Nouveau mandat': '📋',
+            'Anecdote terrain': '💬',
+            'Reel conseil': '📋',
+            'Quiz / Vrai-Faux': '💬',
+            'Quartier spotlight': '📍',
+            'Opinion contrarian': '💬',
+            'Post vendu': '🔑',
+            'Remise de clés': '🔑',
+            'Humour / coulisses': '👥'
+        };
+        return emojiMap[templateName] || '📋';
+    }
+
+    window.confirmCalendarAndGenerate = async function() {
+        try {
+            // Mark calendar as seen
+            await saveProfile({
+                ...currentProfile,
+                calendar_seen: true
+            });
+
+            // Hide confirmation page
+            document.getElementById('calendarConfirmation').classList.add('hidden');
+
+            // Show main interface
+            showMainInterface();
+            renderCalendar();
+
+            // TODO: Auto-generate today's post
+            // For now, just show a success message
+            alert('✅ Calendrier confirmé ! Tu peux maintenant générer tes posts.');
+        } catch (err) {
+            console.error('[Social] Error confirming calendar:', err);
+            alert('Erreur lors de la confirmation: ' + err.message);
+        }
+    };
 
     // ===== VOICE PROFILE MODAL =====
     async function checkAndShowVoiceModal() {
