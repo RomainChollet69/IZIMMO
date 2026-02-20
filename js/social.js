@@ -47,6 +47,232 @@
     const DAYS_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
     const DAYS_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
+    // ===== TEMPLATE DETAILS =====
+    const TEMPLATE_DETAILS = {
+        // LinkedIn
+        'Analyse marché': {
+            quoi: 'Post texte LinkedIn — un chiffre marché local + ton analyse terrain',
+            pourquoi: 'Positionne comme expert local. Les posts data génèrent 3x plus de contacts vendeurs.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Étude de cas': {
+            quoi: 'Post texte ou carrousel — une vente réussie décortiquée',
+            pourquoi: 'Montre concrètement ta valeur ajoutée. Les vendeurs veulent voir des preuves, pas des promesses.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Avis à contre-pied': {
+            quoi: 'Post texte — une opinion tranchée sur le marché',
+            pourquoi: 'Génère des commentaires et du débat. L\'algorithme LinkedIn adore les posts qui divisent.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Coulisses / bilan': {
+            quoi: 'Post texte — transparence sur ton activité du mois',
+            pourquoi: 'La transparence crée la confiance. Les vendeurs choisissent l\'agent qu\'ils connaissent.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Recrutement': {
+            quoi: 'Post texte — histoire de reconversion d\'un collaborateur',
+            pourquoi: 'Attire des profils en reconversion qui cherchent un modèle accessible.',
+            cibles: ['recrutement'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+
+        // Instagram
+        'Carrousel éducatif': {
+            quoi: 'Carrousel 5-7 slides — conseil pratique immobilier',
+            pourquoi: 'Les carrousels sont le format le plus sauvegardé sur Instagram. Sauvegarde = visibilité.',
+            cibles: ['acquereurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Reel quartier': {
+            quoi: 'Vidéo 30 sec — balade dans un quartier avec voix off',
+            pourquoi: 'Montre que tu connais le terrain mieux que personne. Les Reels ont 2x plus de portée.',
+            cibles: ['notoriete'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Reel visite': {
+            quoi: 'Vidéo 30-45 sec — visite express d\'un bien',
+            pourquoi: 'Les visites en vidéo génèrent des DM d\'acquéreurs qualifiés.',
+            cibles: ['acquereurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Reel conseil': {
+            quoi: 'Vidéo 20 sec — 3 conseils face caméra avec jump cuts',
+            pourquoi: 'Le face-cam crée un lien personnel. Les gens achètent à quelqu\'un qu\'ils connaissent.',
+            cibles: ['notoriete'],
+            temps: '5 min',
+            tempsIcon: '📸'
+        },
+        'Post vendu': {
+            quoi: 'Photo + légende — remise de clés ou témoignage',
+            pourquoi: 'La preuve sociale est le déclencheur n°1 pour les vendeurs qui hésitent.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Story reveal': {
+            quoi: 'Séquence de 5 stories — teaser + reveal d\'un bien',
+            pourquoi: 'Le suspense crée de l\'attente. Les stories séquencées ont un taux de complétion 40% plus élevé.',
+            cibles: ['acquereurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+
+        // Facebook
+        'Coup de cœur local': {
+            quoi: 'Photo + texte — un commerce ou lieu local que tu aimes',
+            pourquoi: 'Le commerçant repartage → tu touches son audience. Effet de levier gratuit.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Quiz / Vrai-Faux': {
+            quoi: 'Post texte — question vrai/faux avec réponse',
+            pourquoi: 'Les quiz génèrent 4x plus de commentaires. Commentaires = visibilité algorithmique.',
+            cibles: ['acquereurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Remise de clés': {
+            quoi: 'Photo + texte — histoire d\'une vente réussie',
+            pourquoi: 'Prouve que tu vends. Les vendeurs regardent les Facebook des agents avant de les appeler.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Live visite': {
+            quoi: 'Live Facebook 10-20 min — visite en direct avec chat',
+            pourquoi: 'Les lives ont la portée organique la plus élevée sur Facebook. Et le replay continue de tourner.',
+            cibles: ['acquereurs'],
+            temps: '20 min',
+            tempsIcon: '🕐'
+        },
+        'Mini-audit groupe': {
+            quoi: 'Post dans un groupe local — offre de diagnostic gratuit',
+            pourquoi: 'Les groupes locaux sont des mines d\'or de leads. 1 post utile = 3-5 DM.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+
+        // TikTok
+        'Conseil face-cam': {
+            quoi: 'Vidéo 20-30 sec — conseil immobilier en face caméra',
+            pourquoi: 'TikTok pousse les nouveaux créateurs. Même avec 0 abonnés, tu peux faire 10k vues.',
+            cibles: ['acquereurs'],
+            temps: '5 min',
+            tempsIcon: '📸'
+        },
+        'Visite minute': {
+            quoi: 'Vidéo 30-45 sec — visite d\'un bien avec commentaire',
+            pourquoi: 'Les visites TikTok génèrent des contacts hors zone. Effet vitrine nationale.',
+            cibles: ['acquereurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Quartier spotlight': {
+            quoi: 'Vidéo 25-30 sec — présentation rapide d\'un quartier',
+            pourquoi: 'Ancrage local fort. Les acheteurs recherchent un quartier, pas juste un bien.',
+            cibles: ['notoriete'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Humour / coulisses': {
+            quoi: 'Vidéo libre — trend, humour, behind-the-scenes',
+            pourquoi: 'L\'humour humanise. Un agent drôle est un agent qu\'on retient.',
+            cibles: ['notoriete'],
+            temps: '5 min',
+            tempsIcon: '📸'
+        },
+        'Storytelling': {
+            quoi: 'Vidéo 30-40 sec — anecdote de terrain racontée face caméra',
+            pourquoi: 'Le storytelling est le format roi sur TikTok. Une bonne histoire = partages = viralité.',
+            cibles: ['notoriete'],
+            temps: '5 min',
+            tempsIcon: '📸'
+        },
+
+        // Valeurs par défaut pour templates sans détails spécifiques
+        'Carrousel listing': {
+            quoi: 'Carrousel Instagram — présentation d\'un bien en vente',
+            pourquoi: 'Met en avant ton portefeuille. Les acquéreurs scrollent les carrousels 2x plus que les photos simples.',
+            cibles: ['acquereurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Avant/après staging': {
+            quoi: 'Photo ou Reel — transformation visuelle d\'un bien',
+            pourquoi: 'Le avant/après est le format le plus partagé. Les vendeurs y voient la valeur ajoutée concrète.',
+            cibles: ['vendeurs'],
+            temps: '10 min',
+            tempsIcon: '📸'
+        },
+        'Bilan mensuel': {
+            quoi: 'Post texte ou carrousel — récap chiffré de ton mois',
+            pourquoi: 'La transparence sur tes résultats inspire confiance. Les vendeurs veulent un agent actif.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Coulisses semaine': {
+            quoi: 'Post photo ou texte — un moment authentique de ta semaine',
+            pourquoi: 'L\'humain derrière l\'agent. Les gens achètent à quelqu\'un qu\'ils apprécient.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Stat marché': {
+            quoi: 'Post texte ou image — chiffre marché avec ton analyse',
+            pourquoi: 'Positionne comme expert local. Les données crédibilisent ton discours.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Nouveau mandat': {
+            quoi: 'Photo + texte — annonce d\'une nouvelle exclusivité',
+            pourquoi: 'Montre que tu es actif et que les vendeurs te font confiance.',
+            cibles: ['vendeurs'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Anecdote terrain': {
+            quoi: 'Post texte ou vidéo — histoire vécue sur le terrain',
+            pourquoi: 'Le storytelling humanise et crée de la connexion émotionnelle.',
+            cibles: ['notoriete'],
+            temps: '2 min',
+            tempsIcon: '⚡'
+        },
+        'Conseil express': {
+            quoi: 'Vidéo courte — 1 conseil pratique immobilier',
+            pourquoi: 'Les conseils rapides sont ultra-partageables. Simple et efficace.',
+            cibles: ['acquereurs'],
+            temps: '5 min',
+            tempsIcon: '📸'
+        }
+    };
+
+    const CIBLE_LABELS = {
+        'vendeurs': { label: '🏠 Vendeurs', class: 'vendeurs' },
+        'acquereurs': { label: '🔑 Acquéreurs', class: 'acquereurs' },
+        'notoriete': { label: '📍 Notoriété', class: 'notoriete' },
+        'recrutement': { label: '👥 Recrutement', class: 'recrutement' }
+    };
+
+    // ===== TEMPLATE DETAIL STATE =====
+    let currentTemplateContext = null;
+
     // ===== FREQUENCY FILTER =====
     function getActiveDaysForFrequency(frequency) {
         // Section 7.0 du brief : filtrage selon la fréquence
@@ -367,6 +593,83 @@
         document.getElementById('storyInput').focus();
     };
 
+    // ===== TEMPLATE DETAIL PANEL =====
+    window.showTemplateDetail = function(templateName, platform, dayName) {
+        const panel = document.getElementById('templateDetailPanel');
+        const details = TEMPLATE_DETAILS[templateName];
+
+        // Use default if template not found
+        const defaultDetails = {
+            quoi: 'Post sur les réseaux sociaux — format adapté à la plateforme',
+            pourquoi: 'Maintenir une présence active et engageante auprès de ton audience.',
+            cibles: ['notoriete'],
+            temps: '5 min',
+            tempsIcon: '⚡'
+        };
+
+        const templateData = details || defaultDetails;
+
+        // Store context for generation
+        currentTemplateContext = {
+            templateName,
+            platform,
+            dayName
+        };
+
+        // Fill panel content
+        document.getElementById('templateDetailTitle').textContent = `${templateName}`;
+        document.getElementById('templateQuoi').innerHTML = templateData.quoi;
+        document.getElementById('templatePourquoi').innerHTML = templateData.pourquoi;
+
+        // Cibles badges
+        const ciblesHTML = templateData.cibles.map(cible => {
+            const cibleData = CIBLE_LABELS[cible] || { label: cible, class: 'notoriete' };
+            return `<span class="template-cible-badge ${cibleData.class}">${cibleData.label}</span>`;
+        }).join('');
+        document.getElementById('templateCible').innerHTML = ciblesHTML;
+
+        // Temps badge
+        document.getElementById('templateTemps').innerHTML =
+            `<span class="template-temps-badge">${templateData.tempsIcon} ${templateData.temps}</span>`;
+
+        // Show panel with animation
+        panel.classList.remove('hidden');
+
+        // Scroll to panel
+        setTimeout(() => {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    };
+
+    window.closeTemplateDetail = function() {
+        const panel = document.getElementById('templateDetailPanel');
+        panel.classList.add('hidden');
+        currentTemplateContext = null;
+    };
+
+    window.generateFromTemplate = async function() {
+        if (!currentTemplateContext) return;
+
+        const { templateName, platform } = currentTemplateContext;
+
+        // Close panel
+        closeTemplateDetail();
+
+        // Switch to story mode
+        document.getElementById('storyArea').classList.add('active');
+        document.getElementById('suggestionsArea').classList.remove('active');
+        document.getElementById('storyBtn').classList.add('active');
+        document.getElementById('suggestionBtn').classList.remove('active');
+
+        // Fill context
+        const storyInput = document.getElementById('storyInput');
+        storyInput.value = `Créer un post "${templateName}" pour ${platform}`;
+        storyInput.focus();
+
+        // Scroll to story area
+        document.querySelector('.create-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
     // ===== CALENDAR =====
     function renderCalendar() {
         const container = document.getElementById('weekCalendar');
@@ -405,7 +708,9 @@
             for (const platform of platforms) {
                 if (templates[platform]) {
                     const icon = getPlatformIcon(platform);
-                    platformsHTML += `<span class="platform">${icon} ${templates[platform]}</span>`;
+                    const templateName = templates[platform];
+                    const escapedTemplate = templateName.replace(/'/g, "\\'");
+                    platformsHTML += `<span class="platform" onclick="showTemplateDetail('${escapedTemplate}', '${platform}', '${dayName}')">${icon} ${templateName}</span>`;
                 }
             }
 
