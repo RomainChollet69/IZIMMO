@@ -33,6 +33,31 @@
             overflow-x: hidden;
         }
 
+        /* ===== UTILITY CLASSES ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Fullscreen mode for first-time setup */
+        .modal-backdrop.fullscreen-mode {
+            background: white;
+            padding: 0;
+        }
+
+        .modal-backdrop.fullscreen-mode .strategy-panel {
+            max-width: 100%;
+            width: 100%;
+            height: 100vh;
+            max-height: 100vh;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
         /* ===== HEADER & NAVIGATION ===== */
         .header {
             display: flex;

@@ -99,15 +99,39 @@
             }
 
             if (!data) {
-                console.log('[Social] No profile found, creating default profile');
-                await createDefaultProfile();
+                console.log('[Social] No profile found, showing first-time setup');
+                currentProfile = null;
+                showFirstTimeSetup();
             } else {
                 currentProfile = data;
                 console.log('[Social] Profile loaded:', data);
+                showMainInterface();
             }
         } catch (err) {
             console.error('[Social] Error loading profile:', err);
         }
+    }
+
+    function showFirstTimeSetup() {
+        // Hide main interface elements
+        document.querySelector('.calendar-section')?.classList.add('hidden');
+        document.querySelector('.create-section')?.classList.add('hidden');
+        document.querySelector('.history-section')?.classList.add('hidden');
+
+        // Show strategy panel in fullscreen mode (not as modal)
+        const backdrop = document.getElementById('strategyBackdrop');
+        backdrop.classList.add('active', 'fullscreen-mode');
+    }
+
+    function showMainInterface() {
+        // Show main interface elements
+        document.querySelector('.calendar-section')?.classList.remove('hidden');
+        document.querySelector('.create-section')?.classList.remove('hidden');
+        document.querySelector('.history-section')?.classList.remove('hidden');
+
+        // Hide strategy panel
+        const backdrop = document.getElementById('strategyBackdrop');
+        backdrop.classList.remove('active', 'fullscreen-mode');
     }
 
     async function createDefaultProfile() {
@@ -1199,11 +1223,21 @@
                 voice_profile_set: currentProfile?.voice_profile_set || false
             };
 
+            const isFirstTime = !currentProfile;
+
             await saveProfile(profileData);
 
-            closeStrategyModal();
-            renderCalendar(); // Refresh calendar with new settings
-            alert('✅ Stratégie mise à jour !');
+            if (isFirstTime) {
+                // First-time setup: show main interface
+                showMainInterface();
+                renderCalendar();
+                alert('✅ Profil créé ! Bienvenue sur ton calendrier social.');
+            } else {
+                // Regular update: just close modal and refresh
+                closeStrategyModal();
+                renderCalendar();
+                alert('✅ Stratégie mise à jour !');
+            }
         } catch (err) {
             alert('Erreur lors de la sauvegarde: ' + err.message);
         }
