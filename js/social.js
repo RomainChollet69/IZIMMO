@@ -37,7 +37,7 @@
             tiktok: 'Quartier spotlight'
         },
         vendredi: {
-            linkedin: 'Opinion contrarian',
+            linkedin: 'Avis à contre-pied',
             instagram: 'Post vendu',
             facebook: 'Remise de clés',
             tiktok: 'Humour / coulisses'
@@ -1345,7 +1345,7 @@
             'Reel conseil': '📋',
             'Quiz / Vrai-Faux': '💬',
             'Quartier spotlight': '📍',
-            'Opinion contrarian': '💬',
+            'Avis à contre-pied': '💬',
             'Post vendu': '🔑',
             'Remise de clés': '🔑',
             'Humour / coulisses': '👥'
