@@ -1,11 +1,6 @@
 import { verifyAuth, withCORS } from './_auth.js';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY
-);
-
 export default async function handler(req, res) {
     // CORS
     withCORS(res);
@@ -14,6 +9,21 @@ export default async function handler(req, res) {
 
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: 'Non authentifié' });
+
+    // Create authenticated Supabase client with user's JWT token
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    const token = authHeader.replace('Bearer ', '');
+    const supabase = createClient(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_ANON_KEY,
+        {
+            global: {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        }
+    );
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
