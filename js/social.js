@@ -1132,24 +1132,24 @@
 
     // ===== STRATEGY MODAL =====
     function openStrategyModal() {
-        if (!currentProfile) return;
+        console.log('[Social] Opening strategy modal, currentProfile:', currentProfile);
 
-        // Pre-fill current values
-        const objectives = currentProfile.objectives || [];
+        // Pre-fill current values (use defaults if no profile yet)
+        const objectives = currentProfile?.objectives || ['mandats_vendeurs', 'notoriete'];
         document.querySelectorAll('input[name="strategy_objective"]').forEach(cb => {
             cb.checked = objectives.includes(cb.value);
         });
 
-        const timeAvailable = currentProfile.time_available || '1h';
+        const timeAvailable = currentProfile?.time_available || '1h';
         const timeRadio = document.querySelector(`input[name="time_available"][value="${timeAvailable}"]`);
         if (timeRadio) timeRadio.checked = true;
 
-        const platforms = currentProfile.platforms_active || [];
+        const platforms = currentProfile?.platforms_active || ['linkedin', 'instagram', 'facebook'];
         document.querySelectorAll('input[name="strategy_platform"]').forEach(cb => {
             cb.checked = platforms.includes(cb.value);
         });
 
-        const contentStyle = currentProfile.content_style || ['balanced'];
+        const contentStyle = currentProfile?.content_style || ['balanced'];
         document.querySelectorAll('input[name="content_style"]').forEach(cb => {
             cb.checked = contentStyle.includes(cb.value);
         });
@@ -1186,14 +1186,20 @@
         };
 
         try {
-            await saveProfile({
-                ...currentProfile,
+            // Build profile data (create new or update existing)
+            const profileData = {
+                ...(currentProfile || {}),
                 objectives,
                 time_available: timeAvailable,
                 publishing_frequency: frequencyMap[timeAvailable],
                 platforms_active: platforms,
-                content_style: contentStyle.length > 0 ? contentStyle : ['balanced']
-            });
+                content_style: contentStyle.length > 0 ? contentStyle : ['balanced'],
+                tone: currentProfile?.tone || 'mixte',
+                tutoiement: currentProfile?.tutoiement || false,
+                voice_profile_set: currentProfile?.voice_profile_set || false
+            };
+
+            await saveProfile(profileData);
 
             closeStrategyModal();
             renderCalendar(); // Refresh calendar with new settings
