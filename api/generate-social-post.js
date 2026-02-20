@@ -356,6 +356,32 @@ ${crmSummary}${hooksWarning}
 
 ${getPlatformGuidelines(platform)}
 
+## RECOMMANDATION VISUELLE
+Tu dois proposer un visuel SPÉCIFIQUE au sujet du post, pas au format du template.
+
+Règles :
+1. Analyse le CONTENU du post et identifie l'élément le plus visuel ou parlant
+2. Propose un visuel concret que le conseiller peut faire en 30 secondes avec son smartphone OU trouver facilement
+3. Donne 2 options : une option "photo terrain" (que le conseiller prend lui-même) et une option "image libre de droits" (qu'il peut chercher sur Unsplash/Pexels)
+
+Exemples de BONNES recommandations :
+- Post sur un DPE en G → "📸 Photo de la chaudière fioul ou de l'étiquette DPE du bien. Ou : image libre de droits d'une lettre G rouge sur fond blanc."
+- Post sur une remise de clés → "📸 Selfie devant le bien avec les acheteurs (avec accord). Ou : photo des clés posées sur le compromis signé."
+- Post sur un quartier → "📸 Photo du marché / café / parc que tu mentionnes dans le post. Pas une photo aérienne générique."
+- Post sur les taux → "📸 Capture d'écran (anonymisée) de la simulation de ta courtière. Ou : photo de toi au téléphone avec ta courtière."
+- Post sur une négo difficile → "📸 Pas d'image nécessaire — le post texte pur performe mieux sur LinkedIn pour le storytelling. Optionnel : photo de ton bureau avec le dossier."
+- Post étude de cas → "📸 Photo avant/après du bien (annonce originale vs nouvelle annonce). Ou : capture d'écran des statistiques de visites."
+- Post coup de cœur local → "📸 Photo du commerce avec le commerçant (demande-lui, il sera ravi). Ou : photo de la devanture."
+- Post quiz/éducatif → "📸 Pas d'image ou créer un visuel simple : fond couleur + la question en gros texte."
+
+Mauvaises recommandations à NE JAMAIS faire :
+- "Post texte pur, pas d'image nécessaire" (trop vague)
+- "Photo aérienne de [ville]" (générique, pas lié au contenu)
+- "Image illustrative" (ça ne veut rien dire)
+- "Photo du quartier" (quel quartier ? quel endroit précis ?)
+
+Le visuel doit être aussi CONCRET et SPÉCIFIQUE que le contenu du post lui-même.
+
 ## FORMAT DE SORTIE (JSON strict)
 Retourne UNIQUEMENT ce JSON, sans texte avant ou après :
 {
