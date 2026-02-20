@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAIMMO — Réseaux Sociaux</title>
+    <meta property="og:title" content="WAIMMO — CRM Immobilier">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/audio-recorder.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 16px 30px;
+            background: url('img/header_bg.png') center / cover no-repeat;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 160px;
+            height: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .nav-tab:hover {
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .nav-tab.active {
+            color: #667eea;
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e8eaf6;
+            object-fit: cover;
+        }
+
+        .user-name {
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .logout-btn {
+            background: rgba(0, 0, 0, 0.06);
+            border: none;
+            color: var(--text-light);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(0, 0, 0, 0.12);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ===== CALENDAR SECTION ===== */
+        .calendar-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .calendar-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .week-days {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .day-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 16px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .day-card.today {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #e8eaf6 0%, #d5d9f7 100%);
+        }
+
+        .day-card.published {
+            border-color: #43A047;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+        }
+
+        .day-name {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .day-platforms {
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        .day-platforms .platform {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        /* ===== CREATE POST SECTION ===== */
+        .create-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 16px 24px;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .mode-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .mode-btn.active {
+            border-color: #667eea;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .mode-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .mode-btn.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .input-area {
+            display: none;
+        }
+
+        .input-area.active {
+            display: block;
+        }
+
+        .story-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: var(--text-dark);
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .story-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            align-items: center;
+        }
+
+        .voice-btn {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .voice-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .voice-btn.recording {
+            background: #FF4757;
+            border-color: #FF4757;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .generate-btn {
+            flex: 1;
+            padding: 12px 24px;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .voice-status {
+            font-size: 14px;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* ===== RESULTS SECTION ===== */
+        .results-section {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .results-section.active {
+            display: block;
+        }
+
+        .platform-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0;
+        }
+
+        .platform-tab {
+            padding: 12px 24px;
+            border: none;
+            background: transparent;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-light);
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+            bottom: -2px;
+        }
+
+        .platform-tab:hover {
+            color: var(--text-dark);
+        }
+
+        .platform-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .platform-content {
+            display: none;
+        }
+
+        .platform-content.active {
+            display: block;
+        }
+
+        .post-content {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-dark);
+        }
+
+        .visual-recommendation {
+            background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+            border-left: 4px solid #FF9800;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .visual-recommendation-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #E65100;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .visual-recommendation-text {
+            font-size: 14px;
+            color: #E65100;
+            line-height: 1.6;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px 24px;
+            border: 2px solid var(--border-color);
+            background: white;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .action-btn.primary {
+            background: var(--primary-gradient);
+            border-color: #667eea;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            color: white;
+        }
+
+        .action-btn.success {
+            border-color: #43A047;
+            color: #43A047;
+        }
+
+        .action-btn.success:hover {
+            background: #43A047;
+            color: white;
+        }
+
+        /* ===== HISTORY SECTION ===== */
+        .history-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: #e9ecef;
+            transform: translateX(4px);
+        }
+
+        .history-item.published {
+            border-left-color: #43A047;
+        }
+
+        .history-item.copied {
+            border-left-color: #2196F3;
+        }
+
+        .history-item.draft {
+            border-left-color: #FF9800;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-bottom: 4px;
+        }
+
+        .history-preview {
+            font-size: 14px;
+            color: var(--text-dark);
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 500px;
+        }
+
+        .history-platform {
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 6px;
+            background: white;
+        }
+
+        .history-status {
+            font-size: 20px;
+            margin-left: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .empty-state-subtext {
+            font-size: 14px;
+        }
+
+        /* ===== ONBOARDING MODAL ===== */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .onboarding-modal {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: var(--primary-gradient);
+            padding: 24px;
+            border-radius: 20px 20px 0 0;
+            color: white;
+        }
+
+        .modal-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .modal-body {
+            padding: 32px;
+        }
+
+        .onboarding-step {
+            display: none;
+        }
+
+        .onboarding-step.active {
+            display: block;
+        }
+
+        .step-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            justify-content: center;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .step-dot.active {
+            background: #667eea;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: var(--text-dark);
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            min-height: 48px;
+            cursor: text;
+        }
+
+        .tag-input-container:focus-within {
+            border-color: #667eea;
+        }
+
+        .tag {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .tag-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            min-width: 120px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .checkbox-label:hover {
+            border-color: #667eea;
+        }
+
+        .checkbox-label input:checked + span {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .slider-container {
+            margin: 20px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--border-color);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--text-light);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.secondary {
+            background: var(--border-color);
+            color: var(--text-dark);
+        }
+
+        .modal-btn.secondary:hover {
+            background: #d0d5dd;
+        }
+
+        .modal-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .week-days {
+                grid-template-columns: 1fr;
+            }
+
+            .mode-buttons {
+                flex-direction: column;
+            }
+
+            .input-controls {
+                flex-direction: column;
+            }
+
+            .platform-tabs {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .checkbox-group {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="img/logo_200.png" alt="WAIMMO" />
+        </a>
+        <nav class="nav-tabs">
+            <a href="index.html" class="nav-tab">Vendeurs</a>
+            <a href="acquereurs.html" class="nav-tab">Acquéreurs</a>
+            <a href="social.html" class="nav-tab active">Social</a>
+            <a href="parametres.html" class="nav-tab">Paramètres</a>
+        </nav>
+        <div class="header-actions">
+            <div class="user-profile" id="userProfile"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Calendar Section -->
+        <div class="calendar-section">
+            <div class="calendar-title">
+                📅 Calendrier de la semaine
+            </div>
+            <div class="week-days" id="weekCalendar">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+        <!-- Create Post Section -->
+        <div class="create-section">
+            <div class="section-title">
+                ✨ Créer un post
+            </div>
+            <div class="mode-buttons">
+                <button class="mode-btn disabled" id="suggestionBtn" disabled>
+                    📋 Suggestion du jour
+                </button>
+                <button class="mode-btn" id="storyBtn">
+                    🎤 J'ai un truc à raconter
+                </button>
+            </div>
+
+            <!-- Story Mode -->
+            <div class="input-area" id="storyArea">
+                <textarea
+                    class="story-input"
+                    id="storyInput"
+                    placeholder="Raconte ce qui s'est passé... (ex: Ce matin j'ai visité un T3 rue Garibaldi avec un couple de primo-accédants. L'appart est bien mais le DPE est en F...)"
+                ></textarea>
+                <div class="input-controls">
+                    <button class="voice-btn" id="voiceBtn">
+                        🎤 <span id="voiceBtnText">Dicter</span>
+                    </button>
+                    <span class="voice-status" id="voiceStatus"></span>
+                    <button class="generate-btn" id="generateBtn">
+                        ✨ Générer les posts
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="results-section" id="resultsSection">
+            <div class="section-title">
+                📝 Posts générés
+            </div>
+            <div class="platform-tabs" id="platformTabs">
+                <!-- Generated by JS -->
+            </div>
+            <div id="platformsContent">
+                <!-- Generated by JS -->
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <div class="history-section">
+            <div class="section-title">
+                📚 Posts de la semaine
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📭</div>
+                    <div class="empty-state-text">Aucun post généré cette semaine</div>
+                    <div class="empty-state-subtext">Commence par créer ton premier post ci-dessus</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Onboarding Modal -->
+    <div class="modal-backdrop" id="onboardingBackdrop">
+        <div class="onboarding-modal">
+            <div class="modal-header">
+                <div class="modal-title">Bienvenue sur Social Content Engine</div>
+                <div class="modal-subtitle">Configurons ton profil pour générer des posts personnalisés</div>
+            </div>
+            <div class="modal-body">
+                <div class="step-indicator" id="stepIndicator">
+                    <div class="step-dot active"></div>
+                    <div class="step-dot"></div>
+                    <div class="step-dot"></div>
+                </div>
+
+                <!-- Step 1: Basic Info -->
+                <div class="onboarding-step active" id="step1">
+                    <div class="form-group">
+                        <label class="form-label">Ville(s) et quartier(s) où tu travailles *</label>
+                        <div class="tag-input-container" id="neighborhoodsContainer">
+                            <input type="text" class="tag-input" id="neighborhoodsInput" placeholder="Ex: Lyon 3e, Villeurbanne, Part-Dieu..." />
+                        </div>
+                        <small style="color: var(--text-light); font-size: 12px; margin-top: 4px; display: block;">
+                            Tape un quartier et appuie sur Entrée pour l'ajouter
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Réseau / Agence *</label>
+                        <select class="form-select" id="networkSelect">
+                            <option value="">Sélectionne ton réseau</option>
+                            <option value="efficity">Efficity</option>
+                            <option value="iad">IAD</option>
+                            <option value="safti">Safti</option>
+                            <option value="capifrance">Capifrance</option>
+                            <option value="exp">eXp</option>
+                            <option value="kw">Keller Williams</option>
+                            <option value="independant">Indépendant</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Plateformes actives *</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platform" value="linkedin" />
+                                <span>LinkedIn</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platform" value="instagram" />
+                                <span>Instagram</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platform" value="facebook" />
+                                <span>Facebook</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="platform" value="tiktok" />
+                                <span>TikTok</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">RSAC et CCI (pour mentions légales)</label>
+                        <input type="text" class="form-input" id="rsacInput" placeholder="Ex: RSAC Lyon n°123456789 | CCI Lyon" />
+                    </div>
+                </div>
+
+                <!-- Step 2: Tone & Style -->
+                <div class="onboarding-step" id="step2">
+                    <div class="form-group">
+                        <label class="form-label">Ton style d'écriture</label>
+                        <div class="slider-container">
+                            <input type="range" min="0" max="100" value="50" class="slider" id="toneSlider" />
+                            <div class="slider-labels">
+                                <span>Professionnel</span>
+                                <span>Décontracté</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tu tutoies ton audience ?</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="radio" name="tutoiement" value="false" checked />
+                                <span>Non, je vouvoie</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="radio" name="tutoiement" value="true" />
+                                <span>Oui, je tutoie</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Colle 3 à 5 de tes meilleurs posts (optionnel)</label>
+                        <textarea
+                            class="form-textarea"
+                            id="samplePostsTextarea"
+                            placeholder="Colle ici quelques posts que tu as déjà publiés pour que l'IA apprenne ton style d'écriture..."
+                        ></textarea>
+                        <small style="color: var(--text-light); font-size: 12px; margin-top: 4px; display: block;">
+                            L'IA analysera ton style pour mieux le reproduire
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Step 3: Analysis -->
+                <div class="onboarding-step" id="step3">
+                    <div id="analysisResult" style="display: none;">
+                        <h3 style="margin-bottom: 16px; color: var(--text-dark);">Analyse de ton style</h3>
+                        <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+                            <p id="analysisText" style="font-size: 14px; line-height: 1.8; color: var(--text-dark);"></p>
+                        </div>
+                        <p style="font-size: 13px; color: var(--text-light); text-align: center;">
+                            Ce profil s'affinera au fil de tes modifications
+                        </p>
+                    </div>
+                    <div id="noAnalysis">
+                        <div style="text-align: center; padding: 40px 20px;">
+                            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+                            <h3 style="margin-bottom: 12px; color: var(--text-dark);">Profil créé !</h3>
+                            <p style="font-size: 14px; color: var(--text-light); line-height: 1.6;">
+                                Ton profil est prêt. L'IA va apprendre ton style au fil des posts que tu modifieras.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="modal-btn secondary" id="prevBtn" style="display: none;">Précédent</button>
+                    <button class="modal-btn primary" id="nextBtn">Suivant</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/social.js"></script>
+</body>
+</html>
