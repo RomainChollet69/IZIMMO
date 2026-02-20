@@ -75,6 +75,9 @@
         // Load history
         await loadHistory();
 
+        // Load suggestions (Sprint 2)
+        await loadSuggestions();
+
         // Setup event listeners
         setupListeners();
 
@@ -134,6 +137,168 @@
             throw err;
         }
     }
+
+    // ===== CRM SUGGESTIONS (Sprint 2) =====
+    async function analyzeCRMEvents() {
+        const user = (await supabaseClient.auth.getUser()).data.user;
+        if (!user) return [];
+
+        const now = new Date();
+        const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+        const suggestions = [];
+
+        try {
+            // 1. Recent sales (14 days)
+            const { data: recentSales } = await supabaseClient
+                .from('sellers')
+                .select('property_type, address, budget, last_activity_at')
+                .eq('user_id', user.id)
+                .eq('status', 'sold')
+                .gte('last_activity_at', fourteenDaysAgo)
+                .order('last_activity_at', { ascending: false })
+                .limit(1);
+
+            if (recentSales && recentSales.length > 0) {
+                const sale = recentSales[0];
+                suggestions.push({
+                    type: 'sale',
+                    title: 'Vente récente',
+                    description: `Tu as vendu ${sale.property_type || 'un bien'} ${sale.address ? 'à ' + sale.address : ''} — un post "remise de clés" ?`,
+                    platform: 'linkedin',
+                    data: sale
+                });
+            }
+
+            // 2. Old mandates without offers (> 45 days)
+            const fortyFiveDaysAgo = new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString();
+            const { data: oldMandates } = await supabaseClient
+                .from('sellers')
+                .select('property_type, address, mandate_start_date')
+                .eq('user_id', user.id)
+                .eq('status', 'mandate')
+                .lt('mandate_start_date', fortyFiveDaysAgo)
+                .order('mandate_start_date', { ascending: true })
+                .limit(1);
+
+            if (oldMandates && oldMandates.length > 0) {
+                const mandate = oldMandates[0];
+                const days = Math.floor((now - new Date(mandate.mandate_start_date)) / (1000 * 60 * 60 * 24));
+                suggestions.push({
+                    type: 'mandate',
+                    title: 'Mandat longue durée',
+                    description: `Ton ${mandate.property_type || 'bien'} ${mandate.address ? 'à ' + mandate.address : ''} est en mandat depuis ${days} jours — une étude de cas pour relancer ?`,
+                    platform: 'linkedin',
+                    data: { ...mandate, days }
+                });
+            }
+
+            // 3. Recent visits (7 days)
+            const { data: visits, count: visitsCount } = await supabaseClient
+                .from('visits')
+                .select('*', { count: 'exact' })
+                .eq('user_id', user.id)
+                .gte('created_at', sevenDaysAgo);
+
+            if (visitsCount && visitsCount >= 3) {
+                suggestions.push({
+                    type: 'visits',
+                    title: 'Visites de la semaine',
+                    description: `Tu as fait ${visitsCount} visites cette semaine — un Reel "visite express" ?`,
+                    platform: 'instagram',
+                    data: { count: visitsCount }
+                });
+            }
+
+            // 4. Monthly estimations (≥ 3)
+            const { count: estimationsCount } = await supabaseClient
+                .from('sellers')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', user.id)
+                .gte('created_at', monthStart);
+
+            if (estimationsCount && estimationsCount >= 3) {
+                suggestions.push({
+                    type: 'estimations',
+                    title: 'Estimations du mois',
+                    description: `Tu as fait ${estimationsCount} estimations ce mois — un post "analyse marché" ?`,
+                    platform: 'linkedin',
+                    data: { count: estimationsCount }
+                });
+            }
+
+        } catch (err) {
+            console.error('[Social] CRM analysis error:', err);
+        }
+
+        return suggestions;
+    }
+
+    async function loadSuggestions() {
+        const container = document.getElementById('suggestionsContainer');
+        const suggestions = await analyzeCRMEvents();
+
+        if (suggestions.length === 0) {
+            // Show calendar suggestion for today
+            const today = DAYS_FR[new Date().getDay()];
+            const templates = CALENDAR[today] || {};
+            const platforms = currentProfile?.platforms_active || ['linkedin', 'instagram', 'facebook', 'tiktok'];
+
+            let html = `<div class="suggestion-empty">
+                <p style="color:var(--text-light);margin-bottom:16px">Aucun événement CRM récent détecté.</p>
+                <p style="font-weight:600;margin-bottom:8px">Suggestions du calendrier pour aujourd'hui :</p>
+            `;
+
+            for (const platform of platforms) {
+                if (templates[platform]) {
+                    const emoji = { linkedin: '💼', instagram: '📸', facebook: '👥', tiktok: '🎵' }[platform] || '📱';
+                    html += `<div class="calendar-suggestion">
+                        ${emoji} <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}</strong> : ${templates[platform]}
+                    </div>`;
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        } else {
+            let html = suggestions.map(s => `
+                <div class="suggestion-card" data-suggestion='${JSON.stringify(s).replace(/'/g, "&apos;")}'>
+                    <div class="suggestion-icon">${s.type === 'sale' ? '🏡' : s.type === 'visits' ? '🚶' : s.type === 'mandate' ? '📋' : '📊'}</div>
+                    <div class="suggestion-content">
+                        <div class="suggestion-title">${escapeHtml(s.title)}</div>
+                        <div class="suggestion-description">${escapeHtml(s.description)}</div>
+                    </div>
+                    <button class="suggestion-btn" onclick="window.handleSuggestionClick(this)">Raconter cette histoire</button>
+                </div>
+            `).join('');
+
+            container.innerHTML = html;
+        }
+    }
+
+    window.handleSuggestionClick = async function(btn) {
+        const card = btn.closest('.suggestion-card');
+        const suggestion = JSON.parse(card.dataset.suggestion.replace(/&apos;/g, "'"));
+
+        // Switch to story mode
+        document.getElementById('storyArea').classList.add('active');
+        document.getElementById('storyBtn').classList.add('active');
+        document.getElementById('suggestionBtn').classList.remove('active');
+
+        // Fill textarea with context
+        const context = suggestion.type === 'sale'
+            ? `Vente : ${suggestion.data.property_type || 'bien'} ${suggestion.data.address || ''}, ${suggestion.data.budget ? suggestion.data.budget + '€' : ''}`
+            : suggestion.type === 'visits'
+            ? `${suggestion.data.count} visites cette semaine`
+            : suggestion.type === 'mandate'
+            ? `Mandat ${suggestion.data.property_type || 'bien'} ${suggestion.data.address || ''} depuis ${suggestion.data.days} jours`
+            : `${suggestion.data.count} estimations ce mois`;
+
+        document.getElementById('storyInput').value = context;
+        document.getElementById('storyInput').focus();
+    };
 
     // ===== CALENDAR =====
     function renderCalendar() {
@@ -199,9 +364,19 @@
     // ===== EVENT LISTENERS =====
     function setupListeners() {
         // Mode buttons
+        document.getElementById('suggestionBtn').addEventListener('click', () => {
+            document.getElementById('suggestionsArea').classList.add('active');
+            document.getElementById('storyArea').classList.remove('active');
+            document.getElementById('suggestionBtn').classList.add('active');
+            document.getElementById('storyBtn').classList.remove('active');
+            loadSuggestions();
+        });
+
         document.getElementById('storyBtn').addEventListener('click', () => {
             document.getElementById('storyArea').classList.add('active');
+            document.getElementById('suggestionsArea').classList.remove('active');
             document.getElementById('storyBtn').classList.add('active');
+            document.getElementById('suggestionBtn').classList.remove('active');
         });
 
         // Voice button
@@ -655,30 +830,25 @@
                 tiktok: 'TikTok'
             }[post.platform] || post.platform;
 
-            const statusEmoji = {
-                draft: '📝',
-                copied: '📋',
-                published: '✅'
-            }[post.status] || '📝';
+            const statusBadge = {
+                draft: '<span class="status-badge draft">📝 Brouillon</span>',
+                copied: '<span class="status-badge copied">📋 Copié</span>',
+                published: '<span class="status-badge published">✅ Partagé</span>'
+            }[post.status] || '<span class="status-badge draft">📝 Brouillon</span>';
 
-            const statusLabel = {
-                draft: 'brouillon',
-                copied: 'copié',
-                published: 'partagé'
-            }[post.status] || 'brouillon';
-
-            const preview = post.content.split('\n')[0].substring(0, 60) + '...';
+            // Use hook if available, otherwise first line (max 50 chars)
+            const hookText = post.hook || post.content.split('\n')[0];
+            const preview = hookText.length > 50 ? hookText.substring(0, 50) + '…' : hookText;
 
             html += `
-                <div class="history-item ${post.status}" onclick="viewPost('${post.id}')">
-                    <div class="history-info">
+                <div class="history-item ${post.status}">
+                    <div class="history-header">
                         <div class="history-date">${dateStr}</div>
-                        <div class="history-preview">${escapeHtml(preview)}</div>
+                        <div class="history-platform-icon">${emoji} ${platformName}</div>
+                        ${statusBadge}
                     </div>
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <div class="history-platform">${emoji} ${platformName}</div>
-                        <div class="history-status">${statusEmoji}</div>
-                    </div>
+                    <div class="history-hook">${escapeHtml(preview)}</div>
+                    <button class="history-reopen-btn" onclick="reopenPost('${post.id}')">📝 Réouvrir</button>
                 </div>
             `;
         }
@@ -686,10 +856,36 @@
         container.innerHTML = html;
     }
 
-    window.viewPost = function(postId) {
-        console.log('[Social] View post:', postId);
-        // TODO: Implement view/edit post
-        alert('Affichage du post (fonctionnalité à venir)');
+    window.reopenPost = async function(postId) {
+        try {
+            const { data: post, error } = await supabaseClient
+                .from('social_posts')
+                .select('*')
+                .eq('id', postId)
+                .single();
+
+            if (error || !post) {
+                alert('Post non trouvé');
+                return;
+            }
+
+            // Display in results area
+            document.getElementById('resultsSection').style.display = 'block';
+            displayResults([{
+                platform: post.platform,
+                content: post.content,
+                hook: post.hook,
+                visual_recommendation: post.visual_recommendation || 'Post texte pur.',
+                completeness: post.completeness || { hook_quality: true, local_anchor: true, terrain_proof: true, cta_present: true },
+                post_id: post.id
+            }]);
+
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        } catch (err) {
+            console.error('[Social] Reopen post error:', err);
+            alert('Erreur lors du chargement du post');
+        }
     };
 
     // ===== ONBOARDING =====

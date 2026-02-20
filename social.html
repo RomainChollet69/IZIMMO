@@ -931,6 +931,168 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* Sprint 2: Suggestions */
+        .suggestions-loading {
+            padding: 32px;
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .suggestion-empty {
+            padding: 24px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .calendar-suggestion {
+            padding: 12px 16px;
+            margin-top: 8px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .suggestion-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .suggestion-card:hover {
+            border-color: #667eea;
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .suggestion-icon {
+            font-size: 32px;
+            min-width: 48px;
+            text-align: center;
+        }
+
+        .suggestion-content {
+            flex: 1;
+        }
+
+        .suggestion-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-description {
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        .suggestion-btn {
+            padding: 12px 20px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .suggestion-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        /* Sprint 2: Historique enrichi */
+        .history-item {
+            padding: 16px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .history-item:hover {
+            box-shadow: var(--shadow);
+            border-color: #667eea;
+        }
+
+        .history-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .history-date {
+            font-size: 13px;
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .history-platform-icon {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .status-badge.draft {
+            background: #f0f0f0;
+            color: #666;
+        }
+
+        .status-badge.copied {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-badge.published {
+            background: #e8f5e9;
+            color: #43a047;
+        }
+
+        .history-hook {
+            color: var(--text-dark);
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .history-reopen-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .history-reopen-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -967,12 +1129,19 @@
                 ✨ Raconter un moment
             </div>
             <div class="mode-buttons">
-                <button class="mode-btn disabled" id="suggestionBtn" disabled>
+                <button class="mode-btn active" id="suggestionBtn">
                     📋 Suggestion du jour
                 </button>
                 <button class="mode-btn" id="storyBtn">
                     🎤 J'ai un truc à raconter
                 </button>
+            </div>
+
+            <!-- Suggestions Mode (Sprint 2) -->
+            <div class="input-area active" id="suggestionsArea">
+                <div id="suggestionsContainer">
+                    <div class="suggestions-loading">Analyse de tes données CRM...</div>
+                </div>
             </div>
 
             <!-- Story Mode -->
