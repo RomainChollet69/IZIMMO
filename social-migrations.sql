@@ -1,8 +1,19 @@
 -- WAIMMO — Social Content Engine — Migrations SQL
 -- À exécuter dans l'éditeur SQL de Supabase
--- Sprint 1: Ajoute les nouveaux champs nécessaires aux tables social_profiles et social_posts
+-- Crée les tables de base puis ajoute tous les champs nécessaires
 
--- ===== 1. Mise à jour de la table social_profiles =====
+-- ===== 1. Création de la table social_profiles =====
+
+CREATE TABLE IF NOT EXISTS social_profiles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    tone TEXT,
+    style TEXT,
+    sector TEXT,
+    sample_posts TEXT[],
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- Ajouter les nouveaux champs (si ils n'existent pas déjà)
 ALTER TABLE social_profiles
@@ -16,14 +27,12 @@ ADD COLUMN IF NOT EXISTS rsac_info TEXT,
 ADD COLUMN IF NOT EXISTS legal_mentions TEXT,
 ADD COLUMN IF NOT EXISTS voice_profile JSONB,
 ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now(),
-ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+ADD COLUMN IF NOT EXISTS objectives TEXT[];
 
 -- Ajouter un index sur user_id pour les requêtes rapides
 CREATE INDEX IF NOT EXISTS idx_social_profiles_user_id ON social_profiles(user_id);
 
 -- Ajouter une contrainte unique sur user_id (un seul profil par user)
--- Utilise un bloc DO pour vérifier l'existence avant d'ajouter
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -36,7 +45,17 @@ BEGIN
 END $$;
 
 
--- ===== 2. Mise à jour de la table social_posts =====
+-- ===== 2. Création de la table social_posts =====
+
+CREATE TABLE IF NOT EXISTS social_posts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    category TEXT NOT NULL,
+    content TEXT NOT NULL,
+    platform TEXT NOT NULL,
+    status TEXT DEFAULT 'draft',
+    created_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- Ajouter les nouveaux champs (si ils n'existent pas déjà)
 ALTER TABLE social_posts
@@ -55,8 +74,7 @@ ADD COLUMN IF NOT EXISTS source_type TEXT,
 ADD COLUMN IF NOT EXISTS source_data JSONB,
 ADD COLUMN IF NOT EXISTS calendar_day TEXT,
 ADD COLUMN IF NOT EXISTS generated_at TIMESTAMPTZ DEFAULT now(),
-ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now();
+ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ;
 
 -- Ajouter les index pour les requêtes anti-répétition et historique
 CREATE INDEX IF NOT EXISTS idx_social_posts_hooks ON social_posts(user_id, hook_pattern, generated_at);
@@ -85,6 +103,6 @@ CREATE POLICY "Users see own profile" ON social_profiles
 
 -- ===== 4. Vérification des colonnes existantes =====
 
--- Si vous avez déjà des données dans ces tables, vérifiez que les colonnes ont bien été ajoutées :
--- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'social_profiles';
--- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'social_posts';
+-- Si vous voulez vérifier que les colonnes ont bien été ajoutées :
+-- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'social_profiles' ORDER BY ordinal_position;
+-- SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'social_posts' ORDER BY ordinal_position;

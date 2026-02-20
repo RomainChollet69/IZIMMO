@@ -962,6 +962,12 @@
                 return;
             }
 
+            const objectives = Array.from(document.querySelectorAll('input[name="objective"]:checked')).map(cb => cb.value);
+            if (objectives.length === 0 || objectives.length > 3) {
+                alert('Sélectionne entre 1 et 3 objectifs');
+                return;
+            }
+
             // Go to step 2
             document.getElementById('step1').classList.remove('active');
             document.getElementById('step2').classList.add('active');
@@ -1014,6 +1020,7 @@
             const tutoiement = document.querySelector('input[name="tutoiement"]:checked').value === 'true';
             const frequency = document.querySelector('input[name="frequency"]:checked').value;
             const samplePosts = document.getElementById('samplePostsTextarea').value.trim();
+            const objectives = Array.from(document.querySelectorAll('input[name="objective"]:checked')).map(cb => cb.value);
 
             try {
                 document.getElementById('nextBtn').disabled = true;
@@ -1028,7 +1035,8 @@
                     tone,
                     tutoiement,
                     sample_posts: samplePosts ? [samplePosts] : null,
-                    voice_profile: null
+                    voice_profile: null,
+                    objectives: objectives
                 });
 
                 hideOnboarding();

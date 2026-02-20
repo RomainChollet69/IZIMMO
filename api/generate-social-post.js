@@ -290,6 +290,28 @@ function buildSystemPrompt(profile, today, platform, crmContext, recentHooks) {
         crmSummary += `\n\nNotes récentes :\n${crmContext.recent_notes.slice(0, 2).map(n => `- ${n}`).join('\n')}`;
     }
 
+    // Format objectives
+    const objectives = profile.objectives || [];
+    const objectivesText = objectives.length > 0 ? objectives.join(', ') : 'non spécifié';
+
+    let objectivesGuidance = '';
+    if (objectives.length > 0) {
+        const guidance = [];
+        if (objectives.includes('mandats_vendeurs')) {
+            guidance.push('- mandats vendeurs : met en avant ton expertise vendeur, partage des success stories de ventes, montre ta maîtrise du pricing');
+        }
+        if (objectives.includes('notoriete')) {
+            guidance.push('- notoriété locale : partage des insights locaux, montre ta présence terrain, positionne-toi comme expert du quartier');
+        }
+        if (objectives.includes('acquereurs')) {
+            guidance.push('- acquéreurs : parle des opportunités d\'achat, partage des conseils primo-accédants, montre des biens disponibles');
+        }
+        if (objectives.includes('recrutement')) {
+            guidance.push('- recrutement : partage tes valeurs, montre ton quotidien, parle de ton réseau et des opportunités de carrière');
+        }
+        objectivesGuidance = `\n## OBJECTIFS DE COMMUNICATION\nCibles prioritaires : ${objectivesText}\n\nAdapte l'angle du post pour servir ces objectifs :\n${guidance.join('\n')}\n`;
+    }
+
     const systemPrompt = `Tu es le ghostwriter d'un conseiller immobilier indépendant français. Tu écris DANS SA VOIX, pas dans la tienne. Tu produis des posts prêts à copier-coller.
 
 ## IDENTITÉ DU CONSEILLER
@@ -297,7 +319,7 @@ function buildSystemPrompt(profile, today, platform, crmContext, recentHooks) {
 - Réseau : ${network}
 - Ton : ${tone} (professionnel | décontracté | mixte)
 - Tutoiement : ${tutoiement}
-- Expressions favorites : ${signaturePhrases}
+- Expressions favorites : ${signaturePhrases}${objectivesGuidance}
 
 ## CONTEXTE DU JOUR
 - Date : ${today.date}
