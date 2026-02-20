@@ -610,9 +610,10 @@
         updateStoryInputState();
     };
 
-    // ===== TEMPLATE DETAIL PANEL =====
-    window.showTemplateDetail = function(templateName, platform, dayName) {
-        const panel = document.getElementById('templateDetailPanel');
+    // ===== TEMPLATE POPOVER =====
+    window.showTemplatePopover = function(templateName, platform, dayName, dayElement) {
+        const popover = document.getElementById('templatePopover');
+        const backdrop = document.getElementById('templatePopoverBackdrop');
         const details = TEMPLATE_DETAILS[templateName];
 
         // Use default if template not found
@@ -620,8 +621,10 @@
             quoi: 'Post sur les réseaux sociaux — format adapté à la plateforme',
             pourquoi: 'Maintenir une présence active et engageante auprès de ton audience.',
             cibles: ['notoriete'],
+            ciblesLabels: ['📍 Notoriété locale'],
             temps: '5 min',
-            tempsIcon: '⚡'
+            tempsIcon: '⚡',
+            tempsClass: ''
         };
 
         const templateData = details || defaultDetails;
@@ -633,44 +636,76 @@
             dayName
         };
 
-        // Fill panel content
-        document.getElementById('templateDetailTitle').textContent = `${templateName}`;
-        document.getElementById('templateQuoi').innerHTML = templateData.quoi;
-        document.getElementById('templatePourquoi').innerHTML = templateData.pourquoi;
+        // Get platform info
+        const platformInfo = {
+            linkedin: { name: 'LinkedIn', icon: 'fab fa-linkedin', objective: 'Générer des mandats vendeurs' },
+            instagram: { name: 'Instagram', icon: 'fab fa-instagram', objective: 'Toucher des acquéreurs' },
+            facebook: { name: 'Facebook', icon: 'fab fa-facebook', objective: 'Renforcer la notoriété locale' },
+            tiktok: { name: 'TikTok', icon: 'fab fa-tiktok', objective: 'Atteindre de nouveaux profils' }
+        };
 
-        // Cibles badges
-        const ciblesHTML = templateData.cibles.map(cible => {
-            const cibleData = CIBLE_LABELS[cible] || { label: cible, class: 'notoriete' };
-            return `<span class="template-cible-badge ${cibleData.class}">${cibleData.label}</span>`;
-        }).join('');
-        document.getElementById('templateCible').innerHTML = ciblesHTML;
+        const pInfo = platformInfo[platform] || platformInfo.linkedin;
+
+        // Get template icon
+        const templateIcon = getTemplateIcon(templateName);
+
+        // Fill popover content
+        document.getElementById('templateIconBadge').textContent = templateIcon;
+        document.getElementById('templatePopoverName').textContent = templateName;
+        document.getElementById('templatePopoverPlatformIcon').className = pInfo.icon;
+        document.getElementById('templatePopoverPlatform').textContent = pInfo.name;
+        document.getElementById('templatePopoverObjective').innerHTML = `🎯 <span>${pInfo.objective}</span>`;
+
+        // Cards
+        document.getElementById('templateCardQuoi').textContent = templateData.quoi;
+        document.getElementById('templateCardPourquoi').textContent = templateData.pourquoi;
+
+        // Cibles tags
+        const ciblesHTML = (templateData.ciblesLabels || getCibleLabels(templateData.cibles)).map(label =>
+            `<span class="template-tag">${label}</span>`
+        ).join('');
+        document.getElementById('templateCardCibles').innerHTML = ciblesHTML;
 
         // Temps badge
-        document.getElementById('templateTemps').innerHTML =
-            `<span class="template-temps-badge">${templateData.tempsIcon} ${templateData.temps}</span>`;
+        const tempsClass = templateData.tempsClass || getTempsClass(templateData.temps);
+        document.getElementById('templateCardTemps').innerHTML =
+            `<span class="template-time-badge ${tempsClass}">${templateData.tempsIcon} ${templateData.temps}</span>`;
 
-        // Show panel with animation
-        panel.classList.remove('hidden');
+        // Position popover relative to clicked day
+        if (dayElement) {
+            const rect = dayElement.getBoundingClientRect();
+            const popoverWidth = 420;
+            const dayCenter = rect.left + rect.width / 2;
+            const left = Math.max(20, Math.min(window.innerWidth - popoverWidth - 20, dayCenter - popoverWidth / 2));
+            const top = rect.bottom + 16;
 
-        // Scroll to panel
-        setTimeout(() => {
-            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
+            popover.style.left = `${left}px`;
+            popover.style.top = `${top}px`;
+        } else {
+            // Center on screen if no element reference
+            popover.style.left = '50%';
+            popover.style.top = '50%';
+            popover.style.transform = 'translate(-50%, -50%) scale(1)';
+        }
+
+        // Show popover
+        backdrop.classList.remove('hidden');
+        popover.classList.remove('hidden');
     };
 
-    window.closeTemplateDetail = function() {
-        const panel = document.getElementById('templateDetailPanel');
-        panel.classList.add('hidden');
+    window.closeTemplatePopover = function() {
+        document.getElementById('templatePopover').classList.add('hidden');
+        document.getElementById('templatePopoverBackdrop').classList.add('hidden');
         currentTemplateContext = null;
     };
 
-    window.generateFromTemplate = async function() {
+    window.generateFromTemplatePopover = async function() {
         if (!currentTemplateContext) return;
 
         const { templateName, platform } = currentTemplateContext;
 
-        // Close panel
-        closeTemplateDetail();
+        // Close popover
+        closeTemplatePopover();
 
         // Switch to story mode
         document.getElementById('storyArea').classList.add('active');
@@ -687,6 +722,50 @@
         // Scroll to story area
         document.querySelector('.create-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+
+    // Helper functions for popover
+    function getTemplateIcon(templateName) {
+        const icons = {
+            'Analyse marché': '📊',
+            'Étude de cas': '📋',
+            'Avis à contre-pied': '💬',
+            'Coulisses / bilan': '📸',
+            'Recrutement': '👥',
+            'Carrousel éducatif': '📚',
+            'Reel quartier': '🏘️',
+            'Reel visite': '🏠',
+            'Reel conseil': '💡',
+            'Post vendu': '🔑',
+            'Story reveal': '✨',
+            'Coup de cœur local': '❤️',
+            'Quiz / Vrai-Faux': '❓',
+            'Remise de clés': '🔑',
+            'Live visite': '📹',
+            'Mini-audit groupe': '🔍',
+            'Conseil face-cam': '🎥',
+            'Visite minute': '⚡',
+            'Quartier spotlight': '🌟',
+            'Humour / coulisses': '😄',
+            'Storytelling': '📖'
+        };
+        return icons[templateName] || '📱';
+    }
+
+    function getCibleLabels(cibles) {
+        const labels = {
+            'vendeurs': '🏠 Propriétaires en réflexion',
+            'acquereurs': '🔑 Acquéreurs actifs',
+            'notoriete': '📍 Notoriété locale',
+            'recrutement': '👥 Profils en reconversion'
+        };
+        return cibles.map(c => labels[c] || c);
+    }
+
+    function getTempsClass(temps) {
+        if (temps.includes('10')) return 'long';
+        if (temps.includes('5')) return 'medium';
+        return '';
+    }
 
     // ===== CALENDAR =====
     function renderCalendar() {
@@ -728,7 +807,7 @@
                     const icon = getPlatformIcon(platform);
                     const templateName = templates[platform];
                     const escapedTemplate = templateName.replace(/'/g, "\\'");
-                    platformsHTML += `<span class="platform" onclick="showTemplateDetail('${escapedTemplate}', '${platform}', '${dayName}')">${icon} ${templateName}</span>`;
+                    platformsHTML += `<span class="platform" onclick="event.stopPropagation(); showTemplatePopover('${escapedTemplate}', '${platform}', '${dayName}', this.closest('.day-card'))">${icon} ${templateName}</span>`;
                 }
             }
 
