@@ -33,24 +33,30 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 0;
             color: var(--text-dark);
             overflow-x: hidden;
         }
 
         /* ===== HEADER & NAVIGATION ===== */
         .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: #FFFFFF;
-            border-bottom: 1px solid #E5E7EB;
-            height: 64px;
+            margin-bottom: 30px;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 0 32px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 30px;
         }
 
         .logo {
@@ -335,7 +341,7 @@
             gap: 16px;
             overflow-x: auto;
             overflow-y: visible;
-            padding-bottom: 16px;
+            padding: 0 20px 16px 20px;
             cursor: grab;
             -webkit-overflow-scrolling: touch;
         }
@@ -2228,70 +2234,72 @@
 </head>
 <body>
     <div class="header">
-        <!-- Zone gauche : Logo -->
-        <a href="index.html" class="logo">
-            <img src="img/Logo_leon.svg" alt="Léon">
-        </a>
+        <div class="header-inner">
+            <!-- Zone gauche : Logo -->
+            <a href="index.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
 
-        <!-- Zone centre : Navigation -->
-        <nav class="nav-tabs">
-            <a href="index.html" class="nav-tab active">
-                <i class="fa-solid fa-house"></i> Vendeurs
-            </a>
-            <a href="acquereurs.html" class="nav-tab">
-                <i class="fa-solid fa-key"></i> Acquéreurs
-            </a>
-            <a href="dvf.html" class="nav-tab">
-                <i class="fa-solid fa-chart-simple"></i> Marché
-            </a>
-            <a href="social.html" class="nav-tab">
-                <i class="fa-solid fa-share-nodes"></i> Social
-            </a>
-        </nav>
+            <!-- Zone centre : Navigation -->
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab active">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+            </nav>
 
-        <!-- Zone droite : Actions -->
-        <div class="header-actions">
-            <!-- Alerte relances -->
-            <button class="alert-bell" id="alertBell" title="Relances du jour">
-                <i class="fa-solid fa-bell"></i>
-                <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
-            </button>
-
-            <!-- Bouton Exporter -->
-            <div class="export-wrapper">
-                <button class="export-btn" id="exportBtn">
-                    <i class="fa-solid fa-download"></i> Exporter
+            <!-- Zone droite : Actions -->
+            <div class="header-actions">
+                <!-- Alerte relances -->
+                <button class="alert-bell" id="alertBell" title="Relances du jour">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
                 </button>
-                <div class="export-dropdown" id="exportDropdown">
-                    <button class="export-dropdown-item" onclick="exportSellersCSV()">Exporter tout</button>
-                    <div class="export-dropdown-separator"></div>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">Leads Chaudes</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">Leads Tièdes</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">Leads Froides</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">Sous Mandats</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">Vendus</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">Perdus</button>
-                    <div class="export-dropdown-separator"></div>
-                    <button class="export-dropdown-item" onclick="exportVisitsCSV()">Exporter les visites</button>
-                    <button class="export-dropdown-item" onclick="exportCommissionsCSV()">Exporter les commissions</button>
+
+                <!-- Bouton Exporter -->
+                <div class="export-wrapper">
+                    <button class="export-btn" id="exportBtn">
+                        <i class="fa-solid fa-download"></i> Exporter
+                    </button>
+                    <div class="export-dropdown" id="exportDropdown">
+                        <button class="export-dropdown-item" onclick="exportSellersCSV()">Exporter tout</button>
+                        <div class="export-dropdown-separator"></div>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">Leads Chaudes</button>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">Leads Tièdes</button>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">Leads Froides</button>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">Sous Mandats</button>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">Vendus</button>
+                        <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">Perdus</button>
+                        <div class="export-dropdown-separator"></div>
+                        <button class="export-dropdown-item" onclick="exportVisitsCSV()">Exporter les visites</button>
+                        <button class="export-dropdown-item" onclick="exportCommissionsCSV()">Exporter les commissions</button>
+                    </div>
                 </div>
+
+                <!-- Séparateur -->
+                <div class="header-separator"></div>
+
+                <!-- Profil utilisateur -->
+                <div class="user-profile" id="userProfile">
+                    <!-- Chargé dynamiquement par auth.js -->
+                </div>
+
+                <!-- Icône Settings -->
+                <a href="parametres.html" class="settings-btn" title="Paramètres">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
+
+                <!-- Bouton + Lead -->
+                <button class="add-btn" id="addLeadBtn">+ Lead</button>
             </div>
-
-            <!-- Séparateur -->
-            <div class="header-separator"></div>
-
-            <!-- Profil utilisateur -->
-            <div class="user-profile" id="userProfile">
-                <!-- Chargé dynamiquement par auth.js -->
-            </div>
-
-            <!-- Icône Settings -->
-            <a href="parametres.html" class="settings-btn" title="Paramètres">
-                <i class="fa-solid fa-gear"></i>
-            </a>
-
-            <!-- Bouton + Lead -->
-            <button class="add-btn" id="addLeadBtn">+ Lead</button>
         </div>
     </div>
 
