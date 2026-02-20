@@ -121,6 +121,7 @@
                 platforms_active: ['linkedin', 'instagram', 'facebook'],
                 objectives: ['mandats_vendeurs', 'notoriete'],
                 time_available: '1h',
+                content_style: ['balanced'],
                 voice_profile_set: false,
                 onboarding_completed: false,
                 created_at: new Date().toISOString(),
@@ -1148,6 +1149,11 @@
             cb.checked = platforms.includes(cb.value);
         });
 
+        const contentStyle = currentProfile.content_style || ['balanced'];
+        document.querySelectorAll('input[name="content_style"]').forEach(cb => {
+            cb.checked = contentStyle.includes(cb.value);
+        });
+
         document.getElementById('strategyBackdrop').classList.add('active');
     }
 
@@ -1169,11 +1175,14 @@
             return;
         }
 
+        const contentStyle = Array.from(document.querySelectorAll('input[name="content_style"]:checked')).map(cb => cb.value);
+
         // Map time_available to publishing_frequency
         const frequencyMap = {
             '30min': 'light',
             '1h': 'regular',
-            '2h+': 'intensive'
+            '2h+': 'intensive',
+            'mix': 'regular'
         };
 
         try {
@@ -1182,7 +1191,8 @@
                 objectives,
                 time_available: timeAvailable,
                 publishing_frequency: frequencyMap[timeAvailable],
-                platforms_active: platforms
+                platforms_active: platforms,
+                content_style: contentStyle.length > 0 ? contentStyle : ['balanced']
             });
 
             closeStrategyModal();

@@ -947,8 +947,296 @@
             box-shadow: var(--shadow-hover);
         }
 
-        /* ===== STRATEGY & VOICE MODALS ===== */
-        .strategy-modal, .voice-modal {
+        /* ===== STRATEGY PANEL (New Design) ===== */
+        #strategyBackdrop {
+            background: linear-gradient(135deg, #f5f3ff 0%, #fef3f9 50%, #f0f9ff 100%);
+        }
+
+        .strategy-panel {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            position: relative;
+        }
+
+        .panel-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #f3f4f6;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 24px;
+            color: #6b7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+
+        .panel-close:hover {
+            background: #e5e7eb;
+            transform: scale(1.05);
+        }
+
+        .panel-header {
+            margin-bottom: 32px;
+        }
+
+        .panel-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .panel-title .accent {
+            color: #667eea;
+        }
+
+        .panel-subtitle {
+            font-size: 15px;
+            color: #9ca3af;
+            line-height: 1.5;
+        }
+
+        .panel-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+        }
+
+        /* Chips (Objectives & Content Style) */
+        .chips-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .chip {
+            cursor: pointer;
+        }
+
+        .chip input {
+            display: none;
+        }
+
+        .chip-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .chip:hover .chip-content {
+            border-color: #667eea;
+        }
+
+        .chip-emoji {
+            font-size: 18px;
+        }
+
+        .chip-text {
+            flex: 1;
+        }
+
+        .chip-check {
+            display: none;
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .chip input:checked + .chip-content {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            border-color: #3b82f6;
+        }
+
+        .chip input:checked + .chip-content .chip-check {
+            display: block;
+        }
+
+        /* Two Columns Layout */
+        .panel-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .panel-card {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .platform-card {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.08) 0%, rgba(6, 182, 212, 0.08) 100%);
+        }
+
+        .frequency-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
+        }
+
+        /* Platform Badges */
+        .platform-badges {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .platform-badge {
+            cursor: pointer;
+        }
+
+        .platform-badge input {
+            display: none;
+        }
+
+        .badge-content {
+            display: block;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .platform-badge input:checked + .badge-content {
+            opacity: 1;
+            transform: scale(1.02);
+        }
+
+        .platform-badge.linkedin .badge-content {
+            background: #0077B5;
+        }
+
+        .platform-badge.instagram .badge-content {
+            background: linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%);
+        }
+
+        .platform-badge.tiktok .badge-content {
+            background: #010101;
+        }
+
+        .platform-badge.facebook .badge-content {
+            background: #1877F2;
+        }
+
+        /* Frequency Options */
+        .frequency-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .frequency-option {
+            cursor: pointer;
+        }
+
+        .frequency-option input {
+            display: none;
+        }
+
+        .option-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: transparent;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+
+        .frequency-option:hover .option-content {
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .option-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .option-indicator.green {
+            background: #10b981;
+        }
+
+        .option-indicator.purple {
+            background: #8b5cf6;
+        }
+
+        .option-indicator.blue {
+            background: #3b82f6;
+        }
+
+        .frequency-option input:checked + .option-content {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .frequency-option input:checked + .option-content .option-indicator {
+            background: white;
+        }
+
+        /* CTA Button */
+        .panel-cta {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+
+        .panel-cta:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(6, 182, 212, 0.3);
+        }
+
+        .panel-footer {
+            text-align: center;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        /* Voice Modal (keep existing style) */
+        .voice-modal {
             background: white;
             border-radius: 20px;
             width: 90%;
@@ -985,6 +1273,25 @@
         }
 
         /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .strategy-panel {
+                padding: 24px;
+            }
+
+            .panel-title {
+                font-size: 22px;
+            }
+
+            .chips-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .panel-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
         @media (max-width: 768px) {
             .week-days {
                 grid-template-columns: 1fr;
@@ -1452,86 +1759,161 @@
         </div>
     </div>
 
-    <!-- Strategy Modal -->
+    <!-- Strategy Modal (Redesign) -->
     <div class="modal-backdrop" id="strategyBackdrop">
-        <div class="strategy-modal">
-            <div class="modal-header">
-                <div class="modal-title">Ajuster ma stratégie</div>
-                <button class="modal-close" onclick="closeStrategyModal()">×</button>
+        <div class="strategy-panel">
+            <button class="panel-close" onclick="closeStrategyModal()">×</button>
+
+            <!-- Header -->
+            <div class="panel-header">
+                <h1 class="panel-title">Définissons ensemble ta <span class="accent">stratégie</span> de publication</h1>
+                <p class="panel-subtitle">Avant de générer des posts, définissons un rythme adapté à ton activité.</p>
             </div>
-            <div class="modal-body" style="padding: 24px;">
-                <!-- Question 1: Objectives -->
-                <div class="form-group">
-                    <label class="form-label">Quel est ton objectif principal ?</label>
-                    <small style="color: var(--text-light); font-size: 12px; margin-bottom: 12px; display: block;">
-                        Choisis 1 à 3 objectifs
-                    </small>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="strategy_objective" value="mandats_vendeurs" />
-                            <span>🏠 Obtenir des mandats vendeurs</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="strategy_objective" value="notoriete" />
-                            <span>📍 Développer ma notoriété locale</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="strategy_objective" value="acquereurs" />
-                            <span>🔑 Trouver des acquéreurs</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="strategy_objective" value="recrutement" />
-                            <span>👥 Recruter des collaborateurs</span>
-                        </label>
-                    </div>
-                </div>
 
-                <!-- Question 2: Time Available -->
-                <div class="form-group" style="margin-top: 24px;">
-                    <label class="form-label">Combien de temps par semaine ?</label>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="radio" name="time_available" value="30min" />
-                            <span>⚡ < 30 min (2 posts/semaine)</span>
-                        </label>
-                        <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="radio" name="time_available" value="1h" checked />
-                            <span>🕐 ~1h (3-4 posts/semaine)</span>
-                        </label>
-                        <label class="checkbox-label" style="cursor: pointer;">
-                            <input type="radio" name="time_available" value="2h+" />
-                            <span>🔥 2h+ (5 posts/semaine)</span>
-                        </label>
-                    </div>
+            <!-- Section 1: Objectifs -->
+            <div class="panel-section">
+                <h2 class="section-title">Quel est ton objectif principal ?</h2>
+                <div class="chips-grid">
+                    <label class="chip">
+                        <input type="checkbox" name="strategy_objective" value="mandats_vendeurs" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">🏠</span>
+                            <span class="chip-text">Mandats vendeurs</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="strategy_objective" value="acquereurs" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">🤝</span>
+                            <span class="chip-text">Acquéreurs</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="strategy_objective" value="notoriete" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">❤️</span>
+                            <span class="chip-text">Notoriété locale</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="strategy_objective" value="recrutement" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">🚀</span>
+                            <span class="chip-text">Recrutement</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
                 </div>
+            </div>
 
-                <!-- Question 3: Platforms -->
-                <div class="form-group" style="margin-top: 24px;">
-                    <label class="form-label">Quelles plateformes ?</label>
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
+            <!-- Section 2: Two columns -->
+            <div class="panel-columns">
+                <!-- Left: Platforms -->
+                <div class="panel-card platform-card">
+                    <h2 class="section-title">Sur quelles plateformes ?</h2>
+                    <div class="platform-badges">
+                        <label class="platform-badge linkedin">
                             <input type="checkbox" name="strategy_platform" value="linkedin" />
-                            <span>LinkedIn</span>
+                            <span class="badge-content">LinkedIn</span>
                         </label>
-                        <label class="checkbox-label">
+                        <label class="platform-badge instagram">
                             <input type="checkbox" name="strategy_platform" value="instagram" />
-                            <span>Instagram</span>
+                            <span class="badge-content">Instagram</span>
                         </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="strategy_platform" value="facebook" />
-                            <span>Facebook</span>
-                        </label>
-                        <label class="checkbox-label">
+                        <label class="platform-badge tiktok">
                             <input type="checkbox" name="strategy_platform" value="tiktok" />
-                            <span>TikTok</span>
+                            <span class="badge-content">TikTok</span>
+                        </label>
+                        <label class="platform-badge facebook">
+                            <input type="checkbox" name="strategy_platform" value="facebook" />
+                            <span class="badge-content">Facebook</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Right: Frequency -->
+                <div class="panel-card frequency-card">
+                    <h2 class="section-title">À quelle fréquence ?</h2>
+                    <div class="frequency-options">
+                        <label class="frequency-option">
+                            <input type="radio" name="time_available" value="30min" />
+                            <span class="option-content">
+                                <span class="option-indicator green"></span>
+                                <span class="option-text">2 posts / semaine</span>
+                            </span>
+                        </label>
+                        <label class="frequency-option">
+                            <input type="radio" name="time_available" value="1h" checked />
+                            <span class="option-content">
+                                <span class="option-indicator purple"></span>
+                                <span class="option-text">3 posts / semaine</span>
+                            </span>
+                        </label>
+                        <label class="frequency-option">
+                            <input type="radio" name="time_available" value="2h+" />
+                            <span class="option-content">
+                                <span class="option-indicator blue"></span>
+                                <span class="option-text">5 posts / semaine</span>
+                            </span>
+                        </label>
+                        <label class="frequency-option">
+                            <input type="radio" name="time_available" value="mix" />
+                            <span class="option-content">
+                                <span class="option-indicator purple"></span>
+                                <span class="option-text">Mix équilibré</span>
+                            </span>
                         </label>
                     </div>
                 </div>
             </div>
-            <div class="modal-actions">
-                <button class="modal-btn secondary" onclick="closeStrategyModal()">Annuler</button>
-                <button class="modal-btn primary" onclick="applyStrategy()">Appliquer</button>
+
+            <!-- Section 3: Content Style -->
+            <div class="panel-section">
+                <h2 class="section-title">Quel style de contenu préfères-tu ?</h2>
+                <div class="chips-grid">
+                    <label class="chip">
+                        <input type="checkbox" name="content_style" value="expert" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">📊</span>
+                            <span class="chip-text">Expert / pédagogique</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="content_style" value="storytelling" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">🎬</span>
+                            <span class="chip-text">Storytelling</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="content_style" value="personal" />
+                        <span class="chip-content">
+                            <span class="chip-emoji">👤</span>
+                            <span class="chip-text">Personnel / humain</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                    <label class="chip">
+                        <input type="checkbox" name="content_style" value="balanced" checked />
+                        <span class="chip-content">
+                            <span class="chip-emoji">⚖️</span>
+                            <span class="chip-text">Mix équilibré</span>
+                            <span class="chip-check">✓</span>
+                        </span>
+                    </label>
+                </div>
             </div>
+
+            <!-- CTA Button -->
+            <button class="panel-cta" onclick="applyStrategy()">
+                ✨ Générer mon calendrier
+            </button>
+            <p class="panel-footer">Tu pourras modifier ce calendrier à tout moment.</p>
         </div>
     </div>
 
