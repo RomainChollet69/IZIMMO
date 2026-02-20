@@ -650,24 +650,56 @@
         }
 
         .welcome-text {
+            font-size: 14px;
             font-weight: 500;
+            color: #1E40AF;
             text-align: center;
+            margin-bottom: 8px;
         }
 
-        .welcome-btn {
+        .welcome-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .welcome-btn-primary {
             background: #243B53;
             color: white;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             padding: 7px 18px;
             border-radius: 6px;
             border: none;
             cursor: pointer;
             transition: all 0.2s;
+            text-decoration: none;
         }
 
-        .welcome-btn:hover {
+        .welcome-btn-primary:hover {
             background: #1a2d40;
+        }
+
+        .welcome-btn-secondary {
+            background: transparent;
+            color: #243B53;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid #243B53;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .welcome-btn-secondary:hover {
+            background: #F0F4FF;
+        }
+
+        .welcome-separator {
+            color: #CBD5E1;
+            font-size: 14px;
         }
 
         .card-actions {
@@ -1859,11 +1891,21 @@
     <!-- Bandeau d'encouragement (onboarding) -->
     <div class="welcome-banner" id="welcomeBanner" style="display: none;">
         <div class="welcome-text">
-            👋 Voici à quoi ressemblera ton pipeline. Ajoute ton premier contact pour commencer !
+            👋 Voici à quoi ressemblera ton pipeline. Commence à le remplir !
         </div>
-        <button class="welcome-btn" onclick="document.getElementById('addBuyerBtn').click()">
-            + Ajouter mon premier lead
-        </button>
+        <div class="welcome-actions">
+            <button class="welcome-btn-primary" onclick="document.getElementById('addBuyerBtn').click()">
+                + Ajouter un lead
+            </button>
+            <span class="welcome-separator">·</span>
+            <a href="parametres.html" class="welcome-btn-secondary">
+                📁 Importer un fichier Excel
+            </a>
+            <span class="welcome-separator">·</span>
+            <a href="parametres.html" class="welcome-btn-secondary">
+                📇 Importer mes contacts
+            </a>
+        </div>
     </div>
 
     <div class="pipeline">
