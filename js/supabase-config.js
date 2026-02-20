@@ -10,9 +10,10 @@ const SOURCE_CONFIG = {
     recommandation: { label: '🤝 Recommandation', bg: '#B3E5FC', color: '#01579B' },
     pige: { label: '📰 Pige', bg: '#F8BBD0', color: '#880E4F' },
     siteimmo: { label: '🌐 Site Immo', bg: '#D1C4E9', color: '#4527A0' },
-    boucheaoreille: { label: '🗣️ Bouche à oreille', bg: '#FFE0B2', color: '#E65100' },
     efficity: { label: '🏢 Efficity', bg: '#B2DFDB', color: '#004D40' },
     internet: { label: '💻 Internet', bg: '#E1BEE7', color: '#6A1B9A' },
+    ancien_client: { label: '🔄 Ancien Client', bg: '#FFE0B2', color: '#E65100' },
+    acquereur: { label: '🏡 Acquéreur', bg: '#FFCCBC', color: '#BF360C' },
     autre: { label: '📌 Autre', bg: '#CFD8DC', color: '#37474F' }
 };
 
