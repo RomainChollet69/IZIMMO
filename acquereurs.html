@@ -609,6 +609,59 @@
             animation: pulse 2s infinite;
         }
 
+        /* ===== FICHES EXEMPLE (ONBOARDING) ===== */
+        .example-card {
+            opacity: 0.55;
+            border: 1px dashed #D1D5DB !important;
+            cursor: default !important;
+            pointer-events: none;
+        }
+
+        .example-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #F3F0FF;
+            color: #7C3AED;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .welcome-banner {
+            background: #F0F4FF;
+            border: 1px solid #DBEAFE;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #1E40AF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 20px 16px 20px;
+        }
+
+        .welcome-text {
+            font-weight: 500;
+        }
+
+        .welcome-btn {
+            background: #243B53;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .welcome-btn:hover {
+            background: #1a2d40;
+        }
+
         .card-actions {
             display: flex;
             justify-content: flex-end;
@@ -1793,6 +1846,16 @@
         <button class="mobile-tab" data-status="abandon">❌ Abandon <span class="tab-count">(0)</span></button>
     </div>
 
+    <!-- Bandeau d'encouragement (onboarding) -->
+    <div class="welcome-banner" id="welcomeBanner" style="display: none;">
+        <div class="welcome-text">
+            👋 Voici à quoi ressemblera ton pipeline. Ajoute ton premier contact pour commencer !
+        </div>
+        <button class="welcome-btn" onclick="document.getElementById('addBuyerBtn').click()">
+            + Ajouter mon premier lead
+        </button>
+    </div>
+
     <div class="pipeline">
         <!-- Colonne Nouveaux Acquéreurs -->
         <div class="column" data-status="nouveau">
@@ -2127,6 +2190,83 @@
         let draggedCard = null;
         let matchSellers = null;
         let buyerMatchCounts = {};
+
+        // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
+        const EXAMPLE_BUYERS = [
+            {
+                column: 'nouveau',
+                cards: [
+                    {
+                        first_name: 'Lucas',
+                        last_name: 'Martin',
+                        source: 'recommandation',
+                        property_type: 'appartement',
+                        rooms: 'T3',
+                        budget_max: 280000,
+                        sector: 'Secteur Ouest Lyon',
+                        referrer_name: 'Nathalie Blanc'
+                    },
+                    {
+                        first_name: 'Émilie',
+                        last_name: 'Faure',
+                        source: 'site_annonce',
+                        property_type: 'appartement',
+                        rooms: 'T2',
+                        budget_max: 190000,
+                        sector: 'Lyon centre'
+                    }
+                ]
+            },
+            {
+                column: 'actif',
+                cards: [
+                    {
+                        first_name: 'Camille',
+                        last_name: 'Durand',
+                        source: 'recommandation',
+                        property_type: 'appartement',
+                        rooms: 'T4',
+                        budget_max: 400000,
+                        sector: 'Lyon / Caluire',
+                        phone: '0612345678',
+                        sentProperties: 3
+                    }
+                ]
+            }
+        ];
+
+        // ===== FONCTION POUR CRÉER UNE CARTE D'EXEMPLE =====
+        function createExampleBuyerCard(cardData) {
+            const sourceTag = getBuyerSourceTag(cardData.source);
+            const budgetStr = formatEuro(cardData.budget_max);
+            const viaText = cardData.referrer_name ? `<div class="referrer-via">via ${escapeHtml(cardData.referrer_name)}</div>` : '';
+            const phoneText = cardData.phone ? `<div class="card-info"><a href="tel:${escapeHtml(cardData.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(cardData.phone)}</a></div>` : '';
+            const sentBadge = cardData.sentProperties ? `<div class="match-indicator">🏠 ${cardData.sentProperties} bien${cardData.sentProperties > 1 ? 's' : ''} envoyé${cardData.sentProperties > 1 ? 's' : ''}</div>` : '';
+            const name = escapeHtml((cardData.first_name || '') + ' ' + (cardData.last_name || ''));
+
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const typeIcon = cardData.property_type ? (typeEmojis[cardData.property_type] || '') : '';
+            const compactParts = [];
+            if (typeIcon) compactParts.push(typeIcon);
+            if (cardData.rooms) compactParts.push(cardData.rooms);
+            if (budgetStr) compactParts.push(budgetStr);
+            const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
+
+            return `
+                <div class="lead-card example-card">
+                    <div class="example-badge">✨ Exemple</div>
+                    ${sentBadge}
+                    <div class="card-compact">
+                        ${sourceTag}
+                        ${viaText}
+                        <div class="card-name">${name}</div>
+                        ${compactPropLine}
+                        <div class="card-info" style="font-size:13px;color:#6B7280">📍 ${escapeHtml(cardData.sector)}</div>
+                        ${phoneText}
+                    </div>
+                </div>
+            `;
+        }
 
         // ===== MATCHING =====
         function calculateMatchScore(seller, buyer) {
@@ -2493,12 +2633,34 @@
 
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
-            buyers.forEach(buyer => {
-                const card = createBuyerCard(buyer);
-                if (containers[buyer.status]) {
-                    containers[buyer.status].appendChild(card);
-                }
-            });
+            // Affichage conditionnel des fiches d'exemple
+            if (buyers.length === 0) {
+                // Afficher le bandeau d'encouragement
+                const banner = document.getElementById('welcomeBanner');
+                if (banner) banner.style.display = 'flex';
+
+                // Injecter les fiches exemple
+                EXAMPLE_BUYERS.forEach(columnData => {
+                    const container = containers[columnData.column];
+                    if (container) {
+                        columnData.cards.forEach(card => {
+                            container.innerHTML += createExampleBuyerCard(card);
+                        });
+                    }
+                });
+            } else {
+                // Cacher le bandeau
+                const banner = document.getElementById('welcomeBanner');
+                if (banner) banner.style.display = 'none';
+
+                // Afficher les vraies fiches
+                buyers.forEach(buyer => {
+                    const card = createBuyerCard(buyer);
+                    if (containers[buyer.status]) {
+                        containers[buyer.status].appendChild(card);
+                    }
+                });
+            }
 
             setupCardToggles();
             updateCounts();

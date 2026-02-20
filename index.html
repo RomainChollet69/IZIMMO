@@ -581,6 +581,59 @@
             animation: pulse 2s infinite;
         }
 
+        /* ===== FICHES EXEMPLE (ONBOARDING) ===== */
+        .example-card {
+            opacity: 0.55;
+            border: 1px dashed #D1D5DB !important;
+            cursor: default !important;
+            pointer-events: none;
+        }
+
+        .example-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #F3F0FF;
+            color: #7C3AED;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .welcome-banner {
+            background: #F0F4FF;
+            border: 1px solid #DBEAFE;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-size: 13px;
+            color: #1E40AF;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 0 20px 16px 20px;
+        }
+
+        .welcome-text {
+            font-weight: 500;
+        }
+
+        .welcome-btn {
+            background: #243B53;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .welcome-btn:hover {
+            background: #1a2d40;
+        }
+
         .card-actions {
             display: flex;
             justify-content: flex-end;
@@ -2314,6 +2367,16 @@
         <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
     </div>
 
+    <!-- Bandeau d'encouragement (onboarding) -->
+    <div class="welcome-banner" id="welcomeBanner" style="display: none;">
+        <div class="welcome-text">
+            👋 Voici à quoi ressemblera ton pipeline. Ajoute ton premier contact pour commencer !
+        </div>
+        <button class="welcome-btn" onclick="document.getElementById('addLeadBtn').click()">
+            + Ajouter mon premier lead
+        </button>
+    </div>
+
     <div class="pipeline">
         <!-- Colonne Hot -->
         <div class="column" data-status="hot">
@@ -2790,6 +2853,143 @@
         let currentVisits = [];
         let matchBuyers = null;
         let sellerMatchCounts = {};
+
+        // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
+        const EXAMPLE_SELLERS = [
+            {
+                column: 'hot',
+                cards: [
+                    {
+                        first_name: 'Marie',
+                        last_name: 'Dupont',
+                        source: 'recommandation',
+                        surface: '85 m²',
+                        budget: 320000,
+                        address: 'Lyon 3e',
+                        referrer_name: 'Pierre Martin',
+                        matches: 0
+                    },
+                    {
+                        first_name: 'Thomas',
+                        last_name: 'Renard',
+                        source: 'siteimmo',
+                        surface: '62 m²',
+                        budget: 215000,
+                        address: 'Villeurbanne',
+                        matches: 1
+                    }
+                ]
+            },
+            {
+                column: 'warm',
+                cards: [
+                    {
+                        first_name: 'Henri-Jacques',
+                        last_name: 'Clement',
+                        source: 'efficity',
+                        surface: '198 m²',
+                        budget: 700000,
+                        address: 'Lyon'
+                    }
+                ]
+            },
+            {
+                column: 'cold',
+                cards: [
+                    {
+                        first_name: 'Sophie',
+                        last_name: 'Laurent',
+                        source: 'recommandation',
+                        surface: '160 m²',
+                        budget: 630000,
+                        address: 'Caluire-et-Cuire',
+                        referrer_name: 'Papa'
+                    },
+                    {
+                        first_name: 'Christophe',
+                        last_name: 'Santarelli',
+                        source: 'efficity',
+                        surface: '120 m²',
+                        budget: 595000,
+                        address: 'Dardilly'
+                    }
+                ]
+            },
+            {
+                column: 'off_market',
+                cards: [
+                    {
+                        first_name: 'Cyril',
+                        last_name: 'Valentini',
+                        source: 'autre',
+                        surface: '62 m²',
+                        budget: 229000,
+                        address: 'Caluire-et-Cuire',
+                        matches: 1
+                    }
+                ]
+            },
+            {
+                column: 'mandate',
+                cards: [
+                    {
+                        first_name: 'Alain',
+                        last_name: 'Villalba',
+                        source: 'recommandation',
+                        surface: '88 m²',
+                        budget: 329000,
+                        address: 'Villeurbanne',
+                        referrer_name: 'Julie Chassagneux',
+                        matches: 2
+                    },
+                    {
+                        first_name: 'Didier',
+                        last_name: 'Spiteri',
+                        source: 'recommandation',
+                        surface: '95 m²',
+                        budget: 795000,
+                        address: 'Dardilly',
+                        referrer_name: 'Jonathan Perrier'
+                    }
+                ]
+            },
+            {
+                column: 'competitor',
+                cards: [
+                    {
+                        first_name: 'M.',
+                        last_name: 'Bousta',
+                        source: 'siteimmo',
+                        surface: '55 m²',
+                        budget: 210000,
+                        address: 'Caluire'
+                    }
+                ]
+            }
+        ];
+
+        // ===== FONCTION POUR CRÉER UNE CARTE D'EXEMPLE =====
+        function createExampleSellerCard(cardData) {
+            const sourceTag = getSourceTag(cardData.source);
+            const priceStr = formatEuro(cardData.budget);
+            const viaText = cardData.referrer_name ? `<div class="referrer-via">via ${escapeHtml(cardData.referrer_name)}</div>` : '';
+            const matchBadge = cardData.matches > 0 ? `<div class="match-indicator">🎯 ${cardData.matches} match${cardData.matches > 1 ? 's' : ''}</div>` : '';
+            const name = escapeHtml((cardData.first_name || '') + ' ' + (cardData.last_name || ''));
+
+            return `
+                <div class="lead-card example-card">
+                    <div class="example-badge">✨ Exemple</div>
+                    ${matchBadge}
+                    <div class="card-compact">
+                        ${sourceTag}
+                        ${viaText}
+                        <div class="card-name">${name}</div>
+                        <div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">🏠 · ${cardData.surface} · ${priceStr}</div>
+                        <div class="card-info" style="font-size:13px;color:#6B7280">📍 ${escapeHtml(cardData.address)}</div>
+                    </div>
+                </div>
+            `;
+        }
 
         // ===== MATCHING =====
         function calculateMatchScore(seller, buyer) {
@@ -4083,12 +4283,34 @@
 
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
-            sellers.forEach(seller => {
-                const card = createSellerCard(seller);
-                if (containers[seller.status]) {
-                    containers[seller.status].appendChild(card);
-                }
-            });
+            // Affichage conditionnel des fiches d'exemple
+            if (sellers.length === 0) {
+                // Afficher le bandeau d'encouragement
+                const banner = document.getElementById('welcomeBanner');
+                if (banner) banner.style.display = 'flex';
+
+                // Injecter les fiches exemple
+                EXAMPLE_SELLERS.forEach(columnData => {
+                    const container = containers[columnData.column];
+                    if (container) {
+                        columnData.cards.forEach(card => {
+                            container.innerHTML += createExampleSellerCard(card);
+                        });
+                    }
+                });
+            } else {
+                // Cacher le bandeau
+                const banner = document.getElementById('welcomeBanner');
+                if (banner) banner.style.display = 'none';
+
+                // Afficher les vraies fiches
+                sellers.forEach(seller => {
+                    const card = createSellerCard(seller);
+                    if (containers[seller.status]) {
+                        containers[seller.status].appendChild(card);
+                    }
+                });
+            }
 
             setupCardToggles();
             updateCounts();
