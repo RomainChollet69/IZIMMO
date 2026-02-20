@@ -611,7 +611,7 @@
     };
 
     // ===== TEMPLATE POPOVER =====
-    window.showTemplatePopover = function(templateName, platform, dayName, dayElement) {
+    window.showTemplatePopover = function(templateName, platform, dayName) {
         const popover = document.getElementById('templatePopover');
         const backdrop = document.getElementById('templatePopoverBackdrop');
         const details = TEMPLATE_DETAILS[templateName];
@@ -671,24 +671,7 @@
         document.getElementById('templateCardTemps').innerHTML =
             `<span class="template-time-badge ${tempsClass}">${templateData.tempsIcon} ${templateData.temps}</span>`;
 
-        // Position popover relative to clicked day
-        if (dayElement) {
-            const rect = dayElement.getBoundingClientRect();
-            const popoverWidth = 420;
-            const dayCenter = rect.left + rect.width / 2;
-            const left = Math.max(20, Math.min(window.innerWidth - popoverWidth - 20, dayCenter - popoverWidth / 2));
-            const top = rect.bottom + 16;
-
-            popover.style.left = `${left}px`;
-            popover.style.top = `${top}px`;
-        } else {
-            // Center on screen if no element reference
-            popover.style.left = '50%';
-            popover.style.top = '50%';
-            popover.style.transform = 'translate(-50%, -50%) scale(1)';
-        }
-
-        // Show popover
+        // Show popover (centered by CSS)
         backdrop.classList.remove('hidden');
         popover.classList.remove('hidden');
     };
@@ -807,7 +790,7 @@
                     const icon = getPlatformIcon(platform);
                     const templateName = templates[platform];
                     const escapedTemplate = templateName.replace(/'/g, "\\'");
-                    platformsHTML += `<span class="platform" onclick="event.stopPropagation(); showTemplatePopover('${escapedTemplate}', '${platform}', '${dayName}', this.closest('.day-card'))">${icon} ${templateName}</span>`;
+                    platformsHTML += `<span class="platform" onclick="event.stopPropagation(); showTemplatePopover('${escapedTemplate}', '${platform}', '${dayName}')">${icon} ${templateName}</span>`;
                 }
             }
 
