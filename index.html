@@ -5580,6 +5580,12 @@
             if (ok) {
                 sellers = sellers.filter(s => s.id !== id);
                 renderSellers();
+
+                // Reset onboarding flag si tous les leads sont supprimés
+                if (sellers.length === 0) {
+                    localStorage.removeItem('onboarding_pipeline_done');
+                    console.log('[Onboarding] Flag reset - no leads remaining');
+                }
             }
         }
 
