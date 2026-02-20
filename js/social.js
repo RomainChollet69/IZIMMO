@@ -11,6 +11,19 @@
     let audioRecorder = null;
     let audioStream = null;
     let currentResults = [];
+    let placeholderInterval = null;
+
+    // ===== PLACEHOLDER EXAMPLES =====
+    const PLACEHOLDER_EXAMPLES = [
+        "ex: Ce matin j'ai visité un T3 rue Garibaldi avec un couple de primo-accédants. L'appart est bien mais le DPE est en F...",
+        "ex: Moi je pense que les prix des maisons vont baisser, en tout cas sur Lyon et sa couronne. Et je vais vous dire pourquoi...",
+        "ex: On a signé chez le notaire ce matin pour le T4 de Villeurbanne. Les acheteurs étaient émus, c'est leur premier achat.",
+        "ex: Je suis passé devant la nouvelle boulangerie rue des Tables Claudiennes, elle a rouvert après 3 mois de travaux.",
+        "ex: Ma courtière m'annonce 3.35% sur 20 ans cette semaine. Il y a 2 mois c'était 3.60. Ça change la donne.",
+        "ex: Un vendeur m'a raccroché au nez parce que je lui ai dit que son bien valait 30k de moins que ce qu'il pensait...",
+        "ex: Aujourd'hui un acquéreur m'a demandé si c'était le bon moment pour acheter. Voilà ce que je lui ai répondu.",
+        "ex: Le quartier de la Croix-Rousse a complètement changé en 2 ans. Les prix ont pris 12% mais surtout l'ambiance..."
+    ];
 
     // ===== CALENDAR DATA (section 7 du brief) =====
     const CALENDAR = {
@@ -765,11 +778,15 @@
             if (storyInput.value.trim() === '') {
                 overlay.style.opacity = '0.3';
             }
+            // Stop placeholder rotation when focused
+            stopPlaceholderRotation();
         });
         storyInput.addEventListener('blur', () => {
             const overlay = document.getElementById('bigMicOverlay');
             if (storyInput.value.trim() === '') {
                 overlay.style.opacity = '1';
+                // Restart placeholder rotation if empty
+                startPlaceholderRotation();
             }
         });
 
@@ -805,11 +822,61 @@
             bigMicOverlay.classList.add('hidden');
             smallMicBtn.classList.remove('hidden');
             generateBtn.disabled = false;
+            stopPlaceholderRotation();
         } else {
             // État 1 — Empty
             bigMicOverlay.classList.remove('hidden');
             smallMicBtn.classList.add('hidden');
             generateBtn.disabled = true;
+            startPlaceholderRotation();
+        }
+    }
+
+    // ===== PLACEHOLDER ROTATION =====
+    function setRandomPlaceholder() {
+        const storyInput = document.getElementById('storyInput');
+        if (!storyInput) return;
+
+        const randomIndex = Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length);
+        storyInput.setAttribute('placeholder', PLACEHOLDER_EXAMPLES[randomIndex]);
+    }
+
+    function rotatePlaceholder() {
+        const storyInput = document.getElementById('storyInput');
+        if (!storyInput) return;
+
+        // Only rotate if textarea is empty and doesn't have focus
+        if (storyInput.value.trim() !== '' || document.activeElement === storyInput) {
+            return;
+        }
+
+        // Fade out
+        storyInput.style.opacity = '0.5';
+
+        setTimeout(() => {
+            // Change placeholder
+            setRandomPlaceholder();
+
+            // Fade in
+            storyInput.style.opacity = '1';
+        }, 300);
+    }
+
+    function startPlaceholderRotation() {
+        // Stop any existing rotation
+        stopPlaceholderRotation();
+
+        // Set initial random placeholder
+        setRandomPlaceholder();
+
+        // Rotate every 5 seconds
+        placeholderInterval = setInterval(rotatePlaceholder, 5000);
+    }
+
+    function stopPlaceholderRotation() {
+        if (placeholderInterval) {
+            clearInterval(placeholderInterval);
+            placeholderInterval = null;
         }
     }
 
