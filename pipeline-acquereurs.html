@@ -1,0 +1,1694 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IZIMMO - Pipeline Acquéreurs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --new-color: #00D2FF;
+            --active-color: #7C4DFF;
+            --bought-color: #00E676;
+            --lost-color: #FF5252;
+            --bg-gradient-1: #0F0C29;
+            --bg-gradient-2: #302B63;
+            --bg-gradient-3: #24243E;
+            --card-bg: #FFFFFF;
+            --text-dark: #1A1A2E;
+            --text-light: #6C7293;
+            --border-color: #E8EAF6;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.16);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        /* ============ HEADER ============ */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px 30px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logo {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-tab {
+            padding: 8px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav-tab.inactive {
+            background: rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .nav-tab.inactive:hover {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .reminder-badge {
+            position: relative;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .reminder-badge:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .reminder-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #FF5252;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .add-btn {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ============ PIPELINE ============ */
+        .pipeline {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        .column {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            min-height: 500px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.5s ease;
+            transition: background 0.2s;
+        }
+
+        .column.drag-over {
+            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .column:nth-child(1) { animation-delay: 0s; }
+        .column:nth-child(2) { animation-delay: 0.1s; }
+        .column:nth-child(3) { animation-delay: 0.2s; }
+        .column:nth-child(4) { animation-delay: 0.3s; }
+
+        .column-header-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 14px 16px;
+            border-radius: 12px;
+        }
+
+        .column-header-bar.new { background: linear-gradient(135deg, #00D2FF, #0099CC); }
+        .column-header-bar.active { background: linear-gradient(135deg, #7C4DFF, #6200EA); }
+        .column-header-bar.bought { background: linear-gradient(135deg, #00E676, #00C853); }
+        .column-header-bar.lost { background: linear-gradient(135deg, #FF5252, #D50000); }
+
+        .column-header-bar .icon { font-size: 22px; }
+
+        .column-header-bar .title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .column-header-bar .count {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 100px;
+        }
+
+        /* ============ CARD ============ */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            cursor: grab;
+            transition: all 0.2s ease;
+            border: 1px solid #f0f0f5;
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .card-name {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-dark);
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .card-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.5;
+            transition: all 0.2s;
+            padding: 2px;
+        }
+
+        .card-action-btn:hover {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .card-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-type {
+            background: #EDE7F6;
+            color: #5E35B1;
+        }
+
+        .badge-type.maison { background: #FFF3E0; color: #E65100; }
+        .badge-type.appartement { background: #E3F2FD; color: #1565C0; }
+        .badge-type.terrain { background: #E8F5E9; color: #2E7D32; }
+        .badge-type.immeuble { background: #FCE4EC; color: #C62828; }
+
+        .badge-rooms {
+            background: #F3E5F5;
+            color: #7B1FA2;
+        }
+
+        .badge-sector {
+            background: #E8EAF6;
+            color: #283593;
+        }
+
+        .badge-budget {
+            background: #E0F7FA;
+            color: #00695C;
+            font-weight: 700;
+        }
+
+        .badge-seller {
+            background: #FFF9C4;
+            color: #F57F17;
+            font-weight: 700;
+            border: 1px solid #FFF176;
+            animation: glowSeller 2s infinite;
+        }
+
+        @keyframes glowSeller {
+            0%, 100% { box-shadow: 0 0 4px rgba(245, 127, 23, 0.2); }
+            50% { box-shadow: 0 0 10px rgba(245, 127, 23, 0.5); }
+        }
+
+        .card-source {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .source-boitage { background: #DCEDC8; color: #33691E; }
+        .source-recommandation { background: #B3E5FC; color: #01579B; }
+        .source-pige { background: #F8BBD0; color: #880E4F; }
+        .source-siteimmo { background: #D1C4E9; color: #4527A0; }
+        .source-bouche { background: #FFE0B2; color: #E65100; }
+        .source-efficity { background: #B2DFDB; color: #004D40; }
+        .source-autre { background: #CFD8DC; color: #37474F; }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .card-reminder {
+            font-size: 12px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-reminder.urgent {
+            color: #FF5252;
+            font-weight: 600;
+        }
+
+        .card-reminder.soon {
+            color: #FFA000;
+            font-weight: 600;
+        }
+
+        .card-links-count {
+            font-size: 11px;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ============ MODAL ============ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 680px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 30px;
+            border-bottom: 1px solid #f0f0f5;
+        }
+
+        .modal-header h2 {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .modal-close {
+            background: #f5f5f5;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #FF5252;
+            color: white;
+        }
+
+        .modal-body {
+            padding: 24px 30px;
+        }
+
+        .form-section {
+            margin-bottom: 24px;
+        }
+
+        .form-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #667eea;
+            display: inline-block;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e8eaf6;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+            color: var(--text-dark);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border: 2px solid #e8eaf6;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .checkbox-item:hover {
+            border-color: #667eea;
+        }
+
+        .checkbox-item input {
+            display: none;
+        }
+
+        .checkbox-item.checked {
+            background: #EDE7F6;
+            border-color: #7C4DFF;
+            color: #5E35B1;
+        }
+
+        .seller-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #FFFDE7;
+            border: 2px solid #FFF176;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .seller-toggle:hover {
+            background: #FFF9C4;
+        }
+
+        .seller-toggle.active {
+            background: #FFF176;
+            border-color: #FFD600;
+        }
+
+        .seller-toggle .toggle-icon { font-size: 24px; }
+
+        .seller-toggle .toggle-text {
+            font-weight: 600;
+            font-size: 14px;
+            color: #F57F17;
+        }
+
+        .seller-toggle .toggle-sub {
+            font-size: 12px;
+            color: #F9A825;
+            font-weight: 400;
+        }
+
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid #f0f0f5;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-cancel {
+            background: #f5f5f5;
+            color: var(--text-light);
+        }
+
+        .btn-cancel:hover {
+            background: #eee;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* ============ DETAIL MODAL ============ */
+        .detail-modal .modal {
+            max-width: 750px;
+        }
+
+        .detail-section {
+            margin-bottom: 20px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .detail-item {
+            padding: 10px 14px;
+            background: #f8f9ff;
+            border-radius: 10px;
+        }
+
+        .detail-item .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item .value {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 2px;
+        }
+
+        /* ============ LINKS SECTION ============ */
+        .links-section {
+            margin-top: 20px;
+        }
+
+        .links-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .links-section-header h3 {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .add-link-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .add-link-btn:hover {
+            background: #5a6fd6;
+        }
+
+        .link-input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            display: none;
+        }
+
+        .link-input-row.active {
+            display: flex;
+        }
+
+        .link-input-row input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e8eaf6;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .link-input-row input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .link-input-row select {
+            padding: 10px;
+            border: 2px solid #e8eaf6;
+            border-radius: 10px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .link-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+
+        .link-card:hover {
+            background: #eef0ff;
+        }
+
+        .link-thumbnail {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background: #e8eaf6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .link-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .link-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .link-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .link-url {
+            font-size: 11px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .link-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .link-status.proposed { background: #E3F2FD; color: #1565C0; }
+        .link-status.visited { background: #FFF3E0; color: #E65100; }
+        .link-status.interested { background: #E8F5E9; color: #2E7D32; }
+        .link-status.refused { background: #FFEBEE; color: #C62828; }
+
+        .link-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .link-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+
+        .link-action-btn:hover {
+            opacity: 1;
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 1200px) {
+            .pipeline {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .pipeline {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .header-left {
+                flex-direction: column;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ============ EMPTY STATE ============ */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+            opacity: 0.4;
+        }
+
+        .empty-state p {
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="logo">IZIMMO</div>
+            <div class="nav-tabs">
+                <button class="nav-tab inactive" onclick="window.location.href='index.html'">🏠 Pipeline Vendeurs</button>
+                <button class="nav-tab active">🔑 Pipeline Acquéreurs</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="reminder-badge" id="reminderBtn" title="Relances à faire">
+                🔔
+                <span class="reminder-count" id="reminderCount" style="display:none;">0</span>
+            </button>
+            <button class="add-btn" id="addBuyerBtn">+ Nouvel Acquéreur</button>
+        </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="pipeline">
+        <!-- Nouveaux Acquéreurs -->
+        <div class="column" data-status="new">
+            <div class="column-header-bar new">
+                <span class="icon">🆕</span>
+                <span class="title">Nouveaux</span>
+                <span class="count" id="count-new">0</span>
+            </div>
+            <div class="cards-container" id="cards-new"></div>
+        </div>
+
+        <!-- En Recherche Active -->
+        <div class="column" data-status="active">
+            <div class="column-header-bar active">
+                <span class="icon">🔍</span>
+                <span class="title">En Recherche</span>
+                <span class="count" id="count-active">0</span>
+            </div>
+            <div class="cards-container" id="cards-active"></div>
+        </div>
+
+        <!-- Achetés -->
+        <div class="column" data-status="bought">
+            <div class="column-header-bar bought">
+                <span class="icon">🎉</span>
+                <span class="title">Achetés</span>
+                <span class="count" id="count-bought">0</span>
+            </div>
+            <div class="cards-container" id="cards-bought"></div>
+        </div>
+
+        <!-- Perdus -->
+        <div class="column" data-status="lost">
+            <div class="column-header-bar lost">
+                <span class="icon">❌</span>
+                <span class="title">Perdus</span>
+                <span class="count" id="count-lost">0</span>
+            </div>
+            <div class="cards-container" id="cards-lost"></div>
+        </div>
+    </div>
+
+    <!-- MODAL AJOUT -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modalTitle">➕ Nouvel Acquéreur</h2>
+                <button class="modal-close" onclick="closeAddModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <!-- Contact -->
+                <div class="form-section">
+                    <div class="form-section-title">👤 Contact</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Prénom Nom *</label>
+                            <input type="text" id="f-name" placeholder="Jean Dupont">
+                        </div>
+                        <div class="form-group">
+                            <label>Téléphone</label>
+                            <input type="tel" id="f-phone" placeholder="06 12 34 56 78">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="f-email" placeholder="jean@email.com">
+                        </div>
+                        <div class="form-group">
+                            <label>Source</label>
+                            <select id="f-source">
+                                <option value="">-- Choisir --</option>
+                                <option value="recommandation">Recommandation</option>
+                                <option value="siteimmo">Site Immo (SL, LBC...)</option>
+                                <option value="efficity">Efficity</option>
+                                <option value="bouche">Bouche à oreille</option>
+                                <option value="pige">Pige</option>
+                                <option value="boitage">Boîtage</option>
+                                <option value="autre">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recherche -->
+                <div class="form-section">
+                    <div class="form-section-title">🏠 Recherche</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Type de bien *</label>
+                            <select id="f-type">
+                                <option value="">-- Choisir --</option>
+                                <option value="appartement">Appartement</option>
+                                <option value="maison">Maison</option>
+                                <option value="terrain">Terrain</option>
+                                <option value="immeuble">Immeuble</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Typologie</label>
+                            <select id="f-rooms">
+                                <option value="">-- Choisir --</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                                <option value="T5+">T5+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Secteur / Villes *</label>
+                            <input type="text" id="f-sector" placeholder="Lyon 3, Villeurbanne...">
+                        </div>
+                        <div class="form-group">
+                            <label>Surface min (m²)</label>
+                            <input type="number" id="f-surface" placeholder="60">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Budget min (€)</label>
+                            <input type="number" id="f-budgetMin" placeholder="150000">
+                        </div>
+                        <div class="form-group">
+                            <label>Budget max (€)</label>
+                            <input type="number" id="f-budgetMax" placeholder="300000">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <label style="font-size:13px; font-weight:600; color: var(--text-light); margin-bottom:8px; display:block;">Critères importants</label>
+                        <div class="checkbox-group" id="f-criteria">
+                            <label class="checkbox-item" data-value="jardin">
+                                <input type="checkbox"> 🌳 Jardin
+                            </label>
+                            <label class="checkbox-item" data-value="parking">
+                                <input type="checkbox"> 🅿️ Parking
+                            </label>
+                            <label class="checkbox-item" data-value="ascenseur">
+                                <input type="checkbox"> 🛗 Ascenseur
+                            </label>
+                            <label class="checkbox-item" data-value="balcon">
+                                <input type="checkbox"> 🌤️ Balcon / Terrasse
+                            </label>
+                            <label class="checkbox-item" data-value="calme">
+                                <input type="checkbox"> 🤫 Calme
+                            </label>
+                            <label class="checkbox-item" data-value="neuf">
+                                <input type="checkbox"> ✨ Neuf / Rénové
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financement & Situation -->
+                <div class="form-section">
+                    <div class="form-section-title">💰 Situation</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Pré-accord bancaire</label>
+                            <select id="f-bankApproval">
+                                <option value="">-- Choisir --</option>
+                                <option value="oui">✅ Oui</option>
+                                <option value="non">❌ Non</option>
+                                <option value="en-cours">⏳ En cours</option>
+                                <option value="inconnu">❓ Ne sait pas</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Délai projet</label>
+                            <select id="f-timeline">
+                                <option value="">-- Choisir --</option>
+                                <option value="urgent">🔥 Immédiat (< 1 mois)</option>
+                                <option value="court">⚡ Court terme (1-3 mois)</option>
+                                <option value="moyen">📅 Moyen terme (3-6 mois)</option>
+                                <option value="long">🕐 Long terme (6 mois+)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- VENDEUR D'UN BIEN -->
+                    <div class="seller-toggle" id="sellerToggle" onclick="toggleSeller()">
+                        <span class="toggle-icon">🏷️</span>
+                        <div>
+                            <div class="toggle-text">Vendeur d'un bien ?</div>
+                            <div class="toggle-sub">Double opportunité ! Cliquez pour activer</div>
+                        </div>
+                    </div>
+                    <div id="sellerDetails" style="display:none; margin-top: 12px;">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Adresse du bien à vendre</label>
+                                <input type="text" id="f-sellerAddress" placeholder="12 rue des Lilas, Lyon 3">
+                            </div>
+                            <div class="form-group">
+                                <label>Estimation / Prix souhaité</label>
+                                <input type="text" id="f-sellerPrice" placeholder="250 000 €">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-section">
+                    <div class="form-section-title">📝 Notes</div>
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label>Éléments rédhibitoires</label>
+                            <textarea id="f-dealbreakers" placeholder="RDC exclu, pas de vis-à-vis, pas de travaux..."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row single">
+                        <div class="form-group">
+                            <label>Notes libres</label>
+                            <textarea id="f-notes" placeholder="Informations complémentaires..."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Date de relance</label>
+                            <input type="date" id="f-reminder">
+                        </div>
+                        <div class="form-group">
+                            <label>Colonne *</label>
+                            <select id="f-status">
+                                <option value="new">Nouveaux Acquéreurs</option>
+                                <option value="active">En Recherche Active</option>
+                                <option value="bought">Achetés</option>
+                                <option value="lost">Perdus</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-cancel" onclick="closeAddModal()">Annuler</button>
+                <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()">Créer l'acquéreur</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DÉTAIL -->
+    <div class="modal-overlay detail-modal" id="detailModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="detailTitle">Fiche Acquéreur</h2>
+                <button class="modal-close" onclick="closeDetailModal()">✕</button>
+            </div>
+            <div class="modal-body" id="detailBody">
+                <!-- Filled dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ DATA ============
+        let buyers = JSON.parse(localStorage.getItem('izimmo_buyers') || '[]');
+        let editingId = null;
+
+        function saveBuyers() {
+            localStorage.setItem('izimmo_buyers', JSON.stringify(buyers));
+        }
+
+        // ============ FORMAT HELPERS ============
+        function formatBudget(min, max) {
+            const fmt = (n) => {
+                if (!n) return '';
+                n = parseInt(n);
+                if (n >= 1000000) return (n / 1000000).toFixed(1).replace('.0', '') + 'M€';
+                if (n >= 1000) return Math.round(n / 1000) + 'k€';
+                return n + '€';
+            };
+            const fMin = fmt(min);
+            const fMax = fmt(max);
+            if (fMin && fMax) return fMin + ' - ' + fMax;
+            if (fMax) return '< ' + fMax;
+            if (fMin) return '> ' + fMin;
+            return '';
+        }
+
+        function getSourceLabel(source) {
+            const map = {
+                'boitage': '📬 Boîtage',
+                'recommandation': '🤝 Recommandation',
+                'pige': '📰 Pige',
+                'siteimmo': '🌐 Site Immo',
+                'bouche': '🗣️ Bouche à oreille',
+                'efficity': '🏢 Efficity',
+                'autre': '📌 Autre'
+            };
+            return map[source] || source || '';
+        }
+
+        function getReminderInfo(dateStr) {
+            if (!dateStr) return null;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const reminder = new Date(dateStr);
+            reminder.setHours(0, 0, 0, 0);
+            const diff = Math.ceil((reminder - today) / (1000 * 60 * 60 * 24));
+            if (diff < 0) return { text: `Retard ${Math.abs(diff)}j`, class: 'urgent' };
+            if (diff === 0) return { text: "Aujourd'hui !", class: 'urgent' };
+            if (diff <= 3) return { text: `Dans ${diff}j`, class: 'soon' };
+            return { text: `Dans ${diff}j`, class: '' };
+        }
+
+        function getTypeIcon(type) {
+            const map = { 'maison': '🏠', 'appartement': '🏢', 'terrain': '🌿', 'immeuble': '🏗️' };
+            return map[type] || '🏠';
+        }
+
+        // ============ RENDER ============
+        function renderAll() {
+            const statuses = ['new', 'active', 'bought', 'lost'];
+            statuses.forEach(status => {
+                const container = document.getElementById('cards-' + status);
+                const countEl = document.getElementById('count-' + status);
+                const filtered = buyers.filter(b => b.status === status);
+                countEl.textContent = filtered.length;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><div class="icon">🔑</div><p>Aucun acquéreur</p></div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(b => renderCard(b)).join('');
+            });
+
+            // Reminder count
+            let remindCount = 0;
+            buyers.forEach(b => {
+                const r = getReminderInfo(b.reminder);
+                if (r && (r.class === 'urgent' || r.class === 'soon')) remindCount++;
+            });
+            const badge = document.getElementById('reminderCount');
+            if (remindCount > 0) {
+                badge.style.display = 'flex';
+                badge.textContent = remindCount;
+            } else {
+                badge.style.display = 'none';
+            }
+
+            setupDragAndDrop();
+        }
+
+        function renderCard(b) {
+            const budget = formatBudget(b.budgetMin, b.budgetMax);
+            const reminder = getReminderInfo(b.reminder);
+            const typeClass = b.propertyType || '';
+            const linksCount = (b.links || []).length;
+
+            return `
+                <div class="card" draggable="true" data-id="${b.id}">
+                    <div class="card-top">
+                        <div class="card-name">${b.name || 'Sans nom'}</div>
+                        <div class="card-actions">
+                            <button class="card-action-btn" onclick="openDetail('${b.id}')" title="Voir">👁️</button>
+                            <button class="card-action-btn" onclick="editBuyer('${b.id}')" title="Modifier">✏️</button>
+                            <button class="card-action-btn" onclick="deleteBuyer('${b.id}')" title="Supprimer">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="card-badges">
+                        ${b.propertyType ? `<span class="badge badge-type ${typeClass}">${getTypeIcon(b.propertyType)} ${b.propertyType}</span>` : ''}
+                        ${b.rooms ? `<span class="badge badge-rooms">${b.rooms}</span>` : ''}
+                        ${b.sector ? `<span class="badge badge-sector">📍 ${b.sector}</span>` : ''}
+                        ${budget ? `<span class="badge badge-budget">💰 ${budget}</span>` : ''}
+                        ${b.isSeller ? `<span class="badge badge-seller">🏷️ Vendeur</span>` : ''}
+                    </div>
+                    ${b.source ? `<div class="card-source source-${b.source}">${getSourceLabel(b.source)}</div>` : ''}
+                    <div class="card-footer">
+                        ${reminder ? `<div class="card-reminder ${reminder.class}">⏰ ${reminder.text}</div>` : '<div></div>'}
+                        ${linksCount > 0 ? `<div class="card-links-count">🔗 ${linksCount} bien${linksCount > 1 ? 's' : ''} proposé${linksCount > 1 ? 's' : ''}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ============ DRAG & DROP ============
+        function setupDragAndDrop() {
+            document.querySelectorAll('.card').forEach(card => {
+                card.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', card.dataset.id);
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('dragging');
+                    document.querySelectorAll('.column').forEach(c => c.classList.remove('drag-over'));
+                });
+            });
+
+            document.querySelectorAll('.column').forEach(col => {
+                col.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    col.classList.add('drag-over');
+                });
+                col.addEventListener('dragleave', () => {
+                    col.classList.remove('drag-over');
+                });
+                col.addEventListener('drop', e => {
+                    e.preventDefault();
+                    col.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text/plain');
+                    const newStatus = col.dataset.status;
+                    const buyer = buyers.find(b => b.id === id);
+                    if (buyer && buyer.status !== newStatus) {
+                        buyer.status = newStatus;
+                        saveBuyers();
+                        renderAll();
+                    }
+                });
+            });
+        }
+
+        // ============ ADD / EDIT MODAL ============
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = '➕ Nouvel Acquéreur';
+            document.getElementById('submitBtn').textContent = "Créer l'acquéreur";
+            resetForm();
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+            editingId = null;
+        }
+
+        function resetForm() {
+            ['f-name','f-phone','f-email','f-source','f-type','f-rooms','f-sector','f-surface',
+             'f-budgetMin','f-budgetMax','f-bankApproval','f-timeline','f-sellerAddress',
+             'f-sellerPrice','f-dealbreakers','f-notes','f-reminder','f-status'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.querySelectorAll('#f-criteria .checkbox-item').forEach(item => {
+                item.classList.remove('checked');
+                item.querySelector('input').checked = false;
+            });
+            document.getElementById('sellerToggle').classList.remove('active');
+            document.getElementById('sellerDetails').style.display = 'none';
+            document.getElementById('f-status').value = 'new';
+        }
+
+        function fillForm(b) {
+            document.getElementById('f-name').value = b.name || '';
+            document.getElementById('f-phone').value = b.phone || '';
+            document.getElementById('f-email').value = b.email || '';
+            document.getElementById('f-source').value = b.source || '';
+            document.getElementById('f-type').value = b.propertyType || '';
+            document.getElementById('f-rooms').value = b.rooms || '';
+            document.getElementById('f-sector').value = b.sector || '';
+            document.getElementById('f-surface').value = b.surface || '';
+            document.getElementById('f-budgetMin').value = b.budgetMin || '';
+            document.getElementById('f-budgetMax').value = b.budgetMax || '';
+            document.getElementById('f-bankApproval').value = b.bankApproval || '';
+            document.getElementById('f-timeline').value = b.timeline || '';
+            document.getElementById('f-dealbreakers').value = b.dealbreakers || '';
+            document.getElementById('f-notes').value = b.notes || '';
+            document.getElementById('f-reminder').value = b.reminder || '';
+            document.getElementById('f-status').value = b.status || 'new';
+
+            // Criteria
+            document.querySelectorAll('#f-criteria .checkbox-item').forEach(item => {
+                const val = item.dataset.value;
+                if ((b.criteria || []).includes(val)) {
+                    item.classList.add('checked');
+                    item.querySelector('input').checked = true;
+                } else {
+                    item.classList.remove('checked');
+                    item.querySelector('input').checked = false;
+                }
+            });
+
+            // Seller
+            if (b.isSeller) {
+                document.getElementById('sellerToggle').classList.add('active');
+                document.getElementById('sellerDetails').style.display = 'block';
+                document.getElementById('f-sellerAddress').value = b.sellerAddress || '';
+                document.getElementById('f-sellerPrice').value = b.sellerPrice || '';
+            }
+        }
+
+        function handleSubmit() {
+            const name = document.getElementById('f-name').value.trim();
+            const type = document.getElementById('f-type').value;
+            const sector = document.getElementById('f-sector').value.trim();
+
+            if (!name || !type || !sector) {
+                alert('Veuillez remplir les champs obligatoires : Nom, Type de bien et Secteur');
+                return;
+            }
+
+            const criteria = [];
+            document.querySelectorAll('#f-criteria .checkbox-item.checked').forEach(item => {
+                criteria.push(item.dataset.value);
+            });
+
+            const data = {
+                name: name,
+                phone: document.getElementById('f-phone').value.trim(),
+                email: document.getElementById('f-email').value.trim(),
+                source: document.getElementById('f-source').value,
+                propertyType: type,
+                rooms: document.getElementById('f-rooms').value,
+                sector: sector,
+                surface: document.getElementById('f-surface').value,
+                budgetMin: document.getElementById('f-budgetMin').value,
+                budgetMax: document.getElementById('f-budgetMax').value,
+                bankApproval: document.getElementById('f-bankApproval').value,
+                timeline: document.getElementById('f-timeline').value,
+                criteria: criteria,
+                isSeller: document.getElementById('sellerToggle').classList.contains('active'),
+                sellerAddress: document.getElementById('f-sellerAddress').value.trim(),
+                sellerPrice: document.getElementById('f-sellerPrice').value.trim(),
+                dealbreakers: document.getElementById('f-dealbreakers').value.trim(),
+                notes: document.getElementById('f-notes').value.trim(),
+                reminder: document.getElementById('f-reminder').value,
+                status: document.getElementById('f-status').value,
+            };
+
+            if (editingId) {
+                const idx = buyers.findIndex(b => b.id === editingId);
+                if (idx !== -1) {
+                    data.id = editingId;
+                    data.links = buyers[idx].links || [];
+                    data.createdAt = buyers[idx].createdAt;
+                    buyers[idx] = data;
+                }
+            } else {
+                data.id = Date.now().toString();
+                data.links = [];
+                data.createdAt = new Date().toISOString();
+                buyers.push(data);
+            }
+
+            saveBuyers();
+            renderAll();
+            closeAddModal();
+        }
+
+        function editBuyer(id) {
+            const b = buyers.find(x => x.id === id);
+            if (!b) return;
+            editingId = id;
+            resetForm();
+            fillForm(b);
+            document.getElementById('modalTitle').textContent = '✏️ Modifier Acquéreur';
+            document.getElementById('submitBtn').textContent = 'Enregistrer';
+            document.getElementById('addModal').classList.add('active');
+        }
+
+        function deleteBuyer(id) {
+            if (!confirm('Supprimer cet acquéreur ?')) return;
+            buyers = buyers.filter(b => b.id !== id);
+            saveBuyers();
+            renderAll();
+        }
+
+        // ============ SELLER TOGGLE ============
+        function toggleSeller() {
+            const el = document.getElementById('sellerToggle');
+            const details = document.getElementById('sellerDetails');
+            el.classList.toggle('active');
+            details.style.display = el.classList.contains('active') ? 'block' : 'none';
+        }
+
+        // ============ CHECKBOX TOGGLES ============
+        document.querySelectorAll('#f-criteria .checkbox-item').forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('checked');
+                item.querySelector('input').checked = item.classList.contains('checked');
+            });
+        });
+
+        // ============ DETAIL MODAL ============
+        function openDetail(id) {
+            const b = buyers.find(x => x.id === id);
+            if (!b) return;
+
+            document.getElementById('detailTitle').textContent = `🔑 ${b.name}`;
+
+            const budget = formatBudget(b.budgetMin, b.budgetMax);
+            const reminder = getReminderInfo(b.reminder);
+            const criteriaList = (b.criteria || []).map(c => {
+                const map = { jardin: '🌳 Jardin', parking: '🅿️ Parking', ascenseur: '🛗 Ascenseur', balcon: '🌤️ Balcon', calme: '🤫 Calme', neuf: '✨ Neuf/Rénové' };
+                return map[c] || c;
+            }).join(', ') || 'Aucun';
+
+            const bankMap = { 'oui': '✅ Oui', 'non': '❌ Non', 'en-cours': '⏳ En cours', 'inconnu': '❓ Inconnu' };
+            const timelineMap = { 'urgent': '🔥 Immédiat', 'court': '⚡ 1-3 mois', 'moyen': '📅 3-6 mois', 'long': '🕐 6 mois+' };
+
+            let html = `
+                <div class="detail-section">
+                    <div class="form-section-title">👤 Contact</div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="label">Nom</div><div class="value">${b.name}</div></div>
+                        <div class="detail-item"><div class="label">Téléphone</div><div class="value">${b.phone || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Email</div><div class="value">${b.email || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Source</div><div class="value">${getSourceLabel(b.source) || '-'}</div></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="form-section-title">🏠 Recherche</div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="label">Type</div><div class="value">${getTypeIcon(b.propertyType)} ${b.propertyType || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Typologie</div><div class="value">${b.rooms || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Secteur</div><div class="value">📍 ${b.sector || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Surface min</div><div class="value">${b.surface ? b.surface + ' m²' : '-'}</div></div>
+                        <div class="detail-item"><div class="label">Budget</div><div class="value">💰 ${budget || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Critères</div><div class="value">${criteriaList}</div></div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <div class="form-section-title">💰 Situation</div>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="label">Pré-accord bancaire</div><div class="value">${bankMap[b.bankApproval] || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Délai</div><div class="value">${timelineMap[b.timeline] || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Relance</div><div class="value">${reminder ? '⏰ ' + reminder.text : '-'}</div></div>
+                        <div class="detail-item"><div class="label">Vendeur d'un bien</div><div class="value">${b.isSeller ? '🏷️ OUI' : 'Non'}</div></div>
+                    </div>
+                    ${b.isSeller ? `<div class="detail-grid" style="margin-top:8px;">
+                        <div class="detail-item"><div class="label">Adresse bien à vendre</div><div class="value">${b.sellerAddress || '-'}</div></div>
+                        <div class="detail-item"><div class="label">Prix souhaité</div><div class="value">${b.sellerPrice || '-'}</div></div>
+                    </div>` : ''}
+                </div>
+
+                ${b.dealbreakers ? `<div class="detail-section"><div class="form-section-title">⛔ Rédhibitoires</div><p style="padding:10px 14px; background:#FFF3E0; border-radius:10px; font-size:14px; color:#E65100;">${b.dealbreakers}</p></div>` : ''}
+                ${b.notes ? `<div class="detail-section"><div class="form-section-title">📝 Notes</div><p style="padding:10px 14px; background:#f8f9ff; border-radius:10px; font-size:14px;">${b.notes}</p></div>` : ''}
+
+                <!-- LIENS D'ANNONCES -->
+                <div class="links-section">
+                    <div class="links-section-header">
+                        <h3>🔗 Biens Proposés (${(b.links || []).length})</h3>
+                        <button class="add-link-btn" onclick="showLinkInput('${b.id}')">+ Ajouter un lien</button>
+                    </div>
+                    <div class="link-input-row" id="linkInputRow">
+                        <input type="text" id="linkUrlInput" placeholder="Coller l'URL de l'annonce...">
+                        <select id="linkStatusInput">
+                            <option value="proposed">Proposé</option>
+                            <option value="visited">Visité</option>
+                            <option value="interested">Intéressé</option>
+                            <option value="refused">Refusé</option>
+                        </select>
+                        <button class="add-link-btn" onclick="addLink('${b.id}')">OK</button>
+                    </div>
+                    <div id="linksContainer">
+                        ${(b.links || []).map((link, i) => renderLink(b.id, link, i)).join('')}
+                        ${(b.links || []).length === 0 ? '<p style="text-align:center; color: #999; font-size: 13px; padding: 20px;">Aucun bien proposé pour le moment</p>' : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detailBody').innerHTML = html;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // ============ LINKS MANAGEMENT ============
+        function showLinkInput(buyerId) {
+            const row = document.getElementById('linkInputRow');
+            row.classList.toggle('active');
+            if (row.classList.contains('active')) {
+                document.getElementById('linkUrlInput').focus();
+            }
+        }
+
+        function addLink(buyerId) {
+            const url = document.getElementById('linkUrlInput').value.trim();
+            const status = document.getElementById('linkStatusInput').value;
+
+            if (!url) { alert('Veuillez entrer une URL'); return; }
+
+            const buyer = buyers.find(b => b.id === buyerId);
+            if (!buyer) return;
+
+            if (!buyer.links) buyer.links = [];
+
+            // Extract domain for display
+            let domain = '';
+            try { domain = new URL(url).hostname.replace('www.', ''); } catch(e) { domain = url; }
+
+            const platformIcons = {
+                'seloger.com': '🏠',
+                'leboncoin.fr': '🟠',
+                'bienici.com': '🔵',
+                'logic-immo.com': '🟣',
+                'pap.fr': '🟢',
+                'orpi.com': '🔴',
+                'efficity.com': '🏢',
+                'bien-ici.fr': '🔵'
+            };
+
+            let icon = '🔗';
+            for (const [d, ic] of Object.entries(platformIcons)) {
+                if (domain.includes(d)) { icon = ic; break; }
+            }
+
+            buyer.links.push({
+                url: url,
+                domain: domain,
+                icon: icon,
+                status: status,
+                addedAt: new Date().toISOString()
+            });
+
+            saveBuyers();
+            renderAll();
+            openDetail(buyerId); // Refresh detail
+        }
+
+        function updateLinkStatus(buyerId, linkIndex, newStatus) {
+            const buyer = buyers.find(b => b.id === buyerId);
+            if (!buyer || !buyer.links[linkIndex]) return;
+            buyer.links[linkIndex].status = newStatus;
+            saveBuyers();
+            openDetail(buyerId);
+        }
+
+        function deleteLink(buyerId, linkIndex) {
+            const buyer = buyers.find(b => b.id === buyerId);
+            if (!buyer) return;
+            buyer.links.splice(linkIndex, 1);
+            saveBuyers();
+            renderAll();
+            openDetail(buyerId);
+        }
+
+        function renderLink(buyerId, link, index) {
+            const statusLabels = {
+                'proposed': 'Proposé',
+                'visited': 'Visité',
+                'interested': 'Intéressé',
+                'refused': 'Refusé'
+            };
+
+            return `
+                <div class="link-card">
+                    <div class="link-thumbnail">${link.icon}</div>
+                    <div class="link-info">
+                        <div class="link-title">${link.domain}</div>
+                        <div class="link-url"><a href="${link.url}" target="_blank" style="color:#667eea; text-decoration:none;">${link.url}</a></div>
+                    </div>
+                    <select class="link-status ${link.status}" onchange="updateLinkStatus('${buyerId}', ${index}, this.value)" style="border:none; cursor:pointer; font-size:11px; font-weight:700; padding:4px 8px; border-radius:20px;">
+                        <option value="proposed" ${link.status === 'proposed' ? 'selected' : ''}>📤 Proposé</option>
+                        <option value="visited" ${link.status === 'visited' ? 'selected' : ''}>👀 Visité</option>
+                        <option value="interested" ${link.status === 'interested' ? 'selected' : ''}>💚 Intéressé</option>
+                        <option value="refused" ${link.status === 'refused' ? 'selected' : ''}>❌ Refusé</option>
+                    </select>
+                    <button class="link-action-btn" onclick="deleteLink('${buyerId}', ${index})" title="Supprimer">🗑️</button>
+                </div>
+            `;
+        }
+
+        // ============ KEYBOARD SHORTCUTS ============
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeDetailModal();
+            }
+        });
+
+        document.getElementById('addModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('addModal')) closeAddModal();
+        });
+
+        document.getElementById('detailModal').addEventListener('click', e => {
+            if (e.target === document.getElementById('detailModal')) closeDetailModal();
+        });
+
+        // ============ INIT ============
+        document.getElementById('addBuyerBtn').addEventListener('click', openAddModal);
+
+        renderAll();
+    </script>
+</body>
+</html>
