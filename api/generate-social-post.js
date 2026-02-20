@@ -124,7 +124,14 @@ export default async function handler(req, res) {
                 objective: null,
                 format_type: 'post_texte',
                 visual_recommendation: postData.visual_recommendation,
+                completeness: postData.completeness || {
+                    hook_quality: true,
+                    local_anchor: true,
+                    terrain_proof: true,
+                    cta_present: true
+                },
                 compliance_flags: postData.compliance_flags || {},
+                user_edited: false,
                 source_type: mode === 'free_input' ? 'user_input' : 'calendar_suggestion',
                 source_data: mode === 'free_input' ? { user_input } : {},
                 calendar_day: today.jour,
@@ -323,6 +330,13 @@ Retourne UNIQUEMENT ce JSON, sans texte avant ou après :
   "hook_pattern": "chiffre_choc | contrarian | storytelling | quiz | prix_ville | lifestyle | reconversion | opinion | revelation | erreur_couteuse | secret_local | futur_proche | honnetete_brute | cta_mot_cle",
   "content": "le post complet prêt à copier-coller avec retours à la ligne naturels",
   "visual_recommendation": "instruction visuelle pour le conseiller (ex: 'Post texte pur, pas d'image nécessaire' ou 'Photo smartphone du quartier recommandée')",
+  "completeness": {
+    "hook_quality": true,
+    "local_anchor": true,
+    "terrain_proof": true,
+    "cta_present": true,
+    "details": "Brève explication de ce qui a été vérifié (ex: Hook chiffré (-15k€), ancrage Lyon 3e + rue Garibaldi, preuve terrain (visite ce matin), CTA question ouverte)"
+  },
   "compliance_flags": {
     "hoguet": "pass",
     "rgpd": "pass",

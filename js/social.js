@@ -47,6 +47,21 @@
     const DAYS_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
     const DAYS_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
+    // ===== FREQUENCY FILTER =====
+    function getActiveDaysForFrequency(frequency) {
+        // Section 7.0 du brief : filtrage selon la fréquence
+        if (frequency === 'light') {
+            // 2 posts/semaine : lundi + vendredi
+            return ['lundi', 'vendredi'];
+        } else if (frequency === 'regular') {
+            // 3-4 posts/semaine : lundi + mardi + jeudi + vendredi
+            return ['lundi', 'mardi', 'jeudi', 'vendredi'];
+        } else {
+            // intensive : tous les jours (lun-ven)
+            return ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
+        }
+    }
+
     // ===== INIT =====
     async function init() {
         console.log('[Social] Initializing...');
@@ -132,6 +147,10 @@
         const diff = day === 0 ? -6 : 1 - day; // If Sunday, go back 6 days
         monday.setDate(now.getDate() + diff);
 
+        // Get frequency filter
+        const frequency = currentProfile?.publishing_frequency || 'regular';
+        const activeDays = getActiveDaysForFrequency(frequency);
+
         let html = '';
 
         // Render Mon-Fri only
@@ -141,6 +160,11 @@
             const dayName = DAYS_FR[date.getDay()];
             const dayShort = DAYS_SHORT[date.getDay()];
             const isToday = dayName === today;
+
+            // Skip if this day is not active for the chosen frequency
+            if (!activeDays.includes(dayName)) {
+                continue;
+            }
 
             const templates = CALENDAR[dayName] || {};
             const platforms = currentProfile?.platforms_active || ['linkedin', 'instagram', 'facebook', 'tiktok'];
@@ -283,7 +307,7 @@
 
         const generateBtn = document.getElementById('generateBtn');
         generateBtn.disabled = true;
-        generateBtn.textContent = '⏳ Génération en cours...';
+        generateBtn.textContent = '⏳ En cours...';
 
         try {
             // Generate posts for each platform
@@ -330,7 +354,7 @@
             alert('Erreur lors de la génération: ' + err.message);
         } finally {
             generateBtn.disabled = false;
-            generateBtn.textContent = '✨ Générer les posts';
+            generateBtn.textContent = '✨ Raconter ce moment';
         }
     }
 
@@ -376,10 +400,41 @@
         for (let i = 0; i < currentResults.length; i++) {
             const result = currentResults[i];
             const wordCount = result.word_count || result.content.split(/\s+/).length;
+            const completeness = result.completeness || {
+                hook_quality: true,
+                local_anchor: true,
+                terrain_proof: true,
+                cta_present: true
+            };
 
             contentHTML += `
                 <div class="platform-content ${i === 0 ? 'active' : ''}" data-platform="${result.platform}">
-                    <div class="post-content">${escapeHtml(result.content)}</div>
+                    <div class="edit-hint">✏️ Ajoute ton grain de sel avant de partager 👆</div>
+                    <textarea
+                        class="post-textarea"
+                        id="textarea-${result.platform}"
+                        data-original="${escapeHtml(result.content)}"
+                        data-platform="${result.platform}"
+                    >${escapeHtml(result.content)}</textarea>
+
+                    <div class="completeness-indicator">
+                        <div class="completeness-title">✅ Indicateur de complétude</div>
+                        <div class="completeness-item ${completeness.hook_quality ? 'complete' : 'warning'}">
+                            ${completeness.hook_quality ? '✅' : '⚠️'} Hook accrocheur
+                        </div>
+                        <div class="completeness-item ${completeness.local_anchor ? 'complete' : 'warning'}">
+                            ${completeness.local_anchor ? '✅' : '⚠️'} Ancrage local
+                        </div>
+                        <div class="completeness-item ${completeness.terrain_proof ? 'complete' : 'warning'}">
+                            ${completeness.terrain_proof ? '✅' : '⚠️'} Preuve terrain
+                        </div>
+                        <div class="completeness-item ${completeness.cta_present ? 'complete' : 'warning'}">
+                            ${completeness.cta_present ? '✅' : '⚠️'} CTA adapté
+                        </div>
+                        <div class="completeness-item warning" id="touche-perso-${result.platform}">
+                            ⚠️ Touche perso
+                        </div>
+                    </div>
 
                     <div class="visual-recommendation">
                         <div class="visual-recommendation-title">📸 Visuel recommandé</div>
@@ -394,7 +449,7 @@
                             🔄 Régénérer
                         </button>
                         <button class="action-btn success" onclick="markPublished('${result.platform}')">
-                            ✅ Marquer publié
+                            ✅ Marquer partagé
                         </button>
                     </div>
 
@@ -405,6 +460,29 @@
             `;
         }
         platformsContent.innerHTML = contentHTML;
+
+        // Setup textarea edit listeners
+        document.querySelectorAll('.post-textarea').forEach(textarea => {
+            const originalContent = textarea.dataset.original;
+            const platform = textarea.dataset.platform;
+
+            textarea.addEventListener('input', () => {
+                const touchePersoEl = document.getElementById(`touche-perso-${platform}`);
+                const isEdited = textarea.value !== originalContent;
+
+                if (isEdited) {
+                    textarea.classList.add('edited');
+                    touchePersoEl.innerHTML = '✅ Touche perso';
+                    touchePersoEl.classList.remove('warning');
+                    touchePersoEl.classList.add('complete');
+                } else {
+                    textarea.classList.remove('edited');
+                    touchePersoEl.innerHTML = '⚠️ Touche perso';
+                    touchePersoEl.classList.remove('complete');
+                    touchePersoEl.classList.add('warning');
+                }
+            });
+        });
 
         // Tab click handlers
         document.querySelectorAll('.platform-tab').forEach(tab => {
@@ -431,7 +509,14 @@
         if (!result) return;
 
         try {
-            await navigator.clipboard.writeText(result.content);
+            // Get current textarea content
+            const textarea = document.getElementById(`textarea-${platform}`);
+            const currentContent = textarea ? textarea.value : result.content;
+            const originalContent = textarea ? textarea.dataset.original : result.content;
+            const isEdited = currentContent !== originalContent;
+
+            // Copy to clipboard
+            await navigator.clipboard.writeText(currentContent);
 
             // Visual feedback
             const btn = event.target.closest('.action-btn');
@@ -450,7 +535,11 @@
             if (result.post_id) {
                 await supabaseClient
                     .from('social_posts')
-                    .update({ status: 'copied' })
+                    .update({
+                        status: 'copied',
+                        user_edited: isEdited,
+                        content: currentContent // Update avec le contenu modifié
+                    })
                     .eq('id', result.post_id);
 
                 await loadHistory();
@@ -488,7 +577,7 @@
             // Visual feedback
             const btn = event.target.closest('.action-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '✅ Publié !';
+            btn.innerHTML = '✅ Partagé !';
             btn.style.background = '#43A047';
             btn.style.color = 'white';
 
@@ -540,8 +629,8 @@
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">📭</div>
-                    <div class="empty-state-text">Aucun post généré cette semaine</div>
-                    <div class="empty-state-subtext">Commence par créer ton premier post ci-dessus</div>
+                    <div class="empty-state-text">Aucune histoire partagée cette semaine</div>
+                    <div class="empty-state-subtext">Commence par raconter ton premier moment ci-dessus</div>
                 </div>
             `;
             return;
@@ -571,6 +660,12 @@
                 copied: '📋',
                 published: '✅'
             }[post.status] || '📝';
+
+            const statusLabel = {
+                draft: 'brouillon',
+                copied: 'copié',
+                published: 'partagé'
+            }[post.status] || 'brouillon';
 
             const preview = post.content.split('\n')[0].substring(0, 60) + '...';
 
@@ -708,6 +803,7 @@
             else if (toneSlider > 66) tone = 'decontracte';
 
             const tutoiement = document.querySelector('input[name="tutoiement"]:checked').value === 'true';
+            const frequency = document.querySelector('input[name="frequency"]:checked').value;
             const samplePosts = document.getElementById('samplePostsTextarea').value.trim();
 
             try {
@@ -718,6 +814,7 @@
                     neighborhoods,
                     network,
                     platforms_active: platforms,
+                    publishing_frequency: frequency,
                     rsac_info: rsac || null,
                     tone,
                     tutoiement,
@@ -728,7 +825,7 @@
                 hideOnboarding();
                 renderCalendar();
 
-                alert('Profil créé ! Tu peux maintenant générer tes premiers posts.');
+                alert('Profil créé ! Tu peux maintenant raconter tes premières histoires.');
             } catch (err) {
                 alert('Erreur lors de la sauvegarde: ' + err.message);
             } finally {
