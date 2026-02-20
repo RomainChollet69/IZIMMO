@@ -404,14 +404,8 @@
             let platformsHTML = '';
             for (const platform of platforms) {
                 if (templates[platform]) {
-                    const emoji = {
-                        linkedin: '💼',
-                        instagram: '📸',
-                        facebook: '👥',
-                        tiktok: '🎵'
-                    }[platform] || '📱';
-
-                    platformsHTML += `<span class="platform">${emoji} ${templates[platform]}</span>`;
+                    const icon = getPlatformIcon(platform);
+                    platformsHTML += `<span class="platform">${icon} ${templates[platform]}</span>`;
                 }
             }
 
@@ -624,12 +618,7 @@
         let tabsHTML = '';
         for (let i = 0; i < currentResults.length; i++) {
             const result = currentResults[i];
-            const emoji = {
-                linkedin: '💼',
-                instagram: '📸',
-                facebook: '👥',
-                tiktok: '🎵'
-            }[result.platform] || '📱';
+            const icon = getPlatformIcon(result.platform);
 
             const platformName = {
                 linkedin: 'LinkedIn',
@@ -640,7 +629,7 @@
 
             tabsHTML += `
                 <button class="platform-tab ${i === 0 ? 'active' : ''}" data-platform="${result.platform}">
-                    ${emoji} ${platformName}
+                    ${icon} ${platformName}
                 </button>
             `;
         }
@@ -905,12 +894,7 @@
             const date = new Date(post.generated_at);
             const dateStr = `${DAYS_SHORT[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
 
-            const emoji = {
-                linkedin: '💼',
-                instagram: '📸',
-                facebook: '👥',
-                tiktok: '🎵'
-            }[post.platform] || '📱';
+            const icon = getPlatformIcon(post.platform);
 
             const platformName = {
                 linkedin: 'LinkedIn',
@@ -933,7 +917,7 @@
                 <div class="history-item ${post.status}">
                     <div class="history-header">
                         <div class="history-date">${dateStr}</div>
-                        <div class="history-platform-icon">${emoji} ${platformName}</div>
+                        <div class="history-platform-icon">${icon} ${platformName}</div>
                         ${statusBadge}
                     </div>
                     <div class="history-hook">${escapeHtml(preview)}</div>
@@ -1153,6 +1137,16 @@
         return div.innerHTML;
     }
 
+    function getPlatformIcon(platform) {
+        const icons = {
+            linkedin: '<i class="fab fa-linkedin" style="color: #0077B5"></i>',
+            instagram: '<i class="fab fa-instagram" style="color: #E4405F"></i>',
+            facebook: '<i class="fab fa-facebook" style="color: #1877F2"></i>',
+            tiktok: '<i class="fab fa-tiktok" style="color: #000000"></i>'
+        };
+        return icons[platform] || '';
+    }
+
     // ===== START =====
     init();
 
@@ -1297,8 +1291,8 @@
             let templatesHtml = '';
             for (const platform of platforms) {
                 if (templates[platform]) {
-                    const emoji = getTemplateEmoji(templates[platform]);
-                    templatesHtml += `<div class="preview-template-item"><span>${emoji}</span><span>${templates[platform]}</span></div>`;
+                    const icon = getPlatformIcon(platform);
+                    templatesHtml += `<div class="preview-template-item"><span>${icon}</span><span>${templates[platform]}</span></div>`;
                 }
             }
 
@@ -1327,18 +1321,11 @@
         }
 
         const templateName = templates[firstPlatform];
-        const platformColors = {
-            linkedin: '#0077B5',
-            instagram: 'linear-gradient(135deg, #f58529 0%, #dd2a7b 50%, #8134af 100%)',
-            facebook: '#1877F2',
-            tiktok: '#010101'
-        };
-
-        const platformColor = platformColors[firstPlatform] || '#667eea';
+        const icon = getPlatformIcon(firstPlatform);
         const platformName = firstPlatform.charAt(0).toUpperCase() + firstPlatform.slice(1);
 
         document.getElementById('todayMain').innerHTML = `
-            ${templateName} sur <span style="color:${platformColor};font-weight:800">${platformName}</span>
+            ${templateName} sur ${icon} <span style="font-weight:800">${platformName}</span>
         `;
     }
 
