@@ -818,7 +818,7 @@
                     rsac_info: rsac || null,
                     tone,
                     tutoiement,
-                    sample_posts: samplePosts || null,
+                    sample_posts: samplePosts ? [samplePosts] : null,
                     voice_profile: null
                 });
 
