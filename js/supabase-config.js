@@ -199,6 +199,123 @@ function setupContactAutocomplete(lastNameId, firstNameId, phoneId, emailId) {
     }
 }
 
+// Autocomplete pour le champ fullName (formulaire de création)
+function setupFullNameAutocomplete(fullNameId, phoneId, emailId) {
+    const fullNameInput = document.getElementById(fullNameId);
+    if (!fullNameInput) return;
+
+    const formGroup = fullNameInput.closest('.form-group');
+    formGroup.classList.add('ac-wrapper');
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'ac-dropdown';
+    formGroup.appendChild(dropdown);
+
+    let debounceTimer = null;
+    let results = [];
+    let selIdx = -1;
+
+    fullNameInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = fullNameInput.value.trim();
+        if (q.length < 2) { dropdown.classList.remove('active'); return; }
+        debounceTimer = setTimeout(() => searchContacts(q), 300);
+    });
+
+    fullNameInput.addEventListener('keydown', (e) => {
+        if (!dropdown.classList.contains('active')) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selIdx = Math.min(selIdx + 1, results.length - 1);
+            highlightItem();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selIdx = Math.max(selIdx - 1, 0);
+            highlightItem();
+        } else if (e.key === 'Enter' && selIdx >= 0) {
+            e.preventDefault();
+            pickContact(results[selIdx]);
+        } else if (e.key === 'Escape') {
+            dropdown.classList.remove('active');
+        }
+    });
+
+    // Fermer au clic en dehors
+    document.addEventListener('click', (e) => {
+        if (!formGroup.contains(e.target)) dropdown.classList.remove('active');
+    });
+
+    // Fermer quand le champ perd le focus
+    fullNameInput.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.remove('active'), 200);
+    });
+
+    async function searchContacts(query) {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const { data, error } = await supabaseClient
+            .from('contacts')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .ilike('name', '%' + query + '%')
+            .limit(5);
+
+        if (error || !data || data.length === 0) {
+            dropdown.classList.remove('active');
+            return;
+        }
+
+        results = data;
+        selIdx = -1;
+        dropdown.innerHTML = data.map((c, i) => {
+            let details = [];
+            if (c.phone) details.push(`<span>📞 ${escapeHtml(c.phone)}</span>`);
+            if (c.email) details.push(`<span>📧 ${escapeHtml(c.email)}</span>`);
+            return `<div class="ac-item" data-i="${i}">
+                <div class="ac-name">${escapeHtml(c.name)}</div>
+                ${details.length ? `<div class="ac-details">${details.join('')}</div>` : ''}
+            </div>`;
+        }).join('');
+        dropdown.classList.add('active');
+
+        dropdown.querySelectorAll('.ac-item').forEach(item => {
+            item.addEventListener('click', () => pickContact(data[parseInt(item.dataset.i)]));
+        });
+    }
+
+    function highlightItem() {
+        dropdown.querySelectorAll('.ac-item').forEach((el, i) => {
+            el.classList.toggle('ac-selected', i === selIdx);
+        });
+    }
+
+    function flashField(id) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('ac-flash');
+        void el.offsetWidth;
+        el.classList.add('ac-flash');
+    }
+
+    function pickContact(contact) {
+        // Pour fullName, on met le nom complet directement
+        document.getElementById(fullNameId).value = contact.name || '';
+        flashField(fullNameId);
+
+        if (contact.phone && document.getElementById(phoneId)) {
+            document.getElementById(phoneId).value = contact.phone;
+            flashField(phoneId);
+        }
+        if (contact.email && document.getElementById(emailId)) {
+            document.getElementById(emailId).value = contact.email;
+            flashField(emailId);
+        }
+
+        dropdown.classList.remove('active');
+    }
+}
+
 function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
