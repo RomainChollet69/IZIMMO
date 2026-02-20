@@ -461,8 +461,10 @@
 
         /* Action Button */
         .template-popover-action {
+            display: block;
+            width: calc(100% - 40px);
             margin: 8px 20px 20px 20px;
-            padding: 14px 0;
+            padding: 14px 16px;
             background: #6C4CC8;
             border: none;
             border-radius: 14px;
@@ -473,6 +475,10 @@
             cursor: pointer;
             text-align: center;
             transition: background 0.2s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            box-sizing: border-box;
         }
 
         .template-popover-action:hover {
