@@ -1,4 +1,4 @@
--- WAIMMO — Social Content Engine — Migrations SQL
+-- Léon — Social Content Engine — Migrations SQL
 -- À exécuter dans l'éditeur SQL de Supabase
 -- Crée les tables de base puis ajoute tous les champs nécessaires
 

@@ -1,4 +1,4 @@
-// WAIMMO — Social Content Engine — Frontend Logic
+// Léon — Social Content Engine — Frontend Logic
 // Sprint 1: Mode "J'ai un truc à raconter" + Onboarding + Historique
 
 (async function() {

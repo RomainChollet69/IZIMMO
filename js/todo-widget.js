@@ -1,4 +1,4 @@
-// WAIMMO — Widget Todo List avec dictée vocale
+// Léon — Widget Todo List avec dictée vocale
 (function () {
     'use strict';
 

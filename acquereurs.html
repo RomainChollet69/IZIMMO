@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WAIMMO — Pipeline Acquéreurs</title>
-    <meta property="og:title" content="WAIMMO — CRM Immobilier">
+    <title>Léon. — Pipeline Acquéreurs</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <meta property="og:title" content="Léon. — CRM Immobilier">
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -55,8 +56,8 @@
         }
 
         .logo img {
-            width: 160px;
-            height: auto;
+            height: 40px;
+            width: auto;
         }
 
         .nav-tabs {
@@ -1650,7 +1651,7 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="logo"><img src="img/logo_200.png" alt="WAIMMO"></a>
+        <a href="index.html" class="logo"><img src="img/Logo_leon.svg" alt="Léon"></a>
         <nav class="nav-tabs">
             <a href="index.html" class="nav-tab">🏠 <span class="nav-text">Pipeline Vendeurs</span></a>
             <a href="acquereurs.html" class="nav-tab active">🔑 <span class="nav-text">Pipeline Acquéreurs</span></a>
@@ -2180,13 +2181,13 @@
             { status: 'bought', icon: '🎉', label: 'Achetés' },
             { status: 'lost', icon: '❌', label: 'Perdus' }
         ];
-        let mobileActiveTab = localStorage.getItem('waimmo_mobile_tab_buyers') || 'new';
+        let mobileActiveTab = localStorage.getItem('leon_mobile_tab_buyers') || 'new';
 
         function isMobile() { return window.innerWidth <= 768; }
 
         function setMobileTab(status) {
             mobileActiveTab = status;
-            localStorage.setItem('waimmo_mobile_tab_buyers', status);
+            localStorage.setItem('leon_mobile_tab_buyers', status);
             document.querySelectorAll('.mobile-tab').forEach(t => {
                 t.classList.toggle('active', t.dataset.status === status);
             });

@@ -1,10 +1,10 @@
-// WAIMMO — Configuration Supabase partagée
+// Léon — Configuration Supabase partagée
 const SUPABASE_URL = 'https://aofrngjcfemiptljtyif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvZnJuZ2pjZmVtaXB0bGp0eWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODAwMTIsImV4cCI6MjA4NjU1NjAxMn0.0tnkQYIjgBbvTA_60Eix5Zpau5j3kBV8YTsjpp9utOA';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Sources de leads VENDEURS — charte graphique WAIMMO
+// Sources de leads VENDEURS — charte graphique Léon
 const SOURCE_CONFIG = {
     boitage: { label: '📬 Boîtage', bg: '#DCEDC8', color: '#33691E' },
     recommandation: { label: '🤝 Recommandation', bg: '#B3E5FC', color: '#01579B' },

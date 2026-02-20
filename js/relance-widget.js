@@ -1,4 +1,4 @@
-// WAIMMO — Widget Panneau Relances (vendeurs + acquéreurs)
+// Léon — Widget Panneau Relances (vendeurs + acquéreurs)
 (function () {
     'use strict';
 

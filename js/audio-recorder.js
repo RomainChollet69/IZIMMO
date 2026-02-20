@@ -1,4 +1,4 @@
-// WAIMMO — AudioRecorder : enregistrement micro + transcription Whisper
+// Léon — AudioRecorder : enregistrement micro + transcription Whisper
 // Usage :
 //   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 //   const recorder = new AudioRecorder({ silenceTimeout: 3000, onStateChange: (state, msg) => {} });
