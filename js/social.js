@@ -368,9 +368,11 @@
         document.querySelector('.create-section')?.classList.add('hidden');
         document.querySelector('.history-section')?.classList.add('hidden');
 
-        // Show strategy panel in fullscreen mode (not as modal)
-        const backdrop = document.getElementById('strategyBackdrop');
-        backdrop.classList.add('active', 'fullscreen-mode');
+        // Show onboarding modal FIRST (instead of strategy panel)
+        const backdrop = document.getElementById('onboardingBackdrop');
+        backdrop.classList.add('active');
+
+        console.log('[Social] Showing onboarding modal');
     }
 
     function showMainInterface() {
@@ -382,6 +384,75 @@
         // Hide strategy panel
         const backdrop = document.getElementById('strategyBackdrop');
         backdrop.classList.remove('active', 'fullscreen-mode');
+    }
+
+    async function handleOnboardingSubmit() {
+        try {
+            // 1. Validation des champs
+            const networkSelect = document.getElementById('networkSelect');
+            const propertyTypeInput = document.querySelector('input[name="property_type"]:checked');
+
+            // Validation : au moins 1 quartier
+            if (neighborhoods.length === 0) {
+                alert('Merci d\'ajouter au moins une ville ou un quartier');
+                document.getElementById('neighborhoodsInput').focus();
+                return;
+            }
+
+            // Validation : réseau sélectionné
+            if (!networkSelect.value) {
+                alert('Merci de sélectionner ton réseau');
+                networkSelect.focus();
+                return;
+            }
+
+            // Validation : type de biens sélectionné
+            if (!propertyTypeInput) {
+                alert('Merci de sélectionner le type de biens sur lequel tu travailles');
+                return;
+            }
+
+            // 2. Créer un profil partiel (onboarding_completed: true, calendar_seen: false)
+            const user = (await supabaseClient.auth.getUser()).data.user;
+            const partialProfile = {
+                user_id: user.id,
+                neighborhoods: neighborhoods,
+                network: networkSelect.value,
+                property_types: [propertyTypeInput.value],  // Array pour cohérence DB
+                onboarding_completed: true,   // Modal onboarding terminé
+                calendar_seen: false,         // Pas encore vu le calendrier
+                voice_profile_set: false,     // Pas encore configuré
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const { data, error } = await supabaseClient
+                .from('social_profiles')
+                .insert(partialProfile)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            currentProfile = data;
+            console.log('[Social] Partial profile created:', data);
+
+            // 3. Cacher le modal d'onboarding
+            document.getElementById('onboardingBackdrop').classList.remove('active');
+
+            // 4. Afficher le strategy panel en mode fullscreen
+            showStrategyPanelFullscreen();
+
+        } catch (err) {
+            console.error('[Social] Error in handleOnboardingSubmit:', err);
+            alert('Erreur lors de la création du profil. Merci de réessayer.');
+        }
+    }
+
+    function showStrategyPanelFullscreen() {
+        const backdrop = document.getElementById('strategyBackdrop');
+        backdrop.classList.add('active', 'fullscreen-mode');
+        console.log('[Social] Showing strategy panel in fullscreen mode');
     }
 
     async function createDefaultProfile() {
@@ -865,9 +936,8 @@
         // Generate button
         document.getElementById('generateBtn').addEventListener('click', handleGenerate);
 
-        // Onboarding
-        document.getElementById('nextBtn').addEventListener('click', handleNextStep);
-        document.getElementById('prevBtn').addEventListener('click', handlePrevStep);
+        // Onboarding modal submit
+        document.getElementById('onboardingSubmitBtn')?.addEventListener('click', handleOnboardingSubmit);
 
         // Neighborhoods tag input
         const neighborhoodsInput = document.getElementById('neighborhoodsInput');
@@ -1784,7 +1854,12 @@
             return;
         }
 
-        const timeAvailable = document.querySelector('input[name="time_available"]:checked').value;
+        const timeAvailable = document.querySelector('input[name="time_available"]:checked')?.value;
+        if (!timeAvailable) {
+            alert('Sélectionne ton temps disponible');
+            return;
+        }
+
         const platforms = Array.from(document.querySelectorAll('input[name="strategy_platform"]:checked')).map(cb => cb.value);
         if (platforms.length === 0) {
             alert('Sélectionne au moins une plateforme');
@@ -1792,6 +1867,10 @@
         }
 
         const contentStyle = Array.from(document.querySelectorAll('input[name="content_style"]:checked')).map(cb => cb.value);
+        if (contentStyle.length === 0) {
+            alert('Sélectionne au moins un style de contenu');
+            return;
+        }
 
         // Map time_available to publishing_frequency
         const frequencyMap = {
@@ -1802,25 +1881,32 @@
         };
 
         try {
-            // Build profile data (create new or update existing)
-            const profileData = {
-                ...(currentProfile || {}),
-                objectives,
-                time_available: timeAvailable,
-                publishing_frequency: frequencyMap[timeAvailable],
-                platforms_active: platforms,
-                content_style: contentStyle.length > 0 ? contentStyle : ['balanced'],
-                tone: currentProfile?.tone || 'mixte',
-                tutoiement: currentProfile?.tutoiement || false,
-                voice_profile_set: currentProfile?.voice_profile_set || false
-            };
+            const user = (await supabaseClient.auth.getUser()).data.user;
+            const isInFullscreen = document.getElementById('strategyBackdrop').classList.contains('fullscreen-mode');
 
-            const isFirstTime = !currentProfile;
+            // MODIFICATION : Compléter le profil existant (pas créer un nouveau)
+            const { data, error } = await supabaseClient
+                .from('social_profiles')
+                .update({
+                    objectives,
+                    platforms_active: platforms,
+                    time_available: timeAvailable,
+                    publishing_frequency: frequencyMap[timeAvailable],
+                    content_style: contentStyle,
+                    calendar_seen: false,  // Pas encore confirmé le calendrier
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', user.id)
+                .select()
+                .single();
 
-            await saveProfile(profileData);
+            if (error) throw error;
 
-            if (isFirstTime) {
-                // First-time setup: show calendar confirmation page
+            currentProfile = data;
+            console.log('[Social] Profile completed with strategy:', data);
+
+            if (isInFullscreen) {
+                // Coming from onboarding flow: show calendar confirmation
                 showCalendarConfirmation();
             } else {
                 // Regular update: just close modal and refresh
@@ -1829,7 +1915,8 @@
                 alert('✅ Stratégie mise à jour !');
             }
         } catch (err) {
-            alert('Erreur lors de la sauvegarde: ' + err.message);
+            console.error('[Social] Error in applyStrategy:', err);
+            alert('Erreur lors de la sauvegarde de ta stratégie. Merci de réessayer.');
         }
     }
 

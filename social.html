@@ -2304,17 +2304,11 @@
         <div class="onboarding-modal">
             <div class="modal-header">
                 <div class="modal-title">Bienvenue sur Social Content Engine</div>
-                <div class="modal-subtitle">Configurons ton profil pour générer des posts personnalisés</div>
+                <div class="modal-subtitle">Parle-nous de ton activité (30 secondes)</div>
             </div>
             <div class="modal-body">
-                <div class="step-indicator" id="stepIndicator">
-                    <div class="step-dot active"></div>
-                    <div class="step-dot"></div>
-                    <div class="step-dot"></div>
-                </div>
-
-                <!-- Step 1: Basic Info -->
-                <div class="onboarding-step active" id="step1">
+                <!-- Onboarding Content -->
+                <div class="onboarding-content">
                     <div class="form-group">
                         <label class="form-label">Ville(s) et quartier(s) où tu travailles *</label>
                         <div class="tag-input-container" id="neighborhoodsContainer">
@@ -2339,139 +2333,39 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Quel est ton objectif principal sur les réseaux ? *</label>
+                        <label class="form-label">Tu travailles surtout sur : *</label>
                         <small style="color: var(--text-light); font-size: 12px; margin-bottom: 12px; display: block;">
-                            Choisis 1 à 3 objectifs
+                            Très important pour le ciblage narratif et les visuels suggérés
                         </small>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="objective" value="mandats_vendeurs" />
-                                <span>🏠 Obtenir des mandats vendeurs</span>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="property_type" value="appartements" />
+                                <span>🏢 Appartements</span>
                             </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="objective" value="notoriete" />
-                                <span>📍 Développer ma notoriété locale</span>
+                            <label class="radio-label">
+                                <input type="radio" name="property_type" value="maisons" />
+                                <span>🏡 Maisons</span>
                             </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="objective" value="acquereurs" />
-                                <span>🔑 Trouver des acquéreurs</span>
+                            <label class="radio-label">
+                                <input type="radio" name="property_type" value="haut_gamme" />
+                                <span>💎 Haut de gamme</span>
                             </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="objective" value="recrutement" />
-                                <span>👥 Recruter des collaborateurs</span>
+                            <label class="radio-label">
+                                <input type="radio" name="property_type" value="neuf" />
+                                <span>🏗️ Neuf</span>
                             </label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Plateformes actives *</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="platform" value="linkedin" />
-                                <span>LinkedIn</span>
+                            <label class="radio-label">
+                                <input type="radio" name="property_type" value="mix" checked />
+                                <span>🔀 Mix</span>
                             </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="platform" value="instagram" />
-                                <span>Instagram</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="platform" value="facebook" />
-                                <span>Facebook</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="platform" value="tiktok" />
-                                <span>TikTok</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">RSAC et CCI (pour mentions légales)</label>
-                        <input type="text" class="form-input" id="rsacInput" placeholder="Ex: RSAC Lyon n°123456789 | CCI Lyon" />
-                    </div>
-                </div>
-
-                <!-- Step 2: Tone & Style -->
-                <div class="onboarding-step" id="step2">
-                    <div class="form-group">
-                        <label class="form-label">Ton style d'écriture</label>
-                        <div class="slider-container">
-                            <input type="range" min="0" max="100" value="50" class="slider" id="toneSlider" />
-                            <div class="slider-labels">
-                                <span>Professionnel</span>
-                                <span>Décontracté</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Tu tutoies ton audience ?</label>
-                        <div class="checkbox-group">
-                            <label class="checkbox-label">
-                                <input type="radio" name="tutoiement" value="false" checked />
-                                <span>Non, je vouvoie</span>
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="radio" name="tutoiement" value="true" />
-                                <span>Oui, je tutoie</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Je veux partager…</label>
-                        <div style="display: flex; flex-direction: column; gap: 12px;">
-                            <label class="checkbox-label" style="cursor: pointer;">
-                                <input type="radio" name="frequency" value="light" />
-                                <span>🌱 Doucement (2 fois par semaine) — idéal pour démarrer</span>
-                            </label>
-                            <label class="checkbox-label" style="cursor: pointer;">
-                                <input type="radio" name="frequency" value="regular" checked />
-                                <span>🌿 Régulièrement (3-4 fois par semaine) — bon équilibre</span>
-                            </label>
-                            <label class="checkbox-label" style="cursor: pointer;">
-                                <input type="radio" name="frequency" value="intensive" />
-                                <span>🌳 À fond (5 fois par semaine) — présence maximale</span>
-                            </label>
-                        </div>
-                        <small style="color: var(--text-light); font-size: 12px; margin-top: 8px; display: block;">
-                            Le calendrier s'adaptera à ta cadence choisie
-                        </small>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Colle 3 à 5 de tes meilleurs posts (optionnel)</label>
-                        <textarea
-                            class="form-textarea"
-                            id="samplePostsTextarea"
-                            placeholder="Colle ici quelques posts que tu as déjà publiés pour que l'IA apprenne ton style d'écriture..."
-                        ></textarea>
-                        <small style="color: var(--text-light); font-size: 12px; margin-top: 4px; display: block;">
-                            L'IA analysera ton style pour mieux le reproduire
-                        </small>
-                    </div>
-                </div>
-
-                <!-- Step 3: Analysis -->
-                <div class="onboarding-step" id="step3">
-                    <div id="analysisResult" style="display: none;">
-                        <h3 style="margin-bottom: 16px; color: var(--text-dark);">Analyse de ton style</h3>
-                        <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
-                            <p id="analysisText" style="font-size: 14px; line-height: 1.8; color: var(--text-dark);"></p>
-                        </div>
-                        <p style="font-size: 13px; color: var(--text-light); text-align: center;">
-                            Ce profil s'affinera au fil de tes modifications
-                        </p>
-                    </div>
-                    <div id="noAnalysis">
-                        <div style="text-align: center; padding: 40px 20px;">
-                            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
-                            <h3 style="margin-bottom: 12px; color: var(--text-dark);">Profil créé !</h3>
-                            <p style="font-size: 14px; color: var(--text-light); line-height: 1.6;">
-                                Ton profil est prêt. L'IA va apprendre ton style au fil des posts que tu modifieras.
-                            </p>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-actions">
-                    <button class="modal-btn secondary" id="prevBtn" style="display: none;">Précédent</button>
-                    <button class="modal-btn primary" id="nextBtn">Suivant</button>
+                    <button class="btn-primary" id="onboardingSubmitBtn">
+                        Valider mon profil
+                    </button>
                 </div>
             </div>
         </div>

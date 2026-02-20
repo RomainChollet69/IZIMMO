@@ -31,7 +31,13 @@ ADD COLUMN IF NOT EXISTS objectives TEXT[],
 ADD COLUMN IF NOT EXISTS time_available TEXT,
 ADD COLUMN IF NOT EXISTS voice_profile_set BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS content_style TEXT[],
-ADD COLUMN IF NOT EXISTS calendar_seen BOOLEAN DEFAULT false;
+ADD COLUMN IF NOT EXISTS calendar_seen BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS property_types TEXT[];
+
+-- Mettre à jour les profils existants avec une valeur par défaut pour property_types
+UPDATE social_profiles
+SET property_types = ARRAY['mix']::TEXT[]
+WHERE property_types IS NULL;
 
 -- Ajouter un index sur user_id pour les requêtes rapides
 CREATE INDEX IF NOT EXISTS idx_social_profiles_user_id ON social_profiles(user_id);
