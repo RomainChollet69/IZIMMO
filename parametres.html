@@ -35,17 +35,23 @@
 
         /* ===== HEADER & NAVIGATION ===== */
         .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
             position: sticky;
             top: 0;
             z-index: 1000;
-            background: #FFFFFF;
-            border-bottom: 1px solid #E5E7EB;
-            height: 64px;
+            margin-bottom: 30px;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
             padding: 0 32px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 30px;
         }
 
         .logo {
@@ -1280,47 +1286,49 @@
 </head>
 <body>
     <div class="header">
-        <!-- Zone gauche : Logo -->
-        <a href="index.html" class="logo">
-            <img src="img/Logo_leon.svg" alt="Léon">
-        </a>
-
-        <!-- Zone centre : Navigation -->
-        <nav class="nav-tabs">
-            <a href="index.html" class="nav-tab">
-                <i class="fa-solid fa-house"></i> Vendeurs
+        <div class="header-inner">
+            <!-- Zone gauche : Logo -->
+            <a href="index.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
             </a>
-            <a href="acquereurs.html" class="nav-tab">
-                <i class="fa-solid fa-key"></i> Acquéreurs
-            </a>
-            <a href="dvf.html" class="nav-tab">
-                <i class="fa-solid fa-chart-simple"></i> Marché
-            </a>
-            <a href="social.html" class="nav-tab">
-                <i class="fa-solid fa-share-nodes"></i> Social
-            </a>
-        </nav>
 
-        <!-- Zone droite : Actions -->
-        <div class="header-actions">
-            <!-- Alerte relances -->
-            <button class="alert-bell" id="alertBell" title="Relances du jour">
-                <i class="fa-solid fa-bell"></i>
-                <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
-            </button>
+            <!-- Zone centre : Navigation -->
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+            </nav>
 
-            <!-- Séparateur -->
-            <div class="header-separator"></div>
+            <!-- Zone droite : Actions -->
+            <div class="header-actions">
+                <!-- Alerte relances -->
+                <button class="alert-bell" id="alertBell" title="Relances du jour">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+                </button>
 
-            <!-- Profil utilisateur -->
-            <div class="user-profile" id="userProfile">
-                <!-- Chargé dynamiquement par auth.js -->
+                <!-- Séparateur -->
+                <div class="header-separator"></div>
+
+                <!-- Profil utilisateur -->
+                <div class="user-profile" id="userProfile">
+                    <!-- Chargé dynamiquement par auth.js -->
+                </div>
+
+                <!-- Icône Settings -->
+                <a href="parametres.html" class="settings-btn" title="Paramètres">
+                    <i class="fa-solid fa-gear"></i>
+                </a>
             </div>
-
-            <!-- Icône Settings -->
-            <a href="parametres.html" class="settings-btn" title="Paramètres">
-                <i class="fa-solid fa-gear"></i>
-            </a>
         </div>
     </div>
 
