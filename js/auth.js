@@ -18,74 +18,13 @@
     });
 })();
 
-// Inject dropdown CSS
+// Inject dropdown CSS (if not already in page CSS)
 (function () {
     const style = document.createElement('style');
     style.textContent = `
-        .profile-menu-wrapper {
-            position: relative;
-        }
-        .profile-menu-trigger {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 10px;
-            transition: background 0.2s;
-        }
-        .profile-menu-trigger:hover {
-            background: rgba(0, 0, 0, 0.06);
-        }
-        .profile-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-            min-width: 220px;
-            z-index: 9999;
-            overflow: hidden;
-            animation: dropdownSlide 0.2s ease;
-        }
         @keyframes dropdownSlide {
             from { opacity: 0; transform: translateY(-8px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        .profile-dropdown.active {
-            display: block;
-        }
-        .profile-dropdown-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            padding: 13px 18px;
-            border: none;
-            background: none;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            color: #2C3E50;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-        .profile-dropdown-item:hover {
-            background: #f0f2f5;
-        }
-        .profile-dropdown-divider {
-            height: 1px;
-            background: #E1E8ED;
-            margin: 0;
-        }
-        @media (max-width: 768px) {
-            .profile-dropdown {
-                right: -10px;
-                min-width: 180px;
-            }
         }
     `;
     document.head.appendChild(style);
@@ -101,32 +40,31 @@ function renderUserProfile(user) {
 
     const avatarHTML = avatar
         ? `<img src="${avatar}" alt="" class="user-avatar" referrerpolicy="no-referrer">`
-        : `<div class="user-avatar" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border-radius:50%">${name.charAt(0).toUpperCase()}</div>`;
+        : `<div class="user-initials">${name.charAt(0).toUpperCase()}</div>`;
 
     container.innerHTML = `
-        <div class="profile-menu-wrapper">
-            <div class="profile-menu-trigger" onclick="toggleProfileMenu(event)">
-                ${avatarHTML}
-                <span class="user-name">${name}</span>
-            </div>
-            <div class="profile-dropdown" id="profileDropdown">
-                <a href="parametres.html" class="profile-dropdown-item">⚙️ Paramètres</a>
-                <div class="profile-dropdown-divider"></div>
-                <button class="profile-dropdown-item" onclick="logout()">🚪 Déconnexion</button>
-            </div>
+        ${avatarHTML}
+        <span class="user-name">${name}</span>
+        <div class="user-dropdown" id="userDropdown">
+            <a href="parametres.html" class="user-dropdown-item">Paramètres</a>
+            <div class="export-dropdown-separator"></div>
+            <button class="user-dropdown-item" onclick="logout()">Déconnexion</button>
         </div>
     `;
+
+    // Add click handler to toggle dropdown
+    container.addEventListener('click', toggleUserMenu);
 }
 
-function toggleProfileMenu(e) {
+function toggleUserMenu(e) {
     e.stopPropagation();
-    const dropdown = document.getElementById('profileDropdown');
-    dropdown.classList.toggle('active');
+    const dropdown = document.getElementById('userDropdown');
+    if (dropdown) dropdown.classList.toggle('active');
 }
 
 // Close dropdown on click outside
 document.addEventListener('click', () => {
-    const dropdown = document.getElementById('profileDropdown');
+    const dropdown = document.getElementById('userDropdown');
     if (dropdown) dropdown.classList.remove('active');
 });
 

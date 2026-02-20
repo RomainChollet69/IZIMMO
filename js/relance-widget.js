@@ -294,9 +294,9 @@
         if (e.key === 'Escape' && isOpen) closePanel();
     });
 
-    // Hook into the existing alert counter
+    // Hook into the existing alert bell
     document.addEventListener('DOMContentLoaded', () => {
-        const alertEl = document.getElementById('alertCounter');
+        const alertEl = document.getElementById('alertBell');
         if (alertEl) {
             // Remove any existing click listener by cloning
             const newAlertEl = alertEl.cloneNode(true);
@@ -555,12 +555,14 @@
 
         const total = (sellersRes.count || 0) + (buyersRes.count || 0);
 
-        const numEl = document.getElementById('alertNumber');
-        const counterEl = document.getElementById('alertCounter');
-        if (numEl) numEl.textContent = total;
-        if (counterEl) {
-            if (total > 0) counterEl.classList.add('has-alerts');
-            else counterEl.classList.remove('has-alerts');
+        const badgeEl = document.getElementById('alertBadge');
+        if (badgeEl) {
+            badgeEl.textContent = total;
+            if (total > 0) {
+                badgeEl.style.display = 'block';
+            } else {
+                badgeEl.style.display = 'none';
+            }
         }
     };
 

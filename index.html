@@ -9,6 +9,7 @@
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
@@ -39,191 +40,132 @@
 
         /* ===== HEADER & NAVIGATION ===== */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding: 16px 30px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
             background: #FFFFFF;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-bottom: 1px solid #E5E7EB;
+            height: 48px;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
         }
 
         .logo {
             display: flex;
             align-items: center;
             text-decoration: none;
+            margin-right: 48px;
+            cursor: pointer;
         }
 
         .logo img {
-            height: 40px;
+            height: 24px;
             width: auto;
         }
 
         .nav-tabs {
             display: flex;
-            gap: 8px;
+            align-items: center;
+            gap: 0;
         }
 
         .nav-tab {
-            color: #374151;
+            color: #6B7280;
             text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 14px 20px;
             font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 15px;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s ease;
             background: transparent;
-            border: 1px solid #E5E7EB;
+            border: none;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-tab i {
+            font-size: 14px;
         }
 
         .nav-tab:hover {
-            background: #F3F4F6;
-            border-color: #E5E7EB;
+            color: #243B53;
         }
 
         .nav-tab.active {
-            color: #FFFFFF;
-            background: #243B53;
-            border-color: #243B53;
+            color: #243B53;
+            font-weight: 600;
+            border-bottom-color: #243B53;
         }
 
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: 2px solid #e8eaf6;
-            object-fit: cover;
-        }
-
-        .user-name {
-            color: var(--text-dark);
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-        }
-
-        .logout-btn {
-            background: rgba(0, 0, 0, 0.06);
+        /* Alert bell */
+        .alert-bell {
+            position: relative;
+            background: none;
             border: none;
-            color: var(--text-light);
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
+            color: #6B7280;
+            font-size: 16px;
             cursor: pointer;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.2s;
+            padding: 8px;
+            transition: color 0.2s;
         }
 
-        .logout-btn:hover {
-            background: rgba(0, 0, 0, 0.12);
+        .alert-bell:hover {
+            color: #243B53;
         }
 
-        .alert-counter {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #f8f9fa;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: none;
-            border: 1px solid var(--border-color);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
-        .alert-counter:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .alert-counter.has-alerts {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-        }
-
-        .alert-counter.has-alerts .alert-text { color: white; }
-
-        .alert-counter.has-alerts .alert-icon { animation: ring 2s infinite; }
-
-        @keyframes ring {
-            0%, 100% { transform: rotate(0deg); }
-            10%, 30% { transform: rotate(-10deg); }
-            20%, 40% { transform: rotate(10deg); }
-        }
-
-        .alert-icon { font-size: 24px; }
-
-        .alert-text {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            color: #667eea;
-            transition: color 0.3s ease;
-        }
-
-        .alert-number {
-            font-size: 20px;
-            font-weight: 800;
-            font-family: 'Barlow Semi Condensed', sans-serif;
-        }
-
-        .add-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .alert-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #EF4444;
             color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 10px;
+            font-size: 10px;
             font-weight: 600;
-            font-size: 15px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-            font-family: 'Inter', sans-serif;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
         }
 
-        .add-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        /* ===== EXPORT BUTTON & DROPDOWN ===== */
+        /* Export button */
         .export-wrapper {
             position: relative;
         }
 
         .export-btn {
-            background: #10B981;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
+            background: transparent;
+            color: #374151;
+            border: 1px solid #E5E7EB;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 12px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
             white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .export-btn i {
+            font-size: 12px;
         }
 
         .export-btn:hover {
-            background: #059669;
-            transform: translateY(-2px);
+            background: #F3F4F6;
         }
 
         .export-dropdown {
@@ -232,11 +174,12 @@
             top: calc(100% + 8px);
             right: 0;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-            min-width: 260px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 200px;
             z-index: 1000;
             overflow: hidden;
+            border: 1px solid #E5E7EB;
         }
 
         .export-dropdown.active { display: block; }
@@ -244,33 +187,146 @@
         .export-dropdown-item {
             display: block;
             width: 100%;
-            padding: 12px 18px;
+            padding: 10px 14px;
             border: none;
             background: none;
             text-align: left;
             font-family: 'Inter', sans-serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             color: var(--text-dark);
             cursor: pointer;
             transition: background 0.15s;
         }
 
-        .export-dropdown-item:hover { background: #f0f4ff; }
+        .export-dropdown-item:hover { background: #F3F4F6; }
 
         .export-dropdown-separator {
             height: 1px;
-            background: #e8eaf6;
+            background: #E5E7EB;
             margin: 4px 0;
         }
 
         .export-dropdown-sub {
-            padding-left: 32px;
-            font-size: 13px;
+            padding-left: 28px;
+            font-size: 12px;
             color: var(--text-light);
         }
 
         .export-dropdown-sub:hover { color: var(--text-dark); }
+
+        /* Separator */
+        .header-separator {
+            width: 1px;
+            height: 24px;
+            background: #E5E7EB;
+        }
+
+        /* User profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid #E5E7EB;
+            object-fit: cover;
+        }
+
+        .user-initials {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #243B53;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #374151;
+            font-weight: 500;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid #E5E7EB;
+        }
+
+        .user-dropdown.active { display: block; }
+
+        .user-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 10px 14px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+        }
+
+        .user-dropdown-item:hover { background: #F3F4F6; }
+
+        /* Settings icon */
+        .settings-btn {
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 8px;
+            transition: color 0.2s;
+            text-decoration: none;
+        }
+
+        .settings-btn:hover {
+            color: #243B53;
+        }
+
+        /* Add lead button */
+        .add-btn {
+            background: #243B53;
+            color: white;
+            border: none;
+            padding: 7px 18px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+
+        .add-btn:hover {
+            background: #1a2d40;
+        }
 
         /* ===== PIPELINE ===== */
         .pipeline {
@@ -2171,38 +2227,70 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="logo"><img src="img/Logo_leon.svg" alt="Léon"></a>
+        <!-- Zone gauche : Logo -->
+        <a href="index.html" class="logo">
+            <img src="img/Logo_leon.svg" alt="Léon">
+        </a>
+
+        <!-- Zone centre : Navigation -->
         <nav class="nav-tabs">
-            <a href="index.html" class="nav-tab active">🏠 <span class="nav-text">Pipeline Vendeurs</span></a>
-            <a href="acquereurs.html" class="nav-tab">🔑 <span class="nav-text">Pipeline Acquéreurs</span></a>
-            <a href="dvf.html" class="nav-tab">🗺️ <span class="nav-text">Marché DVF</span></a>
-            <a href="social.html" class="nav-tab">📱 <span class="nav-text">Social</span></a>
+            <a href="index.html" class="nav-tab active">
+                <i class="fa-solid fa-house"></i> Vendeurs
+            </a>
+            <a href="acquereurs.html" class="nav-tab">
+                <i class="fa-solid fa-key"></i> Acquéreurs
+            </a>
+            <a href="dvf.html" class="nav-tab">
+                <i class="fa-solid fa-chart-simple"></i> Marché
+            </a>
+            <a href="social.html" class="nav-tab">
+                <i class="fa-solid fa-share-nodes"></i> Social
+            </a>
         </nav>
+
+        <!-- Zone droite : Actions -->
         <div class="header-actions">
-            <div id="userProfile" class="user-profile"></div>
-            <div class="alert-counter" id="alertCounter">
-                <span class="alert-icon">🔔</span>
-                <span class="alert-text">
-                    <span class="alert-number" id="alertNumber">0</span> à relancer
-                </span>
-            </div>
+            <!-- Alerte relances -->
+            <button class="alert-bell" id="alertBell" title="Relances du jour">
+                <i class="fa-solid fa-bell"></i>
+                <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+            </button>
+
+            <!-- Bouton Exporter -->
             <div class="export-wrapper">
-                <button class="export-btn" id="exportBtn">📥 <span class="btn-text">Exporter</span></button>
+                <button class="export-btn" id="exportBtn">
+                    <i class="fa-solid fa-download"></i> Exporter
+                </button>
                 <div class="export-dropdown" id="exportDropdown">
-                    <button class="export-dropdown-item" onclick="exportSellersCSV()">📥 Exporter tout</button>
-                    <button class="export-dropdown-item" style="font-weight:600;color:var(--text-light);cursor:default;font-size:12px;text-transform:uppercase;letter-spacing:0.5px" disabled>Exporter la colonne…</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">🔥 Leads Chaudes</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">🟡 Leads Tièdes</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">❄️ Leads Froides</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">✅ Sous Mandats</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">🏆 Vendus</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">❌ Perdus</button>
+                    <button class="export-dropdown-item" onclick="exportSellersCSV()">Exporter tout</button>
                     <div class="export-dropdown-separator"></div>
-                    <button class="export-dropdown-item" onclick="exportVisitsCSV()">📅 Exporter les visites</button>
-                    <button class="export-dropdown-item" onclick="exportCommissionsCSV()">💰 Exporter les commissions</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">Leads Chaudes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">Leads Tièdes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">Leads Froides</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">Sous Mandats</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">Vendus</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">Perdus</button>
+                    <div class="export-dropdown-separator"></div>
+                    <button class="export-dropdown-item" onclick="exportVisitsCSV()">Exporter les visites</button>
+                    <button class="export-dropdown-item" onclick="exportCommissionsCSV()">Exporter les commissions</button>
                 </div>
             </div>
-            <button class="add-btn" id="addLeadBtn">+ <span class="btn-text">Ajouter un Lead</span></button>
+
+            <!-- Séparateur -->
+            <div class="header-separator"></div>
+
+            <!-- Profil utilisateur -->
+            <div class="user-profile" id="userProfile">
+                <!-- Chargé dynamiquement par auth.js -->
+            </div>
+
+            <!-- Icône Settings -->
+            <a href="parametres.html" class="settings-btn" title="Paramètres">
+                <i class="fa-solid fa-gear"></i>
+            </a>
+
+            <!-- Bouton + Lead -->
+            <button class="add-btn" id="addLeadBtn">+ Lead</button>
         </div>
     </div>
 
