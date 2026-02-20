@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WAIMMO — Marché DVF</title>
-    <meta property="og:title" content="WAIMMO — Marché DVF">
+    <title>Léon. — Marché DVF</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — Marché DVF">
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -39,8 +40,8 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 30px;
-            background: url('img/header_bg.png') center / cover no-repeat;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            background: #FFFFFF;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             z-index: 1000;
             position: relative;
             flex-shrink: 0;
@@ -53,8 +54,8 @@
         }
 
         .logo img {
-            width: 160px;
-            height: auto;
+            height: 40px;
+            width: auto;
         }
 
         .nav-tabs {
@@ -63,7 +64,7 @@
         }
 
         .nav-tab {
-            color: var(--text-dark);
+            color: #374151;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 10px;
@@ -71,17 +72,19 @@
             font-weight: 600;
             font-size: 15px;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.7);
+            background: transparent;
+            border: 1px solid #E5E7EB;
         }
 
         .nav-tab:hover {
-            color: #667eea;
-            background: rgba(255, 255, 255, 0.9);
+            background: #F3F4F6;
+            border-color: #E5E7EB;
         }
 
         .nav-tab.active {
-            color: #667eea;
-            background: rgba(255, 255, 255, 0.95);
+            color: #FFFFFF;
+            background: #243B53;
+            border-color: #243B53;
         }
 
         .header-actions {
@@ -858,7 +861,7 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="logo"><img src="img/logo_200.png" alt="WAIMMO"></a>
+        <a href="index.html" class="logo"><img src="img/Logo_leon.svg" alt="Léon"></a>
         <nav class="nav-tabs">
             <a href="index.html" class="nav-tab">🏠 <span class="nav-text">Pipeline Vendeurs</span></a>
             <a href="acquereurs.html" class="nav-tab">🔑 <span class="nav-text">Pipeline Acquéreurs</span></a>

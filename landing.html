@@ -145,15 +145,16 @@
             right: 0;
             z-index: 1000;
             padding: 16px 0;
-            background: rgba(15, 20, 25, 0.85);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
             transition: border-color 0.3s, padding 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .nav.scrolled {
-            border-bottom-color: var(--border);
+            border-bottom-color: rgba(0, 0, 0, 0.12);
             padding: 10px 0;
         }
 
@@ -177,12 +178,12 @@
         .nav-links a {
             font-size: 0.9rem;
             font-weight: 500;
-            color: var(--text-muted);
+            color: #374151;
             transition: color 0.3s;
         }
 
         .nav-links a:hover {
-            color: var(--turquoise);
+            color: #243B53;
         }
 
         .nav-cta {
