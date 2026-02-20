@@ -332,7 +332,7 @@
         /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
-            grid-template-columns: repeat(4, minmax(320px, 1fr));
+            grid-template-columns: repeat(5, minmax(240px, 1fr));
             gap: 20px;
             overflow-x: auto;
             overflow-y: visible;
@@ -371,10 +371,16 @@
             background-position: top;
         }
 
-        .column-header.header-new { background-image: url('img/nouveaux.png'); }
-        .column-header.header-active { background-image: url('img/actifs.png'); }
-        .column-header.header-bought { background-image: url('img/achetes.png'); }
-        .column-header.header-lost { background-image: url('img/plusenrecherche.png'); }
+        .column-header.header-nouveau { background-image: url('img/nouveaux.png'); }
+        .column-header.header-actif { background-image: url('img/actifs.png'); }
+        .column-header.header-achete_avec_moi { background-image: url('img/achetes.png'); }
+        .column-header.header-achete_ailleurs {
+            background: linear-gradient(135deg, #F59E0B 0%, #F97316 100%);
+            background-image: url('img/ailleurs.png');
+            background-size: cover;
+            background-position: center;
+        }
+        .column-header.header-abandon { background-image: url('img/plusenrecherche.png'); }
 
         .column-label {
             position: absolute;
@@ -439,10 +445,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .column[data-status="new"] .lead-card { border-left-color: #667eea; }
-        .column[data-status="active"] .lead-card { border-left-color: #66BB6A; }
-        .column[data-status="bought"] .lead-card { border-left-color: #AB47BC; }
-        .column[data-status="lost"] .lead-card { border-left-color: #BDBDBD; }
+        .column[data-status="nouveau"] .lead-card { border-left-color: #667eea; }
+        .column[data-status="actif"] .lead-card { border-left-color: #66BB6A; }
+        .column[data-status="achete_avec_moi"] .lead-card { border-left-color: #AB47BC; }
+        .column[data-status="achete_ailleurs"] .lead-card { border-left-color: #F59E0B; }
+        .column[data-status="abandon"] .lead-card { border-left-color: #BDBDBD; }
 
         .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
 
@@ -1752,10 +1759,11 @@
                 <div class="export-dropdown" id="exportDropdown">
                     <button class="export-dropdown-item" onclick="exportBuyersCSV()">Exporter tout</button>
                     <div class="export-dropdown-separator"></div>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('new')">Nouveaux Acquéreurs</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('active')">En Recherche Active</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('bought')">Achetés</button>
-                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('lost')">Perdus</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('nouveau')">Nouveaux Acquéreurs</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('actif')">En Recherche Active</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_avec_moi')">Achetés avec moi</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_ailleurs')">Achetés ailleurs</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('abandon')">Abandon</button>
                 </div>
             </div>
 
@@ -1778,51 +1786,62 @@
     </div>
 
     <div class="mobile-tabs" id="mobileTabs">
-        <button class="mobile-tab active" data-status="new">🆕 Nouveaux <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="active">🔍 Actifs <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="bought">🎉 Achetés <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab active" data-status="nouveau">🆕 Nouveaux <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="actif">🔍 Actifs <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="achete_avec_moi">🎉 Achetés avec moi <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="achete_ailleurs">🔄 Achetés ailleurs <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="abandon">❌ Abandon <span class="tab-count">(0)</span></button>
     </div>
 
     <div class="pipeline">
         <!-- Colonne Nouveaux Acquéreurs -->
-        <div class="column" data-status="new">
-            <div class="column-header header-new">
+        <div class="column" data-status="nouveau">
+            <div class="column-header header-nouveau">
                 <div class="column-label">NOUVEAUX</div>
             </div>
             <div class="column-title">Premier contact</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            <div class="cards-container" id="new-container"></div>
+            <div class="cards-container" id="nouveau-container"></div>
         </div>
 
         <!-- Colonne En Recherche Active -->
-        <div class="column" data-status="active">
-            <div class="column-header header-active">
+        <div class="column" data-status="actif">
+            <div class="column-header header-actif">
                 <div class="column-label">RECHERCHE ACTIVE</div>
             </div>
             <div class="column-title">Critères définis, envoi de biens</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            <div class="cards-container" id="active-container"></div>
+            <div class="cards-container" id="actif-container"></div>
         </div>
 
-        <!-- Colonne Achetés -->
-        <div class="column" data-status="bought">
-            <div class="column-header header-bought">
-                <div class="column-label">ACHETÉS</div>
+        <!-- Colonne Achetés avec moi -->
+        <div class="column" data-status="achete_avec_moi">
+            <div class="column-header header-achete_avec_moi">
+                <div class="column-label">ACHETÉS AVEC MOI 🎉</div>
             </div>
-            <div class="column-title">Ils ont trouvé 🎉</div>
+            <div class="column-title">Mes transactions</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            <div class="cards-container" id="bought-container"></div>
+            <div class="cards-container" id="achete_avec_moi-container"></div>
         </div>
 
-        <!-- Colonne Perdus -->
-        <div class="column" data-status="lost">
-            <div class="column-header header-lost">
-                <div class="column-label">PLUS EN RECHERCHE</div>
+        <!-- Colonne Achetés ailleurs -->
+        <div class="column" data-status="achete_ailleurs">
+            <div class="column-header header-achete_ailleurs">
+                <div class="column-label">ACHETÉS AILLEURS 🔄</div>
+            </div>
+            <div class="column-title">Ont trouvé sans moi</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
+            <div class="cards-container" id="achete_ailleurs-container"></div>
+        </div>
+
+        <!-- Colonne Plus en recherche -->
+        <div class="column" data-status="abandon">
+            <div class="column-header header-abandon">
+                <div class="column-label">PLUS EN RECHERCHE ❌</div>
             </div>
             <div class="column-title">Abandon</div>
             <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            <div class="cards-container" id="lost-container"></div>
+            <div class="cards-container" id="abandon-container"></div>
         </div>
     </div>
 
@@ -2029,10 +2048,11 @@
                         <div class="form-group">
                             <label class="form-label">Colonne</label>
                             <select class="form-select" id="status">
-                                <option value="new">🆕 Nouveaux Acquéreurs</option>
-                                <option value="active">🔍 En Recherche Active</option>
-                                <option value="bought">🎉 Achetés</option>
-                                <option value="lost">❌ Perdus</option>
+                                <option value="nouveau">🆕 Nouveaux Acquéreurs</option>
+                                <option value="actif">🔍 En Recherche Active</option>
+                                <option value="achete_avec_moi">🎉 Achetés avec moi</option>
+                                <option value="achete_ailleurs">🔄 Achetés ailleurs</option>
+                                <option value="abandon">❌ Plus en recherche</option>
                             </select>
                         </div>
                     </div>
@@ -2272,12 +2292,13 @@
 
         // ===== MOBILE TABS =====
         const BUYER_TABS = [
-            { status: 'new', icon: '🆕', label: 'Nouveaux' },
-            { status: 'active', icon: '🔍', label: 'Actifs' },
-            { status: 'bought', icon: '🎉', label: 'Achetés' },
-            { status: 'lost', icon: '❌', label: 'Perdus' }
+            { status: 'nouveau', icon: '🆕', label: 'Nouveaux' },
+            { status: 'actif', icon: '🔍', label: 'Actifs' },
+            { status: 'achete_avec_moi', icon: '🎉', label: 'Achetés avec moi' },
+            { status: 'achete_ailleurs', icon: '🔄', label: 'Achetés ailleurs' },
+            { status: 'abandon', icon: '❌', label: 'Abandon' }
         ];
-        let mobileActiveTab = localStorage.getItem('leon_mobile_tab_buyers') || 'new';
+        let mobileActiveTab = localStorage.getItem('leon_mobile_tab_buyers') || 'nouveau';
 
         function isMobile() { return window.innerWidth <= 768; }
 
@@ -2463,10 +2484,11 @@
         // ===== RENDU =====
         function renderBuyers() {
             const containers = {
-                new: document.getElementById('new-container'),
-                active: document.getElementById('active-container'),
-                bought: document.getElementById('bought-container'),
-                lost: document.getElementById('lost-container')
+                nouveau: document.getElementById('nouveau-container'),
+                actif: document.getElementById('actif-container'),
+                achete_avec_moi: document.getElementById('achete_avec_moi-container'),
+                achete_ailleurs: document.getElementById('achete_ailleurs-container'),
+                abandon: document.getElementById('abandon-container')
             };
 
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
@@ -2619,7 +2641,7 @@
         }
 
         function updateCounts() {
-            const statuses = ['new', 'active', 'bought', 'lost'];
+            const statuses = ['nouveau', 'actif', 'achete_avec_moi', 'achete_ailleurs', 'abandon'];
             statuses.forEach(status => {
                 const count = buyers.filter(b => b.status === status).length;
                 const col = document.querySelector(`.column[data-status="${status}"] .count`);
@@ -3772,8 +3794,11 @@
 
         // ===== EXPORT CSV =====
         const BUYER_STATUS_LABELS = {
-            new: 'Nouveau', active: 'En Recherche Active',
-            bought: 'Acheté', lost: 'Perdu'
+            nouveau: 'Nouveau',
+            actif: 'En Recherche Active',
+            achete_avec_moi: 'Acheté avec moi',
+            achete_ailleurs: 'Acheté ailleurs',
+            abandon: 'Abandon'
         };
 
         const BANK_LABELS = { oui: 'Oui', non: 'Non', en_cours: 'En cours', ne_sait_pas: 'Ne sait pas' };
