@@ -582,6 +582,14 @@
                 cta_present: true
             };
 
+            // Sprint 3: Check Hoguet warning
+            const complianceFlags = result.compliance_flags || {};
+            const hoguetWarning = complianceFlags.hoguet === 'warn' && complianceFlags.hoguet_missing
+                ? `<div class="hoguet-warning">
+                    ⚠️ Ce post mentionne un bien. Pensez à ajouter : ${complianceFlags.hoguet_missing.join(', ')}
+                </div>`
+                : '';
+
             contentHTML += `
                 <div class="platform-content ${i === 0 ? 'active' : ''}" data-platform="${result.platform}">
                     <div class="edit-hint">✏️ Ajoute ton grain de sel avant de partager 👆</div>
@@ -591,6 +599,8 @@
                         data-original="${escapeHtml(result.content)}"
                         data-platform="${result.platform}"
                     >${escapeHtml(result.content)}</textarea>
+
+                    ${hoguetWarning}
 
                     <div class="completeness-indicator">
                         <div class="completeness-title">✅ Indicateur de complétude</div>
@@ -696,7 +706,10 @@
             // Visual feedback
             const btn = event.target.closest('.action-btn');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '✅ Copié !';
+            const successMessage = isEdited
+                ? '✅ Copié ! Tes modifs sont sauvegardées.'
+                : '✅ Copié !';
+            btn.innerHTML = successMessage;
             btn.style.background = '#43A047';
             btn.style.color = 'white';
 
