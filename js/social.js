@@ -99,14 +99,47 @@
             }
 
             if (!data) {
-                console.log('[Social] No profile found, showing onboarding');
-                showOnboarding();
+                console.log('[Social] No profile found, creating default profile');
+                await createDefaultProfile();
             } else {
                 currentProfile = data;
                 console.log('[Social] Profile loaded:', data);
             }
         } catch (err) {
             console.error('[Social] Error loading profile:', err);
+        }
+    }
+
+    async function createDefaultProfile() {
+        try {
+            const user = (await supabaseClient.auth.getUser()).data.user;
+            const defaultProfile = {
+                user_id: user.id,
+                tone: 'mixte',
+                tutoiement: false,
+                publishing_frequency: 'regular',
+                platforms_active: ['linkedin', 'instagram', 'facebook'],
+                objectives: ['mandats_vendeurs', 'notoriete'],
+                time_available: '1h',
+                voice_profile_set: false,
+                onboarding_completed: false,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            };
+
+            const { data, error } = await supabaseClient
+                .from('social_profiles')
+                .insert(defaultProfile)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            currentProfile = data;
+            console.log('[Social] Default profile created:', data);
+            renderCalendar(); // Refresh calendar with new profile
+        } catch (err) {
+            console.error('[Social] Error creating default profile:', err);
         }
     }
 
@@ -471,6 +504,15 @@
 
         if (!currentProfile) {
             alert('Profil non configuré. Recharge la page.');
+            return;
+        }
+
+        // Check if voice profile modal should be shown (first time only)
+        const shouldShowVoiceModal = await checkAndShowVoiceModal();
+        if (shouldShowVoiceModal) {
+            // Modal is shown, generation will continue after voice profile is saved
+            // Store user input for later
+            window.pendingUserInput = userInput;
             return;
         }
 
@@ -1079,4 +1121,124 @@
 
     // ===== START =====
     init();
+
+    // ===== EXPOSE MODAL FUNCTIONS TO GLOBAL SCOPE =====
+    window.openStrategyModal = openStrategyModal;
+    window.closeStrategyModal = closeStrategyModal;
+    window.applyStrategy = applyStrategy;
+    window.saveVoiceProfile = saveVoiceProfile;
+    window.checkAndShowVoiceModal = checkAndShowVoiceModal;
+
+    // ===== STRATEGY MODAL =====
+    function openStrategyModal() {
+        if (!currentProfile) return;
+
+        // Pre-fill current values
+        const objectives = currentProfile.objectives || [];
+        document.querySelectorAll('input[name="strategy_objective"]').forEach(cb => {
+            cb.checked = objectives.includes(cb.value);
+        });
+
+        const timeAvailable = currentProfile.time_available || '1h';
+        const timeRadio = document.querySelector(`input[name="time_available"][value="${timeAvailable}"]`);
+        if (timeRadio) timeRadio.checked = true;
+
+        const platforms = currentProfile.platforms_active || [];
+        document.querySelectorAll('input[name="strategy_platform"]').forEach(cb => {
+            cb.checked = platforms.includes(cb.value);
+        });
+
+        document.getElementById('strategyBackdrop').classList.add('active');
+    }
+
+    function closeStrategyModal() {
+        document.getElementById('strategyBackdrop').classList.remove('active');
+    }
+
+    async function applyStrategy() {
+        const objectives = Array.from(document.querySelectorAll('input[name="strategy_objective"]:checked')).map(cb => cb.value);
+        if (objectives.length === 0 || objectives.length > 3) {
+            alert('Sélectionne entre 1 et 3 objectifs');
+            return;
+        }
+
+        const timeAvailable = document.querySelector('input[name="time_available"]:checked').value;
+        const platforms = Array.from(document.querySelectorAll('input[name="strategy_platform"]:checked')).map(cb => cb.value);
+        if (platforms.length === 0) {
+            alert('Sélectionne au moins une plateforme');
+            return;
+        }
+
+        // Map time_available to publishing_frequency
+        const frequencyMap = {
+            '30min': 'light',
+            '1h': 'regular',
+            '2h+': 'intensive'
+        };
+
+        try {
+            await saveProfile({
+                ...currentProfile,
+                objectives,
+                time_available: timeAvailable,
+                publishing_frequency: frequencyMap[timeAvailable],
+                platforms_active: platforms
+            });
+
+            closeStrategyModal();
+            renderCalendar(); // Refresh calendar with new settings
+            alert('✅ Stratégie mise à jour !');
+        } catch (err) {
+            alert('Erreur lors de la sauvegarde: ' + err.message);
+        }
+    }
+
+    // ===== VOICE PROFILE MODAL =====
+    async function checkAndShowVoiceModal() {
+        if (!currentProfile) return false;
+
+        // Only show if voice_profile_set is false
+        if (currentProfile.voice_profile_set) return false;
+
+        document.getElementById('voiceBackdrop').classList.add('active');
+        return true; // Modal shown, pause generation
+    }
+
+    async function saveVoiceProfile() {
+        const toneSlider = document.getElementById('voiceToneSlider').value;
+        let tone = 'mixte';
+        if (toneSlider < 33) tone = 'professionnel';
+        else if (toneSlider > 66) tone = 'decontracte';
+
+        const tutoiement = document.querySelector('input[name="voice_tutoiement"]:checked').value === 'true';
+        const samplePosts = document.getElementById('voiceSamplePosts').value.trim();
+
+        try {
+            await saveProfile({
+                ...currentProfile,
+                tone,
+                tutoiement,
+                sample_posts: samplePosts ? [samplePosts] : null,
+                voice_profile_set: true
+            });
+
+            document.getElementById('voiceBackdrop').classList.remove('active');
+
+            // If there was a pending generation, continue it
+            if (window.pendingUserInput) {
+                const userInput = window.pendingUserInput;
+                window.pendingUserInput = null;
+
+                // Wait a bit for the modal to close
+                setTimeout(() => {
+                    document.getElementById('generateBtn').click();
+                }, 300);
+            }
+
+            return true;
+        } catch (err) {
+            alert('Erreur lors de la sauvegarde: ' + err.message);
+            return false;
+        }
+    }
 })();
