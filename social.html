@@ -493,9 +493,16 @@
             display: block;
         }
 
+        /* ===== STORY INPUT WRAPPER ===== */
+        .story-input-wrapper {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+        }
+
         .story-input {
             width: 100%;
-            min-height: 150px;
+            min-height: 200px;
             padding: 16px;
             border: 2px solid var(--border-color);
             border-radius: 12px;
@@ -503,7 +510,9 @@
             font-size: 15px;
             color: var(--text-dark);
             resize: vertical;
-            transition: border-color 0.3s;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
         }
 
         .story-input:focus {
@@ -511,6 +520,146 @@
             border-color: #667eea;
         }
 
+        .story-input::placeholder {
+            color: #B0BEC5;
+            font-size: 13px;
+            position: absolute;
+            bottom: 12px;
+            left: 16px;
+        }
+
+        /* État 1 — Big mic overlay (empty state) */
+        .big-mic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .big-mic-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .big-mic-overlay > * {
+            pointer-events: auto;
+        }
+
+        .big-mic-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+
+        .big-mic-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+        }
+
+        .big-mic-btn.recording {
+            background: #FF4757;
+            animation: micPulse 1.2s infinite;
+        }
+
+        @keyframes micPulse {
+            0%, 100% {
+                box-shadow: 0 4px 16px rgba(255, 71, 87, 0.4);
+            }
+            50% {
+                box-shadow: 0 4px 24px rgba(255, 71, 87, 0.7), 0 0 0 8px rgba(255, 71, 87, 0.2);
+            }
+        }
+
+        .big-mic-label {
+            font-size: 14px;
+            color: #7F8C8D;
+            font-weight: 500;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .big-mic-label.recording {
+            color: #FF4757;
+            font-weight: 600;
+        }
+
+        .big-mic-hint {
+            font-size: 13px;
+            color: #B0BEC5;
+            cursor: pointer;
+            text-decoration: underline;
+            text-decoration-style: dotted;
+            transition: color 0.2s;
+        }
+
+        .big-mic-hint:hover {
+            color: #667eea;
+        }
+
+        /* État 3 — Small mic button (text present) */
+        .small-mic-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            z-index: 3;
+        }
+
+        .small-mic-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.5);
+        }
+
+        .small-mic-btn.recording {
+            background: #FF4757;
+            animation: smallMicPulse 1.2s infinite;
+        }
+
+        @keyframes smallMicPulse {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+            }
+            50% {
+                box-shadow: 0 2px 12px rgba(255, 71, 87, 0.7), 0 0 0 4px rgba(255, 71, 87, 0.2);
+            }
+        }
+
+        .small-mic-btn.hidden {
+            display: none;
+        }
+
+        /* Input controls */
         .input-controls {
             display: flex;
             gap: 12px;
@@ -518,43 +667,10 @@
             align-items: center;
         }
 
-        .voice-btn {
-            padding: 12px 24px;
-            background: white;
-            border: 2px solid #667eea;
-            border-radius: 12px;
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            color: #667eea;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .voice-btn:hover {
-            background: #667eea;
-            color: white;
-        }
-
-        .voice-btn.recording {
-            background: #FF4757;
-            border-color: #FF4757;
-            color: white;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-
         .generate-btn {
             flex: 1;
             padding: 12px 24px;
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
             border: none;
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
@@ -563,16 +679,19 @@
             color: white;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
         }
 
-        .generate-btn:hover {
+        .generate-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4);
         }
 
         .generate-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
+            background: linear-gradient(135deg, #CFD8DC 0%, #B0BEC5 100%);
+            box-shadow: none;
         }
 
         .voice-status {
@@ -2073,17 +2192,34 @@
 
             <!-- Story Mode -->
             <div class="input-area" id="storyArea">
-                <textarea
-                    class="story-input"
-                    id="storyInput"
-                    placeholder="Raconte ce qui s'est passé... (ex: Ce matin j'ai visité un T3 rue Garibaldi avec un couple de primo-accédants. L'appart est bien mais le DPE est en F...)"
-                ></textarea>
-                <div class="input-controls">
-                    <button class="voice-btn" id="voiceBtn">
-                        🎤 <span id="voiceBtnText">Dicter</span>
+                <div class="story-input-wrapper">
+                    <!-- Big mic button (shows when empty) -->
+                    <div class="big-mic-overlay" id="bigMicOverlay">
+                        <button class="big-mic-btn" id="bigMicBtn">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <div class="big-mic-label" id="bigMicLabel">Appuie pour dicter</div>
+                        <div class="big-mic-hint" onclick="document.getElementById('storyInput').focus()">
+                            ou tape ton texte ici
+                        </div>
+                    </div>
+
+                    <!-- Textarea -->
+                    <textarea
+                        class="story-input"
+                        id="storyInput"
+                        placeholder="ex: Ce matin j'ai visité un T3 rue Garibaldi avec un couple de primo-accédants..."
+                    ></textarea>
+
+                    <!-- Small mic button (shows when text present) -->
+                    <button class="small-mic-btn hidden" id="smallMicBtn" title="Compléter par dictée">
+                        <i class="fas fa-microphone"></i>
                     </button>
+                </div>
+
+                <div class="input-controls">
                     <span class="voice-status" id="voiceStatus"></span>
-                    <button class="generate-btn" id="generateBtn">
+                    <button class="generate-btn" id="generateBtn" disabled>
                         ✨ Raconter ce moment
                     </button>
                 </div>

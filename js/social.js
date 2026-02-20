@@ -307,6 +307,9 @@
         // Setup event listeners
         setupListeners();
 
+        // Initialize story input state
+        updateStoryInputState();
+
         console.log('[Social] Initialized');
     }
 
@@ -591,6 +594,7 @@
 
         document.getElementById('storyInput').value = context;
         document.getElementById('storyInput').focus();
+        updateStoryInputState();
     };
 
     // ===== TEMPLATE DETAIL PANEL =====
@@ -665,6 +669,7 @@
         const storyInput = document.getElementById('storyInput');
         storyInput.value = `Créer un post "${templateName}" pour ${platform}`;
         storyInput.focus();
+        updateStoryInputState();
 
         // Scroll to story area
         document.querySelector('.create-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -745,8 +750,28 @@
             document.getElementById('suggestionBtn').classList.remove('active');
         });
 
-        // Voice button
-        document.getElementById('voiceBtn').addEventListener('click', handleVoice);
+        // Big mic button
+        document.getElementById('bigMicBtn').addEventListener('click', handleVoiceNew);
+
+        // Small mic button
+        document.getElementById('smallMicBtn').addEventListener('click', handleVoiceNew);
+
+        // Story input - detect text changes
+        const storyInput = document.getElementById('storyInput');
+        storyInput.addEventListener('input', updateStoryInputState);
+        storyInput.addEventListener('focus', () => {
+            // Hide big mic overlay when user focuses to type
+            const overlay = document.getElementById('bigMicOverlay');
+            if (storyInput.value.trim() === '') {
+                overlay.style.opacity = '0.3';
+            }
+        });
+        storyInput.addEventListener('blur', () => {
+            const overlay = document.getElementById('bigMicOverlay');
+            if (storyInput.value.trim() === '') {
+                overlay.style.opacity = '1';
+            }
+        });
 
         // Generate button
         document.getElementById('generateBtn').addEventListener('click', handleGenerate);
@@ -766,7 +791,117 @@
         });
     }
 
-    // ===== VOICE INPUT =====
+    // ===== STORY INPUT STATE MANAGEMENT =====
+    function updateStoryInputState() {
+        const storyInput = document.getElementById('storyInput');
+        const bigMicOverlay = document.getElementById('bigMicOverlay');
+        const smallMicBtn = document.getElementById('smallMicBtn');
+        const generateBtn = document.getElementById('generateBtn');
+
+        const hasText = storyInput.value.trim().length > 0;
+
+        if (hasText) {
+            // État 3 — Text present
+            bigMicOverlay.classList.add('hidden');
+            smallMicBtn.classList.remove('hidden');
+            generateBtn.disabled = false;
+        } else {
+            // État 1 — Empty
+            bigMicOverlay.classList.remove('hidden');
+            smallMicBtn.classList.add('hidden');
+            generateBtn.disabled = true;
+        }
+    }
+
+    // ===== VOICE INPUT (NEW) =====
+    async function handleVoiceNew() {
+        const bigMicBtn = document.getElementById('bigMicBtn');
+        const smallMicBtn = document.getElementById('smallMicBtn');
+        const bigMicLabel = document.getElementById('bigMicLabel');
+        const status = document.getElementById('voiceStatus');
+        const storyInput = document.getElementById('storyInput');
+
+        // Determine which button was clicked
+        const isBigMic = event.target.closest('#bigMicBtn') !== null;
+        const activeBtn = isBigMic ? bigMicBtn : smallMicBtn;
+
+        if (!audioRecorder) {
+            audioRecorder = new AudioRecorder({
+                maxDuration: 60000,
+                silenceTimeout: 3000,
+                onStateChange: (state, message) => {
+                    console.log('[Social] Voice state:', state, message);
+
+                    if (state === 'recording') {
+                        // État 2 — Recording
+                        activeBtn.classList.add('recording');
+                        if (isBigMic) {
+                            bigMicLabel.textContent = '🔴 En écoute... Appuie pour arrêter';
+                            bigMicLabel.classList.add('recording');
+                        }
+                        status.textContent = 'Enregistrement en cours...';
+                    } else if (state === 'transcribing') {
+                        activeBtn.classList.remove('recording');
+                        if (isBigMic) {
+                            bigMicLabel.textContent = 'Transcription...';
+                            bigMicLabel.classList.remove('recording');
+                        }
+                        status.textContent = 'Transcription...';
+                    } else if (state === 'done') {
+                        activeBtn.classList.remove('recording');
+                        if (isBigMic) {
+                            bigMicLabel.textContent = 'Appuie pour dicter';
+                            bigMicLabel.classList.remove('recording');
+                        }
+                        status.textContent = '';
+                    } else if (state === 'error') {
+                        activeBtn.classList.remove('recording');
+                        if (isBigMic) {
+                            bigMicLabel.textContent = 'Appuie pour dicter';
+                            bigMicLabel.classList.remove('recording');
+                        }
+                        status.textContent = message || 'Erreur';
+                        status.style.color = '#FF4757';
+                        setTimeout(() => {
+                            status.textContent = '';
+                            status.style.color = 'var(--text-light)';
+                        }, 3000);
+                    } else {
+                        activeBtn.classList.remove('recording');
+                        if (isBigMic) {
+                            bigMicLabel.textContent = 'Appuie pour dicter';
+                            bigMicLabel.classList.remove('recording');
+                        }
+                        status.textContent = '';
+                    }
+                }
+            });
+        }
+
+        try {
+            // Get or reuse stream
+            if (!audioStream) {
+                audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+
+            const text = await audioRecorder.record(audioStream);
+
+            if (text) {
+                // If small mic (text already present), append. If big mic, replace.
+                if (isBigMic) {
+                    storyInput.value = text;
+                } else {
+                    storyInput.value += (storyInput.value ? ' ' : '') + text;
+                }
+                updateStoryInputState();
+                console.log('[Social] Transcribed:', text);
+            }
+        } catch (err) {
+            console.error('[Social] Voice error:', err);
+        }
+    }
+
+    // ===== VOICE INPUT (OLD - kept for compatibility) =====
     async function handleVoice() {
         const btn = document.getElementById('voiceBtn');
         const btnText = document.getElementById('voiceBtnText');
@@ -898,6 +1033,7 @@
 
             // Clear input
             storyInput.value = '';
+            updateStoryInputState();
 
         } catch (err) {
             console.error('[Social] Generate error:', err);
