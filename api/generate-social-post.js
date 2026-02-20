@@ -126,6 +126,7 @@ export default async function handler(req, res) {
             .from('social_posts')
             .insert({
                 user_id: user.id,
+                category: mode === 'free_input' ? 'user_story' : 'calendar_suggestion',
                 platform,
                 content: postData.content,
                 hook: postData.hook,
