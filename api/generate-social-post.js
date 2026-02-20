@@ -62,7 +62,7 @@ export default async function handler(req, res) {
             .order('generated_at', { ascending: false });
 
         // 3. Build CRM context
-        const crmContext = await buildCRMContext(user.id);
+        const crmContext = await buildCRMContext(supabase, user.id);
 
         // 4. Determine template (for Sprint 1, we don't use calendar templates, just free input)
         const today = getDayInfo();
@@ -172,7 +172,7 @@ export default async function handler(req, res) {
 }
 
 // ===== CRM CONTEXT BUILDER =====
-async function buildCRMContext(userId) {
+async function buildCRMContext(supabase, userId) {
     const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
