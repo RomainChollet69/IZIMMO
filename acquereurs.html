@@ -44,9 +44,9 @@
             align-items: center;
             margin-bottom: 30px;
             padding: 16px 30px;
-            background: url('img/header_bg.png') center / cover no-repeat;
+            background: #FFFFFF;
             border-radius: 16px;
-            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         .logo {
@@ -66,7 +66,7 @@
         }
 
         .nav-tab {
-            color: var(--text-dark);
+            color: #374151;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 10px;
@@ -74,17 +74,19 @@
             font-weight: 600;
             font-size: 15px;
             transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.7);
+            background: transparent;
+            border: 1px solid #E5E7EB;
         }
 
         .nav-tab:hover {
-            color: #667eea;
-            background: rgba(255, 255, 255, 0.9);
+            background: #F3F4F6;
+            border-color: #E5E7EB;
         }
 
         .nav-tab.active {
-            color: #667eea;
-            background: rgba(255, 255, 255, 0.95);
+            color: #FFFFFF;
+            background: #243B53;
+            border-color: #243B53;
         }
 
         .header-actions {
@@ -206,9 +208,9 @@
         }
 
         .export-btn {
-            background: transparent;
+            background: #10B981;
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.6);
+            border: none;
             padding: 10px 20px;
             border-radius: 10px;
             font-weight: 600;
@@ -220,8 +222,7 @@
         }
 
         .export-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: white;
+            background: #059669;
             transform: translateY(-2px);
         }
 
