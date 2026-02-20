@@ -854,17 +854,27 @@
         storyInput.addEventListener('focus', () => {
             // Hide big mic overlay when user focuses to type
             const overlay = document.getElementById('bigMicOverlay');
+            const exampleEl = document.getElementById('bigMicExample');
             if (storyInput.value.trim() === '') {
                 overlay.style.opacity = '0.3';
             }
-            // Stop placeholder rotation when focused
+            // Hide example when focused
+            if (exampleEl) {
+                exampleEl.style.opacity = '0';
+            }
+            // Stop rotation when focused
             stopPlaceholderRotation();
         });
         storyInput.addEventListener('blur', () => {
             const overlay = document.getElementById('bigMicOverlay');
+            const exampleEl = document.getElementById('bigMicExample');
             if (storyInput.value.trim() === '') {
                 overlay.style.opacity = '1';
-                // Restart placeholder rotation if empty
+                // Show example again
+                if (exampleEl) {
+                    exampleEl.style.opacity = '1';
+                }
+                // Restart rotation if empty
                 startPlaceholderRotation();
             }
         });
@@ -911,18 +921,20 @@
         }
     }
 
-    // ===== PLACEHOLDER ROTATION =====
-    function setRandomPlaceholder() {
-        const storyInput = document.getElementById('storyInput');
-        if (!storyInput) return;
+    // ===== EXAMPLE ROTATION =====
+    function setRandomExample() {
+        const exampleEl = document.getElementById('bigMicExample');
+        if (!exampleEl) return;
 
         const randomIndex = Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length);
-        storyInput.setAttribute('placeholder', PLACEHOLDER_EXAMPLES[randomIndex]);
+        exampleEl.textContent = PLACEHOLDER_EXAMPLES[randomIndex];
+        exampleEl.classList.remove('hidden');
     }
 
-    function rotatePlaceholder() {
+    function rotateExample() {
         const storyInput = document.getElementById('storyInput');
-        if (!storyInput) return;
+        const exampleEl = document.getElementById('bigMicExample');
+        if (!storyInput || !exampleEl) return;
 
         // Only rotate if textarea is empty and doesn't have focus
         if (storyInput.value.trim() !== '' || document.activeElement === storyInput) {
@@ -930,14 +942,15 @@
         }
 
         // Fade out
-        storyInput.style.opacity = '0.5';
+        exampleEl.style.opacity = '0';
 
         setTimeout(() => {
-            // Change placeholder
-            setRandomPlaceholder();
+            // Change example
+            const randomIndex = Math.floor(Math.random() * PLACEHOLDER_EXAMPLES.length);
+            exampleEl.textContent = PLACEHOLDER_EXAMPLES[randomIndex];
 
             // Fade in
-            storyInput.style.opacity = '1';
+            exampleEl.style.opacity = '1';
         }, 300);
     }
 
@@ -945,17 +958,23 @@
         // Stop any existing rotation
         stopPlaceholderRotation();
 
-        // Set initial random placeholder
-        setRandomPlaceholder();
+        // Set initial random example
+        setRandomExample();
 
         // Rotate every 5 seconds
-        placeholderInterval = setInterval(rotatePlaceholder, 5000);
+        placeholderInterval = setInterval(rotateExample, 5000);
     }
 
     function stopPlaceholderRotation() {
         if (placeholderInterval) {
             clearInterval(placeholderInterval);
             placeholderInterval = null;
+        }
+
+        // Hide example
+        const exampleEl = document.getElementById('bigMicExample');
+        if (exampleEl) {
+            exampleEl.classList.add('hidden');
         }
     }
 

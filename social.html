@@ -675,6 +675,21 @@
             color: #667eea;
         }
 
+        .big-mic-example {
+            font-size: 13px;
+            color: #B0BEC5;
+            font-style: italic;
+            margin-top: 12px;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.4;
+            transition: opacity 0.3s ease;
+        }
+
+        .big-mic-example.hidden {
+            opacity: 0;
+        }
+
         /* État 3 — Small mic button (text present) */
         .small-mic-btn {
             position: absolute;
@@ -2219,6 +2234,7 @@
                         <div class="big-mic-hint" onclick="document.getElementById('storyInput').focus()">
                             ou tape ton texte ici
                         </div>
+                        <div class="big-mic-example" id="bigMicExample"></div>
                     </div>
 
                     <!-- Textarea -->
