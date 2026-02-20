@@ -2641,7 +2641,7 @@
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
             // Affichage conditionnel des fiches d'exemple
-            if (buyers.length === 0) {
+            if (buyers.length === 0 || localStorage.getItem('force_demo_cards') === 'true') {
                 // Afficher le bandeau d'encouragement
                 const banner = document.getElementById('welcomeBanner');
                 if (banner) banner.style.display = 'flex';
