@@ -6427,7 +6427,15 @@
                     return;
                 }
                 // Compute match counts for badges (async, non-blocking)
-                computeMatchCounts().then(() => renderSellers()).catch(() => {});
+                computeMatchCounts().then(() => {
+                    renderSellers();
+                    // Lancer le tour guidé après le rendu (si conditions remplies)
+                    setTimeout(() => {
+                        if (typeof PipelineOnboarding !== 'undefined' && PipelineOnboarding.shouldStart()) {
+                            PipelineOnboarding.start();
+                        }
+                    }, 500);
+                }).catch(() => {});
                 // Open lead from relance widget cross-page navigation
                 const params = new URLSearchParams(window.location.search);
                 const openLeadId = params.get('openLead');

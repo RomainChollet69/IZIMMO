@@ -482,13 +482,5 @@ const PipelineOnboarding = {
     }
 };
 
-// Initialiser au chargement
-// Attendre que le pipeline soit rendu (leads + fantômes)
-document.addEventListener('DOMContentLoaded', () => {
-    // Attendre 500ms après le rendu du pipeline
-    setTimeout(() => {
-        if (PipelineOnboarding.shouldStart()) {
-            PipelineOnboarding.start();
-        }
-    }, 500);
-});
+// L'initialisation est maintenant gérée dans index.html après le rendu des sellers
+// (voir la fonction computeMatchCounts().then(() => {...}) dans l'initialisation)
