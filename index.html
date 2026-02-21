@@ -470,12 +470,17 @@
         .lead-card.expanded .card-extended { display: block; }
         .lead-card.expanded {
             max-height: none;
-            overflow-y: visible;
-            overflow-x: hidden; /* Empêcher débordement horizontal */
+            overflow: visible; /* Permettre débordement si nécessaire */
             width: 100%;
             box-sizing: border-box;
-            word-wrap: break-word; /* Forcer le retour à la ligne du texte long */
-            overflow-wrap: break-word;
+            word-wrap: break-word; /* Retour à la ligne des longs mots */
+        }
+
+        /* Forcer le retour à la ligne des emails et URLs longs */
+        .lead-card.expanded .card-info,
+        .lead-card.expanded .card-extended {
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         @keyframes cardAppear {
