@@ -4735,7 +4735,7 @@
             const cRate = seller.commission_rate || 4;
             const cAmount = priceForComm > 0 ? (seller.commission_amount || Math.round(priceForComm * cRate / 100)) : 0;
 
-            // === COMPACT VIEW ===
+            // === COMPACT VIEW === (v2.0)
             let compact = '<div class="card-compact">';
 
             // 1. Tag source
