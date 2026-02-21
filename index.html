@@ -4730,6 +4730,11 @@
             if (price) compactParts.push(formatEuro(price));
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
+            // Commission calculation (shared between COMPACT and EXTENDED)
+            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            const cRate = seller.commission_rate || 4;
+            const cAmount = priceForComm > 0 ? (seller.commission_amount || Math.round(priceForComm * cRate / 100)) : 0;
+
             // === COMPACT VIEW ===
             let compact = '<div class="card-compact">';
 
@@ -4755,10 +4760,7 @@
             compact += compactPropLine;
 
             // 6. Commission
-            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
-            if (priceForComm > 0) {
-                const cRate = seller.commission_rate || 4;
-                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
+            if (cAmount > 0) {
                 compact += `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
@@ -4796,11 +4798,8 @@
 
             // Email : retiré (visible seulement dans la modale)
 
-            // Commission
-            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
-            if (priceForComm > 0) {
-                const cRate = seller.commission_rate || 4;
-                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
+            // Commission (éditable inline)
+            if (cAmount > 0) {
                 ext += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
