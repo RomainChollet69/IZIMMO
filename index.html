@@ -4732,18 +4732,55 @@
 
             // === COMPACT VIEW ===
             let compact = '<div class="card-compact">';
+
+            // 1. Tag source
             if (seller.source) compact += getSourceTag(seller.source);
             if (seller.source === 'recommandation' && seller.referrer_name) compact += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
+
+            // 2. Nom
             compact += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
-            compact += compactPropLine;
+
+            // 3. Téléphone (toujours affiché si présent)
+            if (seller.phone) {
+                compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            }
+
+            // 4. Adresse (ville uniquement)
             const city = extractCity(seller.address);
             if (city) {
                 compact += `<div class="card-info" style="font-size:13px;color:#6B7280">📍 ${escapeHtml(city)}</div>`;
-            } else if (seller.phone) {
-                compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
+
+            // 5. Prix/Budget (déjà dans compactPropLine : type emoji + surface + prix)
+            compact += compactPropLine;
+
+            // 6. Commission
+            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
+                compact += `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
+            }
+
+            // 7. Badge relance
             if (followupCompact) compact += followupCompact;
+
+            // 8. Dernière note (aperçu tronqué max 80 caractères)
+            const notePreview = notesPreviews[seller.id];
+            if (notePreview) {
+                const truncated = notePreview.length > 80 ? notePreview.substring(0, 80) + '...' : notePreview;
+                compact += `<div class="card-notes-preview">📝 ${escapeHtml(truncated)}</div>`;
+            }
+
+            // 9. Boutons actions
+            compact += `<div class="card-actions">
+                <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
+                <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
+            </div>`;
+
+            // Badge off market
             if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
+
             compact += '</div>';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
@@ -4757,8 +4794,7 @@
             // Phone
             if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
 
-            // Email
-            if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
+            // Email : retiré (visible seulement dans la modale)
 
             // Commission
             const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
@@ -4780,10 +4816,7 @@
                 if (seller.competitor_url) ext += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
             }
 
-            // Date de contact
-            if (seller.date) {
-                ext += `<div class="card-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
-            }
+            // Date de contact : retirée (visible seulement dans la modale)
 
             // Relance
             ext += followupFull;
