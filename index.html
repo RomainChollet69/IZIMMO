@@ -2327,7 +2327,7 @@
             z-index: 9998;
             opacity: 0;
             transition: opacity 300ms ease;
-            pointer-events: auto;
+            pointer-events: none; /* Laisser passer les clics pour permettre le drag & drop */
         }
         #onboarding-overlay.visible {
             opacity: 1;
@@ -2352,6 +2352,7 @@
             opacity: 0;
             transform: translateY(8px);
             transition: opacity 300ms ease-out, transform 300ms ease-out;
+            pointer-events: auto; /* Garder le tooltip cliquable */
         }
         #onboarding-tooltip.visible {
             opacity: 1;
