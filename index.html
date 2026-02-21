@@ -4821,12 +4821,8 @@
             // Relance
             ext += followupFull;
 
-            // Actions
-            ext += `<div class="card-actions">
-                <button class="card-btn mobile-move-btn" onclick="openMovePopup('${seller.id}')" title="Déplacer">📂</button>
-                <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
-                <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
-            </div>`;
+            // Actions : retirées (maintenant dans la vue compacte)
+
             ext += '</div>';
 
             // Match indicator badge (absolute positioned)
