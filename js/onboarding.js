@@ -105,6 +105,11 @@ const PipelineOnboarding = {
         this.removeSpotlight();
         this.setSpotlight(this.targetCard);
 
+        // Alléger l'overlay pour que la carte soit bien éclairée
+        if (this.overlay) {
+            this.overlay.style.background = 'rgba(15, 23, 42, 0.15)';
+        }
+
         // Scroller la colonne si nécessaire
         const column = this.targetCard.closest('.column-content');
         if (column) {
@@ -144,7 +149,7 @@ const PipelineOnboarding = {
 
                 // Alléger l'overlay pour que la carte "s'allume"
                 if (this.overlay) {
-                    this.overlay.style.background = 'rgba(15, 23, 42, 0.3)';
+                    this.overlay.style.background = 'rgba(15, 23, 42, 0.15)';
                 }
 
                 this.showTooltip({
