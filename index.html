@@ -4607,10 +4607,11 @@
             }
 
             // Toujours afficher les vraies fiches si elles existent
+            // Utiliser prepend() pour que les nouvelles cartes apparaissent en haut
             sellers.forEach(seller => {
                 const card = createSellerCard(seller);
                 if (containers[seller.status]) {
-                    containers[seller.status].appendChild(card);
+                    containers[seller.status].prepend(card);
                 }
             });
 
