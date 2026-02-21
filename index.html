@@ -4573,12 +4573,20 @@
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
             // Affichage conditionnel des fiches d'exemple
-            if (sellers.length === 0 || localStorage.getItem('force_demo_cards') === 'true') {
-                // Afficher le bandeau d'encouragement
-                const banner = document.getElementById('welcomeBanner');
-                if (banner) banner.style.display = 'flex';
+            // Afficher si : 0 leads, OU 1-2 leads sans tour fait, OU mode debug
+            const shouldShowExamples =
+                sellers.length === 0 ||
+                (sellers.length <= 2 && !localStorage.getItem('onboarding_pipeline_done')) ||
+                localStorage.getItem('force_demo_cards') === 'true';
 
-                // Injecter les fiches exemple
+            // Afficher le bandeau seulement si vraiment 0 leads
+            const banner = document.getElementById('welcomeBanner');
+            if (banner) {
+                banner.style.display = sellers.length === 0 ? 'flex' : 'none';
+            }
+
+            // Injecter les fiches exemple si nécessaire
+            if (shouldShowExamples) {
                 EXAMPLE_SELLERS.forEach(columnData => {
                     const container = containers[columnData.column];
                     if (container) {
@@ -4587,19 +4595,15 @@
                         });
                     }
                 });
-            } else {
-                // Cacher le bandeau
-                const banner = document.getElementById('welcomeBanner');
-                if (banner) banner.style.display = 'none';
-
-                // Afficher les vraies fiches
-                sellers.forEach(seller => {
-                    const card = createSellerCard(seller);
-                    if (containers[seller.status]) {
-                        containers[seller.status].appendChild(card);
-                    }
-                });
             }
+
+            // Toujours afficher les vraies fiches si elles existent
+            sellers.forEach(seller => {
+                const card = createSellerCard(seller);
+                if (containers[seller.status]) {
+                    containers[seller.status].appendChild(card);
+                }
+            });
 
             setupCardToggles();
             updateCounts();
