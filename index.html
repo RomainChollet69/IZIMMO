@@ -4766,8 +4766,8 @@
             if (followupCompact) compact += followupCompact;
 
             // 8. Dernière note (aperçu tronqué max 80 caractères)
-            const notePreview = notesPreviews[seller.id];
-            if (notePreview) {
+            if (typeof notesPreviews !== 'undefined' && notesPreviews[seller.id]) {
+                const notePreview = notesPreviews[seller.id];
                 const truncated = notePreview.length > 80 ? notePreview.substring(0, 80) + '...' : notePreview;
                 compact += `<div class="card-notes-preview">📝 ${escapeHtml(truncated)}</div>`;
             }
