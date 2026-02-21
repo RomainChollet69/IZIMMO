@@ -5727,6 +5727,13 @@
             renderSellers();
             formModified = false;
             closeModal(true);
+
+            // Lancer le tour guidé si c'est le premier lead (après suppression/recréation)
+            setTimeout(() => {
+                if (typeof PipelineOnboarding !== 'undefined' && PipelineOnboarding.shouldStart()) {
+                    PipelineOnboarding.start();
+                }
+            }, 500);
         }
 
         // ===== COMPETITOR POPUP =====
