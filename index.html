@@ -5818,12 +5818,14 @@
         }
 
         async function updatePositions(container, status) {
-            const cards = container.querySelectorAll('.lead-card');
+            // Exclure les cartes fantômes (example-card) qui n'ont pas d'ID en DB
+            const cards = container.querySelectorAll('.lead-card:not(.example-card)');
             const userId = await getCurrentUserId();
             if (!userId) return;
             const updates = [];
             cards.forEach((card, index) => {
                 const id = card.dataset.id;
+                if (!id) return; // Skip si pas d'ID (sécurité supplémentaire)
                 updates.push(supabaseClient.from('sellers').update({ position: index }).eq('id', id).eq('user_id', userId));
                 const seller = sellers.find(s => s.id === id);
                 if (seller) seller.position = index;
