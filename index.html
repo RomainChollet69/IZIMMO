@@ -468,7 +468,15 @@
 
         .card-extended { display: none; }
         .lead-card.expanded .card-extended { display: block; }
-        .lead-card.expanded { max-height: none; overflow: visible; }
+        .lead-card.expanded {
+            max-height: none;
+            overflow-y: visible;
+            overflow-x: hidden; /* Empêcher débordement horizontal */
+            width: 100%;
+            box-sizing: border-box;
+            word-wrap: break-word; /* Forcer le retour à la ligne du texte long */
+            overflow-wrap: break-word;
+        }
 
         @keyframes cardAppear {
             from { opacity: 0; transform: scale(0.9); }

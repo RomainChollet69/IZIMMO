@@ -415,6 +415,9 @@ const PipelineOnboarding = {
     finish() {
         console.log('[Onboarding] Finishing tour');
 
+        // Retirer le spotlight
+        this.removeSpotlight();
+
         // Sauvegarder le flag
         localStorage.setItem('onboarding_pipeline_done', 'true');
 
