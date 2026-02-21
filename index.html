@@ -4730,94 +4730,70 @@
             if (price) compactParts.push(formatEuro(price));
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
-            // Commission calculation (shared between COMPACT and EXTENDED)
-            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
-            const cRate = seller.commission_rate || 4;
-            const cAmount = priceForComm > 0 ? (seller.commission_amount || Math.round(priceForComm * cRate / 100)) : 0;
-
-            // === COMPACT VIEW === (vue fermée - infos essentielles uniquement)
+            // === COMPACT VIEW ===
             let compact = '<div class="card-compact">';
-
-            // Tag source + via
             if (seller.source) compact += getSourceTag(seller.source);
             if (seller.source === 'recommandation' && seller.referrer_name) compact += `<div class="referrer-via">via ${escapeHtml(seller.referrer_name)}</div>`;
-
-            // Nom
             compact += `<div class="card-name">${escapeHtml((seller.first_name || '') + ' ' + (seller.last_name || ''))}</div>`;
-
-            // Type · Surface · Prix
             compact += compactPropLine;
-
-            // Ville uniquement
             const city = extractCity(seller.address);
             if (city) {
                 compact += `<div class="card-info" style="font-size:13px;color:#6B7280">📍 ${escapeHtml(city)}</div>`;
+            } else if (seller.phone) {
+                compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
-
-            // Badge relance (si date dépassée)
             if (followupCompact) compact += followupCompact;
-
-            // Badge off market
             if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
-
             compact += '</div>';
 
-            // === EXTENDED VIEW === (vue ouverte - détails complémentaires)
+            // === EXTENDED VIEW (extra info only, no duplicates) ===
             let ext = '<div class="card-extended">';
 
-            // Badge alerte si relance en retard
             if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
-            // Téléphone (pas dans COMPACT, donc ici)
-            if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
-
-            // Adresse complète (COMPACT n'a que la ville)
+            // Address (full)
             if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
 
-            // Commission (éditable inline)
-            if (cAmount > 0) {
+            // Phone
+            if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
+
+            // Email
+            if (seller.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(seller.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(seller.email)}</a></div>`;
+
+            // Commission
+            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
                 ext += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
-            // Annexes (fixé : join au lieu de [object Object])
-            if (Array.isArray(seller.annexes) && seller.annexes.length > 0) {
-                const annexeEmojis = { parking: '🅿️', cave: '📦', balcon: '🌿', jardin: '🌳', garage: '🚗', piscine: '🏊' };
-                const annexeLabels = seller.annexes.map(a => {
-                    const emoji = annexeEmojis[a] || '';
-                    const label = a.charAt(0).toUpperCase() + a.slice(1);
-                    return emoji + ' ' + label;
-                }).join(', ');
-                ext += `<div class="card-info" style="font-size:13px;color:#546E7A">📦 ${annexeLabels}</div>`;
-            }
-
-            // Type de mandat
+            // Mandate type (small, only in extended — not duplicated since compact only shows for mandate status)
             if (seller.status === 'mandate' && seller.mandate_type) {
                 const tl = { exclusif: 'Exclusif', simple: 'Simple', 'semi-exclusif': 'Semi-exclusif' };
                 ext += `<div class="card-info" style="font-size:12px;color:var(--text-light)">${tl[seller.mandate_type] || seller.mandate_type}</div>`;
             }
 
-            // Concurrent (agence + URL)
+            // Competitor specifics
             if (seller.status === 'competitor') {
                 if (seller.competitor_agency) ext += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
                 if (seller.competitor_url) ext += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
             }
 
-            // Relance (date complète si > 3 jours)
-            ext += followupFull;
-
-            // Dernière note (aperçu)
-            if (typeof notesPreviews !== 'undefined' && notesPreviews[seller.id]) {
-                const notePreview = notesPreviews[seller.id];
-                const truncated = notePreview.length > 80 ? notePreview.substring(0, 80) + '...' : notePreview;
-                ext += `<div class="card-notes-preview">📝 ${escapeHtml(truncated)}</div>`;
+            // Date de contact
+            if (seller.date) {
+                ext += `<div class="card-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
             }
 
-            // Boutons actions
+            // Relance
+            ext += followupFull;
+
+            // Actions
             ext += `<div class="card-actions">
+                <button class="card-btn mobile-move-btn" onclick="openMovePopup('${seller.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="editSeller('${seller.id}')" title="Modifier">✏️</button>
                 <button class="card-btn" onclick="confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
             </div>`;
-
             ext += '</div>';
 
             // Match indicator badge (absolute positioned)
