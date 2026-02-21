@@ -479,8 +479,16 @@
         /* Forcer le retour à la ligne des emails et URLs longs */
         .lead-card.expanded .card-info,
         .lead-card.expanded .card-extended {
-            word-break: break-word;
+            word-break: break-all; /* Plus agressif pour couper les longs emails */
             overflow-wrap: anywhere;
+            max-width: 100%;
+        }
+
+        /* Forcer les liens à respecter la largeur max */
+        .lead-card.expanded a {
+            display: inline-block;
+            max-width: 100%;
+            word-break: break-all;
         }
 
         @keyframes cardAppear {
