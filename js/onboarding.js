@@ -142,6 +142,11 @@ const PipelineOnboarding = {
                 this.removeSpotlight();
                 this.setSpotlight(this.targetCard);
 
+                // Alléger l'overlay pour que la carte "s'allume"
+                if (this.overlay) {
+                    this.overlay.style.background = 'rgba(15, 23, 42, 0.3)';
+                }
+
                 this.showTooltip({
                     target: this.targetCard,
                     title: '📋 Tout est rangé au bon endroit',
@@ -165,6 +170,11 @@ const PipelineOnboarding = {
 
     // ÉTAPE 3 : Déplace ta fiche
     step3_deplaceFiche() {
+        // Restaurer l'overlay à sa valeur normale
+        if (this.overlay) {
+            this.overlay.style.background = 'rgba(15, 23, 42, 0.65)';
+        }
+
         this.removeSpotlight();
         this.setSpotlight(this.targetCard);
 
