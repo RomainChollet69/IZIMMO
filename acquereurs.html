@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/workflows.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/audio-recorder.js"></script>
     <style>
@@ -1807,6 +1808,151 @@
         .sector-tag-remove:hover { color: #C62828; }
         .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 14px; padding: 4px 0; background: transparent; }
         .sector-tags-input::placeholder { color: #bbb; }
+
+        /* ===== WORKFLOW LÉON ===== */
+        .leon-banner {
+            background: #F0F9FF;
+            border: 1px solid #BAE6FD;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .leon-banner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .leon-banner-title {
+            font-weight: 700;
+            font-size: 13px;
+            color: #0369A1;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .leon-banner-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #94A3B8;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+        }
+        .leon-banner-close:hover { color: #475569; }
+        .leon-banner-question {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 12px;
+        }
+        .leon-banner-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .leon-btn {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #E2E8F0;
+            background: white;
+            transition: all 0.2s;
+        }
+        .leon-btn:hover { background: #F8FAFC; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .leon-btn-done { border-color: #2DD4BF; color: #0D9488; }
+        .leon-btn-done:hover { background: #F0FDFA; }
+        .leon-btn-later { border-color: #FCD34D; color: #92400E; }
+        .leon-btn-later:hover { background: #FFFBEB; }
+        .leon-btn-voice { border-color: #C4B5FD; color: #6D28D9; }
+        .leon-btn-voice:hover { background: #F5F3FF; }
+        .leon-banner-suggestion {
+            font-size: 13px;
+            color: #64748B;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+            display: none;
+        }
+        .leon-banner-suggestion.visible { display: block; }
+
+        .workflow-progress {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 16px 0;
+            overflow-x: auto;
+        }
+        .workflow-progress-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 40px;
+            cursor: default;
+        }
+        .workflow-progress-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .workflow-progress-dot.done { background: #D1FAE5; color: #059669; }
+        .workflow-progress-dot.current { background: #DBEAFE; color: #2563EB; animation: leonPulse 2s infinite; }
+        .workflow-progress-dot.pending { background: #F1F5F9; color: #94A3B8; }
+        .workflow-progress-dot.skipped { background: #F1F5F9; color: #CBD5E1; text-decoration: line-through; }
+        .workflow-progress-line {
+            flex: 1;
+            height: 2px;
+            background: #E2E8F0;
+            min-width: 12px;
+        }
+        .workflow-progress-line.done { background: #2DD4BF; }
+        @keyframes leonPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
+            50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+        }
+        .workflow-step-list { list-style: none; padding: 0; margin: 0; }
+        .workflow-step-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .workflow-step-item:last-child { border-bottom: none; }
+        .workflow-step-icon { font-size: 18px; min-width: 24px; text-align: center; }
+        .workflow-step-content { flex: 1; }
+        .workflow-step-label { font-size: 14px; font-weight: 500; color: #1E293B; }
+        .workflow-step-date { font-size: 12px; color: #94A3B8; margin-top: 2px; }
+        .workflow-step-date.overdue { color: #EF4444; font-weight: 600; }
+        .workflow-step-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #2DD4BF;
+            color: #0D9488;
+            background: white;
+            transition: all 0.2s;
+        }
+        .workflow-step-btn:hover { background: #F0FDFA; }
+        .workflow-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #94A3B8;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -1967,8 +2113,11 @@
                 <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
                 <button type="button" class="modal-tab" data-tab="messages" onclick="switchTab('messages')">✨ Messages IA</button>
                 <button type="button" class="modal-tab" data-tab="matching" onclick="switchTab('matching')">🎯 Matching</button>
+                <button type="button" class="modal-tab" data-tab="workflow" onclick="switchTab('workflow')">📊 Workflow</button>
             </div>
             <form id="buyerForm">
+                <!-- Bandeau contextuel Léon -->
+                <div id="leonBanner" class="leon-banner" style="display:none"></div>
                 <div id="tabInfo">
                 <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
                 <div class="dictate-status" id="dictateStatus"></div>
@@ -2223,6 +2372,12 @@
                 <div id="tabMatching" style="display:none">
                     <div id="matchingContent">
                         <div class="match-empty">Chargement...</div>
+                    </div>
+                </div>
+
+                <div id="tabWorkflow" style="display:none">
+                    <div id="workflowTabContent">
+                        <div class="workflow-empty">Chargement...</div>
                     </div>
                 </div>
 
@@ -2949,7 +3104,12 @@
             document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tabMessages').style.display = tab === 'messages' ? 'block' : 'none';
             document.getElementById('tabMatching').style.display = tab === 'matching' ? 'block' : 'none';
+            document.getElementById('tabWorkflow').style.display = tab === 'workflow' ? 'block' : 'none';
             if (tab === 'matching') loadMatchingSellers();
+            if (tab === 'workflow') {
+                const editId = document.getElementById('submitBtn').dataset.editId;
+                if (editId) loadWorkflowTab(editId, 'buyer');
+            }
         }
 
         function updateModalTabs() {
@@ -2978,6 +3138,9 @@
 
         function resetForm() {
             document.getElementById('buyerForm').reset();
+            // Reset bandeau Léon
+            const leonBanner = document.getElementById('leonBanner');
+            if (leonBanner) { leonBanner.style.display = 'none'; leonBanner.innerHTML = ''; }
             document.getElementById('sellerFields').style.display = 'none';
             document.getElementById('referrerGroup').classList.remove('active');
             document.getElementById('referrerName').value = '';
@@ -3837,6 +4000,9 @@
 
             openModal(initialTab);
 
+            // Load workflow banner + tab
+            loadLeonBanner(id, 'buyer');
+
             // Load notes
             loadBuyerNotes(id);
             loadFiles(id, 'buyer');
@@ -3967,6 +4133,141 @@
             await Promise.all(updates);
         }
 
+        // ===== BANDEAU CONTEXTUEL LÉON =====
+        async function loadLeonBanner(leadId, leadType) {
+            const banner = document.getElementById('leonBanner');
+            if (!banner) return;
+            banner.style.display = 'none';
+            banner.innerHTML = '';
+
+            const userId = await getCurrentUserId();
+            if (!userId || !leadId) return;
+
+            const step = await getNextPendingStep(supabaseClient, userId, leadId, leadType);
+            if (!step || !isStepDue(step)) return;
+
+            const now = new Date();
+            const dueDate = new Date(step.due_date);
+            const isOverdue = dueDate < now;
+
+            banner.innerHTML = `
+                <div class="leon-banner-header">
+                    <div class="leon-banner-title">🎯 Léon${isOverdue ? ' <span style="color:#EF4444;font-size:11px;margin-left:4px">en retard</span>' : ''}</div>
+                    <button type="button" class="leon-banner-close" onclick="document.getElementById('leonBanner').style.display='none'">&times;</button>
+                </div>
+                <div class="leon-banner-question">${escapeHtml(step.step_label)}</div>
+                <div class="leon-banner-actions">
+                    <button type="button" class="leon-btn leon-btn-done" data-step-id="${step.id}">✅ C'est fait</button>
+                    <button type="button" class="leon-btn leon-btn-later" data-step-id="${step.id}">⏳ Pas encore</button>
+                    <button type="button" class="leon-btn leon-btn-voice" disabled title="Dictée vocale (Phase 3)">🎤 Répondre</button>
+                </div>
+                ${step.ai_suggestion ? `<div class="leon-banner-suggestion" id="leonSuggestion">💡 ${escapeHtml(step.ai_suggestion)}</div>` : ''}
+            `;
+            banner.style.display = 'block';
+
+            banner.querySelector('.leon-btn-done').addEventListener('click', async function() {
+                const stepId = this.dataset.stepId;
+                this.disabled = true;
+                this.textContent = '...';
+                await completeStep(supabaseClient, stepId);
+                await loadLeonBanner(leadId, leadType);
+                if (document.getElementById('tabWorkflow') && document.getElementById('tabWorkflow').style.display !== 'none') {
+                    await loadWorkflowTab(leadId, leadType);
+                }
+            });
+
+            banner.querySelector('.leon-btn-later').addEventListener('click', function() {
+                const suggestion = document.getElementById('leonSuggestion');
+                if (suggestion) suggestion.classList.toggle('visible');
+            });
+        }
+
+        // ===== ONGLET WORKFLOW =====
+        async function loadWorkflowTab(leadId, leadType) {
+            const container = document.getElementById('workflowTabContent');
+            if (!container) return;
+
+            const userId = await getCurrentUserId();
+            if (!userId || !leadId) {
+                container.innerHTML = '<div class="workflow-empty">Aucun workflow en cours</div>';
+                return;
+            }
+
+            const steps = await getWorkflowSteps(supabaseClient, userId, leadId, leadType);
+            if (!steps || steps.length === 0) {
+                container.innerHTML = '<div class="workflow-empty">Aucun workflow en cours pour ce lead</div>';
+                return;
+            }
+
+            const grouped = {};
+            steps.forEach(s => {
+                if (!grouped[s.workflow_type]) grouped[s.workflow_type] = [];
+                grouped[s.workflow_type].push(s);
+            });
+
+            let html = '';
+            for (const [wfType, wfSteps] of Object.entries(grouped)) {
+                const wfDef = WORKFLOWS[wfType];
+                const wfLabel = wfDef ? wfDef.label : wfType;
+                const doneCount = wfSteps.filter(s => s.status === 'done').length;
+                const totalActive = wfSteps.filter(s => s.status !== 'skipped').length;
+
+                html += `<h3 style="font-size:15px;font-weight:700;color:#1E293B;margin:16px 0 8px">${wfLabel} <span style="font-size:12px;font-weight:400;color:#94A3B8">${doneCount}/${totalActive}</span></h3>`;
+
+                html += '<div class="workflow-progress">';
+                const activeSteps = wfSteps.filter(s => s.status !== 'skipped');
+                const firstPendingIdx = activeSteps.findIndex(s => s.status === 'pending');
+                activeSteps.forEach((s, i) => {
+                    if (i > 0) {
+                        const lineClass = s.status === 'done' || (i <= firstPendingIdx && firstPendingIdx >= 0 && activeSteps[i-1].status === 'done') ? 'done' : '';
+                        html += `<div class="workflow-progress-line ${lineClass}"></div>`;
+                    }
+                    let dotClass = s.status === 'done' ? 'done' : (i === firstPendingIdx ? 'current' : 'pending');
+                    let dotContent = s.status === 'done' ? '✓' : (i === firstPendingIdx ? '●' : '○');
+                    html += `<div class="workflow-progress-node"><div class="workflow-progress-dot ${dotClass}" title="${escapeHtml(s.step_label)}">${dotContent}</div></div>`;
+                });
+                html += '</div>';
+
+                html += '<ul class="workflow-step-list">';
+                wfSteps.forEach(s => {
+                    if (s.status === 'skipped') return;
+                    const icon = s.status === 'done' ? '✅' : (isStepDue(s) ? '🔵' : '○');
+                    const now = new Date();
+                    const dueDate = s.due_date ? new Date(s.due_date) : null;
+                    let dateStr = '';
+                    let dateClass = '';
+                    if (s.status === 'done' && s.completed_at) {
+                        dateStr = 'Fait le ' + new Date(s.completed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                    } else if (dueDate) {
+                        const isOverdue = dueDate < now;
+                        dateClass = isOverdue ? 'overdue' : '';
+                        dateStr = (isOverdue ? 'En retard — ' : 'Prévu le ') + dueDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+                    }
+                    const btnHtml = s.status === 'pending' ? `<button type="button" class="workflow-step-btn" data-step-id="${s.id}" onclick="handleWorkflowStepDone(this, '${leadId}', '${leadType}')">C'est fait</button>` : '';
+                    html += `<li class="workflow-step-item">
+                        <span class="workflow-step-icon">${icon}</span>
+                        <div class="workflow-step-content">
+                            <div class="workflow-step-label">${escapeHtml(s.step_label)}</div>
+                            ${dateStr ? `<div class="workflow-step-date ${dateClass}">${dateStr}</div>` : ''}
+                        </div>
+                        ${btnHtml}
+                    </li>`;
+                });
+                html += '</ul>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        async function handleWorkflowStepDone(btn, leadId, leadType) {
+            const stepId = btn.dataset.stepId;
+            btn.disabled = true;
+            btn.textContent = '...';
+            await completeStep(supabaseClient, stepId);
+            await loadWorkflowTab(leadId, leadType);
+            await loadLeonBanner(leadId, leadType);
+        }
+
         function setupDragAndDrop() {
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
@@ -4036,6 +4337,16 @@
                         await updatePositions(container, newStatus);
                         const oldContainer = document.getElementById(oldStatus + '-container');
                         if (oldContainer) await updatePositions(oldContainer, oldStatus);
+
+                        // === WORKFLOWS LÉON ===
+                        try {
+                            const wfUserId = await getCurrentUserId();
+                            if (wfUserId) {
+                                await onLeadStatusChange(supabaseClient, wfUserId, buyerId, 'buyer', oldStatus, newStatus);
+                            }
+                        } catch (err) {
+                            console.error('Workflow trigger error:', err);
+                        }
                     }
                 });
             });
