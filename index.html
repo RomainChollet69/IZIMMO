@@ -2699,7 +2699,7 @@
         .leon-fab {
             position: fixed;
             bottom: 24px;
-            right: 24px;
+            left: 24px;
             width: 44px;
             height: 44px;
             border-radius: 50%;
@@ -6103,6 +6103,7 @@
         let leonAllSteps = [];
         let leonCurrentLeadId = null;
         let leonCurrentLeadType = null;
+        let leonLaterTimeout = null;
 
         async function showLeonPopup(leadId, leadType) {
             leonCurrentLeadId = leadId;
@@ -6248,13 +6249,18 @@
             // Bind "Pas encore"
             popup.querySelector('.leon-popup-btn-later').addEventListener('click', function() {
                 const extra = document.getElementById('leonExtra');
-                if (extra) extra.classList.toggle('visible');
+                if (extra) {
+                    extra.classList.add('visible');
+                    // Auto-fermeture après 1.5s
+                    leonLaterTimeout = setTimeout(() => dismissLeonPopup(), 1500);
+                }
             });
 
             // Bind AI action button if present
             const aiBtn = popup.querySelector('.leon-popup-ai-btn');
             if (aiBtn) {
                 aiBtn.addEventListener('click', function() {
+                    if (leonLaterTimeout) { clearTimeout(leonLaterTimeout); leonLaterTimeout = null; }
                     const action = this.dataset.action;
                     const scenario = this.dataset.scenario;
                     if (action === 'generate_message') {
@@ -6269,12 +6275,14 @@
                         dismissLeonPopup();
                     } else {
                         console.log('AI action not yet implemented:', action);
+                        dismissLeonPopup();
                     }
                 });
             }
         }
 
         function dismissLeonPopup() {
+            if (leonLaterTimeout) { clearTimeout(leonLaterTimeout); leonLaterTimeout = null; }
             const popup = document.getElementById('leonPopup');
             const fab = document.getElementById('leonFab');
             leonPopupDismissed = true;
