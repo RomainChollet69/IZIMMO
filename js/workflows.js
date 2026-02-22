@@ -269,6 +269,48 @@ const WORKFLOWS = {
         ai_suggestion: "3 mois. Si l'annonce est toujours là, le mandat est peut-être arrivé à échéance. Appelle !"
       }
     ]
+  },
+
+  post_purchase: {
+    label: "Après-achat acquéreur",
+    steps: [
+      {
+        step_key: 'congrats_sent',
+        label: 'Message de félicitations envoyé ?',
+        delay_days: 0,
+        relative_to: 'workflow_start',
+        ai_suggestion: "Bravo pour cette vente ! Un petit message de félicitations à ton acquéreur.",
+        ai_action: 'generate_message',
+        ai_action_params: { scenario: 'felicitations_achat' }
+      },
+      {
+        step_key: 'google_review_buyer',
+        label: "Demande d'avis Google envoyée ?",
+        delay_days: 3,
+        relative_to: 'workflow_start',
+        ai_suggestion: "C'est le bon moment pour demander un avis Google. L'émotion est encore fraîche !",
+        ai_action: 'generate_message',
+        ai_action_params: { scenario: 'demande_avis' }
+      },
+      {
+        step_key: 'recommendation_buyer_3m',
+        label: 'Relance recommandation 3 mois faite ?',
+        delay_days: 90,
+        relative_to: 'workflow_start',
+        ai_suggestion: "Ça fait 3 mois. Comment se passe l'installation ? Profites-en pour demander s'ils connaissent quelqu'un qui cherche.",
+        ai_action: 'generate_message',
+        ai_action_params: { scenario: 'relance_recommandation' }
+      },
+      {
+        step_key: 'recommendation_buyer_6m',
+        label: 'Relance recommandation 6 mois faite ?',
+        delay_days: 180,
+        relative_to: 'workflow_start',
+        ai_suggestion: "6 mois déjà ! Un petit message pour garder le lien.",
+        ai_action: 'generate_message',
+        ai_action_params: { scenario: 'relance_recommandation' }
+      }
+    ]
   }
 };
 
@@ -288,6 +330,11 @@ const CELEBRATIONS = {
     "Toutes les étapes sont faites. Rien ne t'échappe !",
     "Workflow terminé. Tu gères ton dossier comme un pro.",
     "Tout est en ordre sur ce dossier. Continue comme ça !"
+  ],
+  bought_with_me: [
+    "Un acquéreur satisfait, c'est une future recommandation !",
+    "Belle transaction ! Pense à demander un avis Google.",
+    "Bravo, encore un client heureux !"
   ]
 };
 
@@ -310,6 +357,7 @@ function getWorkflowForStatus(status, leadType) {
     switch (status) {
       case 'nouveau':
       case 'actif': return 'active_buyer';
+      case 'achete_avec_moi': return 'post_purchase';
       default: return null;
     }
   }

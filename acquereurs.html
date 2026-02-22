@@ -2016,6 +2016,32 @@
             transition: all 0.2s;
         }
         .leon-fab:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
+
+        /* Célébration workflow */
+        .workflow-celebration {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 16px 28px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+            z-index: 99999;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .workflow-celebration.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .celebration-icon { font-size: 20px; }
     </style>
 </head>
 <body>
@@ -4407,6 +4433,21 @@
             leonCurrentLeadType = null;
         }
 
+        // ===== CÉLÉBRATION WORKFLOW LÉON =====
+        function showWorkflowCelebration(type) {
+            const message = getRandomCelebration(type);
+            if (!message) return;
+            const toast = document.createElement('div');
+            toast.className = 'workflow-celebration';
+            toast.innerHTML = `<span class="celebration-icon">🎯</span> <span>${message}</span>`;
+            document.body.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => {
+                toast.classList.remove('visible');
+                setTimeout(() => toast.remove(), 400);
+            }, 3500);
+        }
+
         function setupDragAndDrop() {
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
@@ -4482,6 +4523,10 @@
                             const wfUserId = await getCurrentUserId();
                             if (wfUserId) {
                                 await onLeadStatusChange(supabaseClient, wfUserId, buyerId, 'buyer', oldStatus, newStatus);
+                                // Célébration au passage en "Acheté avec moi"
+                                if (newStatus === 'achete_avec_moi') {
+                                    showWorkflowCelebration('bought_with_me');
+                                }
                             }
                         } catch (err) {
                             console.error('Workflow trigger error:', err);
