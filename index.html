@@ -2523,6 +2523,21 @@
         }
         .celebration-icon { font-size: 20px; }
 
+        /* Overlay Léon */
+        .leon-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 200ms ease;
+            pointer-events: none;
+        }
+        .leon-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
         /* Pop-up conversationnelle Léon */
         .leon-popup {
             position: fixed;
@@ -3288,6 +3303,7 @@
     </div>
 
     <!-- Pop-up Léon + FAB -->
+    <div id="leonOverlay" class="leon-overlay"></div>
     <div id="leonPopup" class="leon-popup" style="display:none"></div>
     <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()">🤖</button>
 
@@ -6195,6 +6211,13 @@
             popup.style.display = 'block';
             popup.className = 'leon-popup entering';
 
+            // Show overlay
+            const overlay = document.getElementById('leonOverlay');
+            if (overlay) {
+                overlay.classList.add('visible');
+                overlay.onclick = () => dismissLeonPopup();
+            }
+
             // Remove animation class after it completes
             setTimeout(() => popup.classList.remove('entering', 'entering-right'), 310);
 
@@ -6285,7 +6308,9 @@
             if (leonLaterTimeout) { clearTimeout(leonLaterTimeout); leonLaterTimeout = null; }
             const popup = document.getElementById('leonPopup');
             const fab = document.getElementById('leonFab');
+            const overlay = document.getElementById('leonOverlay');
             leonPopupDismissed = true;
+            if (overlay) overlay.classList.remove('visible');
             if (popup) { popup.style.display = 'none'; popup.className = 'leon-popup'; }
             // Show FAB if lead has workflow steps
             const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
@@ -6303,6 +6328,8 @@
         function hideLeonPopup() {
             const popup = document.getElementById('leonPopup');
             const fab = document.getElementById('leonFab');
+            const overlay = document.getElementById('leonOverlay');
+            if (overlay) overlay.classList.remove('visible');
             if (popup) { popup.style.display = 'none'; popup.className = 'leon-popup'; }
             if (fab) fab.style.display = 'none';
             leonPopupDismissed = false;
