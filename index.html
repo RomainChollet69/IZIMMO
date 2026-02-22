@@ -6362,7 +6362,7 @@
                         renderSellers();
                         // Insérer à la bonne position dans la nouvelle colonne
                         const newCard = container.querySelector(`.lead-card[data-id="${sellerId}"]`);
-                        if (newCard && position.before) {
+                        if (newCard && position.before && container.contains(position.before)) {
                             container.insertBefore(newCard, position.before);
                         }
                         await updatePositions(container, newStatus);
