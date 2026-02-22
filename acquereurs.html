@@ -2014,8 +2014,22 @@
             justify-content: center;
             font-size: 20px;
             transition: all 0.2s;
+            padding: 0;
+            overflow: hidden;
         }
         .leon-fab:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
+
+        /* Avatar Léon — classes réutilisables */
+        .leon-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            vertical-align: middle;
+        }
+        .leon-avatar-sm { width: 24px; height: 24px; }
+        .leon-avatar-lg { width: 40px; height: 40px; }
+        .leon-avatar-fab { width: 100%; height: 100%; }
 
         /* Bouton dictée vocale Léon */
         .leon-popup-btn-voice {
@@ -2538,7 +2552,7 @@
     <!-- Pop-up Léon + FAB -->
     <div id="leonOverlay" class="leon-overlay"></div>
     <div id="leonPopup" class="leon-popup" style="display:none"></div>
-    <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()">🤖</button>
+    <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-fab"></button>
 
     <script>
         // ===== DONNÉES =====
@@ -4372,7 +4386,7 @@
 
             popup.innerHTML = `
                 <div class="leon-popup-header">
-                    <div class="leon-popup-avatar">🤖 Léon</div>
+                    <div class="leon-popup-avatar"><img src="img/Leon.png" alt="Léon" class="leon-avatar" style="margin-right:6px"><strong>Léon</strong></div>
                     <button type="button" class="leon-popup-close" onclick="dismissLeonPopup()">✕</button>
                 </div>
                 <div class="leon-popup-body">
@@ -4436,7 +4450,7 @@
                     setTimeout(() => {
                         popup.innerHTML = `
                             <div class="leon-popup-header">
-                                <div class="leon-popup-avatar">🤖 Léon</div>
+                                <div class="leon-popup-avatar"><img src="img/Leon.png" alt="Léon" class="leon-avatar" style="margin-right:6px"><strong>Léon</strong></div>
                             </div>
                             <div class="leon-popup-congrats">
                                 <div class="leon-popup-congrats-icon">👌</div>
@@ -4547,7 +4561,7 @@
             }
 
             voiceArea.style.display = 'block';
-            voiceArea.innerHTML = '<div class="leon-voice-status">Léon t\'écoute...</div><button type="button" class="leon-voice-stop" id="leonVoiceStop">⏹ Arrêter</button>';
+            voiceArea.innerHTML = '<div class="leon-voice-status"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-sm" style="margin-right:6px">Léon t\'écoute...</div><button type="button" class="leon-voice-stop" id="leonVoiceStop">⏹ Arrêter</button>';
             if (voiceBtn) voiceBtn.classList.add('recording');
 
             document.getElementById('leonVoiceStop').addEventListener('click', () => {
@@ -4574,7 +4588,7 @@
                 }
 
                 // Parsing par Claude
-                voiceArea.innerHTML = '<div class="leon-voice-status"><div class="spinner"></div> Léon analyse ta réponse...</div>';
+                voiceArea.innerHTML = '<div class="leon-voice-status"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-sm" style="margin-right:6px"><div class="spinner"></div> Léon analyse ta réponse...</div>';
 
                 const buyerData = buyers.find(b => b.id === leonCurrentLeadId);
                 const leadName = buyerData ? `${buyerData.first_name || ''} ${buyerData.last_name || ''}`.trim() : '';
@@ -4600,7 +4614,7 @@
 
                 // Afficher la réponse de Léon
                 if (result.leon_response) {
-                    voiceArea.innerHTML = `<div class="leon-voice-response">🤖 ${escapeHtml(result.leon_response)}</div>`;
+                    voiceArea.innerHTML = `<div class="leon-voice-response"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-sm" style="margin-right:6px">${escapeHtml(result.leon_response)}</div>`;
                 }
 
                 // Transition vers l'étape suivante après 2s
@@ -4681,7 +4695,7 @@
             if (!message) return;
             const toast = document.createElement('div');
             toast.className = 'workflow-celebration';
-            toast.innerHTML = `<span class="celebration-icon">🎯</span> <span>${message}</span>`;
+            toast.innerHTML = `<img src="img/Leon.png" alt="Léon" class="leon-avatar" style="margin-right:8px"> <span>${message}</span>`;
             document.body.appendChild(toast);
             requestAnimationFrame(() => toast.classList.add('visible'));
             setTimeout(() => {
