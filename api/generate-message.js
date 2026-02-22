@@ -25,11 +25,19 @@ export default async function handler(req, res) {
         confirmation_rdv: "Confirmer un rendez-vous d'estimation avec le vendeur",
         compte_rendu_estimation: "Envoyer un compte-rendu après une estimation du bien",
         relance: "Relancer le vendeur qui n'a pas donné suite depuis un moment",
+        relance_estimation: "Relancer le vendeur après l'envoi d'une estimation sans retour de sa part",
         proposition_baisse: "Proposer une baisse de prix au vendeur pour dynamiser les visites",
         point_visites: "Faire un point sur les visites effectuées sur le bien",
         anniversaire_mandat: "Marquer l'anniversaire du mandat et faire un bilan",
         bonne_nouvelle: "Annoncer une bonne nouvelle (offre reçue, visite très intéressante...)",
         remerciement: "Remercier le vendeur (après signature, pour sa confiance...)",
+        mandat_signe: "Féliciter le vendeur pour la signature du mandat et confirmer les prochaines étapes",
+        demande_avis: "Demander un avis Google au client après une vente réussie, de manière chaleureuse et non insistante",
+        relance_recommandation: "Prendre des nouvelles du client et lui demander s'il connaît quelqu'un qui souhaite vendre ou acheter (3 ou 6 mois après la transaction)",
+        suivi_acquereur_pret: "Prendre des nouvelles du financement de l'acquéreur (prêt bancaire) après une vente",
+        relance_fin_mandat_concurrent: "Contacter un vendeur dont le mandat chez un agent concurrent arrive probablement à échéance, avec tact et professionnalisme",
+        redaction_annonce: "Rédiger une annonce immobilière complète et attractive pour ce bien. Structure : titre accrocheur, description engageante, points forts, informations pratiques (surface, pièces, DPE si dispo). Ne PAS formater comme un message de communication mais comme une vraie annonce immobilière",
+        repositionnement_prix: "Préparer un argumentaire de repositionnement prix pour le vendeur. S'appuyer sur les principes de Shift de Gary Keller : la fenêtre d'opportunité (première impression cruciale), le coût de la surévaluation (plus on attend, plus on perd), le concept des deux marchés (biens positionnés pour se vendre vs ceux qui stagnent). Être empathique mais factuel, utiliser les données fournies dans les instructions supplémentaires",
         libre: "Message libre selon les instructions de l'utilisateur"
     };
 
@@ -40,6 +48,10 @@ export default async function handler(req, res) {
         relance: "Relancer l'acquéreur qui n'a pas donné suite",
         point_recherche: "Faire un point sur l'avancement de la recherche immobilière",
         bonne_nouvelle: "Annoncer une bonne nouvelle (nouveau bien correspondant, offre acceptée...)",
+        felicitations_achat: "Féliciter chaleureusement l'acquéreur pour son achat immobilier",
+        selection_biens: "Envoyer une sélection de biens correspondant aux critères de recherche de l'acquéreur",
+        demande_avis: "Demander un avis Google à l'acquéreur après une transaction réussie, de manière chaleureuse",
+        relance_recommandation: "Prendre des nouvelles de l'acquéreur et lui demander s'il connaît quelqu'un qui cherche ou vend un bien",
         libre: "Message libre selon les instructions de l'utilisateur"
     };
 
@@ -68,7 +80,31 @@ export default async function handler(req, res) {
         notesContext = '\n\nDernières notes sur ce contact:\n' + notes.slice(0, 5).map(n => `- ${n}`).join('\n');
     }
 
-    const systemPrompt = `Tu es un assistant de rédaction pour un agent immobilier professionnel. Tu rédiges des messages personnalisés pour ses clients.
+    const isAnnonce = scenario === 'redaction_annonce';
+    const isArgPrix = scenario === 'repositionnement_prix';
+
+    let systemPrompt;
+    if (isAnnonce) {
+        systemPrompt = `Tu es un expert en rédaction d'annonces immobilières. Tu rédiges des annonces attractives et complètes pour un agent immobilier professionnel.
+
+Règles:
+- Structure l'annonce : titre accrocheur (1 ligne), description engageante (2-3 paragraphes), points forts en puces, informations pratiques
+- Utilise les informations du bien (adresse, surface, pièces, prix, type) pour personnaliser
+- Sois vendeur mais honnête — pas de superlatifs excessifs
+- Ne mets JAMAIS de placeholder entre crochets [xxx] — utilise les vraies informations ou omets le détail
+- Retourne UNIQUEMENT l'annonce, sans explication ni commentaire`;
+    } else if (isArgPrix) {
+        systemPrompt = `Tu es un consultant expert en stratégie de prix immobilier, inspiré des principes de Shift de Gary Keller. Tu prépares des argumentaires de repositionnement prix pour aider un agent immobilier à convaincre son vendeur.
+
+Règles:
+- Structure l'argumentaire : constat factuel, analyse du marché, recommandation, bénéfices pour le vendeur
+- Cite les principes clés : fenêtre d'opportunité, coût de la surévaluation, concept des deux marchés
+- Sois empathique mais factuel — pas de culpabilisation du vendeur
+- Utilise les données chiffrées fournies dans le contexte
+- Ne mets JAMAIS de placeholder entre crochets [xxx]
+- Retourne UNIQUEMENT l'argumentaire, sans explication`;
+    } else {
+        systemPrompt = `Tu es un assistant de rédaction pour un agent immobilier professionnel. Tu rédiges des messages personnalisés pour ses clients.
 
 Règles:
 - ${channelInstructions[channel] || channelInstructions.sms}
@@ -77,6 +113,7 @@ Règles:
 - Ne mets JAMAIS de placeholder entre crochets [xxx] — utilise les vraies informations ou omets le détail
 - Si une info n'est pas disponible, formule autrement sans placeholder
 - Retourne UNIQUEMENT le message, sans explication ni commentaire`;
+    }
 
     const userPrompt = `Contexte du ${leadType === 'buyer' ? 'acquéreur' : 'vendeur'}:\n${leadContext}${notesContext}
 

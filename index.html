@@ -2731,6 +2731,71 @@
         }
         .leon-fab:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
 
+        /* Bouton dictée vocale Léon */
+        .leon-popup-btn-voice {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #d1d5db;
+            background: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .leon-popup-btn-voice:hover { border-color: #38d9a9; background: #F0FDFA; }
+        .leon-popup-btn-voice.recording {
+            border-color: #ef4444;
+            background: #fef2f2;
+            animation: leonPulseRec 1.2s ease-in-out infinite;
+        }
+        @keyframes leonPulseRec {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+        }
+        .leon-voice-status {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .leon-voice-status .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e5e7eb;
+            border-top-color: #2DD4BF;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .leon-voice-stop {
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+            background: white;
+            transition: all 0.2s;
+        }
+        .leon-voice-stop:hover { background: #fef2f2; }
+        .leon-voice-response {
+            font-size: 13px;
+            color: #0D9488;
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: #F0FDFA;
+            border-radius: 8px;
+            line-height: 1.4;
+        }
+
         /* ===== BRIEFING DU MATIN ===== */
         .briefing-overlay {
             position: fixed;
@@ -3443,6 +3508,14 @@
                                     <option value="anniversaire_mandat">🎂 Anniversaire mandat</option>
                                     <option value="bonne_nouvelle">🎉 Bonne nouvelle</option>
                                     <option value="remerciement">🙏 Remerciement</option>
+                                    <option value="mandat_signe">✍️ Confirmation mandat signé</option>
+                                    <option value="demande_avis">⭐ Demande d'avis Google</option>
+                                    <option value="relance_recommandation">🤝 Relance recommandation</option>
+                                    <option value="suivi_acquereur_pret">🏦 Suivi prêt acquéreur</option>
+                                    <option value="relance_fin_mandat_concurrent">🔑 Relance fin mandat concurrent</option>
+                                    <option value="relance_estimation">📨 Relance post-estimation</option>
+                                    <option value="redaction_annonce">📝 Rédaction d'annonce</option>
+                                    <option value="repositionnement_prix">📊 Argumentaire repositionnement prix</option>
                                     <option value="libre">✏️ Message libre</option>
                                 </select>
                             </div>
@@ -6301,6 +6374,33 @@
         let leonCurrentLeadId = null;
         let leonCurrentLeadType = null;
         let leonLaterTimeout = null;
+        let leonRecorder = null;
+
+        // Labels personnalisés avec le prénom du lead
+        const PERSONALIZED_LABELS = {
+            first_contact_done: "Tu as eu {name} au téléphone ?",
+            appointment_scheduled: "RDV d'estimation calé avec {name} ?",
+            appointment_confirmed: "Confirmation envoyée à {name} ?",
+            estimation_visit_done: "RDV d'estimation fait chez {name} ?",
+            estimation_sent: "Estimation envoyée à {name} ?",
+            followup_j7: "Relance faite auprès de {name} ?",
+            followup_j14: "Deuxième relance faite auprès de {name} ?",
+            mandate_discussion: "Mandat proposé à {name} ?",
+            documents_requested: "Pièces demandées à {name} ?",
+            mandate_drafted: "Mandat envoyé à {name} pour signature ?",
+            mandate_signed: "Mandat signé par {name} ?",
+            buyers_matched: "Acquéreurs contactés pour le bien de {name} ?",
+            thank_you_sent: "Remerciement envoyé à {name} ?",
+            google_review: "Demande d'avis Google envoyée à {name} ?",
+            buyer_followup: "Suivi financement fait pour le bien de {name} ?",
+            recommendation_3m: "Pris des nouvelles de {name} ?",
+            recommendation_6m: "Petit message envoyé à {name} ?",
+            initial_check: "Annonce du bien de {name} repérée ?",
+            price_check_2w: "Prix du bien de {name} toujours le même ?",
+            price_check_1m: "Bien de {name} toujours en ligne ?",
+            mandate_expiry_check: "Mandat de {name} bientôt expiré ?",
+            recontact: "{name} recontacté ?"
+        };
 
         // Auto-skip des étapes conditionnelles (ex: buyers_matched sans acquéreurs)
         async function shouldAutoSkipStep(step, leadId, leadType) {
@@ -6388,8 +6488,11 @@
                 }
             });
 
-            // Enrichir la suggestion pour buyers_matched avec le vrai nombre
-            let stepLabel = step.step_label;
+            // Personnaliser le label avec le prénom du lead
+            const seller = sellers.find(s => s.id === leonCurrentLeadId);
+            const leadFirstName = seller?.first_name || '';
+            const personalizedTpl = PERSONALIZED_LABELS[step.step_key];
+            let stepLabel = (personalizedTpl && leadFirstName) ? personalizedTpl.replace('{name}', leadFirstName) : step.step_label;
             let stepSuggestion = step.ai_suggestion;
             if (step.step_key === 'buyers_matched' && step._matchCount) {
                 const n = step._matchCount;
@@ -6421,7 +6524,9 @@
                     <div class="leon-popup-actions">
                         <button type="button" class="leon-popup-btn leon-popup-btn-done" data-step-id="${step.id}">✅ C'est fait</button>
                         <button type="button" class="leon-popup-btn leon-popup-btn-later" data-step-id="${step.id}">⏳ Pas encore</button>
+                        <button type="button" class="leon-popup-btn-voice" data-step-id="${step.id}" title="Répondre à Léon">🎤</button>
                     </div>
+                    <div class="leon-popup-voice-area" id="leonVoiceArea" style="display:none;"></div>
                     <div class="leon-popup-extra" id="leonExtra">
                         ${step.ai_action ? `<button type="button" class="leon-popup-ai-btn" data-action="${step.ai_action}" data-scenario="${aiScenario}">${aiActionLabel}</button>` : '<span class="leon-popup-extra-text">OK, Léon te le rappellera.</span>'}
                     </div>
@@ -6463,7 +6568,6 @@
                 const displayActive = leonAllSteps.filter(s => s.status !== 'skipped');
 
                 if (nextPending) {
-                    // Animate transition: slide out left, then slide in right with next step
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
                         renderLeonStep(nextPending, displayActive);
@@ -6471,7 +6575,6 @@
                         setTimeout(() => popup.classList.remove('entering-right'), 310);
                     }, 260);
                 } else {
-                    // Plus aucune étape pending — congrats puis fermeture
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
                         popup.innerHTML = `
@@ -6500,9 +6603,14 @@
                 const extra = document.getElementById('leonExtra');
                 if (extra) {
                     extra.classList.add('visible');
-                    // Auto-fermeture après 1.5s
                     leonLaterTimeout = setTimeout(() => dismissLeonPopup(), 1500);
                 }
+            });
+
+            // Bind voice button
+            popup.querySelector('.leon-popup-btn-voice').addEventListener('click', function() {
+                if (leonLaterTimeout) { clearTimeout(leonLaterTimeout); leonLaterTimeout = null; }
+                startLeonVoice(step);
             });
 
             // Bind AI action button if present
@@ -6522,6 +6630,37 @@
                             }
                         }
                         dismissLeonPopup();
+                    } else if (action === 'generate_listing') {
+                        switchTab('messages');
+                        const select = document.getElementById('msgScenario');
+                        if (select) {
+                            select.value = 'redaction_annonce';
+                            if (typeof onScenarioChange === 'function') onScenarioChange();
+                        }
+                        dismissLeonPopup();
+                    } else if (action === 'generate_price_argument') {
+                        switchTab('messages');
+                        const select = document.getElementById('msgScenario');
+                        if (select) {
+                            select.value = 'repositionnement_prix';
+                            if (typeof onScenarioChange === 'function') onScenarioChange();
+                        }
+                        // Pré-remplir customPrompt avec les données contextuelles
+                        const sel = sellers.find(s => s.id === leonCurrentLeadId);
+                        if (sel) {
+                            const prompt = document.getElementById('msgCustomPrompt');
+                            if (prompt) {
+                                prompt.style.display = 'block';
+                                prompt.value = `Bien : ${sel.address || 'adresse inconnue'}, prix actuel : ${sel.mandate_price || sel.budget || '?'}€`;
+                            }
+                        }
+                        dismissLeonPopup();
+                    } else if (action === 'generate_social_post') {
+                        dismissLeonPopup();
+                        alert('Post réseaux sociaux — bientôt disponible !');
+                    } else if (action === 'send_feedback_form') {
+                        dismissLeonPopup();
+                        alert('Formulaire retour visite — bientôt disponible !');
                     } else {
                         console.log('AI action not yet implemented:', action);
                         dismissLeonPopup();
@@ -6562,6 +6701,148 @@
             leonAllSteps = [];
             leonCurrentLeadId = null;
             leonCurrentLeadType = null;
+        }
+
+        // ===== DICTÉE VOCALE LÉON =====
+        async function startLeonVoice(step) {
+            const voiceArea = document.getElementById('leonVoiceArea');
+            const voiceBtn = document.querySelector('.leon-popup-btn-voice');
+            if (!voiceArea) return;
+
+            // Si déjà en cours, stopper
+            if (leonRecorder && leonRecorder.isRecording) {
+                leonRecorder.stop();
+                return;
+            }
+
+            voiceArea.style.display = 'block';
+            voiceArea.innerHTML = '<div class="leon-voice-status">Léon t\'écoute...</div><button type="button" class="leon-voice-stop" id="leonVoiceStop">⏹ Arrêter</button>';
+            if (voiceBtn) voiceBtn.classList.add('recording');
+
+            document.getElementById('leonVoiceStop').addEventListener('click', () => {
+                if (leonRecorder) leonRecorder.stop();
+            });
+
+            leonRecorder = new AudioRecorder({
+                silenceTimeout: 3000,
+                maxDuration: 30000,
+                onStateChange: (state) => {
+                    if (state === 'transcribing') {
+                        voiceArea.innerHTML = '<div class="leon-voice-status"><div class="spinner"></div> Transcription en cours...</div>';
+                        if (voiceBtn) voiceBtn.classList.remove('recording');
+                    }
+                }
+            });
+
+            try {
+                const transcription = await leonRecorder.record();
+                if (!transcription || !transcription.trim()) {
+                    voiceArea.style.display = 'none';
+                    if (voiceBtn) voiceBtn.classList.remove('recording');
+                    return;
+                }
+
+                // Parsing par Claude
+                voiceArea.innerHTML = '<div class="leon-voice-status"><div class="spinner"></div> Léon analyse ta réponse...</div>';
+
+                const sellerData = sellers.find(s => s.id === leonCurrentLeadId);
+                const leadName = sellerData ? `${sellerData.first_name || ''} ${sellerData.last_name || ''}`.trim() : '';
+                const notes = currentNotes ? currentNotes.slice(0, 3).map(n => n.content) : [];
+
+                const resp = await fetch('/api/parse-workflow-response', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(),
+                    body: JSON.stringify({
+                        transcription,
+                        stepLabel: step.step_label,
+                        leadName,
+                        leadStatus: sellerData?.status || '',
+                        workflowType: step.workflow_type,
+                        sortOrder: step.sort_order,
+                        recentNotes: notes
+                    })
+                });
+                const result = await resp.json();
+                if (!resp.ok) throw new Error(result.error || 'Erreur de parsing');
+
+                await processVoiceResponse(step.id, result, leonCurrentLeadId, 'seller');
+
+                // Afficher la réponse de Léon
+                if (result.leon_response) {
+                    voiceArea.innerHTML = `<div class="leon-voice-response">🤖 ${escapeHtml(result.leon_response)}</div>`;
+                }
+
+                // Transition vers l'étape suivante après 2s
+                setTimeout(async () => {
+                    if (result.step_completed) {
+                        const userId = await getCurrentUserId();
+                        const freshSteps = await getWorkflowSteps(supabaseClient, userId, leonCurrentLeadId, leonCurrentLeadType);
+                        leonAllSteps = freshSteps || [];
+                        const freshActive = leonAllSteps.filter(s => s.status !== 'skipped');
+                        const nextPending = await findNextDisplayableStep(freshActive, leonCurrentLeadId, leonCurrentLeadType);
+                        const displayActive = leonAllSteps.filter(s => s.status !== 'skipped');
+
+                        if (nextPending) {
+                            const popup = document.getElementById('leonPopup');
+                            popup.className = 'leon-popup exiting-left';
+                            setTimeout(() => {
+                                renderLeonStep(nextPending, displayActive);
+                                popup.className = 'leon-popup entering-right';
+                                setTimeout(() => popup.classList.remove('entering-right'), 310);
+                            }, 260);
+                        } else {
+                            dismissLeonPopup();
+                            showWorkflowCelebration('workflow_complete');
+                        }
+                    } else {
+                        voiceArea.style.display = 'none';
+                    }
+                }, 2000);
+
+            } catch (err) {
+                console.error('Leon voice error:', err);
+                voiceArea.innerHTML = `<div class="leon-voice-status" style="color:#ef4444;">Erreur : ${escapeHtml(err.message)}</div>`;
+                if (voiceBtn) voiceBtn.classList.remove('recording');
+                setTimeout(() => { voiceArea.style.display = 'none'; }, 3000);
+            }
+        }
+
+        async function processVoiceResponse(stepId, result, leadId, leadType) {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+
+            // 1. Marquer l'étape comme done si nécessaire
+            if (result.step_completed) {
+                await completeStep(supabaseClient, stepId);
+            }
+
+            // 2. Créer une note si résumé disponible
+            if (result.note_summary) {
+                const noteCol = leadType === 'seller' ? 'seller_id' : 'buyer_id';
+                const { data } = await supabaseClient
+                    .from('lead_notes')
+                    .insert({ user_id: userId, [noteCol]: leadId, content: '🎤 ' + result.note_summary })
+                    .select()
+                    .single();
+                if (data && typeof currentNotes !== 'undefined') {
+                    currentNotes.unshift(data);
+                    if (typeof renderNotes === 'function') renderNotes();
+                }
+            }
+
+            // 3. Mettre à jour le rappel si date fournie
+            if (result.reminder_date) {
+                const table = leadType === 'seller' ? 'sellers' : 'buyers';
+                await supabaseClient
+                    .from(table)
+                    .update({ reminder: result.reminder_date })
+                    .eq('id', leadId);
+            }
+
+            // 4. Créer un todo si nécessaire
+            if (result.todo_text && typeof addTodo === 'function') {
+                addTodo(result.todo_text);
+            }
         }
 
         // ===== BRIEFING DU MATIN =====
