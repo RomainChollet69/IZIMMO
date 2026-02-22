@@ -6302,6 +6302,41 @@
         let leonCurrentLeadType = null;
         let leonLaterTimeout = null;
 
+        // Auto-skip des étapes conditionnelles (ex: buyers_matched sans acquéreurs)
+        async function shouldAutoSkipStep(step, leadId, leadType) {
+            if (step.step_key === 'buyers_matched' && leadType === 'seller') {
+                const seller = sellers.find(s => s.id === leadId);
+                if (!seller) return true;
+                const buyers = await loadBuyersForMatching();
+                const matchCount = buyers.filter(b => {
+                    const r = calculateMatchScore(seller, b);
+                    return !r.eliminated && r.percent >= 70;
+                }).length;
+                if (matchCount === 0) return true;
+                // Injecter le vrai nombre dans le step pour l'affichage
+                step._matchCount = matchCount;
+            }
+            return false;
+        }
+
+        // Trouve la prochaine étape pending, en auto-skippant celles non pertinentes
+        async function findNextDisplayableStep(activeSteps, leadId, leadType) {
+            for (const step of activeSteps) {
+                if (step.status !== 'pending') continue;
+                if (await shouldAutoSkipStep(step, leadId, leadType)) {
+                    // Auto-skip en DB
+                    await supabaseClient
+                        .from('workflow_steps')
+                        .update({ status: 'skipped', updated_at: new Date().toISOString() })
+                        .eq('id', step.id);
+                    step.status = 'skipped';
+                    continue;
+                }
+                return step;
+            }
+            return null;
+        }
+
         async function showLeonPopup(leadId, leadType) {
             leonCurrentLeadId = leadId;
             leonCurrentLeadType = leadType;
@@ -6321,17 +6356,19 @@
             const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
             if (activeSteps.length === 0) { popup.style.display = 'none'; fab.style.display = 'none'; return; }
 
-            // Première étape pending par sort_order (pas de filtre de date)
-            const nextStep = activeSteps.find(s => s.status === 'pending');
+            // Première étape pending (auto-skip si non pertinente)
+            const nextStep = await findNextDisplayableStep(activeSteps, leadId, leadType);
             if (!nextStep) {
-                // Toutes les étapes sont done
                 popup.style.display = 'none';
                 fab.style.display = 'none';
                 return;
             }
 
+            // Recalculer activeSteps après d'éventuels auto-skips
+            const displaySteps = leonAllSteps.filter(s => s.status !== 'skipped');
+
             fab.style.display = 'none';
-            renderLeonStep(nextStep, activeSteps);
+            renderLeonStep(nextStep, displaySteps);
         }
 
         function renderLeonStep(step, activeSteps) {
@@ -6350,6 +6387,14 @@
                     dotsHtml += '<span class="leon-popup-dot"></span>';
                 }
             });
+
+            // Enrichir la suggestion pour buyers_matched avec le vrai nombre
+            let stepLabel = step.step_label;
+            let stepSuggestion = step.ai_suggestion;
+            if (step.step_key === 'buyers_matched' && step._matchCount) {
+                const n = step._matchCount;
+                stepSuggestion = `Tu as ${n} acquéreur${n > 1 ? 's' : ''} qui matchent à +70%. On leur envoie un message ?`;
+            }
 
             // Look up ai_action_params from WORKFLOWS definition (not stored in DB)
             let aiScenario = '';
@@ -6371,8 +6416,8 @@
                     <button type="button" class="leon-popup-close" onclick="dismissLeonPopup()">✕</button>
                 </div>
                 <div class="leon-popup-body">
-                    <div class="leon-popup-question">"${escapeHtml(step.step_label)}"</div>
-                    ${step.ai_suggestion ? `<div class="leon-popup-suggestion">💡 ${escapeHtml(step.ai_suggestion)}</div>` : ''}
+                    <div class="leon-popup-question">"${escapeHtml(stepLabel)}"</div>
+                    ${stepSuggestion ? `<div class="leon-popup-suggestion">💡 ${escapeHtml(stepSuggestion)}</div>` : ''}
                     <div class="leon-popup-actions">
                         <button type="button" class="leon-popup-btn leon-popup-btn-done" data-step-id="${step.id}">✅ C'est fait</button>
                         <button type="button" class="leon-popup-btn leon-popup-btn-later" data-step-id="${step.id}">⏳ Pas encore</button>
@@ -6413,13 +6458,15 @@
                 const freshSteps = await getWorkflowSteps(supabaseClient, userId, leonCurrentLeadId, leonCurrentLeadType);
                 leonAllSteps = freshSteps || [];
                 const freshActive = leonAllSteps.filter(s => s.status !== 'skipped');
-                const nextPending = freshActive.find(s => s.status === 'pending');
+                const nextPending = await findNextDisplayableStep(freshActive, leonCurrentLeadId, leonCurrentLeadType);
+                // Recalculer après auto-skips
+                const displayActive = leonAllSteps.filter(s => s.status !== 'skipped');
 
                 if (nextPending) {
                     // Animate transition: slide out left, then slide in right with next step
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
-                        renderLeonStep(nextPending, freshActive);
+                        renderLeonStep(nextPending, displayActive);
                         popup.className = 'leon-popup entering-right';
                         setTimeout(() => popup.classList.remove('entering-right'), 310);
                     }, 260);
