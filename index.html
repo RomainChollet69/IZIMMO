@@ -2811,16 +2811,17 @@
         }
 
         /* ===== BRIEFING DU MATIN ===== */
+        /* === BRIEFING DU MATIN === */
         .briefing-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.35);
+            background: rgba(0, 0, 0, 0.4);
             z-index: 2000;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
-            transition: opacity 250ms ease;
+            transition: opacity 300ms ease;
             pointer-events: none;
         }
         .briefing-overlay.visible {
@@ -2829,67 +2830,123 @@
         }
         .briefing-card {
             background: white;
-            border-radius: 16px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
-            width: 580px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            width: 420px;
             max-width: calc(100vw - 32px);
             max-height: calc(100vh - 64px);
             overflow-y: auto;
-            transform: translateY(20px);
-            transition: transform 250ms ease;
+            overflow-x: hidden;
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 300ms ease-out, opacity 300ms ease-out;
         }
         .briefing-overlay.visible .briefing-card {
-            transform: translateY(0);
+            transform: scale(1);
+            opacity: 1;
         }
+        /* Header avec dégradé et Léon */
         .briefing-header {
+            position: relative;
+            background: linear-gradient(180deg, #E8EFFF 0%, #F5F7FF 40%, #FFFFFF 100%);
+            padding: 28px 24px 20px;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 24px 28px 16px;
+            gap: 16px;
+            overflow: visible;
+        }
+        .briefing-header-dot {
+            position: absolute;
+            border-radius: 50%;
+            background: #A0B4F0;
+            opacity: 0.45;
+        }
+        .briefing-header-dot:nth-child(1) { width: 8px; height: 8px; top: 10px; left: 30px; }
+        .briefing-header-dot:nth-child(2) { width: 6px; height: 6px; top: 18px; left: 80px; }
+        .briefing-header-dot:nth-child(3) { width: 7px; height: 7px; top: 8px; right: 60px; }
+        .briefing-header-leon {
+            flex-shrink: 0;
+            width: 100px;
+            height: 120px;
+            object-fit: contain;
+            margin-top: -20px;
+        }
+        .briefing-header-text {
+            flex: 1;
+            min-width: 0;
         }
         .briefing-title {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-weight: 800;
-            font-size: 20px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
             color: #1a1a1a;
+            line-height: 1.2;
+        }
+        .briefing-date {
+            font-size: 16px;
+            color: #6b7280;
+            margin-top: 4px;
         }
         .briefing-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
             background: none;
             border: none;
             font-size: 18px;
             cursor: pointer;
-            color: #94a3b8;
+            color: #9ca3af;
             padding: 4px 8px;
             border-radius: 6px;
+            z-index: 1;
         }
-        .briefing-close:hover { background: #f1f5f9; color: #475569; }
+        .briefing-close:hover { background: rgba(0,0,0,0.05); color: #475569; }
+        /* Sections */
         .briefing-section {
-            padding: 0 28px;
+            padding: 0 24px;
         }
         .briefing-section-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-weight: 700;
-            font-size: 13px;
+            font-size: 18px;
+            color: #1a1a1a;
+            margin: 20px 0 12px;
+        }
+        .briefing-section-label {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
-            margin: 16px 0 8px;
+            letter-spacing: 1px;
+            color: #6b7280;
+            margin: 20px 0 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        .briefing-divider {
-            border: none;
-            border-top: 1px solid #e5e7eb;
-            margin: 16px 28px;
+        .briefing-section-label::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 14px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
         }
+        /* Items — cartes internes */
         .briefing-item {
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            padding: 8px 12px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, box-shadow 0.15s;
+            margin-bottom: 10px;
         }
-        .briefing-item:hover { background: #f8fafc; }
+        .briefing-item:last-child { margin-bottom: 0; }
+        .briefing-item:hover { background: #f8fafc; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .briefing-item-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
         .briefing-item-content { flex: 1; min-width: 0; }
         .briefing-item-label {
@@ -2898,66 +2955,95 @@
             color: #1e293b;
         }
         .briefing-item-sub {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 2px;
+            font-size: 13px;
+            color: #374151;
+            margin-top: 3px;
         }
         .briefing-item-suggestion {
-            font-size: 12px;
-            color: #8b5cf6;
-            margin-top: 3px;
+            font-size: 13px;
+            color: #9ca3af;
+            margin-top: 4px;
             font-style: italic;
         }
         .briefing-item-action {
-            font-size: 12px;
-            color: #667eea;
+            font-size: 13px;
+            color: #4F7DF5;
             font-weight: 600;
             flex-shrink: 0;
             align-self: center;
+            white-space: nowrap;
         }
-        .briefing-stats {
-            display: flex;
-            gap: 16px;
-            padding: 12px 16px;
-            background: #f8fafc;
-            border-radius: 10px;
-            flex-wrap: wrap;
-        }
-        .briefing-stat {
+        /* Stats "Ce mois-ci" */
+        .briefing-stats-card {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            color: #475569;
+            gap: 8px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            font-size: 14px;
+            color: #374151;
+            flex-wrap: wrap;
         }
-        .briefing-stat-value {
-            font-weight: 700;
+        .briefing-stats-card strong {
             color: #1e293b;
         }
-        .briefing-encouragement {
-            padding: 12px 16px;
-            background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-            border-radius: 10px;
-            font-size: 14px;
-            color: #4338ca;
-            text-align: center;
+        .briefing-stats-sep {
+            color: #d1d5db;
         }
+        /* Footer avec Léon et encouragement */
         .briefing-footer {
-            padding: 16px 28px 24px;
-            text-align: center;
+            background: linear-gradient(180deg, #FFFFFF 0%, #F5F7FF 60%, #E8EFFF 100%);
+            padding: 20px 24px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .briefing-footer-inner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+        .briefing-footer-leon {
+            flex-shrink: 0;
+            width: 80px;
+            height: 100px;
+            object-fit: contain;
+        }
+        .briefing-footer-text {
+            flex: 1;
+            min-width: 0;
+        }
+        .briefing-footer-main {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+        .briefing-footer-sub {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 4px;
         }
         .briefing-cta {
             background: #2DD4BF;
             color: white;
             border: none;
-            padding: 12px 32px;
-            border-radius: 10px;
+            padding: 12px 48px;
+            border-radius: 12px;
             font-weight: 700;
             font-size: 15px;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: background 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 12px rgba(45, 212, 191, 0.25);
+            width: 60%;
+            text-align: center;
         }
-        .briefing-cta:hover { background: #14b8a6; }
+        .briefing-cta:hover { background: #14b8a6; box-shadow: 0 6px 16px rgba(45, 212, 191, 0.35); }
         .briefing-btn-header {
             background: none;
             border: 1px solid #e2e8f0;
@@ -2972,13 +3058,15 @@
             gap: 4px;
         }
         .briefing-btn-header:hover { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
-        @media (max-width: 640px) {
-            .briefing-card { border-radius: 12px; }
-            .briefing-header { padding: 20px 20px 12px; }
-            .briefing-section { padding: 0 20px; }
-            .briefing-divider { margin: 12px 20px; }
-            .briefing-footer { padding: 12px 20px 20px; }
-            .briefing-stats { flex-direction: column; gap: 8px; }
+        @media (max-width: 480px) {
+            .briefing-card { width: 95vw; border-radius: 16px; }
+            .briefing-header { padding: 20px 16px 16px; gap: 12px; }
+            .briefing-header-leon { width: 70px; height: 90px; }
+            .briefing-title { font-size: 20px; }
+            .briefing-section { padding: 0 16px; }
+            .briefing-footer { padding: 16px 16px 20px; }
+            .briefing-footer-leon { width: 60px; height: 80px; }
+            .briefing-cta { width: 80%; padding: 12px 24px; }
         }
     </style>
 </head>
@@ -6982,6 +7070,7 @@
             const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
             const dayName = dayNames[now.getDay()];
             const dateStr = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+            const isMonday = now.getDay() === 1;
 
             const { actionableSteps, reminders, mandatesCount, salesCount, totalCommission } = data;
 
@@ -6989,16 +7078,24 @@
             const hasContent = actionableSteps.length > 0 || reminders.length > 0 || mandatesCount > 0 || salesCount > 0;
             if (!hasContent) return false;
 
+            // === HEADER avec Léon ===
             let html = `
                 <div class="briefing-header">
-                    <div class="briefing-title"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-lg" style="margin-right:8px">Bonjour ${escapeHtml(firstName)} — ${dayName} ${dateStr}</div>
+                    <span class="briefing-header-dot"></span>
+                    <span class="briefing-header-dot"></span>
+                    <span class="briefing-header-dot"></span>
+                    <img src="img/Leon.png" alt="Léon" class="briefing-header-leon">
+                    <div class="briefing-header-text">
+                        <div class="briefing-title">Bonjour ${escapeHtml(firstName)} 👋</div>
+                        <div class="briefing-date">${dayName} ${dateStr}</div>
+                    </div>
                     <button type="button" class="briefing-close" onclick="closeBriefing()">✕</button>
                 </div>
             `;
 
-            // Section 1 — Actions workflow
+            // === Section 1 — Actions workflow ===
             if (actionableSteps.length > 0) {
-                html += `<div class="briefing-section"><div class="briefing-section-title">📋 Tes actions du jour</div>`;
+                html += `<div class="briefing-section"><div class="briefing-section-title">📋 À faire aujourd'hui</div>`;
                 for (const step of actionableSteps) {
                     const lead = step.sellers || step.buyers;
                     const leadName = lead ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 'Lead';
@@ -7019,9 +7116,8 @@
                 html += `</div>`;
             }
 
-            // Section 2 — Rappels du jour
+            // === Section 2 — Rappels du jour ===
             if (reminders.length > 0) {
-                if (actionableSteps.length > 0) html += `<hr class="briefing-divider">`;
                 html += `<div class="briefing-section"><div class="briefing-section-title">🔔 Rappels du jour</div>`;
                 for (const r of reminders) {
                     const rName = `${r.first_name || ''} ${r.last_name || ''}`.trim();
@@ -7040,34 +7136,53 @@
                 html += `</div>`;
             }
 
-            // Section 3 — Stats du mois
+            // === Section 3 — Stats du mois ===
             if (mandatesCount > 0 || salesCount > 0) {
-                html += `<hr class="briefing-divider">`;
-                html += `<div class="briefing-section"><div class="briefing-section-title">📊 Ce mois</div>`;
-                html += `<div class="briefing-stats">`;
-                html += `<div class="briefing-stat">📝 Mandats signés : <span class="briefing-stat-value">${mandatesCount}</span></div>`;
-                html += `<div class="briefing-stat">✅ Ventes : <span class="briefing-stat-value">${salesCount}</span></div>`;
+                html += `<div class="briefing-section"><div class="briefing-section-label">CE MOIS-CI</div>`;
+                let statsLine = `📝 Mandats signés : <strong>${mandatesCount}</strong> <span class="briefing-stats-sep">·</span> ✅ Ventes : <strong>${salesCount}</strong>`;
                 if (totalCommission > 0) {
                     const fmtComm = totalCommission >= 1000 ? (totalCommission / 1000).toFixed(1).replace('.0', '') + 'K' : totalCommission;
-                    html += `<div class="briefing-stat">💰 Commissions : <span class="briefing-stat-value">${fmtComm}€ HT</span></div>`;
+                    statsLine += ` <span class="briefing-stats-sep">·</span> 💰 ${fmtComm}€ HT`;
                 }
-                html += `</div></div>`;
+                html += `<div class="briefing-stats-card">${statsLine}</div>`;
+                html += `</div>`;
             }
 
-            // Section 4 — Encouragement
-            let encouragement = '';
-            if (actionableSteps.length > 3) encouragement = "Quelques dossiers t'attendent. On s'y met ? 💪";
-            else if (actionableSteps.length > 0) encouragement = "Quelques actions en attente. Allez, on y va !";
-            else if (salesCount > 0) encouragement = "Belle performance ce mois-ci ! 🎉";
-            else if (mandatesCount > 0) encouragement = "Les mandats rentrent, continue comme ça !";
-            else if (reminders.length > 0) encouragement = "Bonne journée pour prendre des nouvelles de tes contacts.";
-            else encouragement = "C'est calme. Bonne journée pour prospecter ? 🔍";
-
-            html += `<hr class="briefing-divider">`;
-            html += `<div class="briefing-section"><div class="briefing-encouragement"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-sm" style="margin-right:6px">${escapeHtml(encouragement)}</div></div>`;
+            // === Footer — Léon + encouragement ===
+            let encourageMain = '';
+            let encourageSub = '';
+            if (isMonday) {
+                encourageMain = 'Bonne semaine !';
+                encourageSub = 'On attaque fort.';
+            } else if (actionableSteps.length > 3) {
+                encourageMain = 'Quelques actions en attente.';
+                encourageSub = "On s'y met ? 💪";
+            } else if (actionableSteps.length > 0) {
+                encourageMain = 'Quelques actions en attente.';
+                encourageSub = 'Allez, on y va !';
+            } else if (salesCount > 0) {
+                encourageMain = 'Belle performance ce mois-ci !';
+                encourageSub = 'Tu es en forme.';
+            } else if (mandatesCount > 0) {
+                encourageMain = 'Les mandats rentrent !';
+                encourageSub = 'Continue comme ça 💪';
+            } else if (reminders.length > 0) {
+                encourageMain = 'Tout roule !';
+                encourageSub = 'Bonne journée pour prendre des nouvelles.';
+            } else {
+                encourageMain = "C'est calme.";
+                encourageSub = 'Bonne journée pour prospecter ?';
+            }
 
             html += `
                 <div class="briefing-footer">
+                    <div class="briefing-footer-inner">
+                        <img src="img/Leogo.png" alt="Léon" class="briefing-footer-leon">
+                        <div class="briefing-footer-text">
+                            <div class="briefing-footer-main">${escapeHtml(encourageMain)}</div>
+                            <div class="briefing-footer-sub">${escapeHtml(encourageSub)}</div>
+                        </div>
+                    </div>
                     <button type="button" class="briefing-cta" onclick="closeBriefing()">C'est parti !</button>
                 </div>
             `;
