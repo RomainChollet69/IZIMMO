@@ -2730,6 +2730,177 @@
             transition: all 0.2s;
         }
         .leon-fab:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
+
+        /* ===== BRIEFING DU MATIN ===== */
+        .briefing-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 250ms ease;
+            pointer-events: none;
+        }
+        .briefing-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .briefing-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            width: 580px;
+            max-width: calc(100vw - 32px);
+            max-height: calc(100vh - 64px);
+            overflow-y: auto;
+            transform: translateY(20px);
+            transition: transform 250ms ease;
+        }
+        .briefing-overlay.visible .briefing-card {
+            transform: translateY(0);
+        }
+        .briefing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 28px 16px;
+        }
+        .briefing-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 20px;
+            color: #1a1a1a;
+        }
+        .briefing-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            color: #94a3b8;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .briefing-close:hover { background: #f1f5f9; color: #475569; }
+        .briefing-section {
+            padding: 0 28px;
+        }
+        .briefing-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin: 16px 0 8px;
+        }
+        .briefing-divider {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 16px 28px;
+        }
+        .briefing-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .briefing-item:hover { background: #f8fafc; }
+        .briefing-item-icon { font-size: 16px; flex-shrink: 0; margin-top: 2px; }
+        .briefing-item-content { flex: 1; min-width: 0; }
+        .briefing-item-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .briefing-item-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .briefing-item-suggestion {
+            font-size: 12px;
+            color: #8b5cf6;
+            margin-top: 3px;
+            font-style: italic;
+        }
+        .briefing-item-action {
+            font-size: 12px;
+            color: #667eea;
+            font-weight: 600;
+            flex-shrink: 0;
+            align-self: center;
+        }
+        .briefing-stats {
+            display: flex;
+            gap: 16px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 10px;
+            flex-wrap: wrap;
+        }
+        .briefing-stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #475569;
+        }
+        .briefing-stat-value {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .briefing-encouragement {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
+            border-radius: 10px;
+            font-size: 14px;
+            color: #4338ca;
+            text-align: center;
+        }
+        .briefing-footer {
+            padding: 16px 28px 24px;
+            text-align: center;
+        }
+        .briefing-cta {
+            background: #2DD4BF;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .briefing-cta:hover { background: #14b8a6; }
+        .briefing-btn-header {
+            background: none;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .briefing-btn-header:hover { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+        @media (max-width: 640px) {
+            .briefing-card { border-radius: 12px; }
+            .briefing-header { padding: 20px 20px 12px; }
+            .briefing-section { padding: 0 20px; }
+            .briefing-divider { margin: 12px 20px; }
+            .briefing-footer { padding: 12px 20px 20px; }
+            .briefing-stats { flex-direction: column; gap: 8px; }
+        }
     </style>
 </head>
 <body>
@@ -2758,6 +2929,9 @@
 
             <!-- Zone droite : Actions -->
             <div class="header-actions">
+                <!-- Briefing du matin -->
+                <button class="briefing-btn-header" id="briefingBtn" onclick="showBriefing()" title="Briefing du matin">☀️ Briefing</button>
+
                 <!-- Alerte relances -->
                 <button class="alert-bell" id="alertBell" title="Relances du jour">
                     <i class="fa-solid fa-bell"></i>
@@ -3303,6 +3477,13 @@
     </div>
 
     <!-- Pop-up Léon + FAB -->
+    <!-- Briefing du matin -->
+    <div id="briefingOverlay" class="briefing-overlay" onclick="if(event.target===this)closeBriefing()">
+        <div class="briefing-card" id="briefingCard">
+            <!-- Rempli dynamiquement par JS -->
+        </div>
+    </div>
+
     <div id="leonOverlay" class="leon-overlay"></div>
     <div id="leonPopup" class="leon-popup" style="display:none"></div>
     <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()">🤖</button>
@@ -6336,6 +6517,245 @@
             leonCurrentLeadType = null;
         }
 
+        // ===== BRIEFING DU MATIN =====
+        async function loadBriefingData() {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayStr = today.toISOString().split('T')[0];
+
+            // 1. Étapes workflow pending dont l'étape précédente est done (regroupées par lead)
+            const { data: pendingSteps } = await supabaseClient
+                .from('workflow_steps')
+                .select('*, sellers(id, first_name, last_name, status), buyers(id, first_name, last_name, status)')
+                .eq('user_id', userId)
+                .eq('status', 'pending')
+                .order('created_at', { ascending: true })
+                .order('sort_order', { ascending: true });
+
+            // Group pending steps by lead and find "actionable" ones
+            // V1 simplifiée : étapes pending dont l'étape précédente (sort_order - 1) est done
+            const actionableSteps = [];
+            if (pendingSteps && pendingSteps.length > 0) {
+                // Group by lead key
+                const byLead = {};
+                for (const step of pendingSteps) {
+                    const key = step.seller_id || step.buyer_id;
+                    if (!byLead[key]) byLead[key] = [];
+                    byLead[key].push(step);
+                }
+                // For each lead, get all workflow steps to check previous step
+                for (const [leadKey, steps] of Object.entries(byLead)) {
+                    const leadType = steps[0].seller_id ? 'seller' : 'buyer';
+                    const leadCol = leadType === 'seller' ? 'seller_id' : 'buyer_id';
+                    const { data: allSteps } = await supabaseClient
+                        .from('workflow_steps')
+                        .select('id, status, sort_order, workflow_type')
+                        .eq('user_id', userId)
+                        .eq(leadCol, leadKey)
+                        .order('sort_order', { ascending: true });
+                    if (!allSteps) continue;
+                    // Group by workflow_type
+                    const byWf = {};
+                    for (const s of allSteps) {
+                        if (!byWf[s.workflow_type]) byWf[s.workflow_type] = [];
+                        byWf[s.workflow_type].push(s);
+                    }
+                    // Find the first actionable pending step for this lead
+                    let found = false;
+                    for (const step of steps) {
+                        if (found) break;
+                        const wfSteps = byWf[step.workflow_type] || [];
+                        const idx = wfSteps.findIndex(s => s.id === step.id);
+                        // First step of workflow → always actionable
+                        if (idx === 0 || (idx > 0 && wfSteps[idx - 1].status === 'done')) {
+                            actionableSteps.push(step);
+                            found = true;
+                        }
+                    }
+                }
+            }
+
+            // 2. Rappels du jour
+            const { data: sellerReminders } = await supabaseClient
+                .from('sellers')
+                .select('id, first_name, last_name, reminder, status')
+                .eq('user_id', userId)
+                .eq('reminder', todayStr);
+            const { data: buyerReminders } = await supabaseClient
+                .from('buyers')
+                .select('id, first_name, last_name, reminder, status')
+                .eq('user_id', userId)
+                .eq('reminder', todayStr);
+
+            // Dédupliquer : exclure les rappels dont le lead a déjà une étape workflow
+            const workflowLeadIds = new Set(actionableSteps.map(s => s.seller_id || s.buyer_id));
+            const reminders = [
+                ...(sellerReminders || []).filter(r => !workflowLeadIds.has(r.id)).map(r => ({ ...r, leadType: 'seller' })),
+                ...(buyerReminders || []).filter(r => !workflowLeadIds.has(r.id)).map(r => ({ ...r, leadType: 'buyer' }))
+            ];
+
+            // 3. Stats du mois
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+            const { data: mandatesSellers } = await supabaseClient
+                .from('sellers')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('status', 'mandate')
+                .gte('mandate_start_date', monthStart.split('T')[0]);
+            const { data: soldSellers } = await supabaseClient
+                .from('sellers')
+                .select('id, commission_amount')
+                .eq('user_id', userId)
+                .eq('status', 'sold')
+                .gte('updated_at', monthStart);
+
+            const mandatesCount = mandatesSellers ? mandatesSellers.length : 0;
+            const salesCount = soldSellers ? soldSellers.length : 0;
+            const totalCommission = soldSellers ? soldSellers.reduce((sum, s) => sum + (s.commission_amount || 0), 0) : 0;
+
+            return {
+                actionableSteps,
+                reminders,
+                mandatesCount,
+                salesCount,
+                totalCommission
+            };
+        }
+
+        function renderBriefing(data) {
+            const overlay = document.getElementById('briefingOverlay');
+            const card = document.getElementById('briefingCard');
+            if (!overlay || !card) return;
+
+            // Prénom de l'utilisateur
+            const nameEl = document.querySelector('.user-name');
+            const fullName = nameEl ? nameEl.textContent.trim() : '';
+            const firstName = fullName.split(' ')[0] || '';
+
+            // Date formatée
+            const now = new Date();
+            const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+            const dayName = dayNames[now.getDay()];
+            const dateStr = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+
+            const { actionableSteps, reminders, mandatesCount, salesCount, totalCommission } = data;
+
+            // Vérifier s'il y a quelque chose à afficher
+            const hasContent = actionableSteps.length > 0 || reminders.length > 0 || mandatesCount > 0 || salesCount > 0;
+            if (!hasContent) return false;
+
+            let html = `
+                <div class="briefing-header">
+                    <div class="briefing-title">☀️ Bonjour ${escapeHtml(firstName)} — ${dayName} ${dateStr}</div>
+                    <button type="button" class="briefing-close" onclick="closeBriefing()">✕</button>
+                </div>
+            `;
+
+            // Section 1 — Actions workflow
+            if (actionableSteps.length > 0) {
+                html += `<div class="briefing-section"><div class="briefing-section-title">📋 Tes actions du jour</div>`;
+                for (const step of actionableSteps) {
+                    const lead = step.sellers || step.buyers;
+                    const leadName = lead ? `${lead.first_name || ''} ${lead.last_name || ''}`.trim() : 'Lead';
+                    const leadId = step.seller_id || step.buyer_id;
+                    const isSellerLead = !!step.seller_id;
+                    html += `
+                        <div class="briefing-item" onclick="${isSellerLead ? `editSeller('${leadId}')` : `window.location.href='acquereurs.html?openLead=${leadId}'`}; closeBriefing();">
+                            <span class="briefing-item-icon">⚠️</span>
+                            <div class="briefing-item-content">
+                                <div class="briefing-item-label">${escapeHtml(leadName)}</div>
+                                <div class="briefing-item-sub">${escapeHtml(step.step_label)}</div>
+                                ${step.ai_suggestion ? `<div class="briefing-item-suggestion">💡 ${escapeHtml(step.ai_suggestion)}</div>` : ''}
+                            </div>
+                            <span class="briefing-item-action">Ouvrir →</span>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            // Section 2 — Rappels du jour
+            if (reminders.length > 0) {
+                if (actionableSteps.length > 0) html += `<hr class="briefing-divider">`;
+                html += `<div class="briefing-section"><div class="briefing-section-title">🔔 Rappels du jour</div>`;
+                for (const r of reminders) {
+                    const rName = `${r.first_name || ''} ${r.last_name || ''}`.trim();
+                    const isSellerR = r.leadType === 'seller';
+                    html += `
+                        <div class="briefing-item" onclick="${isSellerR ? `editSeller('${r.id}')` : `window.location.href='acquereurs.html?openLead=${r.id}'`}; closeBriefing();">
+                            <span class="briefing-item-icon">🔔</span>
+                            <div class="briefing-item-content">
+                                <div class="briefing-item-label">${escapeHtml(rName)}</div>
+                                <div class="briefing-item-sub">Relance programmée aujourd'hui</div>
+                            </div>
+                            <span class="briefing-item-action">Ouvrir →</span>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            // Section 3 — Stats du mois
+            if (mandatesCount > 0 || salesCount > 0) {
+                html += `<hr class="briefing-divider">`;
+                html += `<div class="briefing-section"><div class="briefing-section-title">📊 Ce mois</div>`;
+                html += `<div class="briefing-stats">`;
+                html += `<div class="briefing-stat">📝 Mandats signés : <span class="briefing-stat-value">${mandatesCount}</span></div>`;
+                html += `<div class="briefing-stat">✅ Ventes : <span class="briefing-stat-value">${salesCount}</span></div>`;
+                if (totalCommission > 0) {
+                    const fmtComm = totalCommission >= 1000 ? (totalCommission / 1000).toFixed(1).replace('.0', '') + 'K' : totalCommission;
+                    html += `<div class="briefing-stat">💰 Commissions : <span class="briefing-stat-value">${fmtComm}€ HT</span></div>`;
+                }
+                html += `</div></div>`;
+            }
+
+            // Section 4 — Encouragement
+            let encouragement = '';
+            if (actionableSteps.length > 3) encouragement = "Quelques dossiers t'attendent. On s'y met ? 💪";
+            else if (actionableSteps.length > 0) encouragement = "Quelques actions en attente. Allez, on y va !";
+            else if (salesCount > 0) encouragement = "Belle performance ce mois-ci ! 🎉";
+            else if (mandatesCount > 0) encouragement = "Les mandats rentrent, continue comme ça !";
+            else if (reminders.length > 0) encouragement = "Bonne journée pour prendre des nouvelles de tes contacts.";
+            else encouragement = "C'est calme. Bonne journée pour prospecter ? 🔍";
+
+            html += `<hr class="briefing-divider">`;
+            html += `<div class="briefing-section"><div class="briefing-encouragement">🤖 ${escapeHtml(encouragement)}</div></div>`;
+
+            html += `
+                <div class="briefing-footer">
+                    <button type="button" class="briefing-cta" onclick="closeBriefing()">C'est parti !</button>
+                </div>
+            `;
+
+            card.innerHTML = html;
+            overlay.classList.add('visible');
+            return true;
+        }
+
+        function closeBriefing() {
+            const overlay = document.getElementById('briefingOverlay');
+            if (overlay) overlay.classList.remove('visible');
+            sessionStorage.setItem('leon_briefing_shown', 'true');
+        }
+
+        async function showBriefing() {
+            const data = await loadBriefingData();
+            if (!data) return;
+            const shown = renderBriefing(data);
+            if (!shown) {
+                // Rien à afficher
+            }
+        }
+
+        // Auto-show briefing au chargement (une fois par session)
+        async function maybeShowBriefing() {
+            if (sessionStorage.getItem('leon_briefing_shown') === 'true') return;
+            await showBriefing();
+        }
+
         function setupDragAndDrop() {
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
@@ -6974,6 +7394,9 @@
                 if (openLeadId && typeof editSeller === 'function') {
                     editSeller(openLeadId);
                     history.replaceState(null, '', window.location.pathname);
+                } else {
+                    // Briefing du matin (non-bloquant, après chargement)
+                    maybeShowBriefing().catch(() => {});
                 }
             });
             setupDragAndDrop();
