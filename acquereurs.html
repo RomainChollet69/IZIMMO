@@ -1809,150 +1809,188 @@
         .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 14px; padding: 4px 0; background: transparent; }
         .sector-tags-input::placeholder { color: #bbb; }
 
-        /* ===== WORKFLOW LÉON ===== */
-        .leon-banner {
-            background: #F0F9FF;
-            border: 1px solid #BAE6FD;
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 20px;
-            position: relative;
+        /* Pop-up conversationnelle Léon */
+        .leon-popup {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 320px;
+            max-width: calc(100vw - 48px);
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            border: 1px solid #E2E8F0;
+            z-index: 1001;
+            overflow: hidden;
         }
-        .leon-banner-header {
+        .leon-popup.entering {
+            animation: leonSlideUp 300ms ease-out forwards;
+        }
+        .leon-popup.exiting-left {
+            animation: leonSlideOutLeft 250ms ease-in forwards;
+        }
+        .leon-popup.entering-right {
+            animation: leonSlideInRight 300ms ease-out forwards;
+        }
+        @keyframes leonSlideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes leonSlideOutLeft {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(-100%); }
+        }
+        @keyframes leonSlideInRight {
+            from { opacity: 0; transform: translateX(60px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .leon-popup-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            padding: 16px 20px 12px;
         }
-        .leon-banner-title {
-            font-weight: 700;
-            font-size: 13px;
-            color: #0369A1;
+        .leon-popup-avatar {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 15px;
+            color: #1a1a1a;
         }
-        .leon-banner-close {
+        .leon-popup-close {
             background: none;
             border: none;
             font-size: 18px;
-            color: #94A3B8;
+            color: #9ca3af;
             cursor: pointer;
-            padding: 0 4px;
+            padding: 2px 6px;
             line-height: 1;
+            border-radius: 4px;
         }
-        .leon-banner-close:hover { color: #475569; }
-        .leon-banner-question {
+        .leon-popup-close:hover { color: #6b7280; background: #f3f4f6; }
+        .leon-popup-body {
+            padding: 0 20px 16px;
+        }
+        .leon-popup-question {
             font-size: 15px;
             font-weight: 600;
-            color: #1E293B;
-            margin-bottom: 12px;
+            color: #1a1a1a;
+            line-height: 1.4;
         }
-        .leon-banner-actions {
+        .leon-popup-suggestion {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 12px;
+            line-height: 1.4;
+        }
+        .leon-popup-actions {
             display: flex;
             gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 8px;
+            margin-top: 16px;
         }
-        .leon-btn {
+        .leon-popup-btn {
             padding: 8px 16px;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            border: 1px solid #E2E8F0;
-            background: white;
+            border: none;
             transition: all 0.2s;
         }
-        .leon-btn:hover { background: #F8FAFC; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .leon-btn-done { border-color: #2DD4BF; color: #0D9488; }
-        .leon-btn-done:hover { background: #F0FDFA; }
-        .leon-btn-later { border-color: #FCD34D; color: #92400E; }
-        .leon-btn-later:hover { background: #FFFBEB; }
-        .leon-btn-voice { border-color: #C4B5FD; color: #6D28D9; }
-        .leon-btn-voice:hover { background: #F5F3FF; }
-        .leon-banner-suggestion {
-            font-size: 13px;
-            color: #64748B;
-            padding: 8px 12px;
-            background: white;
-            border-radius: 8px;
-            border: 1px solid #E2E8F0;
+        .leon-popup-btn:disabled { opacity: 0.6; cursor: default; }
+        .leon-popup-btn-done {
+            background: #2DD4BF;
+            color: white;
+        }
+        .leon-popup-btn-done:hover:not(:disabled) { background: #14b8a6; }
+        .leon-popup-btn-later {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        .leon-popup-btn-later:hover:not(:disabled) { background: #e5e7eb; }
+        .leon-popup-extra {
+            margin-top: 12px;
             display: none;
         }
-        .leon-banner-suggestion.visible { display: block; }
-
-        .workflow-progress {
-            display: flex;
+        .leon-popup-extra.visible { display: block; }
+        .leon-popup-ai-btn {
+            display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 16px 0;
-            overflow-x: auto;
-        }
-        .workflow-progress-node {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-width: 40px;
-            cursor: default;
-        }
-        .workflow-progress-dot {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 700;
-        }
-        .workflow-progress-dot.done { background: #D1FAE5; color: #059669; }
-        .workflow-progress-dot.current { background: #DBEAFE; color: #2563EB; animation: leonPulse 2s infinite; }
-        .workflow-progress-dot.pending { background: #F1F5F9; color: #94A3B8; }
-        .workflow-progress-dot.skipped { background: #F1F5F9; color: #CBD5E1; text-decoration: line-through; }
-        .workflow-progress-line {
-            flex: 1;
-            height: 2px;
-            background: #E2E8F0;
-            min-width: 12px;
-        }
-        .workflow-progress-line.done { background: #2DD4BF; }
-        @keyframes leonPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3); }
-            50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
-        }
-        .workflow-step-list { list-style: none; padding: 0; margin: 0; }
-        .workflow-step-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #F1F5F9;
-        }
-        .workflow-step-item:last-child { border-bottom: none; }
-        .workflow-step-icon { font-size: 18px; min-width: 24px; text-align: center; }
-        .workflow-step-content { flex: 1; }
-        .workflow-step-label { font-size: 14px; font-weight: 500; color: #1E293B; }
-        .workflow-step-date { font-size: 12px; color: #94A3B8; margin-top: 2px; }
-        .workflow-step-date.overdue { color: #EF4444; font-weight: 600; }
-        .workflow-step-btn {
-            padding: 6px 12px;
+            gap: 6px;
+            padding: 8px 14px;
             border-radius: 8px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             border: 1px solid #2DD4BF;
             color: #0D9488;
-            background: white;
+            background: #F0FDFA;
             transition: all 0.2s;
         }
-        .workflow-step-btn:hover { background: #F0FDFA; }
-        .workflow-empty {
-            text-align: center;
-            padding: 40px 20px;
-            color: #94A3B8;
-            font-size: 14px;
+        .leon-popup-ai-btn:hover { background: #CCFBF1; }
+        .leon-popup-extra-text {
+            font-size: 13px;
+            color: #9ca3af;
+            font-style: italic;
         }
+        .leon-popup-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .leon-popup-dots {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .leon-popup-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #d1d5db;
+        }
+        .leon-popup-dot.done { background: #2DD4BF; }
+        .leon-popup-dot.current { background: #2DD4BF; box-shadow: 0 0 0 2px rgba(45,212,191,0.3); }
+        .leon-popup-count {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .leon-popup-congrats {
+            text-align: center;
+            padding: 24px 20px;
+        }
+        .leon-popup-congrats-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .leon-popup-congrats-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        /* FAB Léon */
+        .leon-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: white;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1001;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+        .leon-fab:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.15); transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -2113,11 +2151,8 @@
                 <button type="button" class="modal-tab active" data-tab="info" onclick="switchTab('info')">📋 Informations</button>
                 <button type="button" class="modal-tab" data-tab="messages" onclick="switchTab('messages')">✨ Messages IA</button>
                 <button type="button" class="modal-tab" data-tab="matching" onclick="switchTab('matching')">🎯 Matching</button>
-                <button type="button" class="modal-tab" data-tab="workflow" onclick="switchTab('workflow')">📊 Workflow</button>
             </div>
             <form id="buyerForm">
-                <!-- Bandeau contextuel Léon -->
-                <div id="leonBanner" class="leon-banner" style="display:none"></div>
                 <div id="tabInfo">
                 <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
                 <div class="dictate-status" id="dictateStatus"></div>
@@ -2375,16 +2410,14 @@
                     </div>
                 </div>
 
-                <div id="tabWorkflow" style="display:none">
-                    <div id="workflowTabContent">
-                        <div class="workflow-empty">Chargement...</div>
-                    </div>
-                </div>
-
                 <button type="button" class="submit-btn" id="submitBtn">Créer l'Acquéreur</button>
             </form>
         </div>
     </div>
+
+    <!-- Pop-up Léon + FAB -->
+    <div id="leonPopup" class="leon-popup" style="display:none"></div>
+    <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()">🤖</button>
 
     <script>
         // ===== DONNÉES =====
@@ -3104,12 +3137,7 @@
             document.getElementById('tabInfo').style.display = tab === 'info' ? 'block' : 'none';
             document.getElementById('tabMessages').style.display = tab === 'messages' ? 'block' : 'none';
             document.getElementById('tabMatching').style.display = tab === 'matching' ? 'block' : 'none';
-            document.getElementById('tabWorkflow').style.display = tab === 'workflow' ? 'block' : 'none';
             if (tab === 'matching') loadMatchingSellers();
-            if (tab === 'workflow') {
-                const editId = document.getElementById('submitBtn').dataset.editId;
-                if (editId) loadWorkflowTab(editId, 'buyer');
-            }
         }
 
         function updateModalTabs() {
@@ -3138,9 +3166,8 @@
 
         function resetForm() {
             document.getElementById('buyerForm').reset();
-            // Reset bandeau Léon
-            const leonBanner = document.getElementById('leonBanner');
-            if (leonBanner) { leonBanner.style.display = 'none'; leonBanner.innerHTML = ''; }
+            // Reset pop-up Léon
+            hideLeonPopup();
             document.getElementById('sellerFields').style.display = 'none';
             document.getElementById('referrerGroup').classList.remove('active');
             document.getElementById('referrerName').value = '';
@@ -4000,8 +4027,8 @@
 
             openModal(initialTab);
 
-            // Load workflow banner + tab
-            loadLeonBanner(id, 'buyer');
+            // Load Léon popup
+            showLeonPopup(id, 'buyer');
 
             // Load notes
             loadBuyerNotes(id);
@@ -4133,139 +4160,206 @@
             await Promise.all(updates);
         }
 
-        // ===== BANDEAU CONTEXTUEL LÉON =====
-        async function loadLeonBanner(leadId, leadType) {
-            const banner = document.getElementById('leonBanner');
-            if (!banner) return;
-            banner.style.display = 'none';
-            banner.innerHTML = '';
+        // ===== POP-UP CONVERSATIONNELLE LÉON =====
+        let leonPopupDismissed = false;
+        let leonAllSteps = [];
+        let leonCurrentLeadId = null;
+        let leonCurrentLeadType = null;
+
+        async function showLeonPopup(leadId, leadType) {
+            leonCurrentLeadId = leadId;
+            leonCurrentLeadType = leadType;
+            leonPopupDismissed = false;
+
+            const popup = document.getElementById('leonPopup');
+            const fab = document.getElementById('leonFab');
+            if (!popup || !fab) return;
 
             const userId = await getCurrentUserId();
-            if (!userId || !leadId) return;
+            if (!userId || !leadId) { popup.style.display = 'none'; fab.style.display = 'none'; return; }
 
-            const step = await getNextPendingStep(supabaseClient, userId, leadId, leadType);
-            if (!step || !isStepDue(step)) return;
+            const steps = await getWorkflowSteps(supabaseClient, userId, leadId, leadType);
+            leonAllSteps = steps || [];
 
-            const now = new Date();
-            const dueDate = new Date(step.due_date);
-            const isOverdue = dueDate < now;
+            // Filter active (non-skipped) steps
+            const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
+            if (activeSteps.length === 0) { popup.style.display = 'none'; fab.style.display = 'none'; return; }
 
-            banner.innerHTML = `
-                <div class="leon-banner-header">
-                    <div class="leon-banner-title">🎯 Léon${isOverdue ? ' <span style="color:#EF4444;font-size:11px;margin-left:4px">en retard</span>' : ''}</div>
-                    <button type="button" class="leon-banner-close" onclick="document.getElementById('leonBanner').style.display='none'">&times;</button>
+            // Find the first due pending step
+            const dueStep = activeSteps.find(s => s.status === 'pending' && isStepDue(s));
+            if (!dueStep) {
+                // Has steps but none are due — show FAB only if there are pending steps
+                const hasPending = activeSteps.some(s => s.status === 'pending');
+                popup.style.display = 'none';
+                fab.style.display = hasPending ? 'flex' : 'none';
+                return;
+            }
+
+            fab.style.display = 'none';
+            renderLeonStep(dueStep, activeSteps);
+        }
+
+        function renderLeonStep(step, activeSteps) {
+            const popup = document.getElementById('leonPopup');
+            const doneCount = activeSteps.filter(s => s.status === 'done').length;
+            const totalCount = activeSteps.length;
+
+            // Build dots HTML
+            let dotsHtml = '';
+            activeSteps.forEach(s => {
+                if (s.status === 'done') {
+                    dotsHtml += '<span class="leon-popup-dot done"></span>';
+                } else if (s.id === step.id) {
+                    dotsHtml += '<span class="leon-popup-dot current"></span>';
+                } else {
+                    dotsHtml += '<span class="leon-popup-dot"></span>';
+                }
+            });
+
+            // Look up ai_action_params from WORKFLOWS definition
+            let aiScenario = '';
+            let aiActionLabel = '';
+            if (step.ai_action) {
+                const wfDef = WORKFLOWS[step.workflow_type];
+                if (wfDef) {
+                    const stepDef = wfDef.steps.find(s => s.step_key === step.step_key);
+                    if (stepDef && stepDef.ai_action_params) aiScenario = stepDef.ai_action_params.scenario || '';
+                }
+                if (step.ai_action === 'generate_message') aiActionLabel = '💬 Préparer le message';
+                else if (step.ai_action === 'generate_listing') aiActionLabel = '📝 Rédiger l\'annonce';
+                else if (step.ai_action === 'generate_social_post') aiActionLabel = '📣 Préparer le post';
+            }
+
+            popup.innerHTML = `
+                <div class="leon-popup-header">
+                    <div class="leon-popup-avatar">🤖 Léon</div>
+                    <button type="button" class="leon-popup-close" onclick="dismissLeonPopup()">✕</button>
                 </div>
-                <div class="leon-banner-question">${escapeHtml(step.step_label)}</div>
-                <div class="leon-banner-actions">
-                    <button type="button" class="leon-btn leon-btn-done" data-step-id="${step.id}">✅ C'est fait</button>
-                    <button type="button" class="leon-btn leon-btn-later" data-step-id="${step.id}">⏳ Pas encore</button>
-                    <button type="button" class="leon-btn leon-btn-voice" disabled title="Dictée vocale (Phase 3)">🎤 Répondre</button>
+                <div class="leon-popup-body">
+                    <div class="leon-popup-question">"${escapeHtml(step.step_label)}"</div>
+                    ${step.ai_suggestion ? `<div class="leon-popup-suggestion">💡 ${escapeHtml(step.ai_suggestion)}</div>` : ''}
+                    <div class="leon-popup-actions">
+                        <button type="button" class="leon-popup-btn leon-popup-btn-done" data-step-id="${step.id}">✅ C'est fait</button>
+                        <button type="button" class="leon-popup-btn leon-popup-btn-later" data-step-id="${step.id}">⏳ Pas encore</button>
+                    </div>
+                    <div class="leon-popup-extra" id="leonExtra">
+                        ${step.ai_action ? `<button type="button" class="leon-popup-ai-btn" data-action="${step.ai_action}" data-scenario="${aiScenario}">${aiActionLabel}</button>` : '<span class="leon-popup-extra-text">OK, Léon te le rappellera.</span>'}
+                    </div>
                 </div>
-                ${step.ai_suggestion ? `<div class="leon-banner-suggestion" id="leonSuggestion">💡 ${escapeHtml(step.ai_suggestion)}</div>` : ''}
+                <div class="leon-popup-footer">
+                    <div class="leon-popup-dots">${dotsHtml}</div>
+                    <span class="leon-popup-count">${doneCount}/${totalCount}</span>
+                </div>
             `;
-            banner.style.display = 'block';
 
-            banner.querySelector('.leon-btn-done').addEventListener('click', async function() {
+            popup.style.display = 'block';
+            popup.className = 'leon-popup entering';
+
+            // Remove animation class after it completes
+            setTimeout(() => popup.classList.remove('entering', 'entering-right'), 310);
+
+            // Bind "C'est fait"
+            popup.querySelector('.leon-popup-btn-done').addEventListener('click', async function() {
                 const stepId = this.dataset.stepId;
                 this.disabled = true;
                 this.textContent = '...';
                 await completeStep(supabaseClient, stepId);
-                await loadLeonBanner(leadId, leadType);
-                if (document.getElementById('tabWorkflow') && document.getElementById('tabWorkflow').style.display !== 'none') {
-                    await loadWorkflowTab(leadId, leadType);
+
+                // Refresh steps from DB
+                const userId = await getCurrentUserId();
+                const freshSteps = await getWorkflowSteps(supabaseClient, userId, leonCurrentLeadId, leonCurrentLeadType);
+                leonAllSteps = freshSteps || [];
+                const freshActive = leonAllSteps.filter(s => s.status !== 'skipped');
+                const nextDue = freshActive.find(s => s.status === 'pending' && isStepDue(s));
+
+                if (nextDue) {
+                    // Animate transition: slide out left, then slide in right with next step
+                    popup.className = 'leon-popup exiting-left';
+                    setTimeout(() => {
+                        renderLeonStep(nextDue, freshActive);
+                        popup.className = 'leon-popup entering-right';
+                        setTimeout(() => popup.classList.remove('entering-right'), 310);
+                    }, 260);
+                } else {
+                    // No more due steps — show congrats
+                    popup.className = 'leon-popup exiting-left';
+                    setTimeout(() => {
+                        popup.innerHTML = `
+                            <div class="leon-popup-header">
+                                <div class="leon-popup-avatar">🤖 Léon</div>
+                            </div>
+                            <div class="leon-popup-congrats">
+                                <div class="leon-popup-congrats-icon">👌</div>
+                                <div class="leon-popup-congrats-text">Tout est à jour sur ce dossier !</div>
+                            </div>
+                        `;
+                        popup.style.display = 'block';
+                        popup.className = 'leon-popup entering-right';
+                        setTimeout(() => {
+                            popup.style.display = 'none';
+                            popup.className = 'leon-popup';
+                            const hasPending = freshActive.some(s => s.status === 'pending');
+                            document.getElementById('leonFab').style.display = hasPending ? 'flex' : 'none';
+                        }, 2000);
+                    }, 260);
                 }
             });
 
-            banner.querySelector('.leon-btn-later').addEventListener('click', function() {
-                const suggestion = document.getElementById('leonSuggestion');
-                if (suggestion) suggestion.classList.toggle('visible');
-            });
-        }
-
-        // ===== ONGLET WORKFLOW =====
-        async function loadWorkflowTab(leadId, leadType) {
-            const container = document.getElementById('workflowTabContent');
-            if (!container) return;
-
-            const userId = await getCurrentUserId();
-            if (!userId || !leadId) {
-                container.innerHTML = '<div class="workflow-empty">Aucun workflow en cours</div>';
-                return;
-            }
-
-            const steps = await getWorkflowSteps(supabaseClient, userId, leadId, leadType);
-            if (!steps || steps.length === 0) {
-                container.innerHTML = '<div class="workflow-empty">Aucun workflow en cours pour ce lead</div>';
-                return;
-            }
-
-            const grouped = {};
-            steps.forEach(s => {
-                if (!grouped[s.workflow_type]) grouped[s.workflow_type] = [];
-                grouped[s.workflow_type].push(s);
+            // Bind "Pas encore"
+            popup.querySelector('.leon-popup-btn-later').addEventListener('click', function() {
+                const extra = document.getElementById('leonExtra');
+                if (extra) extra.classList.toggle('visible');
             });
 
-            let html = '';
-            for (const [wfType, wfSteps] of Object.entries(grouped)) {
-                const wfDef = WORKFLOWS[wfType];
-                const wfLabel = wfDef ? wfDef.label : wfType;
-                const doneCount = wfSteps.filter(s => s.status === 'done').length;
-                const totalActive = wfSteps.filter(s => s.status !== 'skipped').length;
-
-                html += `<h3 style="font-size:15px;font-weight:700;color:#1E293B;margin:16px 0 8px">${wfLabel} <span style="font-size:12px;font-weight:400;color:#94A3B8">${doneCount}/${totalActive}</span></h3>`;
-
-                html += '<div class="workflow-progress">';
-                const activeSteps = wfSteps.filter(s => s.status !== 'skipped');
-                const firstPendingIdx = activeSteps.findIndex(s => s.status === 'pending');
-                activeSteps.forEach((s, i) => {
-                    if (i > 0) {
-                        const lineClass = s.status === 'done' || (i <= firstPendingIdx && firstPendingIdx >= 0 && activeSteps[i-1].status === 'done') ? 'done' : '';
-                        html += `<div class="workflow-progress-line ${lineClass}"></div>`;
+            // Bind AI action button if present
+            const aiBtn = popup.querySelector('.leon-popup-ai-btn');
+            if (aiBtn) {
+                aiBtn.addEventListener('click', function() {
+                    const action = this.dataset.action;
+                    const scenario = this.dataset.scenario;
+                    if (action === 'generate_message') {
+                        switchTab('messages');
+                        if (scenario) {
+                            const select = document.getElementById('msgScenario');
+                            if (select) {
+                                select.value = scenario;
+                                if (typeof onScenarioChange === 'function') onScenarioChange();
+                            }
+                        }
+                        dismissLeonPopup();
+                    } else {
+                        console.log('AI action not yet implemented:', action);
                     }
-                    let dotClass = s.status === 'done' ? 'done' : (i === firstPendingIdx ? 'current' : 'pending');
-                    let dotContent = s.status === 'done' ? '✓' : (i === firstPendingIdx ? '●' : '○');
-                    html += `<div class="workflow-progress-node"><div class="workflow-progress-dot ${dotClass}" title="${escapeHtml(s.step_label)}">${dotContent}</div></div>`;
                 });
-                html += '</div>';
-
-                html += '<ul class="workflow-step-list">';
-                wfSteps.forEach(s => {
-                    if (s.status === 'skipped') return;
-                    const icon = s.status === 'done' ? '✅' : (isStepDue(s) ? '🔵' : '○');
-                    const now = new Date();
-                    const dueDate = s.due_date ? new Date(s.due_date) : null;
-                    let dateStr = '';
-                    let dateClass = '';
-                    if (s.status === 'done' && s.completed_at) {
-                        dateStr = 'Fait le ' + new Date(s.completed_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-                    } else if (dueDate) {
-                        const isOverdue = dueDate < now;
-                        dateClass = isOverdue ? 'overdue' : '';
-                        dateStr = (isOverdue ? 'En retard — ' : 'Prévu le ') + dueDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-                    }
-                    const btnHtml = s.status === 'pending' ? `<button type="button" class="workflow-step-btn" data-step-id="${s.id}" onclick="handleWorkflowStepDone(this, '${leadId}', '${leadType}')">C'est fait</button>` : '';
-                    html += `<li class="workflow-step-item">
-                        <span class="workflow-step-icon">${icon}</span>
-                        <div class="workflow-step-content">
-                            <div class="workflow-step-label">${escapeHtml(s.step_label)}</div>
-                            ${dateStr ? `<div class="workflow-step-date ${dateClass}">${dateStr}</div>` : ''}
-                        </div>
-                        ${btnHtml}
-                    </li>`;
-                });
-                html += '</ul>';
             }
-
-            container.innerHTML = html;
         }
 
-        async function handleWorkflowStepDone(btn, leadId, leadType) {
-            const stepId = btn.dataset.stepId;
-            btn.disabled = true;
-            btn.textContent = '...';
-            await completeStep(supabaseClient, stepId);
-            await loadWorkflowTab(leadId, leadType);
-            await loadLeonBanner(leadId, leadType);
+        function dismissLeonPopup() {
+            const popup = document.getElementById('leonPopup');
+            const fab = document.getElementById('leonFab');
+            leonPopupDismissed = true;
+            if (popup) { popup.style.display = 'none'; popup.className = 'leon-popup'; }
+            const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
+            const hasPending = activeSteps.some(s => s.status === 'pending');
+            if (fab) fab.style.display = hasPending ? 'flex' : 'none';
+        }
+
+        function reopenLeonPopup() {
+            if (!leonCurrentLeadId) return;
+            leonPopupDismissed = false;
+            document.getElementById('leonFab').style.display = 'none';
+            showLeonPopup(leonCurrentLeadId, leonCurrentLeadType);
+        }
+
+        function hideLeonPopup() {
+            const popup = document.getElementById('leonPopup');
+            const fab = document.getElementById('leonFab');
+            if (popup) { popup.style.display = 'none'; popup.className = 'leon-popup'; }
+            if (fab) fab.style.display = 'none';
+            leonPopupDismissed = false;
+            leonAllSteps = [];
+            leonCurrentLeadId = null;
+            leonCurrentLeadType = null;
         }
 
         function setupDragAndDrop() {
