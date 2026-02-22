@@ -1812,8 +1812,9 @@
         /* Pop-up conversationnelle Léon */
         .leon-popup {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 320px;
             max-width: calc(100vw - 48px);
             background: white;
@@ -1833,16 +1834,16 @@
             animation: leonSlideInRight 300ms ease-out forwards;
         }
         @keyframes leonSlideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translate(-50%, -45%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
         }
         @keyframes leonSlideOutLeft {
-            from { opacity: 1; transform: translateX(0); }
-            to { opacity: 0; transform: translateX(-100%); }
+            from { opacity: 1; transform: translate(-50%, -50%); }
+            to { opacity: 0; transform: translate(-120%, -50%); }
         }
         @keyframes leonSlideInRight {
-            from { opacity: 0; transform: translateX(60px); }
-            to { opacity: 1; transform: translateX(0); }
+            from { opacity: 0; transform: translate(-20%, -50%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
         }
         .leon-popup-header {
             display: flex;
@@ -1958,6 +1959,15 @@
             font-size: 12px;
             color: #9ca3af;
         }
+        .leon-popup-skip {
+            font-size: 12px;
+            color: #9ca3af;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+        .leon-popup-skip:hover { color: #6b7280; }
         .leon-popup-congrats {
             text-align: center;
             padding: 24px 20px;
@@ -4249,6 +4259,7 @@
                 <div class="leon-popup-footer">
                     <div class="leon-popup-dots">${dotsHtml}</div>
                     <span class="leon-popup-count">${doneCount}/${totalCount}</span>
+                    <button type="button" class="leon-popup-skip" onclick="dismissLeonPopup()">Passer Léon</button>
                 </div>
             `;
 
