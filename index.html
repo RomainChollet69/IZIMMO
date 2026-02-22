@@ -6874,7 +6874,7 @@
                     voiceArea.innerHTML = `<div class="leon-voice-response"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-sm" style="margin-right:6px">${escapeHtml(result.leon_response)}</div>`;
                 }
 
-                // Transition vers l'étape suivante après 2s
+                // Transition vers l'étape suivante après 5s (laisser le temps de lire la réponse)
                 setTimeout(async () => {
                     if (result.step_completed) {
                         const userId = await getCurrentUserId();
@@ -6899,7 +6899,7 @@
                     } else {
                         voiceArea.style.display = 'none';
                     }
-                }, 2000);
+                }, 5000);
 
             } catch (err) {
                 console.error('Leon voice error:', err);
