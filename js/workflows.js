@@ -317,57 +317,26 @@ function getWorkflowForStatus(status, leadType) {
 }
 
 /**
- * Calcule la due_date d'une étape en fonction du delay_days et de la date de référence
- */
-function calculateDueDate(step, previousStepCompletedAt) {
-  const baseDate = previousStepCompletedAt ? new Date(previousStepCompletedAt) : new Date();
-  const dueDate = new Date(baseDate);
-  dueDate.setDate(dueDate.getDate() + step.delay_days);
-  return dueDate.toISOString();
-}
-
-/**
  * Crée toutes les étapes d'un workflow en DB
+ * due_date = null : les délais serviront plus tard pour le briefing du matin (alertes retard)
  */
 async function createWorkflowSteps(supabase, userId, leadId, leadType, workflowType) {
   const workflow = WORKFLOWS[workflowType];
   if (!workflow) return null;
 
-  const now = new Date();
   const leadCol = leadType === 'seller' ? 'seller_id' : 'buyer_id';
-
-  // Construire un map step_key -> due_date pour les calculs relatifs
-  const dueDates = {};
-  const rows = [];
-
-  workflow.steps.forEach((step, index) => {
-    let dueDate;
-    if (step.relative_to === 'workflow_start') {
-      dueDate = new Date(now);
-      dueDate.setDate(dueDate.getDate() + step.delay_days);
-    } else {
-      // Relatif à une autre étape — on utilise sa due_date comme base
-      const baseDateStr = dueDates[step.relative_to];
-      const base = baseDateStr ? new Date(baseDateStr) : new Date(now);
-      dueDate = new Date(base);
-      dueDate.setDate(dueDate.getDate() + step.delay_days);
-    }
-
-    dueDates[step.step_key] = dueDate.toISOString();
-
-    rows.push({
-      user_id: userId,
-      [leadCol]: leadId,
-      workflow_type: workflowType,
-      step_key: step.step_key,
-      step_label: step.label,
-      sort_order: index + 1,
-      status: 'pending',
-      due_date: dueDate.toISOString(),
-      ai_suggestion: step.ai_suggestion || null,
-      ai_action: step.ai_action || null
-    });
-  });
+  const rows = workflow.steps.map((step, index) => ({
+    user_id: userId,
+    [leadCol]: leadId,
+    workflow_type: workflowType,
+    step_key: step.step_key,
+    step_label: step.label,
+    sort_order: index + 1,
+    status: 'pending',
+    due_date: null,
+    ai_suggestion: step.ai_suggestion || null,
+    ai_action: step.ai_action || null
+  }));
 
   const { data, error } = await supabase
     .from('workflow_steps')
@@ -401,7 +370,7 @@ async function closeWorkflow(supabase, userId, leadId, leadType, workflowType) {
 }
 
 /**
- * Retourne la prochaine étape pending pour un lead (la plus urgente)
+ * Retourne la prochaine étape pending pour un lead (par sort_order)
  */
 async function getNextPendingStep(supabase, userId, leadId, leadType) {
   const leadCol = leadType === 'seller' ? 'seller_id' : 'buyer_id';
@@ -412,7 +381,6 @@ async function getNextPendingStep(supabase, userId, leadId, leadType) {
     .eq('user_id', userId)
     .eq(leadCol, leadId)
     .eq('status', 'pending')
-    .order('due_date', { ascending: true })
     .order('sort_order', { ascending: true })
     .limit(1);
 
@@ -520,10 +488,13 @@ function getRandomCelebration(type) {
 }
 
 /**
- * Vérifie si une étape pending est "due" (date passée ou dans les 3 prochains jours)
+ * Vérifie si une étape pending est "due"
+ * Sans due_date → toujours due (enchaînement immédiat)
+ * Avec due_date → date passée ou dans les 3 prochains jours (pour futur briefing)
  */
 function isStepDue(step) {
-  if (!step || !step.due_date) return false;
+  if (!step) return false;
+  if (!step.due_date) return true;
   const now = new Date();
   const in3Days = new Date(now);
   in3Days.setDate(in3Days.getDate() + 3);

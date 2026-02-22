@@ -6140,18 +6140,17 @@
             const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
             if (activeSteps.length === 0) { popup.style.display = 'none'; fab.style.display = 'none'; return; }
 
-            // Find the first due pending step
-            const dueStep = activeSteps.find(s => s.status === 'pending' && isStepDue(s));
-            if (!dueStep) {
-                // Has steps but none are due — show FAB only if there are pending steps
-                const hasPending = activeSteps.some(s => s.status === 'pending');
+            // Première étape pending par sort_order (pas de filtre de date)
+            const nextStep = activeSteps.find(s => s.status === 'pending');
+            if (!nextStep) {
+                // Toutes les étapes sont done
                 popup.style.display = 'none';
-                fab.style.display = hasPending ? 'flex' : 'none';
+                fab.style.display = 'none';
                 return;
             }
 
             fab.style.display = 'none';
-            renderLeonStep(dueStep, activeSteps);
+            renderLeonStep(nextStep, activeSteps);
         }
 
         function renderLeonStep(step, activeSteps) {
@@ -6233,18 +6232,18 @@
                 const freshSteps = await getWorkflowSteps(supabaseClient, userId, leonCurrentLeadId, leonCurrentLeadType);
                 leonAllSteps = freshSteps || [];
                 const freshActive = leonAllSteps.filter(s => s.status !== 'skipped');
-                const nextDue = freshActive.find(s => s.status === 'pending' && isStepDue(s));
+                const nextPending = freshActive.find(s => s.status === 'pending');
 
-                if (nextDue) {
+                if (nextPending) {
                     // Animate transition: slide out left, then slide in right with next step
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
-                        renderLeonStep(nextDue, freshActive);
+                        renderLeonStep(nextPending, freshActive);
                         popup.className = 'leon-popup entering-right';
                         setTimeout(() => popup.classList.remove('entering-right'), 310);
                     }, 260);
                 } else {
-                    // No more due steps — show congrats
+                    // Plus aucune étape pending — congrats puis fermeture
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
                         popup.innerHTML = `
@@ -6261,9 +6260,8 @@
                         setTimeout(() => {
                             popup.style.display = 'none';
                             popup.className = 'leon-popup';
-                            // Show FAB if there are still pending steps (not yet due)
-                            const hasPending = freshActive.some(s => s.status === 'pending');
-                            document.getElementById('leonFab').style.display = hasPending ? 'flex' : 'none';
+                            const overlay = document.getElementById('leonOverlay');
+                            if (overlay) overlay.classList.remove('visible');
                         }, 2000);
                     }, 260);
                 }
