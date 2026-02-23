@@ -1641,6 +1641,7 @@
             position: relative;
         }
         .note-item:last-child { border-bottom: none; }
+        .note-pending { background: #F5F3FF; border-radius: 8px; padding: 10px; margin-bottom: 6px; border: 1px dashed #667eea40; }
         .note-date {
             font-size: 11px;
             color: var(--text-light);
@@ -5751,6 +5752,7 @@
 
         // ===== NOTES HORODATÉES =====
         let currentNotes = [];
+        let pendingNotes = []; // Notes en attente pour un lead non encore enregistré
         let noteRecorder = null;
 
         async function loadNotes(sellerId) {
@@ -5771,7 +5773,15 @@
             const input = document.getElementById('noteInput');
             const text = input.value.trim();
             if (!text) return;
-            if (!sellerId) { alert('Enregistrez le lead avant d\'ajouter des notes.'); return; }
+
+            // Lead pas encore enregistré → queuer en local
+            if (!sellerId) {
+                pendingNotes.unshift({ id: 'pending-' + Date.now(), content: text, created_at: new Date().toISOString(), pending: true });
+                input.value = '';
+                renderNotes();
+                return;
+            }
+
             const userId = await getCurrentUserId();
             if (!userId) return;
             const { data, error } = await supabaseClient
@@ -5805,22 +5815,37 @@
         function renderNotes() {
             const timeline = document.getElementById('notesTimeline');
             const countEl = document.getElementById('notesCount');
-            countEl.textContent = currentNotes.length > 0 ? `(${currentNotes.length})` : '';
+            const allNotes = [...pendingNotes, ...currentNotes];
+            countEl.textContent = allNotes.length > 0 ? `(${allNotes.length})` : '';
 
-            if (currentNotes.length === 0) {
+            if (allNotes.length === 0) {
                 timeline.innerHTML = '<div class="notes-empty">Aucune note pour le moment</div>';
                 return;
             }
-            timeline.innerHTML = currentNotes.map(n => `
-                <div class="note-item" data-id="${n.id}">
+            timeline.innerHTML = allNotes.map(n => {
+                if (n.pending) {
+                    return `<div class="note-item note-pending" data-id="${n.id}">
+                        <div class="note-date" style="color:#667eea">En attente d'enregistrement</div>
+                        <div class="note-content">${escapeHtml(n.content)}</div>
+                        <div class="note-actions">
+                            <button type="button" class="note-action-btn delete" onclick="removePendingNote('${n.id}')" title="Supprimer">🗑️</button>
+                        </div>
+                    </div>`;
+                }
+                return `<div class="note-item" data-id="${n.id}">
                     <div class="note-date">${formatNoteDate(n.created_at)}</div>
                     <div class="note-content">${escapeHtml(n.content)}</div>
                     <div class="note-actions">
                         <button type="button" class="note-action-btn" onclick="editNote('${n.id}')" title="Modifier">✏️</button>
                         <button type="button" class="note-action-btn delete" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+        }
+
+        function removePendingNote(id) {
+            pendingNotes = pendingNotes.filter(n => n.id !== id);
+            renderNotes();
         }
 
         function editNote(noteId) {
@@ -5916,15 +5941,13 @@
             if (micBtn) micBtn.addEventListener('click', startNoteRecording);
             if (addBtn) addBtn.addEventListener('click', () => {
                 const editId = document.getElementById('submitBtn').dataset.editId;
-                if (editId) addNote(editId);
-                else alert('Enregistrez le lead avant d\'ajouter des notes.');
+                addNote(editId || null);
             });
             if (input) input.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     const editId = document.getElementById('submitBtn').dataset.editId;
-                    if (editId) addNote(editId);
-                    else alert('Enregistrez le lead avant d\'ajouter des notes.');
+                    addNote(editId || null);
                 }
             });
         }
@@ -6291,6 +6314,7 @@
 
             // Reset notes
             currentNotes = [];
+            pendingNotes = [];
             renderNotes();
             if (noteRecorder) noteRecorder.stop();
             if (sellerRecorder) sellerRecorder.stop();
@@ -6544,10 +6568,22 @@
                 }
             }
 
-            // Auto-save note si non vide
+            // Auto-save note input + pending notes
             const pendingNote = document.getElementById('noteInput').value.trim();
-            if (pendingNote && savedId) {
-                await addNote(savedId);
+            if (savedId) {
+                const userId = await getCurrentUserId();
+                if (userId) {
+                    // Sauvegarder les pendingNotes en attente
+                    for (const pn of pendingNotes) {
+                        await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pn.content });
+                    }
+                    pendingNotes = [];
+                    // Sauvegarder le texte encore dans l'input
+                    if (pendingNote) {
+                        await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pendingNote });
+                        document.getElementById('noteInput').value = '';
+                    }
+                }
             }
 
             await loadVisitCounts();
