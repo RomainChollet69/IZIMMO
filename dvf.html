@@ -499,6 +499,11 @@
         }
 
         /* Filter panel */
+        .quick-filters {
+            padding: 16px 20px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+
         .filter-panel {
             padding: 16px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
@@ -839,6 +844,23 @@
         .sale-card.appartement { border-left-color: #FF9800; }
         .sale-card.terrain { border-left-color: #9C27B0; }
         .sale-card.autre { border-left-color: #607D8B; }
+
+        .show-more-btn {
+            width: 100%;
+            padding: 12px;
+            background: rgba(102,126,234,0.12);
+            color: #667eea;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 4px;
+        }
+        .show-more-btn:hover { background: rgba(102,126,234,0.22); }
+        .show-more-btn i { margin-right: 6px; }
 
         .sale-type {
             font-size: 11px;
@@ -1362,14 +1384,8 @@
                 <span class="radius-value" id="radiusValue">1 km</span>
             </div>
 
-            <div class="filter-toggle-bar" id="filterToggleBar" onclick="toggleFilters()">
-                <i class="fas fa-sliders-h"></i>
-                <span>Filtres</span>
-                <i class="fas fa-chevron-down filter-toggle-chevron" id="filterChevron"></i>
-            </div>
-
-            <div class="filter-panel" id="filterPanel">
-                <!-- Année de vente -->
+            <!-- Filtres principaux toujours visibles -->
+            <div class="quick-filters">
                 <div class="fp-section">
                     <div class="fp-label">Année de vente <span class="fp-label-value" id="yearValues">2014 → 2025</span></div>
                     <div class="dual-range" id="yearRange">
@@ -1379,9 +1395,7 @@
                         <input type="range" min="2014" max="2025" value="2025" step="1" class="range-max">
                     </div>
                 </div>
-
-                <!-- Type de bien -->
-                <div class="fp-section">
+                <div class="fp-section" style="margin-bottom:0">
                     <div class="fp-label">Type de bien</div>
                     <div class="fp-type-grid" id="typeGrid">
                         <button class="fp-type-btn active" data-type="all">Tout</button>
@@ -1391,7 +1405,15 @@
                         <button class="fp-type-btn" data-type="local">Local pro</button>
                     </div>
                 </div>
+            </div>
 
+            <div class="filter-toggle-bar" id="filterToggleBar" onclick="toggleFilters()">
+                <i class="fas fa-sliders-h"></i>
+                <span>Plus de filtres</span>
+                <i class="fas fa-chevron-down filter-toggle-chevron collapsed" id="filterChevron"></i>
+            </div>
+
+            <div class="filter-panel collapsed" id="filterPanel">
                 <!-- Caractéristiques min/max -->
                 <div class="fp-section">
                     <div class="fp-label">Caractéristiques</div>
@@ -2199,7 +2221,12 @@
                 return;
             }
 
-            salesList.innerHTML = sales.slice(0, 100).map((sale, i) => {
+            const SALES_PREVIEW = 3;
+            salesListExpanded = false;
+            const displayCount = Math.min(SALES_PREVIEW, sales.length);
+            const hasMore = sales.length > SALES_PREVIEW;
+
+            function renderSaleCard(sale, i) {
                 const type = getType(sale);
                 const price = parseFloat(sale.valeur_fonciere);
                 const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
@@ -2216,7 +2243,27 @@
                     </div>
                     ${priceM2 ? `<span class="sale-price-m2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
                 </div>`;
-            }).join('');
+            }
+
+            let html = sales.slice(0, displayCount).map((s, i) => renderSaleCard(s, i)).join('');
+            if (hasMore) {
+                html += `<button class="show-more-btn" id="showMoreSalesBtn" onclick="expandSalesList()">
+                    <i class="fas fa-chevron-down"></i> Voir les ${sales.length - SALES_PREVIEW} autres ventes
+                </button>`;
+            }
+            salesList.innerHTML = html;
+
+            // Stocker les ventes pour l'expansion
+            salesList._allSales = sales;
+            salesList._renderCard = renderSaleCard;
+        }
+
+        function expandSalesList() {
+            const salesList = document.getElementById('salesList');
+            const sales = salesList._allSales;
+            const renderCard = salesList._renderCard;
+            if (!sales) return;
+            salesList.innerHTML = sales.slice(0, 100).map((s, i) => renderCard(s, i)).join('');
         }
 
         function showSaleDetail(index, skipMapCenter) {
