@@ -1602,42 +1602,32 @@
         .notes-textarea::placeholder { color: #B0BEC5; }
         .notes-mic-btn {
             padding: 0;
-            background: none;
-            border: none;
+            background: #f0f2f5;
+            border: 1px solid #E1E8ED;
+            border-radius: 10px;
             cursor: pointer;
             transition: all 0.25s ease;
             flex-shrink: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
+            width: 42px;
+            height: 42px;
+            font-size: 18px;
+            color: #667eea;
         }
-        .notes-mic-btn img {
-            width: 48px;
-            height: 48px;
-            object-fit: contain;
-            transition: transform 0.25s ease;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; transform: scale(1.08); }
+        .notes-mic-btn:active { transform: scale(0.95); }
+        .notes-mic-btn.transcribing { background: #E8EAF6; border-color: #667eea; color: #764ba2; }
+        .notes-mic-btn.recording {
+            background: #FFEBEE;
+            border-color: #FF4757;
+            color: #FF4757;
+            animation: micPulse 1.2s ease-in-out infinite;
         }
-        .notes-mic-btn:hover { transform: scale(1.12); }
-        .notes-mic-btn:hover img { transform: scale(1.05) rotate(-5deg); filter: drop-shadow(0 3px 8px rgba(102,126,234,0.3)); }
-        .notes-mic-btn:active { transform: scale(0.92); }
-        .notes-mic-btn.transcribing { animation: micSpin 1.5s linear infinite; }
-        .notes-mic-btn.recording { animation: micPulse 1.2s ease-in-out infinite; }
-        .notes-mic-btn.recording img { animation: micBounce 0.6s ease-in-out infinite alternate; }
         @keyframes micPulse {
-            0%, 100% { filter: drop-shadow(0 0 0 rgba(255,71,87,0)); }
-            50% { filter: drop-shadow(0 0 8px rgba(255,71,87,0.5)); }
-        }
-        @keyframes micBounce {
-            0% { transform: translateY(1px) scale(1); }
-            100% { transform: translateY(-2px) scale(1.08); }
-        }
-        @keyframes micSpin {
-            0% { filter: drop-shadow(0 0 4px rgba(102,126,234,0.5)); }
-            50% { filter: drop-shadow(0 0 4px rgba(118,75,162,0.5)); }
-            100% { filter: drop-shadow(0 0 4px rgba(102,126,234,0.5)); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(255,71,87,0); }
         }
         .notes-add-btn {
             padding: 8px 14px;
@@ -3485,7 +3475,7 @@
                         <div class="notes-section-title">📝 Notes <span class="notes-count" id="notesCount"></span></div>
                         <div class="notes-input-row">
                             <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
-                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><img src="img/Micro.png" alt="Micro"></button>
+                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><i class="fa-solid fa-microphone"></i></button>
                             <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
                         </div>
                         <div class="notes-timeline" id="notesTimeline">
@@ -5931,14 +5921,13 @@
                     if (state === 'recording') {
                         btn.classList.add('recording');
                         btn.classList.remove('transcribing');
-                        btn.innerHTML = '<img src="img/Micro.png" alt="Micro">';
                     } else if (state === 'transcribing') {
                         btn.classList.remove('recording');
                         btn.classList.add('transcribing');
-                        btn.innerHTML = '⏳';
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     } else {
                         btn.classList.remove('recording', 'transcribing');
-                        btn.innerHTML = '<img src="img/Micro.png" alt="Micro">';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
                     }
                     if (state === 'error' && msg) alert(msg);
                 }
