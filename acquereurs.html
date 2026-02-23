@@ -1274,11 +1274,11 @@
         .notes-textarea::placeholder { color: #B0BEC5; }
         .notes-mic-btn {
             padding: 8px 10px; background: #f0f2f5; border: 1px solid #E1E8ED;
-            border-radius: 8px; font-size: 16px; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
+            border-radius: 8px; font-size: 16px; color: #667eea; cursor: pointer; transition: all 0.2s; flex-shrink: 0;
         }
         .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; }
         .notes-mic-btn.transcribing { background: #E8EAF6; border-color: #667eea; }
-        .notes-mic-btn.recording { background: #FFEBEE; border-color: #FF4757; animation: dictatePulse 1.2s infinite; }
+        .notes-mic-btn.recording { background: #FFEBEE; border-color: #FF4757; color: #FF4757; animation: dictatePulse 1.2s infinite; }
         .notes-add-btn {
             padding: 8px 14px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; flex-shrink: 0;
@@ -2442,7 +2442,7 @@
                         <div class="notes-section-title">📝 Notes <span class="notes-count" id="notesCount"></span></div>
                         <div class="notes-input-row">
                             <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
-                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale">🎙️</button>
+                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><i class="fa-solid fa-microphone"></i></button>
                             <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
                         </div>
                         <div class="notes-timeline" id="notesTimeline">
@@ -3683,10 +3683,10 @@
                     } else if (state === 'transcribing') {
                         btn.classList.remove('recording');
                         btn.classList.add('transcribing');
-                        btn.innerHTML = '⏳';
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     } else {
                         btn.classList.remove('recording', 'transcribing');
-                        btn.innerHTML = '🎙️';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
                     }
                     if (state === 'error' && msg) alert(msg);
                 }
