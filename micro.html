@@ -381,6 +381,23 @@
             font-weight: 700;
             font-size: 16px;
             color: #1E293B;
+            flex: 1;
+        }
+
+        .confirmation-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94A3B8;
+            font-size: 20px;
+            padding: 4px 8px;
+            line-height: 1;
+            border-radius: 6px;
+            transition: background 0.15s, color 0.15s;
+        }
+        .confirmation-close:hover {
+            background: #F1F5F9;
+            color: #475569;
         }
 
         .confirmation-action {
@@ -894,6 +911,7 @@
                 <div class="confirmation-card">
                     <div class="confirmation-header">
                         <div class="confirmation-header-text">Léon a compris</div>
+                        <button class="confirmation-close" id="confirmCloseBtn" title="Fermer">&times;</button>
                     </div>
                     <div class="confirmation-action" id="confirmationAction"></div>
                     <div id="confirmationMatches"></div>
@@ -983,6 +1001,7 @@
         const confirmationMatches = document.getElementById('confirmationMatches');
         const confirmBtn = document.getElementById('confirmBtn');
         const editBtn = document.getElementById('editBtn');
+        const confirmCloseBtn = document.getElementById('confirmCloseBtn');
         const ambiguousZone = document.getElementById('ambiguousZone');
         const noMatchZone = document.getElementById('noMatchZone');
         const errorZone = document.getElementById('errorZone');
@@ -1240,6 +1259,14 @@
             confirmationZone.classList.add('visible');
         }
 
+        // ===== CLOSE CONFIRMATION =====
+        confirmCloseBtn.addEventListener('click', () => {
+            hideAllZones();
+            setMicState('idle');
+            examplesZone.classList.remove('hidden');
+            startExamplesCarousel();
+        });
+
         // ===== EDIT MODE =====
         editBtn.addEventListener('click', () => {
             isEditing = !isEditing;
@@ -1318,10 +1345,12 @@
                 // Si Claude n'a pas fourni les matches, chercher dans les leads locaux
                 let resolvedMatches = matches;
                 if (matches.length === 0 && allLeads) {
-                    const searchName = (amb.name_mentioned || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const searchName = (amb.name_mentioned || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                    if (!searchName) return;
                     resolvedMatches = allLeads.filter(lead => {
-                        const full = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                        return full.includes(searchName) || searchName.includes((lead.first_name || '').toLowerCase());
+                        const fn = (lead.first_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        const ln = (lead.last_name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+                        return fn === searchName || ln === searchName || `${fn} ${ln}` === searchName;
                     }).map(lead => ({
                         lead_id: lead.id,
                         lead_type: lead.type,
