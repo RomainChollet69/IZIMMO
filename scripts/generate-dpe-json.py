@@ -5,7 +5,7 @@ Reads from ~/Downloads/DPE/raw/{dept}.csv
 Outputs to ~/Downloads/DPE/dpe-data/{dept}.json + index.json
 
 Format per row (compact array):
-  [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat]
+  [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat, date, addr, complement]
 """
 
 import csv
@@ -91,6 +91,19 @@ def process_department(csv_path):
             year = parse_int(row.get("annee_construction", ""))
             postal = (row.get("code_postal_ban") or "").strip()[:5]
 
+            # Date DPE (YYYYMMDD int)
+            date_str = (row.get("date_etablissement_dpe") or "").strip()[:10]
+            date_int = 0
+            if date_str and len(date_str) >= 10:
+                try:
+                    date_int = int(date_str.replace("-", ""))
+                except ValueError:
+                    date_int = 0
+
+            # Adresse et complément
+            addr_label = (row.get("adresse_brut") or row.get("nom_rue") or "").strip()
+            complement = (row.get("complement_adresse_logement") or "").strip()
+
             # Round coords to 4 decimals (~11m precision)
             lng_r = round(lng, 4)
             lat_r = round(lat, 4)
@@ -100,7 +113,7 @@ def process_department(csv_path):
             max_lng = max(max_lng, lng_r)
             max_lat = max(max_lat, lat_r)
 
-            # [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat]
+            # [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat, date, addr, complement]
             rows.append([
                 CLASS_MAP[dpe_letter],
                 ges_code,
@@ -112,6 +125,9 @@ def process_department(csv_path):
                 postal,
                 lng_r,
                 lat_r,
+                date_int,
+                addr_label,
+                complement,
             ])
 
     bbox = [round(min_lng, 4), round(min_lat, 4), round(max_lng, 4), round(max_lat, 4)]

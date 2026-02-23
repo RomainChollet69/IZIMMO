@@ -115,14 +115,14 @@ def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     # ── Data stores ─────────────────────────────────────────────────
-    valid_ids = set()           # DPE UUIDs post-2022 and active
+    valid_ids = {}              # DPE UUIDs post-2022 and active → date_etablissement_dpe
     carac = {}                  # dpe_id → (surface, year, type_enum_id)
     energy = {}                 # dpe_id → (classe_bilan_dpe, ep_conso_5_usages_m2)
     ges = {}                    # dpe_id → (classe_emission_ges, emission_ges_5_usages_m2)
     type_enum = {}              # enum_id → type_batiment string
     geo_links = {}              # dpe_id → adresse_bien_id
     needed_addr_ids = set()
-    addresses = {}              # address_id → (x, y, postcode, dept)
+    addresses = {}              # address_id → (x, y, postcode, dept, label, complement)
 
     current_table = None
     col_idx = None  # dict mapping column name → index
@@ -203,7 +203,9 @@ def main():
                     if date_str == "\\N" or date_str < MIN_DATE:
                         continue
 
-                    valid_ids.add(dpe_id)
+                    # Store date (YYYY-MM-DD → YYYYMMDD integer for compactness)
+                    date_int = int(date_str[:10].replace("-", "")) if date_str != "\\N" else 0
+                    valid_ids[dpe_id] = date_int
                 except (KeyError, IndexError):
                     continue
 
@@ -286,6 +288,24 @@ def main():
                     postcode = vals[col_idx.get("ban_postcode", -1)] if "ban_postcode" in col_idx else ""
                     dept = vals[col_idx.get("ban_departement", -1)] if "ban_departement" in col_idx else ""
 
+                    # Adresse textuelle (label BAN ou champ adresse)
+                    label = ""
+                    for field in ("ban_label", "adresse_brut", "nom_rue"):
+                        if field in col_idx:
+                            val = vals[col_idx[field]]
+                            if val and val != "\\N":
+                                label = val.strip()
+                                break
+
+                    # Complément d'adresse (étage, porte, bâtiment)
+                    complement = ""
+                    for field in ("complement_adresse_logement", "complement_adresse"):
+                        if field in col_idx:
+                            val = vals[col_idx[field]]
+                            if val and val != "\\N":
+                                complement = val.strip()
+                                break
+
                     if x == "\\N" or y == "\\N":
                         continue
 
@@ -294,7 +314,7 @@ def main():
                     if dept == "\\N":
                         dept = ""
 
-                    addresses[addr_id] = (x, y, postcode, dept)
+                    addresses[addr_id] = (x, y, postcode, dept, label, complement)
                 except (KeyError, IndexError):
                     continue
 
@@ -302,7 +322,7 @@ def main():
     print()
     print(f"Streaming done in {elapsed:.0f}s ({elapsed/60:.1f} min)")
     print(f"Tables processed: {len(tables_processed)}")
-    print(f"Valid DPE (post-2022, active): {len(valid_ids):,}")
+    print(f"Valid DPE (post-2022, active): {len(valid_ids):,} (with dates)")
     print(f"  with characteristics: {len(carac):,}")
     print(f"  with energy class:    {len(energy):,}")
     print(f"  with GES:             {len(ges):,}")
@@ -338,7 +358,7 @@ def main():
             skipped["no_addr"] += 1
             continue
 
-        x_str, y_str, postcode, dept = addresses[addr_id]
+        x_str, y_str, postcode, dept, addr_label, addr_complement = addresses[addr_id]
 
         # Convert coordinates
         lng, lat = convert_coords(x_str, y_str)
@@ -382,7 +402,10 @@ def main():
         if not dept:
             continue
 
-        # Compact row: [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat]
+        # Date du DPE
+        dpe_date = valid_ids[dpe_id]  # YYYYMMDD int
+
+        # Compact row: [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat, date, addr, complement]
         row = [
             CLASS_MAP[dpe_class_letter],
             ges_code,
@@ -394,6 +417,9 @@ def main():
             postcode[:5] if postcode else "",
             lng,
             lat,
+            dpe_date,
+            addr_label,
+            addr_complement,
         ]
 
         if dept not in dept_data:

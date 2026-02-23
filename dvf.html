@@ -1466,6 +1466,17 @@
                     </div>
                 </div>
 
+                <!-- DPE date filter (visible when DPE active) -->
+                <div class="fp-section dpe-filter-section" id="dpeDateFilterSection">
+                    <div class="fp-label">DPE récents <span class="fp-label-value" id="dpeDateValue">Tous</span></div>
+                    <div class="fp-type-grid" id="dpeDateGrid">
+                        <button class="fp-type-btn active" data-months="0">Tous</button>
+                        <button class="fp-type-btn" data-months="3">3 mois</button>
+                        <button class="fp-type-btn" data-months="6">6 mois</button>
+                        <button class="fp-type-btn" data-months="12">1 an</button>
+                    </div>
+                </div>
+
                 <!-- Footer: counter + reset -->
                 <div class="fp-footer">
                     <span class="fp-counter" id="filterCounter">— ventes trouvées</span>
@@ -2561,6 +2572,7 @@
         let allDpe = [];
         let currentFilteredDpe = [];
         let dpeClassFilters = new Set([1, 2, 3, 4, 5, 6, 7]);
+        let dpeMonthsFilter = 0; // 0 = tous, 3/6/12 = derniers X mois
         const MAX_DPE_MARKERS = 1000;
 
         // DVF toggle button
@@ -2613,6 +2625,18 @@
                 } else {
                     dpeClassFilters.delete(cls);
                 }
+                renderFilteredDpe();
+            });
+        });
+
+        // DPE date filter buttons
+        document.querySelectorAll('#dpeDateGrid .fp-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#dpeDateGrid .fp-type-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                dpeMonthsFilter = parseInt(btn.dataset.months);
+                const label = btn.textContent;
+                document.getElementById('dpeDateValue').textContent = label;
                 renderFilteredDpe();
             });
         });
@@ -2673,7 +2697,7 @@
                 }
 
                 // Filter by distance
-                // row = [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat]
+                // row = [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat, date, addr, complement]
                 for (const dept of depts) {
                     const data = loadedDpeDepts[dept];
                     for (const row of data) {
@@ -2693,7 +2717,10 @@
                             postal: row[7],
                             lng: sLng,
                             lat: sLat,
-                            distance: Math.round(dist)
+                            distance: Math.round(dist),
+                            date: row[10] || 0,        // YYYYMMDD int
+                            address: row[11] || '',
+                            complement: row[12] || ''
                         });
                     }
                 }
@@ -2708,6 +2735,15 @@
 
         function renderFilteredDpe() {
             let filtered = allDpe.filter(d => dpeClassFilters.has(d.dpeClass));
+
+            // Filtre par date récente (en mois)
+            if (dpeMonthsFilter > 0) {
+                const cutoff = new Date();
+                cutoff.setMonth(cutoff.getMonth() - dpeMonthsFilter);
+                const cutoffInt = parseInt(cutoff.toISOString().slice(0, 10).replace(/-/g, ''));
+                filtered = filtered.filter(d => d.date && d.date >= cutoffInt);
+            }
+
             currentFilteredDpe = filtered;
 
             // Render markers (limit to MAX_DPE_MARKERS)
@@ -2742,8 +2778,25 @@
                     const isPassoire = dpe.dpeClass >= 6;
                     const uid = 'dpe_' + Date.now();
 
+                    // Formater la date DPE
+                    let dpeDateStr = '';
+                    if (dpe.date) {
+                        const ds = String(dpe.date);
+                        if (ds.length === 8) {
+                            dpeDateStr = new Date(ds.slice(0,4) + '-' + ds.slice(4,6) + '-' + ds.slice(6,8))
+                                .toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+                        }
+                    }
+
+                    // Adresse disponible dans les données ou reverse geocoding
+                    const hasAddr = dpe.address && dpe.address.length > 3;
+                    const addrLine = hasAddr
+                        ? '📍 ' + escapeHtml(dpe.address) + (dpe.postal ? ' ' + dpe.postal : '')
+                        : '';
+                    const complementLine = dpe.complement ? '🏢 ' + escapeHtml(dpe.complement) : '';
+
                     infoWindow.setContent(`
-                        <div style="font-family:Inter,sans-serif;min-width:220px;max-width:280px;color:#2C3E50;padding:2px 0">
+                        <div style="font-family:Inter,sans-serif;min-width:220px;max-width:300px;color:#2C3E50;padding:2px 0">
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
                                 <span style="display:inline-block;padding:3px 10px;border-radius:6px;background:${color};color:${dpe.dpeClass <= 2 ? '#fff' : '#333'};font-weight:800;font-size:16px;font-family:'Barlow Semi Condensed',sans-serif">${classLabel}</span>
                                 <div>
@@ -2762,35 +2815,40 @@
                                     <div style="font-size:15px;font-weight:700">${gesLabel} <span style="font-size:10px;font-weight:400;color:#999">(${dpe.ges || '—'} kgCO₂/m²/an)</span></div>
                                 </div>
                             </div>
-                            <div id="${uid}" style="font-size:12px;color:#667eea;cursor:pointer;padding-top:4px;border-top:1px solid #f0f0f0" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
+                            ${dpeDateStr ? `<div style="font-size:11px;color:#667eea;margin-bottom:4px">📅 DPE du ${dpeDateStr}</div>` : ''}
+                            <div style="font-size:12px;color:#667eea;cursor:pointer;padding-top:4px;border-top:1px solid #f0f0f0" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
                                 <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i> Plus de détails
                             </div>
                             <div style="display:none;padding-top:6px;font-size:12px;color:#555;line-height:1.7">
-                                <div id="${uid}_addr" style="color:#999;font-style:italic">Recherche de l'adresse…</div>
+                                <div id="${uid}_addr"${hasAddr ? '' : ' style="color:#999;font-style:italic"'}>${hasAddr ? addrLine : 'Recherche de l\'adresse…'}</div>
+                                ${complementLine ? '<div>' + complementLine + '</div>' : ''}
                                 ${dpe.postal ? '<div>📮 Code postal : ' + dpe.postal + '</div>' : ''}
                                 ${dpe.surface ? '<div>📐 Surface : ' + dpe.surface + ' m²</div>' : ''}
                                 ${dpe.conso ? '<div>⚡ ' + dpe.conso + ' kWh/m²/an (' + classLabel + ')</div>' : ''}
                                 ${dpe.ges ? '<div>🌍 ' + dpe.ges + ' kgCO₂/m²/an (' + gesLabel + ')</div>' : ''}
                                 ${dpe.year ? '<div>🏗️ Construction : ' + dpe.year + '</div>' : ''}
+                                ${dpeDateStr ? '<div>📅 DPE établi le : ' + dpeDateStr + '</div>' : ''}
                                 ${isPassoire ? '<div style="margin-top:4px;color:#DC2626;font-weight:600">⚠️ Passoire thermique — interdiction de location progressive</div>' : ''}
                             </div>
                         </div>
                     `);
                     infoWindow.open(map, marker);
 
-                    // Reverse geocoding pour l'adresse
-                    fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + dpe.lat + '&lon=' + dpe.lng)
-                        .then(r => r.json())
-                        .then(json => {
-                            const addrEl = document.getElementById(uid + '_addr');
-                            if (addrEl && json.features && json.features.length > 0) {
-                                addrEl.style.fontStyle = 'normal';
-                                addrEl.style.color = '#2C3E50';
-                                addrEl.innerHTML = '📍 ' + json.features[0].properties.label;
-                            } else if (addrEl) {
-                                addrEl.textContent = '📍 Adresse non trouvée';
-                            }
-                        }).catch(() => {});
+                    // Reverse geocoding si pas d'adresse dans les données
+                    if (!hasAddr) {
+                        fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + dpe.lat + '&lon=' + dpe.lng)
+                            .then(r => r.json())
+                            .then(json => {
+                                const addrEl = document.getElementById(uid + '_addr');
+                                if (addrEl && json.features && json.features.length > 0) {
+                                    addrEl.style.fontStyle = 'normal';
+                                    addrEl.style.color = '#2C3E50';
+                                    addrEl.innerHTML = '📍 ' + json.features[0].properties.label;
+                                } else if (addrEl) {
+                                    addrEl.textContent = '📍 Adresse non trouvée';
+                                }
+                            }).catch(() => {});
+                    }
                 });
 
                 dpeMarkers.push(marker);
