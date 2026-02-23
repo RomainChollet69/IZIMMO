@@ -862,7 +862,7 @@
         /* ===== STORY CARD INNER (flex layout) ===== */
         .story-card-inner {
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 20px;
         }
 
@@ -1069,28 +1069,32 @@
         }
 
         .generate-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
-            padding: 14px 28px;
+            padding: 14px 32px;
             background: #CBD5E0;
             border: none;
-            border-radius: 12px;
+            border-radius: 28px;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
-            font-size: 15px;
+            font-size: 16px;
             color: white;
             cursor: default;
             transition: all 0.25s ease;
         }
 
         .generate-btn:not(:disabled) {
-            background: linear-gradient(135deg, #243B53 0%, #2B6CB0 100%);
+            background: linear-gradient(135deg, #2B6CB0 0%, #3B82F6 100%);
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(43, 108, 176, 0.25);
+            box-shadow: 0 4px 16px rgba(43, 108, 176, 0.3);
         }
 
         .generate-btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(43, 108, 176, 0.35);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(43, 108, 176, 0.35);
         }
 
         .generate-btn:disabled {
