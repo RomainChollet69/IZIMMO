@@ -1692,10 +1692,13 @@
             filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
 
             // Update counter
-            const capped = filtered.length > MAX_MARKERS;
-            document.getElementById('filterCounter').textContent = capped
-                ? `${filtered.length} ventes (${MAX_MARKERS} sur carte)`
-                : `${filtered.length} vente${filtered.length > 1 ? 's' : ''} trouvée${filtered.length > 1 ? 's' : ''}`;
+            const parcelCount = new Set(filtered.map(s => `${s.lat}_${s.lng}`)).size;
+            const cappedParcels = parcelCount > MAX_PARCELS;
+            const ventesTxt = `${filtered.length} vente${filtered.length > 1 ? 's' : ''}`;
+            const parcellesTxt = cappedParcels
+                ? `${parcelCount} parcelles (${MAX_PARCELS} affichées)`
+                : `${parcelCount} parcelle${parcelCount > 1 ? 's' : ''}`;
+            document.getElementById('filterCounter').textContent = `${ventesTxt} · ${parcellesTxt}`;
 
             currentFilteredSales = filtered;
             updateStats(filtered);
@@ -1762,27 +1765,42 @@
                 : '—';
         }
 
-        const MAX_MARKERS = 500;
+        const MAX_PARCELS = 500;
 
         function renderMarkers(sales) {
             clearMarkers();
 
-            const toRender = sales.slice(0, MAX_MARKERS);
-            toRender.forEach((sale, idx) => {
-                const lat = parseFloat(sale.lat);
-                const lng = parseFloat(sale.lng);
+            // Group sales by parcel (same coordinates = same parcel centroid)
+            const parcelMap = {};
+            sales.forEach(sale => {
+                const key = `${sale.lat}_${sale.lng}`;
+                if (!parcelMap[key]) parcelMap[key] = [];
+                parcelMap[key].push(sale);
+            });
+
+            const parcels = Object.values(parcelMap);
+            // Sort by most sales first (most active parcels are more interesting)
+            parcels.sort((a, b) => b.length - a.length);
+
+            const toRender = parcels.slice(0, MAX_PARCELS);
+            const typeEmojis = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' };
+
+            toRender.forEach(parcelSales => {
+                const lat = parseFloat(parcelSales[0].lat);
+                const lng = parseFloat(parcelSales[0].lng);
                 if (!lat || !lng) return;
 
-                const priceM2 = getPricePerM2(sale);
-                const color = getPriceColor(priceM2);
-                const type = getType(sale);
-                const typeEmoji = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' }[type];
+                const count = parcelSales.length;
 
-                const price = parseFloat(sale.valeur_fonciere);
-                const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
-                const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+                // Median price/m² for color
+                const pricesM2 = parcelSales.map(s => getPricePerM2(s)).filter(p => p && p > 0);
+                pricesM2.sort((a, b) => a - b);
+                const medianPriceM2 = pricesM2.length > 0 ? pricesM2[Math.floor(pricesM2.length / 2)] : null;
+                const color = getPriceColor(medianPriceM2);
 
-                // SVG circle marker
+                // Scale: 8 for single sale, grows with log for groups
+                const scale = count === 1 ? 8 : Math.min(8 + Math.log2(count) * 3, 20);
+
                 const marker = new google.maps.Marker({
                     position: { lat, lng },
                     map: map,
@@ -1792,27 +1810,68 @@
                         fillOpacity: 0.85,
                         strokeColor: '#fff',
                         strokeWeight: 1.5,
-                        scale: 8
-                    }
+                        scale: Math.round(scale)
+                    },
+                    label: count > 1 ? {
+                        text: String(count),
+                        color: '#fff',
+                        fontSize: '10px',
+                        fontWeight: '700'
+                    } : undefined
                 });
 
-                // InfoWindow + detail on click
-                const content = `
-                    <div style="font-family:Inter,sans-serif;min-width:180px">
-                        <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
-                        <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
-                        ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
-                        <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
-                        ${sale.distance ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
-                    </div>
-                `;
+                // Build InfoWindow content
+                let content;
+                if (count === 1) {
+                    const sale = parcelSales[0];
+                    const type = getType(sale);
+                    const price = parseFloat(sale.valeur_fonciere);
+                    const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+                    const priceM2 = getPricePerM2(sale);
+                    const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+                    content = `
+                        <div style="font-family:Inter,sans-serif;min-width:180px">
+                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmojis[type] || '📍'} ${capitalize(type)}</div>
+                            <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
+                            ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
+                            <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
+                            ${sale.distance ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
+                        </div>
+                    `;
+                } else {
+                    // Multi-sale parcel: show summary + list
+                    const prices = parcelSales.map(s => parseFloat(s.valeur_fonciere)).filter(p => p > 0);
+                    const minPrice = Math.min(...prices);
+                    const maxPrice = Math.max(...prices);
+                    const salesListHtml = parcelSales.slice(0, 10).map(sale => {
+                        const type = getType(sale);
+                        const price = parseFloat(sale.valeur_fonciere);
+                        const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+                        const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+                        return `<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:12px">
+                            ${typeEmojis[type] || '📍'} <strong>${formatPrice(price)}</strong>${surface ? ` — ${surface} m²` : ''} <span style="color:#999">${date}</span>
+                        </div>`;
+                    }).join('');
+                    content = `
+                        <div style="font-family:Inter,sans-serif;min-width:220px;max-height:300px;overflow-y:auto">
+                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">🏘️ ${count} ventes sur cette parcelle</div>
+                            <div style="font-size:13px;color:#666;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
+                            ${medianPriceM2 ? `<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:8px">Médiane : ${formatNumber(medianPriceM2)} €/m²</div>` : ''}
+                            ${salesListHtml}
+                            ${count > 10 ? `<div style="font-size:11px;color:#999;padding-top:4px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
+                        </div>
+                    `;
+                }
+
                 marker.addListener('click', () => {
                     infoWindow.setContent(content);
                     infoWindow.open(map, marker);
-                    showSaleDetail(idx, true);
+                    // Show first sale of parcel in detail panel
+                    const saleIndex = currentFilteredSales.indexOf(parcelSales[0]);
+                    if (saleIndex >= 0) showSaleDetail(saleIndex, true);
                 });
 
-                marker._saleData = sale;
+                marker._parcelSales = parcelSales;
                 markers.push(marker);
             });
         }
