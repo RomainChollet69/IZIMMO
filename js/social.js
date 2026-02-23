@@ -1709,16 +1709,18 @@
                 return;
             }
 
-            // Display in results area
-            document.getElementById('resultsSection').style.display = 'block';
-            displayResults([{
+            // Set currentResults and display
+            currentResults = [{
                 platform: post.platform,
                 content: post.content,
                 hook: post.hook,
+                hook_pattern: post.hook_pattern,
                 visual_recommendation: post.visual_recommendation || 'Post texte pur.',
                 completeness: post.completeness || { hook_quality: true, local_anchor: true, terrain_proof: true, cta_present: true },
+                compliance_flags: post.compliance_flags || {},
                 post_id: post.id
-            }]);
+            }];
+            displayResults();
 
             // Scroll to results
             document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
