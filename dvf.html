@@ -1692,7 +1692,10 @@
             filtered.sort((a, b) => new Date(b.date_mutation || 0) - new Date(a.date_mutation || 0));
 
             // Update counter
-            document.getElementById('filterCounter').textContent = `${filtered.length} vente${filtered.length > 1 ? 's' : ''} trouvée${filtered.length > 1 ? 's' : ''}`;
+            const capped = filtered.length > MAX_MARKERS;
+            document.getElementById('filterCounter').textContent = capped
+                ? `${filtered.length} ventes (${MAX_MARKERS} sur carte)`
+                : `${filtered.length} vente${filtered.length > 1 ? 's' : ''} trouvée${filtered.length > 1 ? 's' : ''}`;
 
             currentFilteredSales = filtered;
             updateStats(filtered);
@@ -1759,10 +1762,13 @@
                 : '—';
         }
 
+        const MAX_MARKERS = 500;
+
         function renderMarkers(sales) {
             clearMarkers();
 
-            sales.forEach((sale, idx) => {
+            const toRender = sales.slice(0, MAX_MARKERS);
+            toRender.forEach((sale, idx) => {
                 const lat = parseFloat(sale.lat);
                 const lng = parseFloat(sale.lng);
                 if (!lat || !lng) return;
