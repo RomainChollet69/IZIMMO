@@ -494,6 +494,11 @@
         try {
             const user = (await supabaseClient.auth.getUser()).data.user;
 
+            // Deduplicate platforms_active if present
+            if (profileData.platforms_active) {
+                profileData.platforms_active = [...new Set(profileData.platforms_active)];
+            }
+
             const { data, error } = await supabaseClient
                 .from('social_profiles')
                 .upsert({
@@ -679,7 +684,7 @@
     };
 
     async function generateFromSuggestion(suggestion, btn) {
-        const platforms = currentProfile.platforms_active || [];
+        const platforms = [...new Set(currentProfile.platforms_active || [])];
         if (platforms.length === 0) {
             alert('Aucune plateforme active dans ton profil');
             return;
@@ -1255,7 +1260,7 @@
             return;
         }
 
-        const platforms = currentProfile.platforms_active || [];
+        const platforms = [...new Set(currentProfile.platforms_active || [])];
         if (platforms.length === 0) {
             alert('Aucune plateforme active dans ton profil');
             return;
