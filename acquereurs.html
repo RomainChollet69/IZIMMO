@@ -3111,6 +3111,9 @@
                     const arrow = card.querySelector('.card-expand-arrow');
                     if (card.classList.contains('expanded')) {
                         card.style.maxHeight = card.scrollHeight + 'px';
+                        setTimeout(() => {
+                            if (card.classList.contains('expanded')) card.style.maxHeight = 'none';
+                        }, 350);
                         if (arrow) arrow.textContent = '▲';
                     } else {
                         card.style.maxHeight = '120px';
