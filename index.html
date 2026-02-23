@@ -10,6 +10,11 @@
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        if (window.innerWidth <= 768 && !new URLSearchParams(window.location.search).has('v')) {
+            window.location.replace('micro.html');
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/workflows.js"></script>
@@ -8579,7 +8584,7 @@
 
     <!-- Bottom Mobile Tab Bar -->
     <nav class="mobile-bottom-bar">
-        <a href="index.html" class="bottom-tab active">
+        <a href="index.html?v=1" class="bottom-tab active">
             <i class="fa-solid fa-house"></i>
             <span>Vendeurs</span>
         </a>
@@ -8627,10 +8632,10 @@
             .bottom-tab-micro {
                 display: flex; align-items: center; justify-content: center;
                 width: 56px; height: 56px; border-radius: 50%;
-                background: #6C4CC8; color: white;
+                background: #26a1e8; color: white;
                 text-decoration: none; font-size: 24px;
                 margin-top: -20px;
-                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
+                box-shadow: 0 4px 16px rgba(38, 161, 232, 0.4);
                 transition: transform 0.2s;
             }
             .bottom-tab-micro:active { transform: scale(0.93); }
