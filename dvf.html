@@ -1087,11 +1087,10 @@
         }
         .map-type-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
 
-        /* DPE toggle button */
-        .dpe-toggle {
+        /* DVF & DPE toggle buttons */
+        .dvf-toggle, .dpe-toggle {
             position: absolute;
             top: 10px;
-            right: 150px;
             z-index: 1001;
             background: rgba(255,255,255,0.95);
             border: none;
@@ -1105,7 +1104,13 @@
             transition: all 0.2s;
             color: #333;
         }
-        .dpe-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .dvf-toggle:hover, .dpe-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .dvf-toggle { right: 230px; }
+        .dvf-toggle.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .dpe-toggle { right: 150px; }
         .dpe-toggle.active {
             background: #319834;
             color: #fff;
@@ -1517,6 +1522,7 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
+            <button class="dvf-toggle active" id="dvfToggle">📊 DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
             <div id="map"></div>
@@ -1559,6 +1565,7 @@
         let allSales = [];
         let currentFilteredSales = [];
         let currentFilter = 'all';
+        let dvfLayerActive = true;
         let currentCenter = null;
         let currentMapType = 'roadmap';
 
@@ -2093,6 +2100,7 @@
 
         function renderMarkers(sales) {
             clearMarkers();
+            if (!dvfLayerActive) return;
 
             // Group sales by parcel (same coordinates = same parcel centroid)
             const parcelMap = {};
@@ -2523,6 +2531,24 @@
         let currentFilteredDpe = [];
         let dpeClassFilters = new Set([1, 2, 3, 4, 5, 6, 7]);
         const MAX_DPE_MARKERS = 1000;
+
+        // DVF toggle button
+        document.getElementById('dvfToggle').addEventListener('click', () => {
+            dvfLayerActive = !dvfLayerActive;
+            const btn = document.getElementById('dvfToggle');
+            btn.classList.toggle('active', dvfLayerActive);
+            btn.textContent = dvfLayerActive ? '📊 DVF ✓' : '📊 DVF';
+
+            // Afficher/masquer marqueurs DVF
+            markers.forEach(m => m.setMap(dvfLayerActive ? map : null));
+
+            // Afficher/masquer stats, filtres, liste
+            document.querySelector('.quick-filters').style.display = dvfLayerActive ? '' : 'none';
+            document.getElementById('filterToggleBar').style.display = dvfLayerActive ? '' : 'none';
+            document.getElementById('filterPanel').style.display = dvfLayerActive ? '' : 'none';
+            document.getElementById('statsSection').style.display = dvfLayerActive && currentFilteredSales.length > 0 ? 'block' : 'none';
+            document.getElementById('salesSection').style.display = dvfLayerActive ? '' : 'none';
+        });
 
         // DPE toggle button
         document.getElementById('dpeToggle').addEventListener('click', () => {
