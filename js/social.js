@@ -12,6 +12,9 @@
     let audioStream = null;
     let currentResults = [];
     let placeholderInterval = null;
+    let carouselSlides = [];
+    let carouselIndex = 0;
+    let carouselTimer = null;
 
     // ===== PLACEHOLDER EXAMPLES =====
     const PLACEHOLDER_EXAMPLES = [
@@ -59,6 +62,19 @@
 
     const DAYS_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
     const DAYS_SHORT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+    // Map templates → CRM event types for enrichment
+    const CRM_TEMPLATE_MATCH = {
+        'Analyse marché': ['estimations'],
+        'Stat marché': ['estimations'],
+        'Étude de cas': ['mandate'],
+        'Post vendu': ['sale'],
+        'Remise de clés': ['sale'],
+        'Nouveau mandat': ['mandate'],
+        'Carrousel listing': ['visits', 'mandate'],
+        'Reel visite': ['visits'],
+        'Visite minute': ['visits']
+    };
 
     // ===== TEMPLATE DETAILS =====
     const TEMPLATE_DETAILS = {
@@ -523,17 +539,16 @@
         }
     }
 
-    // ===== CRM SUGGESTIONS (Sprint 2) =====
-    async function analyzeCRMEvents() {
+    // ===== CRM DATA FETCHING =====
+    async function fetchCRMData() {
         const user = (await supabaseClient.auth.getUser()).data.user;
-        if (!user) return [];
+        if (!user) return { sale: null, mandate: null, visits: null, estimations: null };
 
         const now = new Date();
         const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
         const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-        const suggestions = [];
+        const result = { sale: null, mandate: null, visits: null, estimations: null };
 
         try {
             // 1. Recent sales (14 days)
@@ -547,150 +562,274 @@
                 .limit(1);
 
             if (recentSales && recentSales.length > 0) {
-                const sale = recentSales[0];
-                suggestions.push({
-                    type: 'sale',
-                    title: 'Vente récente',
-                    description: `Tu as vendu ${sale.property_type || 'un bien'} ${sale.address ? 'à ' + sale.address : ''} — un post "remise de clés" ?`,
-                    platform: 'linkedin',
-                    data: sale
-                });
+                result.sale = recentSales[0];
             }
 
-            // 2. Old mandates without offers (> 45 days)
+            // 2. Active mandates (for content)
             const fortyFiveDaysAgo = new Date(now.getTime() - 45 * 24 * 60 * 60 * 1000).toISOString();
-            const { data: oldMandates } = await supabaseClient
+            const { data: mandates } = await supabaseClient
                 .from('sellers')
                 .select('property_type, address, mandate_start_date')
                 .eq('user_id', user.id)
                 .eq('status', 'mandate')
-                .lt('mandate_start_date', fortyFiveDaysAgo)
                 .order('mandate_start_date', { ascending: true })
                 .limit(1);
 
-            if (oldMandates && oldMandates.length > 0) {
-                const mandate = oldMandates[0];
-                const days = Math.floor((now - new Date(mandate.mandate_start_date)) / (1000 * 60 * 60 * 24));
-                suggestions.push({
-                    type: 'mandate',
-                    title: 'Mandat longue durée',
-                    description: `Ton ${mandate.property_type || 'bien'} ${mandate.address ? 'à ' + mandate.address : ''} est en mandat depuis ${days} jours — une étude de cas pour relancer ?`,
-                    platform: 'linkedin',
-                    data: { ...mandate, days }
-                });
+            if (mandates && mandates.length > 0) {
+                const m = mandates[0];
+                const days = Math.floor((now - new Date(m.mandate_start_date)) / (1000 * 60 * 60 * 24));
+                result.mandate = { ...m, days };
             }
 
             // 3. Recent visits (7 days)
-            const { data: visits, count: visitsCount } = await supabaseClient
+            const { count: visitsCount } = await supabaseClient
                 .from('visits')
-                .select('*', { count: 'exact' })
+                .select('id', { count: 'exact', head: true })
                 .eq('user_id', user.id)
                 .gte('created_at', sevenDaysAgo);
 
-            if (visitsCount && visitsCount >= 3) {
-                suggestions.push({
-                    type: 'visits',
-                    title: 'Visites de la semaine',
-                    description: `Tu as fait ${visitsCount} visites cette semaine — un Reel "visite express" ?`,
-                    platform: 'instagram',
-                    data: { count: visitsCount }
-                });
+            if (visitsCount && visitsCount >= 1) {
+                result.visits = { count: visitsCount };
             }
 
-            // 4. Monthly estimations (≥ 3)
+            // 4. Monthly estimations
             const { count: estimationsCount } = await supabaseClient
                 .from('sellers')
                 .select('id', { count: 'exact', head: true })
                 .eq('user_id', user.id)
                 .gte('created_at', monthStart);
 
-            if (estimationsCount && estimationsCount >= 3) {
-                suggestions.push({
-                    type: 'estimations',
-                    title: 'Estimations du mois',
-                    description: `Tu as fait ${estimationsCount} estimations ce mois — un post "analyse marché" ?`,
-                    platform: 'linkedin',
-                    data: { count: estimationsCount }
-                });
+            if (estimationsCount && estimationsCount >= 1) {
+                result.estimations = { count: estimationsCount };
             }
 
         } catch (err) {
-            console.error('[Social] CRM analysis error:', err);
+            console.error('[Social] CRM fetch error:', err);
         }
 
-        return suggestions;
+        return result;
+    }
+
+    // ===== CALENDAR-FIRST SUGGESTIONS =====
+    const PLATFORM_NAMES = {
+        linkedin: 'LinkedIn', instagram: 'Instagram',
+        facebook: 'Facebook', tiktok: 'TikTok'
+    };
+
+    function buildLeaText(templateName, platform, crmMatch) {
+        const pName = PLATFORM_NAMES[platform];
+        const base = `Aujourd'hui c'est jour de ${templateName} sur ${pName}`;
+
+        if (!crmMatch) {
+            const details = TEMPLATE_DETAILS[templateName];
+            if (details && details.pourquoi) {
+                return `${base}. ${details.pourquoi}`;
+            }
+            return `${base}. Lance-toi !`;
+        }
+
+        switch (crmMatch.type) {
+            case 'sale':
+                return `${base}, et justement tu as vendu ${crmMatch.data.property_type || 'un bien'}${crmMatch.data.address ? ' à ' + crmMatch.data.address : ''} récemment — l'histoire parfaite !`;
+            case 'mandate':
+                return `${base}, et ton ${crmMatch.data.property_type || 'bien'}${crmMatch.data.address ? ' à ' + crmMatch.data.address : ''} en mandat depuis ${crmMatch.data.days} jours mérite un coup de projecteur.`;
+            case 'visits':
+                return `${base}, et avec ${crmMatch.data.count} visite${crmMatch.data.count > 1 ? 's' : ''} cette semaine, tu as de la matière !`;
+            case 'estimations':
+                return `${base}, et tes ${crmMatch.data.count} estimations ce mois te donnent des chiffres concrets à partager.`;
+            default:
+                return `${base}.`;
+        }
+    }
+
+    async function buildCalendarSuggestions(today) {
+        const templates = CALENDAR[today];
+        if (!templates) return [];
+
+        const platforms = [...new Set(currentProfile?.platforms_active || [])];
+        const crmData = await fetchCRMData();
+
+        const slides = [];
+        for (const platform of platforms) {
+            const templateName = templates[platform];
+            if (!templateName) continue;
+
+            // Try to find a CRM match for this template
+            const matchTypes = CRM_TEMPLATE_MATCH[templateName] || [];
+            let crmMatch = null;
+            for (const type of matchTypes) {
+                if (crmData[type]) {
+                    crmMatch = { type, data: crmData[type] };
+                    break;
+                }
+            }
+
+            slides.push({
+                platform,
+                templateName,
+                templateIcon: getTemplateIcon(templateName),
+                crmMatch,
+                leaText: buildLeaText(templateName, platform, crmMatch)
+            });
+        }
+
+        return slides;
+    }
+
+    function getNextActiveDay(today, activeDays) {
+        const allDays = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi'];
+        const todayIdx = allDays.indexOf(today);
+        for (let i = 1; i <= 5; i++) {
+            const nextDay = allDays[(todayIdx + i) % 5];
+            if (activeDays.includes(nextDay)) return nextDay;
+        }
+        return 'lundi';
     }
 
     async function loadSuggestions() {
         const container = document.getElementById('suggestionsContainer');
-        const suggestions = await analyzeCRMEvents();
+        const today = DAYS_FR[new Date().getDay()];
 
-        if (suggestions.length === 0) {
-            // Show calendar suggestion for today
-            const today = DAYS_FR[new Date().getDay()];
-            const templates = CALENDAR[today] || {};
-            const platforms = currentProfile?.platforms_active || ['linkedin', 'instagram', 'facebook', 'tiktok'];
+        // Weekend
+        if (today === 'samedi' || today === 'dimanche') {
+            container.innerHTML = `<div class="suggestion-empty">
+                <p style="font-weight:600;">Bon weekend !</p>
+                <p style="color:var(--text-light);margin-top:8px;">
+                    Léa te retrouve lundi avec de nouvelles idées de contenu.
+                </p>
+            </div>`;
+            return;
+        }
 
-            let html = `<div class="suggestion-empty">
-                <p style="color:var(--text-light);margin-bottom:16px">Aucun événement CRM récent détecté.</p>
-                <p style="font-weight:600;margin-bottom:8px">Suggestions du calendrier pour aujourd'hui :</p>
-            `;
+        // Check frequency filter
+        const frequency = currentProfile?.publishing_frequency || 'regular';
+        const activeDays = getActiveDaysForFrequency(frequency);
+        if (!activeDays.includes(today)) {
+            const nextDay = getNextActiveDay(today, activeDays);
+            container.innerHTML = `<div class="suggestion-empty">
+                <p style="font-weight:600;">Pas de post prévu aujourd'hui</p>
+                <p style="color:var(--text-light);margin-top:8px;">
+                    Ton prochain jour de publication est <strong>${nextDay}</strong>.
+                </p>
+            </div>`;
+            return;
+        }
 
-            for (const platform of platforms) {
-                if (templates[platform]) {
-                    const emoji = { linkedin: '💼', instagram: '📸', facebook: '👥', tiktok: '🎵' }[platform] || '📱';
-                    html += `<div class="calendar-suggestion">
-                        ${emoji} <strong>${platform.charAt(0).toUpperCase() + platform.slice(1)}</strong> : ${templates[platform]}
-                    </div>`;
-                }
-            }
+        // Build calendar-first suggestions enriched with CRM
+        const slides = await buildCalendarSuggestions(today);
 
-            html += '</div>';
-            container.innerHTML = html;
-        } else {
-            let html = suggestions.map(s => `
-                <div class="suggestion-card" data-suggestion='${JSON.stringify(s).replace(/'/g, "&apos;")}'>
-                    <div class="suggestion-icon">${s.type === 'sale' ? '🏡' : s.type === 'visits' ? '🚶' : s.type === 'mandate' ? '📋' : '📊'}</div>
-                    <div class="suggestion-content">
-                        <div class="suggestion-title">${escapeHtml(s.title)}</div>
-                        <div class="suggestion-description">${escapeHtml(s.description)}</div>
-                    </div>
-                    <button class="suggestion-btn" onclick="window.handleSuggestionClick(this)">Raconter cette histoire</button>
+        if (slides.length === 0) {
+            container.innerHTML = `<div class="suggestion-empty">
+                <p>Aucune plateforme active pour aujourd'hui.</p>
+            </div>`;
+            return;
+        }
+
+        carouselSlides = slides;
+        carouselIndex = 0;
+        renderCarousel(container);
+        initCarouselEvents();
+        startCarouselTimer();
+    }
+
+    // ===== CAROUSEL RENDERING & NAVIGATION =====
+    function renderCarousel(container) {
+        const slides = carouselSlides;
+        const now = new Date();
+        const dateStr = `${DAYS_SHORT[now.getDay()]} ${now.getDate()}/${now.getMonth() + 1}`;
+
+        let slidesHTML = slides.map((slide, i) => `
+            <div class="suggestion-slide ${i === 0 ? 'active' : ''}" data-index="${i}">
+                <div class="suggestion-slide-header">
+                    <span class="suggestion-platform-badge">${getPlatformIcon(slide.platform)} ${PLATFORM_NAMES[slide.platform]}</span>
+                    <span class="suggestion-template-label">${slide.templateIcon} ${escapeHtml(slide.templateName)}</span>
                 </div>
-            `).join('');
+                <div class="suggestion-lea-text">${escapeHtml(slide.leaText)}</div>
+                <button class="suggestion-generate-btn"
+                        data-platform="${slide.platform}"
+                        data-template="${escapeHtml(slide.templateName)}"
+                        data-crm='${slide.crmMatch ? JSON.stringify(slide.crmMatch).replace(/'/g, "&apos;") : ""}'
+                        onclick="window.handleCarouselGenerate(this)">
+                    Générer ce post
+                </button>
+            </div>
+        `).join('');
 
-            container.innerHTML = html;
+        let dotsHTML = '';
+        if (slides.length > 1) {
+            dotsHTML = `<div class="carousel-dots">
+                ${slides.map((_, i) => `<span class="carousel-dot ${i === 0 ? 'active' : ''}" data-index="${i}" onclick="window.goToSlide(${i})"></span>`).join('')}
+            </div>`;
+        }
+
+        container.innerHTML = `
+            <div class="suggestion-carousel" id="suggestionCarousel">
+                ${slidesHTML}
+            </div>
+            ${dotsHTML}
+        `;
+    }
+
+    function startCarouselTimer() {
+        stopCarouselTimer();
+        if (carouselSlides.length <= 1) return;
+        carouselTimer = setInterval(() => {
+            window.goToSlide((carouselIndex + 1) % carouselSlides.length);
+        }, 5000);
+    }
+
+    function stopCarouselTimer() {
+        if (carouselTimer) {
+            clearInterval(carouselTimer);
+            carouselTimer = null;
         }
     }
 
-    window.handleSuggestionClick = async function(btn) {
-        const card = btn.closest('.suggestion-card');
-        const suggestion = JSON.parse(card.dataset.suggestion.replace(/&apos;/g, "'"));
+    window.goToSlide = function(index) {
+        carouselIndex = index;
 
+        document.querySelectorAll('.suggestion-slide').forEach(slide => {
+            slide.classList.remove('active');
+        });
+        const targetSlide = document.querySelector(`.suggestion-slide[data-index="${index}"]`);
+        if (targetSlide) targetSlide.classList.add('active');
+
+        document.querySelectorAll('.carousel-dot').forEach(dot => {
+            dot.classList.remove('active');
+        });
+        const targetDot = document.querySelector(`.carousel-dot[data-index="${index}"]`);
+        if (targetDot) targetDot.classList.add('active');
+    };
+
+    function initCarouselEvents() {
+        const carousel = document.getElementById('suggestionCarousel');
+        if (!carousel) return;
+        carousel.addEventListener('mouseenter', stopCarouselTimer);
+        carousel.addEventListener('mouseleave', startCarouselTimer);
+    }
+
+    // ===== SUGGESTION GENERATION (single platform) =====
+    window.handleCarouselGenerate = async function(btn) {
         if (!currentProfile) {
             alert('Profil non configuré. Recharge la page.');
             return;
         }
 
-        // Check if voice profile modal should be shown (first time only)
+        const platform = btn.dataset.platform;
+        const templateName = btn.dataset.template;
+        const crmRaw = btn.dataset.crm;
+        const crmMatch = crmRaw ? JSON.parse(crmRaw.replace(/&apos;/g, "'")) : null;
+
         const shouldShowVoiceModal = await checkAndShowVoiceModal();
         if (shouldShowVoiceModal) {
-            // Store suggestion context for after voice profile is saved
-            window.pendingSuggestion = suggestion;
+            window.pendingSuggestion = { platform, templateName, crmMatch };
             return;
         }
 
-        await generateFromSuggestion(suggestion, btn);
+        await generateSinglePlatformPost(platform, templateName, crmMatch, btn);
     };
 
-    async function generateFromSuggestion(suggestion, btn) {
-        const platforms = [...new Set(currentProfile.platforms_active || [])];
-        if (platforms.length === 0) {
-            alert('Aucune plateforme active dans ton profil');
-            return;
-        }
-
-        // Disable button during generation
+    async function generateSinglePlatformPost(platform, templateName, crmMatch, btn) {
         if (btn) {
             btn.disabled = true;
             btn.textContent = '⏳ En cours...';
@@ -699,45 +838,46 @@
         try {
             currentResults = [];
 
-            for (const platform of platforms) {
-                console.log(`[Social] Generating suggestion post for ${platform}...`);
+            const suggestionContext = {
+                type: crmMatch?.type || 'calendar',
+                title: templateName,
+                description: crmMatch ? buildLeaText(templateName, platform, crmMatch) : '',
+                data: crmMatch?.data || {},
+                template_id: templateName
+            };
 
-                const response = await fetch('/api/generate-social-post', {
-                    method: 'POST',
-                    headers: await getAuthHeaders(),
-                    body: JSON.stringify({
-                        mode: 'suggestion',
-                        platform,
-                        suggestion_context: suggestion
-                    })
-                });
+            const response = await fetch('/api/generate-social-post', {
+                method: 'POST',
+                headers: await getAuthHeaders(),
+                body: JSON.stringify({
+                    mode: 'suggestion',
+                    platform,
+                    suggestion_context: suggestionContext
+                })
+            });
 
-                if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.error || `Erreur ${platform}`);
-                }
-
-                const result = await response.json();
-                currentResults.push({ platform, ...result });
-                console.log(`[Social] Generated for ${platform}:`, result);
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || `Erreur ${platform}`);
             }
 
-            // Display results
-            displayResults();
+            const result = await response.json();
+            currentResults.push({ platform, ...result });
 
-            // Reload history
+            displayResults();
             await loadHistory();
 
         } catch (err) {
-            console.error('[Social] Generate suggestion error:', err);
-            alert('Erreur lors de la génération: ' + err.message);
+            console.error('[Social] Generate error:', err);
+            alert('Erreur : ' + err.message);
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.textContent = 'Raconter cette histoire';
+                btn.textContent = 'Générer ce post';
             }
         }
     }
+
 
     // ===== TEMPLATE POPOVER =====
     window.showTemplatePopover = function(templateName, platform, dayName) {
@@ -2220,11 +2360,11 @@
 
             // If there was a pending generation, continue it
             if (window.pendingSuggestion) {
-                const suggestion = window.pendingSuggestion;
+                const s = window.pendingSuggestion;
                 window.pendingSuggestion = null;
 
                 setTimeout(() => {
-                    generateFromSuggestion(suggestion, null);
+                    generateSinglePlatformPost(s.platform, s.templateName, s.crmMatch, null);
                 }, 300);
             } else if (window.pendingUserInput) {
                 const userInput = window.pendingUserInput;

@@ -75,9 +75,9 @@ export default async function handler(req, res) {
         if (mode === 'free_input') {
             userPrompt = `Génère un post ${platform} à partir de ce vécu :\n\n"${user_input}"\n\nRetourne UNIQUEMENT le JSON sans explication.`;
         } else if (mode === 'suggestion' && suggestion_context) {
-            // Suggestion mode: generate from CRM suggestion context
+            // Suggestion mode: generate from calendar template + CRM context
             const ctx = suggestion_context;
-            userPrompt = `Génère un post ${platform} basé sur cette suggestion CRM :\n\nType : ${ctx.type}\nTitre : ${ctx.title || ''}\nDescription : ${ctx.description || ''}\nDonnées : ${JSON.stringify(ctx.data || {})}\n\nRetourne UNIQUEMENT le JSON sans explication.`;
+            userPrompt = `Génère un post ${platform} basé sur cette suggestion du calendrier éditorial :\n\nTemplate : ${ctx.template_id || ctx.title || 'libre'}\nType de contenu : ${ctx.type}\nContexte : ${ctx.description || ''}\nDonnées CRM : ${JSON.stringify(ctx.data || {})}\n\nLe post doit correspondre au format "${ctx.template_id || ctx.title}" pour ${platform}.\n\nRetourne UNIQUEMENT le JSON sans explication.`;
         } else {
             // Calendar-based suggestions (fallback)
             userPrompt = `Génère le post ${platform} du jour selon les données CRM fournies.\n\nRetourne UNIQUEMENT le JSON sans explication.`;
@@ -135,7 +135,7 @@ export default async function handler(req, res) {
                 content: postData.content,
                 hook: postData.hook,
                 hook_pattern: postData.hook_pattern,
-                template_id: null, // Sprint 1: no template
+                template_id: suggestion_context?.template_id || null,
                 objective: null,
                 format_type: 'post_texte',
                 visual_recommendation: postData.visual_recommendation,
@@ -148,7 +148,7 @@ export default async function handler(req, res) {
                 compliance_flags: postData.compliance_flags || {},
                 user_edited: false,
                 source_type: mode === 'free_input' ? 'user_input' : 'calendar_suggestion',
-                source_data: mode === 'free_input' ? { user_input } : {},
+                source_data: mode === 'free_input' ? { user_input } : { template_id: suggestion_context?.template_id, crm_type: suggestion_context?.type },
                 calendar_day: today.jour,
                 status: 'draft',
                 generated_at: new Date().toISOString()
