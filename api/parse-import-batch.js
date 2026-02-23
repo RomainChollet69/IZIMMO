@@ -29,7 +29,6 @@ export default async function handler(req, res) {
 - "source": string ou null — parmi "pige", "recommandation", "boitage", "boucheaoreille", "siteimmo", "efficity", "autre"
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble"
 - "surface": number ou null — surface en m² (nombre pur). "128m2" → 128, "T3-88m2" → 88
-- "rooms": string ou null — nombre de pièces (T1, T2, T3...)
 - "date": string ou null — date au format "YYYY-MM-DD" (convertir depuis tout format)
 - "reminder": string ou null — date de relance au format "YYYY-MM-DD"
 - "status": string ou null — parmi "hot", "warm", "cold", "off_market", "mandate", "competitor", "sold", "lost"
