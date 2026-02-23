@@ -1544,7 +1544,7 @@
                     <div class="empty-state-title">Aucune histoire partagée cette semaine</div>
                     <div class="empty-state-separator"></div>
                     <div class="empty-state-subtitle">Prête à créer du contenu ? Lance ta première publication !</div>
-                    <button class="empty-state-cta" onclick="document.getElementById('suggestionBtn').click()">
+                    <button class="empty-state-cta" onclick="document.querySelector('.create-section').scrollIntoView({behavior: 'smooth', block: 'center'}); setTimeout(() => document.getElementById('suggestionBtn').click(), 500);">
                         + Créer une nouvelle story
                     </button>
                 </div>
