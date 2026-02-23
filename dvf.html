@@ -673,6 +673,132 @@
         .stat-value.apartments { color: #FF9800; }
         .stat-value.land { color: #9C27B0; }
 
+        /* DPE stats section */
+        .dpe-stats-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+            display: none;
+        }
+
+        .dpe-stats-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.5);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dpe-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .dpe-bar-label {
+            font-size: 13px;
+            font-weight: 700;
+            width: 18px;
+            text-align: center;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+        }
+
+        .dpe-bar-track {
+            flex: 1;
+            height: 16px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .dpe-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            min-width: 0;
+        }
+
+        .dpe-bar-pct {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            width: 36px;
+            text-align: right;
+        }
+
+        .dpe-passoires {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: rgba(252,28,3,0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .dpe-passoires-value {
+            font-size: 24px;
+            font-weight: 800;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            color: #fc1c03;
+        }
+
+        .dpe-passoires-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        .dpe-median {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .dpe-median-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 4px;
+            font-weight: 800;
+            font-size: 16px;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            color: #fff;
+            margin-left: 6px;
+        }
+
+        /* DPE filter buttons */
+        .dpe-filter-section {
+            display: none;
+        }
+
+        .dpe-class-grid {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .dpe-class-btn {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 2px solid transparent;
+            color: #fff;
+            transition: all 0.15s;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            opacity: 0.4;
+        }
+
+        .dpe-class-btn.active {
+            opacity: 1;
+            border-color: #fff;
+        }
+
         /* Sales list */
         .sales-section {
             flex: 1;
@@ -938,6 +1064,30 @@
             color: #333;
         }
         .map-type-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+
+        /* DPE toggle button */
+        .dpe-toggle {
+            position: absolute;
+            top: 10px;
+            right: 150px;
+            z-index: 1001;
+            background: rgba(255,255,255,0.95);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+            color: #333;
+        }
+        .dpe-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .dpe-toggle.active {
+            background: #319834;
+            color: #fff;
+        }
 
         /* ===== MAP ===== */
         .map-container {
@@ -1231,6 +1381,20 @@
                     </div>
                 </div>
 
+                <!-- DPE class filter (visible when DPE active) -->
+                <div class="fp-section dpe-filter-section" id="dpeFilterSection">
+                    <div class="fp-label">Classe DPE</div>
+                    <div class="dpe-class-grid" id="dpeClassGrid">
+                        <button class="dpe-class-btn active" data-class="1" style="background:#319834">A</button>
+                        <button class="dpe-class-btn active" data-class="2" style="background:#33cc33">B</button>
+                        <button class="dpe-class-btn active" data-class="3" style="background:#cbfc33;color:#333">C</button>
+                        <button class="dpe-class-btn active" data-class="4" style="background:#fbeb09;color:#333">D</button>
+                        <button class="dpe-class-btn active" data-class="5" style="background:#fccc04;color:#333">E</button>
+                        <button class="dpe-class-btn active" data-class="6" style="background:#fc9a07">F</button>
+                        <button class="dpe-class-btn active" data-class="7" style="background:#fc1c03">G</button>
+                    </div>
+                </div>
+
                 <!-- Footer: counter + reset -->
                 <div class="fp-footer">
                     <span class="fp-counter" id="filterCounter">— ventes trouvées</span>
@@ -1263,6 +1427,17 @@
                 </div>
             </div>
 
+            <!-- DPE Stats (visible when DPE layer active) -->
+            <div class="dpe-stats-section" id="dpeStatsSection">
+                <div class="dpe-stats-title">🏠 DPE du secteur</div>
+                <div id="dpeBars"></div>
+                <div class="dpe-passoires">
+                    <div class="dpe-passoires-value" id="dpePassoires">—</div>
+                    <div class="dpe-passoires-label">Passoires thermiques (F+G)</div>
+                </div>
+                <div class="dpe-median" id="dpeMedian"></div>
+            </div>
+
             <div class="sales-section" id="salesSection">
                 <div class="empty-state" id="emptyState">
                     <div class="empty-state-icon">🗺️</div>
@@ -1278,19 +1453,30 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
+            <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
             <div id="map"></div>
             <div class="loading-overlay" id="loadingOverlay">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">Chargement des ventes...</div>
             </div>
-            <div class="map-legend">
+            <div class="map-legend" id="legendDVF">
                 <div class="legend-title">Prix au m²</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> &lt; 2 000 €/m²</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#FFC107"></div> 2 000 - 4 000 €/m²</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#FF9800"></div> 4 000 - 6 000 €/m²</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> 6 000 - 8 000 €/m²</div>
                 <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> &gt; 8 000 €/m²</div>
+            </div>
+            <div class="map-legend" id="legendDPE" style="display:none;bottom:30px;left:220px;">
+                <div class="legend-title">Classe DPE</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#319834"></div> A</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#33cc33"></div> B</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#cbfc33"></div> C</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#fbeb09"></div> D</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#fccc04"></div> E</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#fc9a07"></div> F</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#fc1c03"></div> G</div>
             </div>
         </div>
     </div>
@@ -1633,6 +1819,11 @@
 
                 renderFilteredSales();
                 collapseFilters();
+
+                // Also load DPE if layer is active
+                if (dpeLayerActive) {
+                    fetchDPEData(lat, lng, radius);
+                }
 
                 // Draggable center marker — created AFTER sale markers so it stays on top
                 if (centerMarker) centerMarker.setMap(null);
@@ -2008,16 +2199,40 @@
             infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Date de vente</span><span class="sale-detail-row-value">📅 ${date}</span></div>`;
             if (sale.distance) infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Distance</span><span class="sale-detail-row-value">📍 ${sale.distance} m</span></div>`;
 
+            // DPE crossmatch
+            const matchedDpe = dpeLayerActive ? findMatchingDpe(sale) : null;
+            let dpeHtml = '';
+            if (matchedDpe) {
+                const dpeLabel = DPE_LABELS[matchedDpe.dpeClass] || '?';
+                const gesLabel = DPE_LABELS[matchedDpe.gesClass] || '?';
+                const dpeColor = DPE_COLORS[matchedDpe.dpeClass] || '#607D8B';
+                const dpeTextColor = matchedDpe.dpeClass >= 3 && matchedDpe.dpeClass <= 5 ? '#333' : '#fff';
+                dpeHtml = `
+                    <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;border-left:3px solid ${dpeColor}">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.4);margin-bottom:6px">DPE estimé</div>
+                        <div style="display:flex;align-items:center;gap:10px">
+                            <span style="display:inline-block;padding:4px 12px;border-radius:6px;background:${dpeColor};color:${dpeTextColor};font-weight:800;font-size:20px;font-family:'Barlow Semi Condensed',sans-serif">${dpeLabel}</span>
+                            <div>
+                                <div style="font-size:14px;font-weight:600;color:#fff">${matchedDpe.conso || '—'} kWh/m²/an</div>
+                                <div style="font-size:12px;color:rgba(255,255,255,0.5)">GES : ${gesLabel} (${matchedDpe.ges || '—'} kgCO₂/m²/an)</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
             salesSection.innerHTML = `
                 <div class="sale-detail">
                     <button class="sale-detail-back" onclick="hideSaleDetail()">← Retour à la liste</button>
                     <div class="sale-detail-header">
                         <span class="sale-detail-type-badge ${type}">${typeIcon} ${capitalize(type)}</span>
+                        ${matchedDpe ? getDpeBadgeHtml(matchedDpe) : ''}
                     </div>
                     <div class="sale-detail-price">${formatPrice(price)}</div>
                     ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
                     ${gridItems ? `<div class="sale-detail-grid">${gridItems}</div>` : ''}
                     <div class="sale-detail-info">${infoRows}</div>
+                    ${dpeHtml}
                 </div>
             `;
 
@@ -2199,6 +2414,303 @@
         document.getElementById('togglePanelBtn').addEventListener('click', () => {
             document.getElementById('sidePanel').classList.toggle('collapsed');
         });
+
+        // ===== DPE LAYER =====
+        const DPE_COLORS = {
+            1: '#319834', 2: '#33cc33', 3: '#cbfc33',
+            4: '#fbeb09', 5: '#fccc04', 6: '#fc9a07', 7: '#fc1c03'
+        };
+        const DPE_LABELS = { 1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G' };
+        const DPE_TYPE_LABELS = { 1: 'Appartement', 2: 'Maison', 3: 'Immeuble' };
+
+        let dpeLayerActive = false;
+        let dpeIndex = null;
+        let loadedDpeDepts = {};
+        let dpeMarkers = [];
+        let allDpe = [];
+        let currentFilteredDpe = [];
+        let dpeClassFilters = new Set([1, 2, 3, 4, 5, 6, 7]);
+        const MAX_DPE_MARKERS = 1000;
+
+        // DPE toggle button
+        document.getElementById('dpeToggle').addEventListener('click', () => {
+            dpeLayerActive = !dpeLayerActive;
+            const btn = document.getElementById('dpeToggle');
+            btn.classList.toggle('active', dpeLayerActive);
+            btn.textContent = dpeLayerActive ? '🏠 DPE ✓' : '🏠 DPE';
+
+            document.getElementById('dpeStatsSection').style.display = dpeLayerActive ? 'block' : 'none';
+            document.getElementById('dpeFilterSection').style.display = dpeLayerActive ? 'block' : 'none';
+            document.getElementById('legendDPE').style.display = dpeLayerActive ? 'block' : 'none';
+
+            if (dpeLayerActive && currentCenter) {
+                const radius = parseInt(radiusSlider.value);
+                fetchDPEData(currentCenter.lat, currentCenter.lng, radius);
+            } else {
+                clearDpeMarkers();
+                allDpe = [];
+                currentFilteredDpe = [];
+            }
+        });
+
+        // DPE class filter buttons
+        document.querySelectorAll('.dpe-class-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const cls = parseInt(btn.dataset.class);
+                btn.classList.toggle('active');
+                if (btn.classList.contains('active')) {
+                    dpeClassFilters.add(cls);
+                } else {
+                    dpeClassFilters.delete(cls);
+                }
+                renderFilteredDpe();
+            });
+        });
+
+        async function loadDPEIndex() {
+            if (dpeIndex) return dpeIndex;
+            const resp = await fetch(DPE_STORAGE_URL + '/index.json');
+            if (!resp.ok) throw new Error('Impossible de charger l\'index DPE');
+            dpeIndex = await resp.json();
+            return dpeIndex;
+        }
+
+        function findDpeDepts(lat, lng, radiusM) {
+            if (!dpeIndex) return [];
+            const degPerMeterLat = 1 / 111320;
+            const degPerMeterLng = 1 / (111320 * Math.cos(lat * Math.PI / 180));
+            const dLat = radiusM * degPerMeterLat;
+            const dLng = radiusM * degPerMeterLng;
+            const minLng = lng - dLng, maxLng = lng + dLng;
+            const minLat = lat - dLat, maxLat = lat + dLat;
+
+            const depts = [];
+            for (const [dept, info] of Object.entries(dpeIndex)) {
+                const [bMinLng, bMinLat, bMaxLng, bMaxLat] = info.bbox;
+                if (maxLng >= bMinLng && minLng <= bMaxLng && maxLat >= bMinLat && minLat <= bMaxLat) {
+                    depts.push(dept);
+                }
+            }
+            return depts;
+        }
+
+        async function loadDpeDeptData(dept) {
+            if (loadedDpeDepts[dept]) return loadedDpeDepts[dept];
+            const resp = await fetch(DPE_STORAGE_URL + '/' + dept + '.json');
+            if (!resp.ok) throw new Error('Erreur chargement DPE dept ' + dept);
+            const json = await resp.json();
+            loadedDpeDepts[dept] = json.data;
+            return json.data;
+        }
+
+        async function fetchDPEData(lat, lng, radius) {
+            if (!dpeLayerActive) return;
+
+            clearDpeMarkers();
+            allDpe = [];
+
+            try {
+                await loadDPEIndex();
+
+                const depts = findDpeDepts(lat, lng, radius);
+                if (depts.length === 0) {
+                    renderFilteredDpe();
+                    return;
+                }
+
+                for (const dept of depts) {
+                    await loadDpeDeptData(dept);
+                }
+
+                // Filter by distance
+                // row = [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat]
+                for (const dept of depts) {
+                    const data = loadedDpeDepts[dept];
+                    for (const row of data) {
+                        const sLat = row[9];
+                        const sLng = row[8];
+                        const dist = haversine(lat, lng, sLat, sLng);
+                        if (dist > radius) continue;
+
+                        allDpe.push({
+                            dpeClass: row[0],
+                            gesClass: row[1],
+                            conso: row[2],
+                            ges: row[3],
+                            surface: row[4],
+                            type: row[5],
+                            year: row[6],
+                            postal: row[7],
+                            lng: sLng,
+                            lat: sLat,
+                            distance: Math.round(dist)
+                        });
+                    }
+                }
+
+                console.log(`DPE: ${allDpe.length} diagnostics dans le rayon de ${radius}m`);
+                renderFilteredDpe();
+
+            } catch (err) {
+                console.error('Erreur DPE:', err);
+            }
+        }
+
+        function renderFilteredDpe() {
+            let filtered = allDpe.filter(d => dpeClassFilters.has(d.dpeClass));
+            currentFilteredDpe = filtered;
+
+            // Render markers (limit to MAX_DPE_MARKERS)
+            clearDpeMarkers();
+            const toRender = filtered.slice(0, MAX_DPE_MARKERS);
+
+            toRender.forEach(dpe => {
+                const lat = parseFloat(dpe.lat);
+                const lng = parseFloat(dpe.lng);
+                if (!lat || !lng) return;
+
+                const color = DPE_COLORS[dpe.dpeClass] || '#607D8B';
+
+                const marker = new google.maps.Marker({
+                    position: { lat, lng },
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        fillColor: color,
+                        fillOpacity: 0.8,
+                        strokeColor: '#fff',
+                        strokeWeight: 1,
+                        scale: 5
+                    },
+                    zIndex: 100
+                });
+
+                marker.addListener('click', () => {
+                    const classLabel = DPE_LABELS[dpe.dpeClass] || '?';
+                    const gesLabel = DPE_LABELS[dpe.gesClass] || '?';
+                    const typeLabel = DPE_TYPE_LABELS[dpe.type] || '—';
+
+                    infoWindow.setContent(`
+                        <div style="font-family:Inter,sans-serif;min-width:200px;color:#2C3E50">
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                                <span style="display:inline-block;padding:4px 12px;border-radius:6px;background:${color};color:${dpe.dpeClass <= 2 ? '#fff' : '#333'};font-weight:800;font-size:18px;font-family:'Barlow Semi Condensed',sans-serif">${classLabel}</span>
+                                <span style="font-weight:700;font-size:14px">DPE Énergie</span>
+                            </div>
+                            <div style="display:flex;gap:16px;margin-bottom:8px">
+                                <div>
+                                    <div style="font-size:11px;color:#777;text-transform:uppercase">Énergie</div>
+                                    <div style="font-size:16px;font-weight:700;color:#667eea">${dpe.conso || '—'} <span style="font-size:11px;font-weight:400">kWh/m²/an</span></div>
+                                </div>
+                                <div>
+                                    <div style="font-size:11px;color:#777;text-transform:uppercase">GES</div>
+                                    <div style="font-size:16px;font-weight:700">${gesLabel} <span style="font-size:11px;font-weight:400;color:#777">(${dpe.ges || '—'} kgCO₂/m²/an)</span></div>
+                                </div>
+                            </div>
+                            <div style="font-size:13px;color:#555;line-height:1.6">
+                                ${dpe.surface ? '📐 ' + dpe.surface + ' m²' : ''}
+                                ${typeLabel !== '—' ? ' · ' + typeLabel : ''}
+                                ${dpe.year ? '<br>🏗️ Construit en ' + dpe.year : ''}
+                            </div>
+                        </div>
+                    `);
+                    infoWindow.open(map, marker);
+                });
+
+                dpeMarkers.push(marker);
+            });
+
+            // Update DPE stats
+            updateDpeStats(filtered);
+        }
+
+        function updateDpeStats(dpeList) {
+            const barsEl = document.getElementById('dpeBars');
+            const passoiresEl = document.getElementById('dpePassoires');
+            const medianEl = document.getElementById('dpeMedian');
+
+            if (dpeList.length === 0) {
+                barsEl.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:10px">Aucun DPE dans le secteur</div>';
+                passoiresEl.textContent = '—';
+                medianEl.innerHTML = '';
+                return;
+            }
+
+            // Count per class
+            const counts = {};
+            for (let c = 1; c <= 7; c++) counts[c] = 0;
+            dpeList.forEach(d => { if (counts[d.dpeClass] !== undefined) counts[d.dpeClass]++; });
+
+            const total = dpeList.length;
+
+            // Bars
+            let barsHtml = '';
+            for (let c = 1; c <= 7; c++) {
+                const pct = total > 0 ? (counts[c] / total * 100) : 0;
+                const color = DPE_COLORS[c];
+                const textColor = c <= 2 ? color : color;
+                barsHtml += `
+                    <div class="dpe-bar-row">
+                        <span class="dpe-bar-label" style="color:${textColor}">${DPE_LABELS[c]}</span>
+                        <div class="dpe-bar-track">
+                            <div class="dpe-bar-fill" style="width:${pct}%;background:${color}"></div>
+                        </div>
+                        <span class="dpe-bar-pct">${pct.toFixed(0)}%</span>
+                    </div>
+                `;
+            }
+            barsEl.innerHTML = barsHtml;
+
+            // Passoires (F+G)
+            const passoires = counts[6] + counts[7];
+            const passoiresPct = total > 0 ? (passoires / total * 100) : 0;
+            passoiresEl.textContent = passoiresPct.toFixed(1) + '%';
+
+            // Median class
+            const sorted = dpeList.map(d => d.dpeClass).sort((a, b) => a - b);
+            const medianClass = sorted[Math.floor(sorted.length / 2)];
+            const medColor = DPE_COLORS[medianClass] || '#607D8B';
+            medianEl.innerHTML = `Classe médiane : <span class="dpe-median-badge" style="background:${medColor}">${DPE_LABELS[medianClass]}</span> <span style="font-size:11px;color:rgba(255,255,255,0.4)">(${total} DPE)</span>`;
+        }
+
+        function clearDpeMarkers() {
+            dpeMarkers.forEach(m => m.setMap(null));
+            dpeMarkers = [];
+        }
+
+        // ===== DPE × DVF CROSSMATCH =====
+        function findMatchingDpe(sale) {
+            if (!allDpe.length || !sale.lat || !sale.lng) return null;
+
+            const saleSurface = parseFloat(sale.surface_reelle_bati) || 0;
+            let bestMatch = null;
+            let bestDist = Infinity;
+
+            for (const dpe of allDpe) {
+                const dist = haversine(sale.lat, sale.lng, dpe.lat, dpe.lng);
+                if (dist > 50) continue; // Max 50m
+
+                // Surface match ±20%
+                if (saleSurface > 0 && dpe.surface > 0) {
+                    const ratio = dpe.surface / saleSurface;
+                    if (ratio < 0.8 || ratio > 1.2) continue;
+                }
+
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    bestMatch = dpe;
+                }
+            }
+
+            return bestMatch;
+        }
+
+        function getDpeBadgeHtml(dpe) {
+            if (!dpe) return '';
+            const label = DPE_LABELS[dpe.dpeClass] || '?';
+            const color = DPE_COLORS[dpe.dpeClass] || '#607D8B';
+            const textColor = dpe.dpeClass >= 3 && dpe.dpeClass <= 5 ? '#333' : '#fff';
+            return `<span style="display:inline-block;padding:3px 10px;border-radius:6px;background:${color};color:${textColor};font-weight:800;font-size:14px;font-family:'Barlow Semi Condensed',sans-serif;margin-left:8px">DPE ${label}</span>`;
+        }
 
         // ===== INIT =====
         // Google Maps loaded dynamically via maps-config.js

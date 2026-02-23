@@ -2,6 +2,7 @@
 const SUPABASE_URL = 'https://aofrngjcfemiptljtyif.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFvZnJuZ2pjZmVtaXB0bGp0eWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODAwMTIsImV4cCI6MjA4NjU1NjAxMn0.0tnkQYIjgBbvTA_60Eix5Zpau5j3kBV8YTsjpp9utOA';
 const DVF_STORAGE_URL = SUPABASE_URL + '/storage/v1/object/public/dvf-data';
+const DPE_STORAGE_URL = SUPABASE_URL + '/storage/v1/object/public/dpe-data';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
