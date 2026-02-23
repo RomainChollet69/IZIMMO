@@ -5806,6 +5806,7 @@
             isNewLead = !submitBtn.dataset.editId;
 
             document.getElementById('modal').classList.add('active');
+            document.querySelector('.modal-content').scrollTop = 0;
             document.body.style.overflow = 'hidden';
 
             const dateInput = document.getElementById('date');
