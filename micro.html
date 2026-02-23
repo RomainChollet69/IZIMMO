@@ -581,6 +581,42 @@
 
         .history-check { color: #10B981; font-size: 12px; }
 
+        /* ===== EXAMPLES ZONE ===== */
+        .examples-zone {
+            width: 100%;
+            margin-top: 24px;
+        }
+
+        .examples-zone.hidden { display: none; }
+
+        .examples-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #94A3B8;
+            text-align: center;
+            margin-bottom: 14px;
+        }
+
+        .example-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #F8FAFC;
+            border: 1px solid #F1F5F9;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .example-emoji { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+        .example-text {
+            font-size: 13px;
+            line-height: 1.45;
+            color: #64748B;
+            font-style: italic;
+        }
+
         /* ===== BOTTOM TAB BAR ===== */
         .mobile-bottom-bar { display: none; }
 
@@ -700,6 +736,27 @@
                 <div class="mic-waves" id="micWaves"></div>
             </div>
             <p class="mic-help" id="micHelp">Appuyez et parlez à Léon</p>
+        </div>
+
+        <!-- Exemples (visible au démarrage, masqué après 1ère dictée) -->
+        <div class="examples-zone" id="examplesZone">
+            <p class="examples-title">Exemples de ce que vous pouvez dire :</p>
+            <div class="example-item">
+                <span class="example-emoji">📧</span>
+                <span class="example-text">"J'ai envoyé l'estimation à Nicolas Rudloff"</span>
+            </div>
+            <div class="example-item">
+                <span class="example-emoji">📞</span>
+                <span class="example-text">"J'ai rappelé Madame Ferreira, elle hésite sur le prix"</span>
+            </div>
+            <div class="example-item">
+                <span class="example-emoji">🏠</span>
+                <span class="example-text">"Visite faite chez Dupont avec M. Martin"</span>
+            </div>
+            <div class="example-item">
+                <span class="example-emoji">✍️</span>
+                <span class="example-text">"Coralie m'a signé le mandat aujourd'hui"</span>
+            </div>
         </div>
 
         <!-- Result area -->
@@ -828,6 +885,7 @@
         const historyList = document.getElementById('historyList');
         const successOverlay = document.getElementById('successOverlay');
         const successText = document.getElementById('successText');
+        const examplesZone = document.getElementById('examplesZone');
 
         // ===== INIT =====
         async function init() {
@@ -906,6 +964,7 @@
             if (recorder && recorder.isRecording) { recorder.stop(); return; }
 
             hideAllZones();
+            examplesZone.classList.add('hidden');
             currentResult = null;
             isEditing = false;
 
@@ -1138,35 +1197,65 @@
         function showAmbiguous(ambiguousContacts) {
             let html = '';
             ambiguousContacts.forEach(amb => {
+                const matches = amb.possible_matches || [];
+
+                // Si Claude n'a pas fourni les matches, chercher dans les leads locaux
+                let resolvedMatches = matches;
+                if (matches.length === 0 && allLeads) {
+                    const searchName = (amb.name_mentioned || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    resolvedMatches = allLeads.filter(lead => {
+                        const full = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                        return full.includes(searchName) || searchName.includes((lead.first_name || '').toLowerCase());
+                    }).map(lead => ({
+                        lead_id: lead.id,
+                        lead_type: lead.type,
+                        lead_name: `${lead.first_name || ''} ${lead.last_name || ''}`.trim()
+                    }));
+                }
+
+                if (resolvedMatches.length === 0) return;
+
                 html += `<div class="ambiguous-card">
                     <div class="ambiguous-title">Plusieurs « ${escHtml(amb.name_mentioned)} » trouvés :</div>`;
-                amb.possible_matches.forEach(pm => {
-                    html += `<div class="ambiguous-option" onclick="resolveAmbiguous('${escHtml(amb.name_mentioned)}', '${pm.lead_id}', '${pm.lead_type || 'seller'}', '${escHtml(pm.lead_name)}')">
-                        <span class="ambiguous-option-name">${escHtml(pm.lead_name)}</span>
-                        <span class="ambiguous-option-info">${pm.lead_type === 'buyer' ? 'acquéreur' : 'vendeur'}</span>
+                resolvedMatches.forEach(pm => {
+                    const name = pm.lead_name || `${pm.first_name || ''} ${pm.last_name || ''}`.trim() || 'Sans nom';
+                    const type = pm.lead_type || pm.type || 'seller';
+                    html += `<div class="ambiguous-option" data-name-mentioned="${escAttr(amb.name_mentioned)}" data-lead-id="${pm.lead_id}" data-lead-type="${type}" data-lead-name="${escAttr(name)}">
+                        <span class="ambiguous-option-name">${escHtml(name)}</span>
+                        <span class="ambiguous-option-info">${type === 'buyer' ? 'acquéreur' : 'vendeur'}</span>
                     </div>`;
                 });
                 html += '</div>';
             });
+
+            if (!html) return;
             ambiguousZone.innerHTML = html;
             ambiguousZone.classList.add('visible');
-        }
 
-        window.resolveAmbiguous = function(nameMentioned, leadId, leadType, leadName) {
-            if (!currentResult) return;
-            if (!currentResult.contacts_matched) currentResult.contacts_matched = [];
-            currentResult.contacts_matched.push({
-                lead_id: leadId, lead_type: leadType, lead_name: leadName,
-                confidence: 'high',
-                note_content: `📝 ${currentResult.action_understood || currentTranscription}`,
-                next_step: null, reminder_date: null
+            // Event delegation for clicks
+            ambiguousZone.querySelectorAll('.ambiguous-option').forEach(el => {
+                el.addEventListener('click', function() {
+                    const nameMentioned = this.dataset.nameMentioned;
+                    const leadId = this.dataset.leadId;
+                    const leadType = this.dataset.leadType;
+                    const leadName = this.dataset.leadName;
+
+                    if (!currentResult) return;
+                    if (!currentResult.contacts_matched) currentResult.contacts_matched = [];
+                    currentResult.contacts_matched.push({
+                        lead_id: leadId, lead_type: leadType, lead_name: leadName,
+                        confidence: 'high',
+                        note_content: `📝 ${currentResult.action_understood || currentTranscription}`,
+                        next_step: null, reminder_date: null
+                    });
+                    if (currentResult.ambiguous_contacts) {
+                        currentResult.ambiguous_contacts = currentResult.ambiguous_contacts.filter(a => a.name_mentioned !== nameMentioned);
+                    }
+                    ambiguousZone.classList.remove('visible');
+                    showConfirmation(currentResult);
+                });
             });
-            if (currentResult.ambiguous_contacts) {
-                currentResult.ambiguous_contacts = currentResult.ambiguous_contacts.filter(a => a.name_mentioned !== nameMentioned);
-            }
-            ambiguousZone.classList.remove('visible');
-            showConfirmation(currentResult);
-        };
+        }
 
         // ===== NO MATCH =====
         function showNoMatch(names) {
@@ -1221,6 +1310,11 @@
         function escHtml(str) {
             if (!str) return '';
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function escAttr(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         // ===== START =====
