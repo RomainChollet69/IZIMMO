@@ -1615,7 +1615,7 @@
 
                 console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m (${depts.length} dept(s): ${depts.join(', ')})`);
 
-                // Draw radius circle
+                // Draw radius circle (clickable:false so it doesn't intercept drag events)
                 if (radiusCircle) radiusCircle.setMap(null);
                 radiusCircle = new google.maps.Circle({
                     center: { lat, lng },
@@ -1625,15 +1625,22 @@
                     strokeWeight: 1.5,
                     fillColor: '#667eea',
                     fillOpacity: 0.08,
+                    clickable: false,
                     map: map
                 });
 
-                // Draggable center marker
+                map.fitBounds(radiusCircle.getBounds());
+
+                renderFilteredSales();
+                collapseFilters();
+
+                // Draggable center marker — created AFTER sale markers so it stays on top
                 if (centerMarker) centerMarker.setMap(null);
                 centerMarker = new google.maps.Marker({
                     position: { lat, lng },
                     map: map,
                     draggable: true,
+                    optimized: false,
                     cursor: 'grab',
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
@@ -1644,7 +1651,7 @@
                         scale: 12
                     },
                     title: 'Déplacer pour chercher ailleurs',
-                    zIndex: 999
+                    zIndex: 9999
                 });
 
                 centerMarker.addListener('drag', (e) => {
@@ -1671,11 +1678,6 @@
                     const r = parseInt(radiusSlider.value);
                     fetchDVFData(newLat, newLng, r);
                 });
-
-                map.fitBounds(radiusCircle.getBounds());
-
-                renderFilteredSales();
-                collapseFilters();
 
             } catch (err) {
                 console.error('Erreur DVF:', err);
