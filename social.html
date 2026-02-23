@@ -837,6 +837,10 @@
         .card-content-wrap {
             position: relative;
             z-index: 1;
+        }
+
+        /* Only constrain left card (absolute-positioned Léa) */
+        .create-card-left > .card-content-wrap {
             max-width: calc(100% - 140px);
         }
 
@@ -855,17 +859,37 @@
             pointer-events: none;
         }
 
+        /* ===== STORY CARD INNER (flex layout) ===== */
+        .story-card-inner {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .story-card-inner .card-content-wrap {
+            flex: 1;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .story-card-illustration {
+            flex-shrink: 0;
+            height: 220px;
+            width: auto;
+            pointer-events: none;
+        }
+
         /* ===== STORY INPUT WRAPPER ===== */
         .story-input-wrapper {
             position: relative;
             width: 100%;
-            min-height: 200px;
+            min-height: 80px;
         }
 
         .story-input {
             width: 100%;
-            min-height: 200px;
-            padding: 16px;
+            min-height: 80px;
+            padding: 12px;
             border: 2px solid var(--border-color);
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
@@ -915,20 +939,20 @@
         }
 
         .big-mic-btn {
-            width: 80px;
-            height: 80px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
             background: linear-gradient(135deg, #2B6CB0 0%, #243B53 100%);
             border: none;
             color: white;
-            font-size: 32px;
+            font-size: 26px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 16px rgba(43, 108, 176, 0.4);
             transition: all 0.3s ease;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .big-mic-btn:hover {
@@ -1038,37 +1062,40 @@
         /* Input controls */
         .input-controls {
             display: flex;
-            gap: 12px;
-            margin-top: 16px;
-            align-items: center;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 12px;
+            align-items: stretch;
         }
 
         .generate-btn {
-            flex: 1;
-            padding: 12px 24px;
-            background: #243B53;
+            width: 100%;
+            padding: 14px 28px;
+            background: #CBD5E0;
             border: none;
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
-            font-weight: 700;
+            font-weight: 600;
             font-size: 15px;
             color: white;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.25s ease;
-            box-shadow: 0 2px 8px rgba(36, 59, 83, 0.25);
+        }
+
+        .generate-btn:not(:disabled) {
+            background: linear-gradient(135deg, #243B53 0%, #2B6CB0 100%);
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(43, 108, 176, 0.25);
         }
 
         .generate-btn:hover:not(:disabled) {
-            background: #1a2d40;
             transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(36, 59, 83, 0.3);
+            box-shadow: 0 6px 16px rgba(43, 108, 176, 0.35);
         }
 
         .generate-btn:disabled {
-            opacity: 0.5;
+            opacity: 1;
             cursor: not-allowed;
-            background: linear-gradient(135deg, #CFD8DC 0%, #B0BEC5 100%);
-            box-shadow: none;
         }
 
         .voice-status {
@@ -2344,6 +2371,14 @@
                 margin-left: 0;
                 max-width: 100%;
             }
+
+            .story-card-inner {
+                flex-direction: column;
+            }
+
+            .story-card-illustration {
+                display: none;
+            }
         }
 
         /* Sprint 2: Suggestions */
@@ -2604,43 +2639,45 @@
                     <button class="mode-btn" id="storyBtn">
                         🎤 J'ai un truc à raconter
                     </button>
-                    <div class="card-content-wrap">
-                        <div class="input-area" id="storyArea">
-                            <div class="story-input-wrapper">
-                                <!-- Big mic button (shows when empty) -->
-                                <div class="big-mic-overlay" id="bigMicOverlay">
-                                    <button class="big-mic-btn" id="bigMicBtn">
+                    <div class="story-card-inner">
+                        <div class="card-content-wrap">
+                            <div class="input-area" id="storyArea">
+                                <div class="story-input-wrapper">
+                                    <!-- Big mic button (shows when empty) -->
+                                    <div class="big-mic-overlay" id="bigMicOverlay">
+                                        <button class="big-mic-btn" id="bigMicBtn">
+                                            <i class="fas fa-microphone"></i>
+                                        </button>
+                                        <div class="big-mic-label" id="bigMicLabel">Appuie pour dicter</div>
+                                        <div class="big-mic-hint" onclick="document.getElementById('storyInput').focus()">
+                                            ou tape ton texte ici
+                                        </div>
+                                        <div class="big-mic-example" id="bigMicExample"></div>
+                                    </div>
+
+                                    <!-- Textarea -->
+                                    <textarea
+                                        class="story-input"
+                                        id="storyInput"
+                                        placeholder=""
+                                    ></textarea>
+
+                                    <!-- Small mic button (shows when text present) -->
+                                    <button class="small-mic-btn hidden" id="smallMicBtn" title="Compléter par dictée">
                                         <i class="fas fa-microphone"></i>
                                     </button>
-                                    <div class="big-mic-label" id="bigMicLabel">Appuie pour dicter</div>
-                                    <div class="big-mic-hint" onclick="document.getElementById('storyInput').focus()">
-                                        ou tape ton texte ici
-                                    </div>
-                                    <div class="big-mic-example" id="bigMicExample"></div>
                                 </div>
 
-                                <!-- Textarea -->
-                                <textarea
-                                    class="story-input"
-                                    id="storyInput"
-                                    placeholder=""
-                                ></textarea>
-
-                                <!-- Small mic button (shows when text present) -->
-                                <button class="small-mic-btn hidden" id="smallMicBtn" title="Compléter par dictée">
-                                    <i class="fas fa-microphone"></i>
-                                </button>
-                            </div>
-
-                            <div class="input-controls">
-                                <span class="voice-status" id="voiceStatus"></span>
-                                <button class="generate-btn" id="generateBtn" disabled>
-                                    ✨ Raconter ce moment
-                                </button>
+                                <div class="input-controls">
+                                    <span class="voice-status" id="voiceStatus"></span>
+                                    <button class="generate-btn" id="generateBtn" disabled>
+                                        ✨ Raconter ce moment
+                                    </button>
+                                </div>
                             </div>
                         </div>
+                        <img src="img/mobile-social.png" alt="" class="story-card-illustration" aria-hidden="true">
                     </div>
-                    <img src="img/mobile-social.png" alt="" class="card-illustration" aria-hidden="true">
                 </div>
             </div>
         </div>
