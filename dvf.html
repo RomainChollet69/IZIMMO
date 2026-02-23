@@ -1256,6 +1256,11 @@
         let currentCenter = null;
         let currentMapType = 'roadmap';
 
+        // DVF local data (Supabase Storage)
+        let dvfIndex = null;
+        let loadedDepts = {};
+        const TYPE_LABELS = { 1: 'Appartement', 2: 'Maison', 3: 'Terrain', 4: 'Local pro', 5: 'Autre' };
+
         // Default: Paris (fallback si géolocalisation refusée)
         const DEFAULT_LAT = 48.8566;
         const DEFAULT_LNG = 2.3522;
@@ -1456,63 +1461,7 @@
             });
         });
 
-        // ===== DVF API (CEREMA in_bbox) =====
-        function polygonCentroid(coords) {
-            if (!coords || !coords[0] || coords[0].length === 0) return null;
-            const ring = coords[0];
-            const n = ring.length;
-            let latSum = 0, lngSum = 0;
-            for (let i = 0; i < n; i++) { lngSum += ring[i][0]; latSum += ring[i][1]; }
-            return { lat: latSum / n, lng: lngSum / n };
-        }
-
-        function normalizeSale(feature, centerLat, centerLng, radius) {
-            const props = feature.properties || {};
-            const geom = feature.geometry || {};
-
-            let lat = null, lng = null;
-            if (geom.type === 'Polygon') {
-                const c = polygonCentroid(geom.coordinates);
-                if (c) { lat = c.lat; lng = c.lng; }
-            } else if (geom.type === 'MultiPolygon' && geom.coordinates[0]) {
-                const c = polygonCentroid(geom.coordinates[0]);
-                if (c) { lat = c.lat; lng = c.lng; }
-            } else if (geom.type === 'Point') {
-                lng = geom.coordinates[0]; lat = geom.coordinates[1];
-            }
-            if (!lat || !lng) return null;
-
-            const dist = haversine(centerLat, centerLng, lat, lng);
-            if (dist > radius) return null;
-
-            const typeBien = (props.libtypbien || '').toLowerCase();
-            const nbMaisons = parseInt(props.nblocmai) || 0;
-            const nbApparts = parseInt(props.nblocapt) || 0;
-            let type_local = '';
-            if (typeBien.includes('maison') || nbMaisons > 0) type_local = 'Maison';
-            else if (typeBien.includes('appartement') || nbApparts > 0) type_local = 'Appartement';
-            else if (typeBien.includes('terrain') || typeBien.includes('dépendance')) type_local = 'Terrain';
-            else type_local = props.libnatmut || 'Autre';
-
-            // Commune from l_codinsee
-            const communes = (props.l_codinsee || []).join(', ');
-
-            return {
-                lat, lng,
-                valeur_fonciere: parseFloat(props.valeurfonc) || 0,
-                date_mutation: props.datemut || null,
-                type_local,
-                surface_reelle_bati: parseFloat(props.sbati) || 0,
-                surface_terrain: parseFloat(props.sterr) || 0,
-                nombre_pieces_principales: parseInt(props.nbppmut) || 0,
-                nature_mutation: props.libnatmut || '',
-                nombre_lots: parseInt(props.nblot) || 0,
-                libtypbien: props.libtypbien || '',
-                adresse: communes,
-                distance: Math.round(dist)
-            };
-        }
-
+        // ===== DVF LOCAL DATA (Supabase Storage) =====
         function haversine(lat1, lon1, lat2, lon2) {
             const R = 6371000;
             const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1521,56 +1470,97 @@
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         }
 
-        // Convert lat/lng + radius(m) to a bounding box (capped at 0.02° for CEREMA API)
-        function radiusToBBox(lat, lng, radius) {
+        async function loadDVFIndex() {
+            if (dvfIndex) return dvfIndex;
+            const resp = await fetch(DVF_STORAGE_URL + '/index.json');
+            if (!resp.ok) throw new Error('Impossible de charger l\'index DVF');
+            dvfIndex = await resp.json();
+            return dvfIndex;
+        }
+
+        function findDepts(lat, lng, radiusM) {
+            if (!dvfIndex) return [];
             const degPerMeterLat = 1 / 111320;
             const degPerMeterLng = 1 / (111320 * Math.cos(lat * Math.PI / 180));
-            let dLat = radius * degPerMeterLat;
-            let dLng = radius * degPerMeterLng;
-            // CEREMA max: 0.02° x 0.02°
-            dLat = Math.min(dLat, 0.0099);
-            dLng = Math.min(dLng, 0.0099);
-            return {
-                minLng: (lng - dLng).toFixed(6),
-                minLat: (lat - dLat).toFixed(6),
-                maxLng: (lng + dLng).toFixed(6),
-                maxLat: (lat + dLat).toFixed(6)
-            };
+            const dLat = radiusM * degPerMeterLat;
+            const dLng = radiusM * degPerMeterLng;
+            const minLng = lng - dLng, maxLng = lng + dLng;
+            const minLat = lat - dLat, maxLat = lat + dLat;
+
+            const depts = [];
+            for (const [dept, info] of Object.entries(dvfIndex)) {
+                const [bMinLng, bMinLat, bMaxLng, bMaxLat] = info.bbox;
+                if (maxLng >= bMinLng && minLng <= bMaxLng && maxLat >= bMinLat && minLat <= bMaxLat) {
+                    depts.push(dept);
+                }
+            }
+            return depts;
+        }
+
+        async function loadDeptData(dept) {
+            if (loadedDepts[dept]) return loadedDepts[dept];
+            const resp = await fetch(DVF_STORAGE_URL + '/' + dept + '.json');
+            if (!resp.ok) throw new Error('Erreur chargement dept ' + dept);
+            const json = await resp.json();
+            loadedDepts[dept] = json.data;
+            return json.data;
         }
 
         async function fetchDVFData(lat, lng, radius) {
             const loading = document.getElementById('loadingOverlay');
+            const loadingText = loading.querySelector('.loading-text');
             loading.classList.add('active');
+            loadingText.textContent = 'Chargement des données DVF...';
 
             clearMarkers();
             allSales = [];
 
             try {
-                const bbox = radiusToBBox(lat, lng, radius);
-                const yearMin = parseInt(document.querySelector('#yearRange .range-min').value) || 2014;
-                const yearMax = parseInt(document.querySelector('#yearRange .range-max').value) || 2025;
-                const baseUrl = `https://apidf-preprod.cerema.fr/dvf_opendata/geomutations/?in_bbox=${bbox.minLng},${bbox.minLat},${bbox.maxLng},${bbox.maxLat}&page_size=500&ordering=-datemut&anneemut_min=${yearMin}&anneemut_max=${yearMax}`;
+                await loadDVFIndex();
 
-                // Pagination : jusqu'à 3 pages (max 1500 ventes)
-                let allFeatures = [];
-                const MAX_PAGES = 3;
-                for (let page = 1; page <= MAX_PAGES; page++) {
-                    const url = page === 1 ? baseUrl : `${baseUrl}&page=${page}`;
-                    console.log(`DVF API page ${page}:`, url);
-                    const resp = await fetch(url);
-                    if (!resp.ok) throw new Error('Erreur API DVF: ' + resp.status);
-                    const data = await resp.json();
-                    const features = data.features || [];
-                    allFeatures = allFeatures.concat(features);
-                    console.log(`DVF page ${page}: ${features.length} / ${data.count} total`);
-                    if (!data.next || features.length === 0) break;
+                const depts = findDepts(lat, lng, radius);
+                if (depts.length === 0) {
+                    renderFilteredSales();
+                    return;
                 }
 
-                allSales = allFeatures
-                    .map(f => normalizeSale(f, lat, lng, radius))
-                    .filter(s => s && s.valeur_fonciere > 0);
+                // Load needed departments
+                for (const dept of depts) {
+                    if (!loadedDepts[dept]) {
+                        const size = dvfIndex[dept]?.size;
+                        loadingText.textContent = `Chargement dept ${dept}...${size ? ' (' + (size / 1024 / 1024).toFixed(1) + ' Mo)' : ''}`;
+                    }
+                    await loadDeptData(dept);
+                }
 
-                console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m`);
+                // Filter by distance and convert to sale objects
+                for (const dept of depts) {
+                    const data = loadedDepts[dept];
+                    for (const row of data) {
+                        // row = [date, price, type, surf_bati, surf_terrain, lng, lat]
+                        const sLat = row[6];
+                        const sLng = row[5];
+                        const dist = haversine(lat, lng, sLat, sLng);
+                        if (dist > radius) continue;
+
+                        const dateInt = row[0];
+                        const ds = String(dateInt);
+                        const dateStr = ds.slice(0, 4) + '-' + ds.slice(4, 6) + '-' + ds.slice(6, 8);
+
+                        allSales.push({
+                            lat: sLat,
+                            lng: sLng,
+                            valeur_fonciere: row[1],
+                            date_mutation: dateStr,
+                            type_local: TYPE_LABELS[row[2]] || 'Autre',
+                            surface_reelle_bati: row[3],
+                            surface_terrain: row[4],
+                            distance: Math.round(dist)
+                        });
+                    }
+                }
+
+                console.log(`DVF: ${allSales.length} ventes dans le rayon de ${radius}m (${depts.length} dept(s): ${depts.join(', ')})`);
 
                 // Draw radius circle
                 if (radiusCircle) radiusCircle.setMap(null);
@@ -1613,7 +1603,6 @@
                     const newLng = e.latLng.lng();
                     currentCenter = { lat: newLat, lng: newLng };
 
-                    // Reverse geocode
                     try {
                         const revResp = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lon=${newLng}&lat=${newLat}&limit=1`);
                         const revData = await revResp.json();
@@ -1636,7 +1625,7 @@
 
             } catch (err) {
                 console.error('Erreur DVF:', err);
-                document.getElementById('salesList').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Erreur de chargement des données DVF.<br>Réessayez avec une autre adresse.</div></div>`;
+                document.getElementById('salesList').innerHTML = `<div class="empty-state"><div class="empty-state-icon">⚠️</div><div class="empty-state-text">Erreur de chargement des données DVF.<br>${escapeHtml(err.message)}</div></div>`;
             } finally {
                 loading.classList.remove('active');
             }
@@ -1877,23 +1866,16 @@
             const date = sale.date_mutation
                 ? new Date(sale.date_mutation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                 : '—';
-            const pieces = sale.nombre_pieces_principales;
-            const natmut = sale.nature_mutation || '—';
-            const nblot = sale.nombre_lots;
             const typeEmoji = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' }[type] || '📍';
 
             // Build grid items
             let gridItems = '';
             if (surfaceBati) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Surface bâtie</div><div class="sale-detail-item-value">${surfaceBati} m²</div></div>`;
             if (surfaceTerrain) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Surface terrain</div><div class="sale-detail-item-value">${surfaceTerrain} m²</div></div>`;
-            if (pieces) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Pièces</div><div class="sale-detail-item-value">${pieces}</div></div>`;
-            if (nblot) gridItems += `<div class="sale-detail-item"><div class="sale-detail-item-label">Lots</div><div class="sale-detail-item-value">${nblot}</div></div>`;
 
             // Build info rows
             let infoRows = '';
-            if (sale.adresse) infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Adresse</span><span class="sale-detail-row-value">${escapeHtml(sale.adresse)}</span></div>`;
             infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Date de vente</span><span class="sale-detail-row-value">📅 ${date}</span></div>`;
-            infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Nature mutation</span><span class="sale-detail-row-value">${escapeHtml(natmut)}</span></div>`;
             if (sale.distance) infoRows += `<div class="sale-detail-row"><span class="sale-detail-row-label">Distance</span><span class="sale-detail-row-value">📍 ${sale.distance} m</span></div>`;
 
             salesSection.innerHTML = `
@@ -1901,7 +1883,6 @@
                     <button class="sale-detail-back" onclick="hideSaleDetail()">← Retour à la liste</button>
                     <div class="sale-detail-header">
                         <span class="sale-detail-type-badge ${type}">${typeEmoji} ${capitalize(type)}</span>
-                        ${pieces ? `<span class="sale-detail-date">${pieces} pièce${pieces > 1 ? 's' : ''}</span>` : ''}
                     </div>
                     <div class="sale-detail-price">${formatPrice(price)}</div>
                     ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
@@ -1958,11 +1939,6 @@
 
         function formatNumber(n) {
             return new Intl.NumberFormat('fr-FR').format(n);
-        }
-
-        function cleanNumero(num) {
-            if (!num || num === 'None' || num === 'null') return '';
-            return String(num).replace(/\.0$/, '');
         }
 
         function capitalize(str) {
@@ -2042,16 +2018,8 @@
             };
         }
 
-        function refetchDVF() {
-            if (currentCenter) {
-                const r = parseInt(radiusSlider.value);
-                fetchDVFData(currentCenter.lat, currentCenter.lng, r);
-            }
-        }
-
         const yearSlider = initDualRange('yearRange', 'yearValues',
-            (min, max) => `${min} → ${max}`,
-            refetchDVF
+            (min, max) => `${min} → ${max}`
         );
 
         const priceM2Slider = initDualRange('priceM2Range', 'priceM2Values',
