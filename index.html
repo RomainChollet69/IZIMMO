@@ -356,6 +356,8 @@
         .column {
             min-width: 280px;
             flex: 0 0 280px;
+            display: flex;
+            flex-direction: column;
             background: rgba(255, 255, 255, 0.75);
             border-radius: 16px;
             padding: 20px;
@@ -429,6 +431,7 @@
             flex-direction: column;
             gap: 12px;
             min-height: 200px;
+            flex: 1;
         }
 
         /* ===== CARTES ===== */
@@ -7603,19 +7606,34 @@
                 clearDropIndicators();
             });
 
-            document.querySelectorAll('.cards-container').forEach(container => {
-                container.addEventListener('dragover', e => {
+            // Écouter dragover/drop sur toute la colonne (pas seulement le cards-container)
+            document.querySelectorAll('.column').forEach(column => {
+                column.addEventListener('dragover', e => {
                     e.preventDefault();
                     if (!draggedCard) return;
+                    const container = column.querySelector('.cards-container');
+                    if (!container) return;
                     const position = getDropPosition(container, e.clientY);
                     showDropIndicator(container, position);
                 });
-
-                container.addEventListener('dragleave', e => {
-                    if (!container.contains(e.relatedTarget)) {
+                column.addEventListener('dragleave', e => {
+                    if (!column.contains(e.relatedTarget)) {
                         clearDropIndicators();
                     }
                 });
+                // Drop sur toute la colonne → déléguer au cards-container
+                column.addEventListener('drop', e => {
+                    const container = column.querySelector('.cards-container');
+                    if (container && !container.contains(e.target)) {
+                        // Le drop a eu lieu sur la colonne mais hors du container → simuler le drop dedans
+                        const dropEvent = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer, clientX: e.clientX, clientY: e.clientY });
+                        e.preventDefault();
+                        container.dispatchEvent(dropEvent);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.cards-container').forEach(container => {
 
                 container.addEventListener('drop', async e => {
                     e.preventDefault();

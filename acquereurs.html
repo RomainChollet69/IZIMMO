@@ -354,6 +354,8 @@
         .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
         .column {
+            display: flex;
+            flex-direction: column;
             background: rgba(255, 255, 255, 0.75);
             border-radius: 16px;
             padding: 20px;
@@ -424,6 +426,7 @@
             flex-direction: column;
             gap: 12px;
             min-height: 200px;
+            flex: 1;
         }
 
         /* ===== CARTES ACQUÉREURS ===== */
@@ -4728,6 +4731,32 @@
                     e.target.classList.remove('dragging');
                 }
                 clearDropIndicators();
+            });
+
+            // Écouter dragover/drop sur toute la colonne (pas seulement le cards-container)
+            document.querySelectorAll('.column').forEach(column => {
+                column.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (!draggedCard) return;
+                    const container = column.querySelector('.cards-container');
+                    if (!container) return;
+                    const position = getDropPosition(container, e.clientY);
+                    showDropIndicator(container, position);
+                });
+                column.addEventListener('dragleave', e => {
+                    if (!column.contains(e.relatedTarget)) {
+                        clearDropIndicators();
+                    }
+                });
+                // Drop sur toute la colonne → déléguer au cards-container
+                column.addEventListener('drop', e => {
+                    const container = column.querySelector('.cards-container');
+                    if (container && !container.contains(e.target)) {
+                        const dropEvent = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer, clientX: e.clientX, clientY: e.clientY });
+                        e.preventDefault();
+                        container.dispatchEvent(dropEvent);
+                    }
+                });
             });
 
             document.querySelectorAll('.cards-container').forEach(container => {
