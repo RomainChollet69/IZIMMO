@@ -849,10 +849,10 @@
         /* Empty state illustration */
         .empty-state-illustration {
             display: block;
-            height: 160px;
+            height: 300px;
             width: auto;
-            margin: 0 auto 16px;
-            opacity: 1;
+            margin: 0 auto 24px;
+            pointer-events: none;
         }
 
         /* ===== STORY INPUT WRAPPER ===== */
@@ -1442,23 +1442,51 @@
 
         .empty-state {
             text-align: center;
-            padding: 60px 20px;
-            color: var(--text-light);
+            padding: 40px 20px 48px;
         }
 
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .empty-state-text {
-            font-size: 16px;
+        .empty-state-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #243B53;
             margin-bottom: 8px;
         }
 
-        .empty-state-subtext {
-            font-size: 14px;
+        .empty-state-separator {
+            width: 40px;
+            height: 3px;
+            background: #2B6CB0;
+            margin: 12px auto;
+            border-radius: 2px;
+        }
+
+        .empty-state-subtitle {
+            font-size: 15px;
+            color: #7F8C8D;
+            margin-bottom: 24px;
+        }
+
+        .empty-state-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, #2B6CB0 0%, #3B82F6 100%);
+            color: white;
+            border: none;
+            border-radius: 28px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(43, 108, 176, 0.3);
+            transition: all 0.25s ease;
+        }
+
+        .empty-state-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(43, 108, 176, 0.35);
         }
 
         /* ===== ONBOARDING MODAL ===== */
@@ -2637,9 +2665,13 @@
             </div>
             <div class="history-list" id="historyList">
                 <div class="empty-state">
-                    <img src="img/mobile-social.png" alt="" class="empty-state-illustration">
-                    <div class="empty-state-text">Aucune histoire partagée cette semaine</div>
-                    <div class="empty-state-subtext">Commence par raconter ton premier moment ci-dessus</div>
+                    <img src="img/lea-empty-state.svg" alt="Léa" class="empty-state-illustration">
+                    <div class="empty-state-title">Aucune histoire partagée cette semaine</div>
+                    <div class="empty-state-separator"></div>
+                    <div class="empty-state-subtitle">Prête à créer du contenu ? Lance ta première publication !</div>
+                    <button class="empty-state-cta" onclick="document.getElementById('suggestionBtn').click()">
+                        + Créer une nouvelle story
+                    </button>
                 </div>
             </div>
         </div>
