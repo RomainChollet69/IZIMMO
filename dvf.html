@@ -1768,6 +1768,16 @@
             return 'autre';
         }
 
+        function getTypeIcon(type) {
+            const icons = {
+                maison: '<i class="fas fa-house" style="color:#4CAF50"></i>',
+                appartement: '<i class="fas fa-building" style="color:#FF9800"></i>',
+                terrain: '<i class="fas fa-mountain-sun" style="color:#9C27B0"></i>',
+                autre: '<i class="fas fa-location-dot" style="color:#607D8B"></i>'
+            };
+            return icons[type] || icons.autre;
+        }
+
         function getPricePerM2(sale) {
             const price = parseFloat(sale.valeur_fonciere);
             const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
@@ -1837,7 +1847,6 @@
             parcels.sort((a, b) => b.length - a.length);
 
             const toRender = parcels.slice(0, MAX_PARCELS);
-            const typeEmojis = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' };
 
             toRender.forEach(parcelSales => {
                 const lat = parseFloat(parcelSales[0].lat);
@@ -1884,12 +1893,12 @@
                     const priceM2 = getPricePerM2(sale);
                     const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
                     content = `
-                        <div style="font-family:Inter,sans-serif;min-width:180px">
-                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmojis[type] || '📍'} ${capitalize(type)}</div>
+                        <div style="font-family:Inter,sans-serif;min-width:180px;color:#2C3E50">
+                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">${getTypeIcon(type)} ${capitalize(type)}</div>
                             <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
-                            ${surface ? `<div style="font-size:13px;color:#666;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
-                            <div style="font-size:12px;color:#999;margin-top:6px">📅 ${date}</div>
-                            ${sale.distance ? `<div style="font-size:12px;color:#999;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
+                            ${surface ? `<div style="font-size:13px;color:#555;margin-top:4px">${surface} m² ${priceM2 ? '— ' + formatNumber(priceM2) + ' €/m²' : ''}</div>` : ''}
+                            <div style="font-size:12px;color:#777;margin-top:6px">📅 ${date}</div>
+                            ${sale.distance ? `<div style="font-size:12px;color:#777;margin-top:2px">📍 à ${sale.distance} m</div>` : ''}
                         </div>
                     `;
                 } else {
@@ -1902,17 +1911,17 @@
                         const price = parseFloat(sale.valeur_fonciere);
                         const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
                         const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                        return `<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:12px">
-                            ${typeEmojis[type] || '📍'} <strong>${formatPrice(price)}</strong>${surface ? ` — ${surface} m²` : ''} <span style="color:#999">${date}</span>
+                        return `<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:12px;color:#2C3E50">
+                            ${getTypeIcon(type)} <strong>${formatPrice(price)}</strong>${surface ? ` — ${surface} m²` : ''} <span style="color:#777">${date}</span>
                         </div>`;
                     }).join('');
                     content = `
-                        <div style="font-family:Inter,sans-serif;min-width:220px;max-height:300px;overflow-y:auto">
-                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">🏘️ ${count} ventes sur cette parcelle</div>
-                            <div style="font-size:13px;color:#666;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
+                        <div style="font-family:Inter,sans-serif;min-width:220px;max-height:300px;overflow-y:auto;color:#2C3E50">
+                            <div style="font-weight:700;font-size:14px;margin-bottom:6px"><i class="fas fa-city" style="color:#667eea"></i> ${count} ventes sur cette parcelle</div>
+                            <div style="font-size:13px;color:#555;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
                             ${medianPriceM2 ? `<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:8px">Médiane : ${formatNumber(medianPriceM2)} €/m²</div>` : ''}
                             ${salesListHtml}
-                            ${count > 10 ? `<div style="font-size:11px;color:#999;padding-top:4px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
+                            ${count > 10 ? `<div style="font-size:11px;color:#777;padding-top:4px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
                         </div>
                     `;
                 }
@@ -1985,7 +1994,7 @@
             const date = sale.date_mutation
                 ? new Date(sale.date_mutation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                 : '—';
-            const typeEmoji = { maison: '🏡', appartement: '🏢', terrain: '🏗️', autre: '📍' }[type] || '📍';
+            const typeIcon = getTypeIcon(type);
 
             // Build grid items
             let gridItems = '';
@@ -2001,7 +2010,7 @@
                 <div class="sale-detail">
                     <button class="sale-detail-back" onclick="hideSaleDetail()">← Retour à la liste</button>
                     <div class="sale-detail-header">
-                        <span class="sale-detail-type-badge ${type}">${typeEmoji} ${capitalize(type)}</span>
+                        <span class="sale-detail-type-badge ${type}">${typeIcon} ${capitalize(type)}</span>
                     </div>
                     <div class="sale-detail-price">${formatPrice(price)}</div>
                     ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
@@ -2018,8 +2027,8 @@
                     const pos = m.getPosition();
                     if (Math.abs(pos.lat() - sale.lat) < 0.0001 && Math.abs(pos.lng() - sale.lng) < 0.0001) {
                         infoWindow.setContent(`
-                            <div style="font-family:Inter,sans-serif;min-width:180px">
-                                <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeEmoji} ${capitalize(type)}</div>
+                            <div style="font-family:Inter,sans-serif;min-width:180px;color:#2C3E50">
+                                <div style="font-weight:700;font-size:14px;margin-bottom:6px">${typeIcon} ${capitalize(type)}</div>
                                 <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
                             </div>
                         `);
