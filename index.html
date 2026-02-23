@@ -731,14 +731,14 @@
         }
 
         .modal-content {
-            background: white;
-            border-radius: 20px;
+            background: #FCFCFD;
+            border-radius: 16px;
             padding: 40px;
             max-width: 600px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0,0,0,0.04);
             animation: slideIn 0.3s ease;
         }
 
@@ -756,10 +756,16 @@
 
         .modal-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 800;
-            text-transform: uppercase;
             color: var(--text-dark);
+        }
+        .modal-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            color: #9CA3AF;
+            font-weight: 400;
+            margin-top: 2px;
         }
 
         .close-btn {
@@ -781,35 +787,49 @@
 
         .close-btn:hover { background: #e0e0e0; color: #111; }
 
-        .form-group { margin-bottom: 24px; }
+        .form-group { margin-bottom: 20px; }
 
         .form-label {
             display: block;
             font-weight: 600;
             margin-bottom: 8px;
-            color: var(--text-dark);
-            font-size: 14px;
+            color: #4B5563;
+            font-size: 13px;
         }
+
+        .form-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #B0B8C4;
+            margin: 28px 0 14px 0;
+            padding-top: 16px;
+            border-top: 1px solid #F0F1F3;
+        }
+        .form-section-title:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
 
         .form-input,
         .form-select,
         .form-textarea {
             width: 100%;
             padding: 12px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: 10px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 12px;
             font-size: 15px;
             font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
-            background: white;
+            transition: all 0.2s ease;
+            background: #F9FAFB;
         }
+        .form-input::placeholder, .form-textarea::placeholder { color: #C0C7D0; }
 
         .form-input:focus,
         .form-select:focus,
         .form-textarea:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: #fff;
+            box-shadow: inset 0 1px 3px rgba(102, 126, 234, 0.08), 0 0 0 3px rgba(102, 126, 234, 0.08);
         }
 
         .annexes-toggles {
@@ -829,21 +849,22 @@
             display: inline-block;
             padding: 6px 12px;
             border-radius: 20px;
-            border: 1.5px solid var(--border-color);
+            border: 1.5px solid transparent;
             font-size: 13px;
             font-weight: 500;
-            background: white;
-            transition: all 0.2s;
+            background: #F3F4F6;
+            transition: all 0.15s ease;
         }
+        .annexe-toggle span:active { transform: scale(0.96); }
 
         .annexe-toggle input:checked + span {
-            background: #E8EAF6;
+            background: #EEF0FF;
             border-color: #667eea;
-            color: #667eea;
+            color: #5B6ECF;
         }
 
         .annexe-toggle:hover span {
-            border-color: #667eea;
+            background: #EBEDF0;
         }
 
         .referrer-group {
@@ -880,14 +901,14 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             font-weight: 700;
             font-size: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-top: 10px;
+            margin-top: 28px;
             font-family: 'Barlow Semi Condensed', sans-serif;
         }
 
@@ -1368,8 +1389,8 @@
 
         /* ===== LIENS D'ANNONCES ===== */
         .links-section {
-            margin-top: 20px;
-            border-top: 1px solid var(--border-color);
+            margin-top: 28px;
+            border-top: 1px solid #F0F1F3;
             padding-top: 16px;
         }
         .links-section-title {
@@ -1491,30 +1512,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 10px 12px;
-            background: #f0f2f5;
-            border: 1px dashed #CFD8DC;
-            border-radius: 10px;
+            gap: 8px;
+            padding: 11px 14px;
+            background: #F0F4FF;
+            border: none;
+            border-radius: 12px;
             font-family: 'Inter', sans-serif;
             font-size: 13px;
             font-weight: 600;
-            color: var(--text-dark);
+            color: #4B5563;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .modal-action-btn:hover { border-color: #667eea; color: #667eea; background: #f5f3ff; }
+        .modal-action-btn i, .modal-action-btn .emoji-icon { font-size: 17px; }
+        .modal-action-btn:hover { color: #667eea; background: #E8EEFF; }
         .modal-action-btn.recording {
             background: #FFEBEE;
-            border-color: #FF4757;
-            border-style: solid;
             color: #FF4757;
             animation: dictatePulse 1.2s infinite;
         }
         .modal-action-btn.analyzing {
             background: #E8EAF6;
-            border-color: #667eea;
-            border-style: solid;
             color: #667eea;
             pointer-events: none;
         }
@@ -1563,7 +1581,7 @@
         .dictate-status.active { display: block; }
 
         /* ===== NOTES HORODATÉES ===== */
-        .notes-section { margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 16px; }
+        .notes-section { margin-top: 28px; border-top: 1px solid #F0F1F3; padding-top: 16px; }
         .notes-section-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-size: 14px;
@@ -1733,8 +1751,8 @@
 
         /* ===== DOCUMENTS / FICHIERS JOINTS ===== */
         .docs-section {
-            margin-top: 20px;
-            border-top: 1px solid var(--border-color);
+            margin-top: 28px;
+            border-top: 1px solid #F0F1F3;
             padding-top: 16px;
         }
         .docs-section-title {
@@ -3330,7 +3348,10 @@
     <div class="modal" id="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">Nouveau Lead</h2>
+                <div>
+                    <h2 class="modal-title">Nouveau lead</h2>
+                    <p class="modal-subtitle" id="modalSubtitle">Ajoute un contact en quelques secondes</p>
+                </div>
                 <button class="close-btn" id="closeModalBtn">&times;</button>
             </div>
             <div class="modal-tabs" id="modalTabs" style="display:none">
@@ -3389,6 +3410,8 @@
                         </div>
                     </div>
 
+                    <div class="form-section-title">Contact</div>
+
                     <div class="form-group" id="fullNameGroup">
                         <label class="form-label">Nom du contact *</label>
                         <input type="text" class="form-input" id="fullName" placeholder="Christian Chapotton" required>
@@ -3415,6 +3438,8 @@
                             <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
                         </div>
                     </div>
+
+                    <div class="form-section-title">Bien</div>
 
                     <div class="form-group">
                         <label class="form-label">Adresse du bien</label>
@@ -3494,6 +3519,8 @@
                             <div class="notes-empty">Aucun document</div>
                         </div>
                     </div>
+
+                    <div class="form-section-title">Détails</div>
 
                     <div class="form-row">
                         <div class="form-group">
@@ -5735,7 +5762,8 @@
             }
 
             if (isNewLead) {
-                document.querySelector('.modal-title').textContent = 'Nouveau Lead';
+                document.querySelector('.modal-title').textContent = 'Nouveau lead';
+                document.getElementById('modalSubtitle').style.display = '';
                 submitBtn.textContent = 'Créer le Lead';
                 document.getElementById('dvfBtn').style.display = 'none';
             }
@@ -6242,7 +6270,8 @@
             const submitBtn = document.getElementById('submitBtn');
             delete submitBtn.dataset.editId;
             submitBtn.textContent = 'Créer le Lead';
-            document.querySelector('.modal-title').textContent = 'Nouveau Lead';
+            document.querySelector('.modal-title').textContent = 'Nouveau lead';
+            document.getElementById('modalSubtitle').style.display = '';
 
             // Reset pop-up Léon
             hideLeonPopup();
@@ -6381,7 +6410,9 @@
             currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
             renderLinks();
 
-            document.querySelector('.modal-title').textContent = 'Modifier le Lead';
+            const displayName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
+            document.querySelector('.modal-title').textContent = displayName || 'Modifier le lead';
+            document.getElementById('modalSubtitle').style.display = 'none';
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.textContent = 'Mettre à jour';
             submitBtn.dataset.editId = id;
