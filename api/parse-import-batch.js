@@ -95,7 +95,7 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
 
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 30000);
+        const timeout = setTimeout(() => controller.abort(), 45000);
 
         const rowsText = rows.map((row, i) => {
             const obj = {};
@@ -107,6 +107,9 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
             return `Ligne ${i}: ${JSON.stringify(obj)}`;
         }).join('\n');
 
+        const userContent = `En-têtes : ${JSON.stringify(headers)}\n\n${rowsText}`;
+        console.log(`[parse-import-batch] ${rows.length} rows, prompt ~${userContent.length} chars`);
+
         const response = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -116,9 +119,9 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
             },
             body: JSON.stringify({
                 model: 'claude-haiku-4-5-20251001',
-                max_tokens: 4096,
+                max_tokens: 8000,
                 system: systemPrompt,
-                messages: [{ role: 'user', content: `En-têtes : ${JSON.stringify(headers)}\n\n${rowsText}` }]
+                messages: [{ role: 'user', content: userContent }]
             }),
             signal: controller.signal
         });
@@ -126,18 +129,38 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
 
         if (!response.ok) {
             const errBody = await response.text();
-            console.error('Anthropic error:', response.status, errBody);
-            return res.status(502).json({ error: 'Parsing failed' });
+            console.error('Anthropic API error:', response.status, errBody);
+            return res.status(502).json({
+                error: `API error: ${response.status}`,
+                detail: errBody.substring(0, 200)
+            });
         }
 
         const result = await response.json();
-        const content = result.content?.[0]?.text || '{}';
+
+        if (!result.content || !result.content[0] || !result.content[0].text) {
+            console.error('Unexpected API response:', JSON.stringify(result).substring(0, 500));
+            return res.status(502).json({
+                error: 'Empty API response',
+                detail: JSON.stringify(result).substring(0, 200)
+            });
+        }
+
+        const content = result.content[0].text;
+        console.log(`[parse-import-batch] Response: ${content.length} chars, stop_reason: ${result.stop_reason}`);
 
         let jsonStr = content;
         const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
         if (codeBlockMatch) jsonStr = codeBlockMatch[1];
         const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) return res.status(400).json({ error: 'No valid JSON in response' });
+
+        if (!jsonMatch) {
+            console.error('JSON parse failed. Raw response:', content.substring(0, 500));
+            return res.status(400).json({
+                error: 'JSON parse failed',
+                detail: content.substring(0, 200)
+            });
+        }
 
         const parsed = JSON.parse(jsonMatch[0]);
         return res.status(200).json({
@@ -145,8 +168,10 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
             ignored: parsed.ignored || []
         });
     } catch (err) {
-        if (err.name === 'AbortError') return res.status(504).json({ error: 'Parsing timeout' });
+        if (err.name === 'AbortError') {
+            return res.status(504).json({ error: 'Timeout (45s)', detail: 'Batch trop volumineux' });
+        }
         console.error('Parse-import-batch error:', err);
-        return res.status(500).json({ error: 'Internal error: ' + err.message });
+        return res.status(500).json({ error: 'Internal error', detail: err.message });
     }
 }

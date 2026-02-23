@@ -2665,7 +2665,11 @@
             const firstRowData = excelRows.slice(0, 1).map(row => {
                 return excelHeaders.map(h => {
                     const colIdx = headerColIndex[h];
-                    return colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                    let cell = colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                    if (typeof cell === 'string' && cell.length > 300) {
+                        cell = cell.substring(0, 300) + '...';
+                    }
+                    return cell;
                 });
             });
 
@@ -3225,30 +3229,49 @@
             );
 
             // Prepare raw rows for AI (indexed by excelHeaders via headerColIndex)
+            // Truncate cells to avoid oversized API requests
             const rawRowsForAI = excelRows.map(row => {
                 return excelHeaders.map(h => {
                     const colIdx = headerColIndex[h];
-                    return colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                    let cell = colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
+                    if (typeof cell === 'string' && cell.length > 300) {
+                        cell = cell.substring(0, 300) + '...';
+                    }
+                    return cell;
                 });
             });
 
-            // AI batch processing
-            const AI_BATCH_SIZE = 10;
+            // AI batch processing — dynamic batch size based on content
+            const MAX_BATCH_CHARS = 15000;
+            const MAX_BATCH_ROWS = 10;
             const allParsedLeads = [];
             const allSkipped = [];
             const statusCounts = {};
             let totalProcessed = 0;
 
             progressText.textContent = 'Analyse IA en cours...';
-            console.log('[AI Import] Début: ' + rawRowsForAI.length + ' lignes, batch size=' + AI_BATCH_SIZE);
+            console.log('[AI Import] Début: ' + rawRowsForAI.length + ' lignes');
 
-            for (let i = 0; i < rawRowsForAI.length; i += AI_BATCH_SIZE) {
-                const batchRows = rawRowsForAI.slice(i, i + AI_BATCH_SIZE);
+            let i = 0;
+            let batchNum = 0;
+            while (i < rawRowsForAI.length) {
+                // Calculate dynamic batch size
+                const headerSize = JSON.stringify(excelHeaders).length;
+                let batchChars = headerSize;
+                let count = 0;
+                for (let k = i; k < rawRowsForAI.length && count < MAX_BATCH_ROWS; k++) {
+                    const rowSize = JSON.stringify(rawRowsForAI[k]).length;
+                    if (batchChars + rowSize > MAX_BATCH_CHARS && count > 0) break;
+                    batchChars += rowSize;
+                    count++;
+                }
+
+                const batchRows = rawRowsForAI.slice(i, i + count);
                 const batchStartIdx = i;
-                const batchNum = Math.floor(i / AI_BATCH_SIZE) + 1;
-                const totalBatches = Math.ceil(rawRowsForAI.length / AI_BATCH_SIZE);
+                batchNum++;
+                const totalBatches = '~' + Math.ceil(rawRowsForAI.length / Math.max(count, 1));
 
-                console.log('[AI Import] Batch ' + batchNum + '/' + totalBatches + ' (' + batchRows.length + ' lignes)');
+                console.log('[AI Import] Batch ' + batchNum + '/' + totalBatches + ' (' + batchRows.length + ' lignes, ~' + batchChars + ' chars)');
 
                 try {
                     const resp = await fetch('/api/parse-import-batch', {
@@ -3262,16 +3285,19 @@
                     });
 
                     if (!resp.ok) {
-                        console.error('[AI Import] Batch ' + batchNum + ' API error:', resp.status);
+                        const errData = await resp.json().catch(() => ({ error: 'HTTP ' + resp.status }));
+                        const errMsg = errData.detail || errData.error || 'HTTP ' + resp.status;
+                        console.error('[AI Import] Batch ' + batchNum + ' API error:', resp.status, errMsg);
                         for (let j = 0; j < batchRows.length; j++) {
                             allSkipped.push({
                                 row: batchStartIdx + j + 2 + skippedHeaderRows,
-                                reason: 'Erreur API IA (batch ' + batchNum + ')'
+                                reason: 'Erreur API (batch ' + batchNum + '): ' + errMsg
                             });
                         }
                         totalProcessed += batchRows.length;
                         progressBar.style.width = Math.round((totalProcessed / rawRowsForAI.length) * 100) + '%';
                         progressText.textContent = 'Analyse IA... ' + totalProcessed + '/' + rawRowsForAI.length;
+                        i += count;
                         continue;
                     }
 
@@ -3349,10 +3375,11 @@
 
                 } catch (err) {
                     console.error('[AI Import] Batch ' + batchNum + ' exception:', err);
+                    const errMsg = err.message || 'Erreur inconnue';
                     for (let j = 0; j < batchRows.length; j++) {
                         allSkipped.push({
                             row: batchStartIdx + j + 2 + skippedHeaderRows,
-                            reason: 'Exception IA: ' + err.message
+                            reason: 'Exception (batch ' + batchNum + '): ' + errMsg
                         });
                     }
                 }
@@ -3361,6 +3388,7 @@
                 const pct = Math.round((totalProcessed / rawRowsForAI.length) * 100);
                 progressBar.style.width = pct + '%';
                 progressText.textContent = 'Analyse IA... ' + totalProcessed + '/' + rawRowsForAI.length;
+                i += count;
             }
 
             console.log('[AI Import] Analyse terminée: ' + allParsedLeads.length + ' leads, ' + allSkipped.length + ' ignorés');
