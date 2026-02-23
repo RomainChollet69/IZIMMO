@@ -2666,8 +2666,8 @@
                 return excelHeaders.map(h => {
                     const colIdx = headerColIndex[h];
                     let cell = colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
-                    if (typeof cell === 'string' && cell.length > 300) {
-                        cell = cell.substring(0, 300) + '...';
+                    if (typeof cell === 'string' && cell.length > 150) {
+                        cell = cell.substring(0, 150) + '...';
                     }
                     return cell;
                 });
@@ -3229,21 +3229,21 @@
             );
 
             // Prepare raw rows for AI (indexed by excelHeaders via headerColIndex)
-            // Truncate cells to avoid oversized API requests
+            // Truncate cells to 150 chars — AI only needs name/phone/price/type, not full descriptions
             const rawRowsForAI = excelRows.map(row => {
                 return excelHeaders.map(h => {
                     const colIdx = headerColIndex[h];
                     let cell = colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
-                    if (typeof cell === 'string' && cell.length > 300) {
-                        cell = cell.substring(0, 300) + '...';
+                    if (typeof cell === 'string' && cell.length > 150) {
+                        cell = cell.substring(0, 150) + '...';
                     }
                     return cell;
                 });
             });
 
             // AI batch processing — dynamic batch size based on content
-            const MAX_BATCH_CHARS = 15000;
-            const MAX_BATCH_ROWS = 10;
+            const MAX_BATCH_CHARS = 8000;
+            const MAX_BATCH_ROWS = 5;
             const allParsedLeads = [];
             const allSkipped = [];
             const statusCounts = {};

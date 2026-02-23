@@ -94,7 +94,7 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
 
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 45000);
+        const timeout = setTimeout(() => controller.abort(), 55000);
 
         const rowsText = rows.map((row, i) => {
             const obj = {};
@@ -168,7 +168,7 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
         });
     } catch (err) {
         if (err.name === 'AbortError') {
-            return res.status(504).json({ error: 'Timeout (45s)', detail: 'Batch trop volumineux' });
+            return res.status(504).json({ error: 'Timeout (55s)', detail: 'Batch trop volumineux' });
         }
         console.error('Parse-import-batch error:', err);
         return res.status(500).json({ error: 'Internal error', detail: err.message });

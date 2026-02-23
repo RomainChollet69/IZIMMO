@@ -1,4 +1,12 @@
 {
+  "functions": {
+    "api/parse-import-batch.js": {
+      "maxDuration": 60
+    },
+    "api/generate-social-post.js": {
+      "maxDuration": 60
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",
