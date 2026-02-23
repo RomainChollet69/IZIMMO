@@ -339,6 +339,9 @@
         // Initialize story input state
         updateStoryInputState();
 
+        // Léa briefing (once per day)
+        await maybeShowLeaBriefing();
+
         console.log('[Social] Initialized');
     }
 
@@ -878,6 +881,228 @@
         }
     }
 
+
+    // ===== LÉA BRIEFING =====
+    async function loadLeaBriefingData() {
+        try {
+            const user = (await supabaseClient.auth.getUser()).data.user;
+            if (!user) return null;
+
+            const today = DAYS_FR[new Date().getDay()];
+
+            // Calendar posts for today
+            const templates = CALENDAR[today] || {};
+            const platforms = [...new Set(currentProfile?.platforms_active || [])];
+            const crmData = await fetchCRMData();
+
+            const posts = [];
+            for (const platform of platforms) {
+                const templateName = templates[platform];
+                if (!templateName) continue;
+
+                const matchTypes = CRM_TEMPLATE_MATCH[templateName] || [];
+                let crmMatch = null;
+                for (const type of matchTypes) {
+                    if (crmData[type]) {
+                        crmMatch = { type, data: crmData[type] };
+                        break;
+                    }
+                }
+
+                posts.push({ platform, templateName, crmMatch });
+            }
+
+            // Weekly stats
+            const now = new Date();
+            const monday = new Date(now);
+            const day = now.getDay();
+            const diff = day === 0 ? -6 : 1 - day;
+            monday.setDate(now.getDate() + diff);
+            monday.setHours(0, 0, 0, 0);
+
+            const { data: weekPosts } = await supabaseClient
+                .from('social_posts')
+                .select('status, generated_at')
+                .eq('user_id', user.id)
+                .gte('generated_at', monday.toISOString());
+
+            const created = weekPosts?.length || 0;
+            const published = weekPosts?.filter(p => p.status === 'published').length || 0;
+
+            // Streak: consecutive days with at least 1 published post
+            let streak = 0;
+            const checkDate = new Date(now);
+            checkDate.setHours(0, 0, 0, 0);
+            for (let i = 0; i < 30; i++) {
+                const dayStart = new Date(checkDate);
+                dayStart.setDate(checkDate.getDate() - i);
+                const dayEnd = new Date(dayStart);
+                dayEnd.setDate(dayStart.getDate() + 1);
+
+                const hasPost = weekPosts?.some(p => {
+                    const d = new Date(p.generated_at);
+                    return d >= dayStart && d < dayEnd;
+                }) || false;
+
+                // For streak, also check older posts beyond this week
+                if (i === 0 && !hasPost) break; // No post today, check yesterday
+                if (i > 0 && !hasPost) break;
+                streak++;
+            }
+
+            // Simple streak: just count from recent posts
+            if (streak === 0) {
+                // Check if there were posts yesterday
+                const { count } = await supabaseClient
+                    .from('social_posts')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('user_id', user.id)
+                    .gte('generated_at', new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString());
+                streak = count > 0 ? 1 : 0;
+            }
+
+            return { posts, created, published, streak, today };
+        } catch (err) {
+            console.error('[Social] Briefing data error:', err);
+            return null;
+        }
+    }
+
+    function renderLeaBriefing(data) {
+        const card = document.getElementById('leaBriefingCard');
+        const overlay = document.getElementById('leaBriefingOverlay');
+        if (!card || !overlay) return;
+
+        const now = new Date();
+        const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+        const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+        const dateStr = `${dayNames[now.getDay()]} ${now.getDate()} ${monthNames[now.getMonth()]}`;
+
+        const user = (await supabaseClient.auth.getUser()).data.user;
+        const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+        const firstName = fullName.split(' ')[0] || 'Agent';
+
+        // Build posts HTML
+        const platformIcons = {
+            linkedin: '<i class="fab fa-linkedin" style="color:#0077B5"></i>',
+            instagram: '<i class="fab fa-instagram" style="color:#E4405F"></i>',
+            facebook: '<i class="fab fa-facebook" style="color:#1877F2"></i>',
+            tiktok: '<i class="fab fa-tiktok" style="color:#000000"></i>'
+        };
+
+        let postsHTML = '';
+        if (data.posts.length > 0) {
+            postsHTML = data.posts.map(p => {
+                const icon = platformIcons[p.platform] || '';
+                let matchHTML = '';
+                if (p.crmMatch) {
+                    const matchTexts = {
+                        sale: `Tu as vendu ${p.crmMatch.data.property_type || 'un bien'}${p.crmMatch.data.address ? ' à ' + p.crmMatch.data.address : ''} — parfait pour illustrer !`,
+                        mandate: `Ton ${p.crmMatch.data.property_type || 'bien'}${p.crmMatch.data.address ? ' à ' + p.crmMatch.data.address : ''} en mandat depuis ${p.crmMatch.data.days}j pourrait faire un bon sujet`,
+                        visits: `${p.crmMatch.data.count} visite${p.crmMatch.data.count > 1 ? 's' : ''} cette semaine — de la matière !`,
+                        estimations: `${p.crmMatch.data.count} estimations ce mois — des chiffres concrets à partager`
+                    };
+                    matchHTML = `<span class="lea-briefing-crm-match">${escapeHtml(matchTexts[p.crmMatch.type] || '')}</span>`;
+                } else {
+                    const details = TEMPLATE_DETAILS[p.templateName];
+                    const tip = details?.quoi || 'Parle des tendances de ton secteur';
+                    matchHTML = `<span class="lea-briefing-no-match">${escapeHtml(tip)}</span>`;
+                }
+
+                return `<div class="lea-briefing-post-item">
+                    ${icon}
+                    <div>
+                        <strong>${escapeHtml(p.templateName)}</strong>
+                        ${matchHTML}
+                    </div>
+                </div>`;
+            }).join('');
+        } else {
+            postsHTML = `<div style="color: var(--text-light); font-size: 14px;">
+                Pas de post prévu aujourd'hui. Profite-en pour recharger les batteries !
+            </div>`;
+        }
+
+        // Léa encouragement message
+        let footerMain, footerSub;
+        if (data.streak >= 5) {
+            footerMain = `${data.streak} jours de suite !`;
+            footerSub = `Tu es une machine à contenu. Tes followers adorent.`;
+        } else if (data.created >= 3) {
+            footerMain = `Belle régularité !`;
+            footerSub = `${data.created} posts cette semaine, tes followers vont adorer.`;
+        } else if (data.created >= 1) {
+            footerMain = `Bon début !`;
+            footerSub = `Continue sur ta lancée, la régularité paie.`;
+        } else {
+            footerMain = `C'est le moment de s'y mettre !`;
+            footerSub = `Ton premier post de la semaine t'attend.`;
+        }
+
+        card.innerHTML = `
+            <div class="lea-briefing-header">
+                <span class="lea-briefing-header-dot"></span>
+                <span class="lea-briefing-header-dot"></span>
+                <span class="lea-briefing-header-dot"></span>
+                <img src="img/lea_social.png" alt="Léa" class="lea-briefing-avatar">
+                <div class="lea-briefing-header-text">
+                    <div class="lea-briefing-title">Bonjour ${escapeHtml(firstName)} 👋</div>
+                    <div class="lea-briefing-date">${dateStr}</div>
+                </div>
+                <button type="button" class="lea-briefing-close" onclick="closeLeaBriefing()">✕</button>
+            </div>
+
+            <div class="lea-briefing-section">
+                <div class="lea-briefing-section-title">📱 Ton programme social du jour</div>
+                <div class="lea-briefing-posts">
+                    ${postsHTML}
+                </div>
+            </div>
+
+            <div class="lea-briefing-section">
+                <div class="lea-briefing-section-title">📊 Cette semaine</div>
+                <div class="lea-briefing-stats">
+                    <span>📝 Posts créés : <strong>${data.created}</strong></span>
+                    <span>·</span>
+                    <span>✅ Partagés : <strong>${data.published}</strong></span>
+                    <span>·</span>
+                    <span>🔥 Streak : <strong>${data.streak} jour${data.streak > 1 ? 's' : ''}</strong></span>
+                </div>
+            </div>
+
+            <div class="lea-briefing-footer">
+                <div class="lea-briefing-footer-inner">
+                    <img src="img/lea_social.png" alt="Léa" class="lea-briefing-footer-avatar">
+                    <div class="lea-briefing-footer-text">
+                        <div class="lea-briefing-footer-main">${escapeHtml(footerMain)}</div>
+                        <div class="lea-briefing-footer-sub">${escapeHtml(footerSub)}</div>
+                    </div>
+                </div>
+                <button class="lea-briefing-cta" onclick="closeLeaBriefing()">C'est parti !</button>
+            </div>
+        `;
+
+        overlay.classList.add('visible');
+    }
+
+    window.closeLeaBriefing = function() {
+        const overlay = document.getElementById('leaBriefingOverlay');
+        if (overlay) overlay.classList.remove('visible');
+        localStorage.setItem('lea_briefing_last_seen', new Date().toDateString());
+    };
+
+    async function maybeShowLeaBriefing() {
+        const lastSeen = localStorage.getItem('lea_briefing_last_seen');
+        const today = new Date().toDateString();
+        if (lastSeen === today) return;
+
+        if (!currentProfile) return;
+
+        const data = await loadLeaBriefingData();
+        if (!data) return;
+
+        renderLeaBriefing(data);
+    }
 
     // ===== TEMPLATE POPOVER =====
     window.showTemplatePopover = function(templateName, platform, dayName) {
