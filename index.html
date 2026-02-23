@@ -3342,7 +3342,7 @@
             <form id="leadForm">
                 <div id="tabInfo">
                     <div class="modal-actions" id="modalActions">
-                        <button type="button" class="modal-action-btn" id="dictateBtn">🎙️ Dicter</button>
+                        <button type="button" class="modal-action-btn" id="dictateBtn"><i class="fa-solid fa-microphone"></i> Dicter</button>
                         <button type="button" class="modal-action-btn" id="importDocBtn">📎 Importer un document</button>
                         <button type="button" class="modal-action-btn" id="dvfBtn" style="display:none" onclick="openDVF()">📊 Marché local</button>
                     </div>
@@ -5992,7 +5992,7 @@
                         status.className = 'dictate-status active transcribing';
                     } else if (state === 'error') {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter';
                         if (msg) {
                             status.textContent = '⚠️ ' + msg;
                             status.className = 'dictate-status active';
@@ -6002,7 +6002,7 @@
                         }
                     } else {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter';
                         status.className = 'dictate-status';
                     }
                 }
@@ -6133,7 +6133,7 @@
                 }
             }
 
-            if (btn) btn.innerHTML = '🎙️ Dicter';
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter';
         }
 
         // ===== LIENS D'ANNONCES =====

@@ -2284,7 +2284,7 @@
             </div>
             <form id="buyerForm">
                 <div id="tabInfo">
-                <button type="button" class="dictate-btn" id="dictateBtn">🎙️ Dicter mon lead</button>
+                <button type="button" class="dictate-btn" id="dictateBtn"><i class="fa-solid fa-microphone"></i> Dicter mon lead</button>
                 <div class="dictate-status" id="dictateStatus"></div>
                 <!-- Section Contact -->
                 <div class="form-section">
@@ -3375,7 +3375,7 @@
                         status.className = 'dictate-status active transcribing';
                     } else if (state === 'error') {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter mon lead';
                         if (msg) {
                             status.textContent = '⚠️ ' + msg;
                             status.className = 'dictate-status active';
@@ -3385,7 +3385,7 @@
                         }
                     } else {
                         btn.classList.remove('recording');
-                        btn.innerHTML = '🎙️ Dicter mon lead';
+                        btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter mon lead';
                         status.className = 'dictate-status';
                     }
                 }
@@ -3547,7 +3547,7 @@
                 }
             }
 
-            if (btn) btn.innerHTML = '🎙️ Dicter mon lead';
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-microphone"></i> Dicter mon lead';
         }
 
         // ===== NOTES HORODATÉES =====
