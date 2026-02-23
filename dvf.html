@@ -1118,10 +1118,12 @@
             color: #fff;
         }
 
-        /* InfoWindow : réduire l'espace en haut */
-        .gm-style-iw-c { padding: 8px 8px 8px 12px !important; }
-        .gm-style-iw-d { overflow: auto !important; }
-        .gm-ui-hover-effect { top: 2px !important; right: 2px !important; }
+        /* InfoWindow : supprimer l'espace en haut */
+        .gm-style-iw-c { padding: 0 !important; }
+        .gm-style-iw-ch { padding-top: 0 !important; max-height: none !important; }
+        .gm-style-iw-d { overflow: auto !important; padding: 8px 10px 8px 12px !important; }
+        .gm-style-iw-tc { display: none !important; }
+        .gm-ui-hover-effect { top: 0 !important; right: 0 !important; width: 28px !important; height: 28px !important; }
 
         /* ===== MAP ===== */
         .map-container {
@@ -2608,6 +2610,7 @@
 
             document.getElementById('dpeStatsSection').style.display = dpeLayerActive ? 'block' : 'none';
             document.getElementById('dpeFilterSection').style.display = dpeLayerActive ? 'block' : 'none';
+            document.getElementById('dpeDateFilterSection').style.display = dpeLayerActive ? 'block' : 'none';
             document.getElementById('legendDPE').style.display = dpeLayerActive ? 'block' : 'none';
 
             if (dpeLayerActive && currentCenter) {
