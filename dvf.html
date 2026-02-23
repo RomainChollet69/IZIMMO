@@ -1522,7 +1522,7 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
-            <button class="dvf-toggle active" id="dvfToggle">📊 DVF ✓</button>
+            <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
             <div id="map"></div>
@@ -2537,10 +2537,11 @@
             dvfLayerActive = !dvfLayerActive;
             const btn = document.getElementById('dvfToggle');
             btn.classList.toggle('active', dvfLayerActive);
-            btn.textContent = dvfLayerActive ? '📊 DVF ✓' : '📊 DVF';
+            btn.innerHTML = dvfLayerActive ? '<i class="fa-solid fa-euro-sign"></i> DVF ✓' : '<i class="fa-solid fa-euro-sign"></i> DVF';
 
-            // Afficher/masquer marqueurs DVF
+            // Afficher/masquer marqueurs DVF + légende
             markers.forEach(m => m.setMap(dvfLayerActive ? map : null));
+            document.getElementById('legendDVF').style.display = dvfLayerActive ? '' : 'none';
 
             // Afficher/masquer stats, filtres, liste
             document.querySelector('.quick-filters').style.display = dvfLayerActive ? '' : 'none';
