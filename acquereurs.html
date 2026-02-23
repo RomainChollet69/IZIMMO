@@ -3183,8 +3183,8 @@
             // Budget max
             if (buyer.budget_max) ext += `<div class="card-info">💰 ${formatEuro(buyer.budget_max)} HFN</div>`;
 
-            // Relance
-            ext += followup.html;
+            // Relance (seulement dans extended si pas déjà affiché en compact)
+            if (!followup.isAlert) ext += followup.html;
 
             // Actions
             ext += `<div class="card-actions">
@@ -3360,8 +3360,8 @@
             }
 
             buyerRecorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 5000,
+                maxDuration: 120000,
+                silenceTimeout: 8000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -3674,8 +3674,8 @@
             }
 
             noteRecorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 5000,
+                maxDuration: 60000,
+                silenceTimeout: 7000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -4571,8 +4571,8 @@
             });
 
             leonRecorder = new AudioRecorder({
-                silenceTimeout: 3000,
-                maxDuration: 30000,
+                silenceTimeout: 5000,
+                maxDuration: 60000,
                 onStateChange: (state) => {
                     if (state === 'transcribing') {
                         voiceArea.innerHTML = '<div class="leon-voice-status"><div class="spinner"></div> Transcription en cours...</div>';

@@ -5530,8 +5530,8 @@
                 const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
                 const diff = Math.ceil((rd - today) / 86400000);
                 const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-                if (diff < 0) { followupCompact = `<div class="card-followup followup-overdue">⚠️ Relance ${fmt}</div>`; followupFull = followupCompact; showAlert = true; }
-                else if (diff === 0) { followupCompact = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; followupFull = `<div class="card-followup followup-due">🔔 À relancer aujourd'hui</div>`; showAlert = true; }
+                if (diff < 0) { followupCompact = `<div class="card-followup followup-overdue">⚠️ Relance ${fmt}</div>`; showAlert = true; }
+                else if (diff === 0) { followupCompact = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; showAlert = true; }
                 else if (diff <= 3) { followupFull = `<div class="card-followup followup-due">📅 Relance ${fmt}</div>`; }
                 else { followupFull = `<div class="card-followup followup-ok">📅 Relance ${fmt}</div>`; }
             }
@@ -5878,8 +5878,8 @@
             }
 
             noteRecorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 5000,
+                maxDuration: 60000,
+                silenceTimeout: 7000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -5957,8 +5957,8 @@
             }
 
             sellerRecorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 5000,
+                maxDuration: 120000,
+                silenceTimeout: 8000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         btn.classList.add('recording');
@@ -7046,8 +7046,8 @@
             });
 
             leonRecorder = new AudioRecorder({
-                silenceTimeout: 3000,
-                maxDuration: 30000,
+                silenceTimeout: 5000,
+                maxDuration: 60000,
                 onStateChange: (state) => {
                     if (state === 'transcribing') {
                         voiceArea.innerHTML = '<div class="leon-voice-status"><div class="spinner"></div> Transcription en cours...</div>';
@@ -7872,8 +7872,8 @@
             }
 
             onboardingRecorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 5000,
+                maxDuration: 120000,
+                silenceTimeout: 8000,
                 onStateChange: (state, msg) => {
                     if (state === 'recording') {
                         micBtn.classList.add('recording');
