@@ -1601,21 +1601,55 @@
         .notes-textarea:focus { border-color: #667eea; }
         .notes-textarea::placeholder { color: #B0BEC5; }
         .notes-mic-btn {
-            padding: 8px 10px;
+            padding: 6px;
             background: #f0f2f5;
             border: 1px solid #E1E8ED;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
             flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
         }
-        .notes-mic-btn:hover { background: #e8eaf6; border-color: #667eea; }
-        .notes-mic-btn.transcribing { background: #E8EAF6; border-color: #667eea; }
+        .notes-mic-btn img {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            transition: transform 0.25s ease;
+        }
+        .notes-mic-btn:hover {
+            background: #e8eaf6;
+            border-color: #667eea;
+            transform: scale(1.08);
+        }
+        .notes-mic-btn:hover img { transform: scale(1.1) rotate(-5deg); }
+        .notes-mic-btn:active { transform: scale(0.95); }
+        .notes-mic-btn.transcribing {
+            background: #E8EAF6;
+            border-color: #667eea;
+            animation: micSpin 1.5s linear infinite;
+        }
         .notes-mic-btn.recording {
             background: #FFEBEE;
             border-color: #FF4757;
-            animation: dictatePulse 1.2s infinite;
+            animation: micPulse 1.2s ease-in-out infinite;
+        }
+        .notes-mic-btn.recording img { animation: micBounce 0.6s ease-in-out infinite alternate; }
+        @keyframes micPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,71,87,0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(255,71,87,0); }
+        }
+        @keyframes micBounce {
+            0% { transform: translateY(1px) scale(1); }
+            100% { transform: translateY(-2px) scale(1.08); }
+        }
+        @keyframes micSpin {
+            0% { border-color: #667eea; }
+            50% { border-color: #764ba2; }
+            100% { border-color: #667eea; }
         }
         .notes-add-btn {
             padding: 8px 14px;
@@ -3463,7 +3497,7 @@
                         <div class="notes-section-title">📝 Notes <span class="notes-count" id="notesCount"></span></div>
                         <div class="notes-input-row">
                             <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
-                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale">🎙️</button>
+                            <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><img src="img/Micro.png" alt="Micro"></button>
                             <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
                         </div>
                         <div class="notes-timeline" id="notesTimeline">
@@ -5909,13 +5943,14 @@
                     if (state === 'recording') {
                         btn.classList.add('recording');
                         btn.classList.remove('transcribing');
+                        btn.innerHTML = '<img src="img/Micro.png" alt="Micro">';
                     } else if (state === 'transcribing') {
                         btn.classList.remove('recording');
                         btn.classList.add('transcribing');
                         btn.innerHTML = '⏳';
                     } else {
                         btn.classList.remove('recording', 'transcribing');
-                        btn.innerHTML = '🎙️';
+                        btn.innerHTML = '<img src="img/Micro.png" alt="Micro">';
                     }
                     if (state === 'error' && msg) alert(msg);
                 }
