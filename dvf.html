@@ -775,9 +775,10 @@
             margin-left: 6px;
         }
 
-        /* DPE filter buttons */
-        .dpe-filter-section {
-            display: none;
+        /* DPE filters container */
+        .dpe-filters-container {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
         }
 
         .dpe-class-grid {
@@ -1317,6 +1318,7 @@
             .side-panel.collapsed .radius-section,
             .side-panel.collapsed .filter-toggle-bar,
             .side-panel.collapsed .filter-panel,
+            .side-panel.collapsed .dpe-filters-container,
             .side-panel.collapsed .stats-section { display: flex; }
             .side-panel.collapsed .sales-section { display: none; }
 
@@ -1459,8 +1461,16 @@
                     </div>
                 </div>
 
-                <!-- DPE class filter (visible when DPE active) -->
-                <div class="fp-section dpe-filter-section" id="dpeFilterSection">
+                <!-- Footer: counter + reset -->
+                <div class="fp-footer">
+                    <span class="fp-counter" id="filterCounter">— ventes trouvées</span>
+                    <button class="fp-reset-btn" id="filterReset">Réinitialiser</button>
+                </div>
+            </div>
+
+            <!-- DPE Filters (indépendant du panel repliable DVF) -->
+            <div class="dpe-filters-container" id="dpeFiltersContainer" style="display:none">
+                <div class="fp-section" style="margin-bottom:10px">
                     <div class="fp-label">Classe DPE</div>
                     <div class="dpe-class-grid" id="dpeClassGrid">
                         <button class="dpe-class-btn active" data-class="1" style="background:#319834">A</button>
@@ -1472,9 +1482,7 @@
                         <button class="dpe-class-btn active" data-class="7" style="background:#fc1c03">G</button>
                     </div>
                 </div>
-
-                <!-- DPE date filter (visible when DPE active) -->
-                <div class="fp-section dpe-filter-section" id="dpeDateFilterSection">
+                <div class="fp-section" style="margin-bottom:0">
                     <div class="fp-label">DPE récents <span class="fp-label-value" id="dpeDateValue">Tous</span></div>
                     <div class="fp-type-grid" id="dpeDateGrid">
                         <button class="fp-type-btn active" data-months="0">Tous</button>
@@ -1482,12 +1490,6 @@
                         <button class="fp-type-btn" data-months="6">6 mois</button>
                         <button class="fp-type-btn" data-months="12">1 an</button>
                     </div>
-                </div>
-
-                <!-- Footer: counter + reset -->
-                <div class="fp-footer">
-                    <span class="fp-counter" id="filterCounter">— ventes trouvées</span>
-                    <button class="fp-reset-btn" id="filterReset">Réinitialiser</button>
                 </div>
             </div>
 
@@ -2609,8 +2611,7 @@
             btn.textContent = dpeLayerActive ? '🏠 DPE ✓' : '🏠 DPE';
 
             document.getElementById('dpeStatsSection').style.display = dpeLayerActive ? 'block' : 'none';
-            document.getElementById('dpeFilterSection').style.display = dpeLayerActive ? 'block' : 'none';
-            document.getElementById('dpeDateFilterSection').style.display = dpeLayerActive ? 'block' : 'none';
+            document.getElementById('dpeFiltersContainer').style.display = dpeLayerActive ? 'block' : 'none';
             document.getElementById('legendDPE').style.display = dpeLayerActive ? 'block' : 'none';
 
             if (dpeLayerActive && currentCenter) {
