@@ -2058,6 +2058,13 @@
     };
 
     // ===== VOICE PROFILE MODAL =====
+    // Close voice modal when clicking on backdrop (outside modal)
+    document.getElementById('voiceBackdrop').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('active');
+        }
+    });
+
     async function checkAndShowVoiceModal() {
         if (!currentProfile) return false;
 
