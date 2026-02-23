@@ -956,9 +956,19 @@
             margin-bottom: 8px;
         }
 
+        .big-mic-btn {
+            animation: micBreath 2.5s ease-in-out infinite;
+        }
+
         .big-mic-btn:hover {
-            transform: scale(1.05);
+            transform: scale(1.1);
             box-shadow: 0 6px 24px rgba(43, 108, 176, 0.5);
+            animation: none;
+        }
+
+        @keyframes micBreath {
+            0%, 100% { transform: scale(1); box-shadow: 0 4px 16px rgba(43, 108, 176, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 6px 24px rgba(43, 108, 176, 0.6); }
         }
 
         .big-mic-btn.recording {
