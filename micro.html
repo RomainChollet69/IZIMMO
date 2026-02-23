@@ -25,8 +25,8 @@
             overflow-x: hidden;
         }
 
-        /* ===== HEADER ===== */
-        .header {
+        /* ===== DESKTOP HEADER (classique, visible > 768px) ===== */
+        .header-desktop {
             width: 100%;
             background: #FFFFFF;
             border-bottom: 1px solid #E5E7EB;
@@ -35,7 +35,7 @@
             z-index: 1000;
         }
 
-        .header-inner {
+        .header-desktop .header-inner {
             max-width: 1400px;
             margin: 0 auto;
             padding: 0 32px;
@@ -45,7 +45,7 @@
             justify-content: space-between;
         }
 
-        .logo {
+        .header-desktop .logo {
             display: flex;
             align-items: center;
             text-decoration: none;
@@ -53,7 +53,7 @@
             cursor: pointer;
         }
 
-        .logo img { height: 36px; width: auto; }
+        .header-desktop .logo img { height: 36px; width: auto; }
 
         .nav-tabs { display: flex; align-items: center; gap: 0; }
 
@@ -77,7 +77,7 @@
         .nav-tab:hover { color: #243B53; }
         .nav-tab.active { color: #6C4CC8; font-weight: 600; border-bottom-color: #6C4CC8; }
 
-        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .header-desktop .header-actions { display: flex; align-items: center; gap: 12px; }
 
         .settings-btn {
             color: #6B7280;
@@ -89,6 +89,7 @@
         }
         .settings-btn:hover { color: #243B53; background: #F3F4F6; }
 
+        /* User profile (desktop) */
         .user-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; position: relative; }
         .user-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #E5E7EB; }
         .user-name { font-size: 14px; font-weight: 500; color: #374151; }
@@ -106,28 +107,61 @@
         .user-dropdown a:hover, .user-dropdown button:hover { background: #F9FAFB; }
         .user-dropdown button { border-top: 1px solid #E5E7EB; color: #EF4444; }
 
-        /* ===== MAIN CONTENT ===== */
-        .micro-container {
+        /* ===== MOBILE HEADER (minimal) ===== */
+        .header-mobile {
+            display: none;
+            padding: 16px 24px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-mobile .logo-mobile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .header-mobile .logo-mobile img { height: 28px; width: auto; }
+
+        .header-mobile .user-firstname {
+            font-size: 15px;
+            font-weight: 500;
+            color: #64748B;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .micro-page {
             max-width: 480px;
             margin: 0 auto;
-            padding: 40px 24px 120px;
+            padding: 0 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: calc(100vh - 64px);
         }
 
-        /* ===== MIC BUTTON ===== */
+        /* ===== MIC ZONE ===== */
         .mic-zone {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-top: 40px;
+            padding-top: 60px;
+            position: relative;
+            transition: padding-top 0.4s ease;
+        }
+
+        .mic-zone.compact { padding-top: 24px; }
+
+        .mic-btn-wrap {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .mic-btn {
-            width: 120px;
-            height: 120px;
+            width: 130px;
+            height: 130px;
             border-radius: 50%;
             border: none;
             background: #6C4CC8;
@@ -135,183 +169,87 @@
             font-size: 48px;
             cursor: pointer;
             position: relative;
+            z-index: 2;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 32px rgba(108, 76, 200, 0.3);
-            transition: all 0.3s ease;
+            box-shadow: 0 8px 40px rgba(108, 76, 200, 0.25);
+            transition: all 0.4s ease;
             -webkit-tap-highlight-color: transparent;
         }
 
         .mic-btn:active { transform: scale(0.95); }
 
-        /* Pulsation subtile au repos */
+        /* Pulsation douce au repos */
         .mic-btn.idle { animation: pulse-idle 3s ease-in-out infinite; }
 
         @keyframes pulse-idle {
-            0%, 100% { box-shadow: 0 8px 32px rgba(108, 76, 200, 0.3); }
-            50% { box-shadow: 0 8px 48px rgba(108, 76, 200, 0.5); }
+            0%, 100% { box-shadow: 0 8px 40px rgba(108, 76, 200, 0.25); }
+            50% { box-shadow: 0 12px 56px rgba(108, 76, 200, 0.4); }
         }
 
-        /* Enregistrement : rouge pulsant */
+        /* Enregistrement */
         .mic-btn.recording {
             background: #FF4757;
-            animation: pulse-recording 1s ease-in-out infinite;
+            box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4);
+            animation: pulse-recording 1.2s ease-in-out infinite;
         }
 
         @keyframes pulse-recording {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
-            50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 71, 87, 0); }
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.3); }
+            50% { transform: scale(1.04); box-shadow: 0 0 0 24px rgba(255, 71, 87, 0); }
         }
 
-        /* Ondes audio pendant l'enregistrement */
+        /* Ondes */
         .mic-waves {
             position: absolute;
-            width: 120px;
-            height: 120px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 130px; height: 130px;
             border-radius: 50%;
             pointer-events: none;
             display: none;
         }
 
-        .mic-btn.recording ~ .mic-waves { display: block; }
+        .mic-waves.active { display: block; }
 
         .mic-waves::before, .mic-waves::after {
             content: '';
             position: absolute;
-            top: 50%;
-            left: 50%;
+            top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             border-radius: 50%;
-            border: 2px solid rgba(255, 71, 87, 0.3);
-            animation: wave-expand 2s ease-out infinite;
+            border: 2px solid rgba(255, 71, 87, 0.2);
+            animation: wave-expand 2.4s ease-out infinite;
         }
 
-        .mic-waves::after { animation-delay: 1s; }
+        .mic-waves::after { animation-delay: 1.2s; }
 
         @keyframes wave-expand {
-            0% { width: 120px; height: 120px; opacity: 1; }
-            100% { width: 200px; height: 200px; opacity: 0; }
+            0% { width: 130px; height: 130px; opacity: 0.6; }
+            100% { width: 240px; height: 240px; opacity: 0; }
         }
 
-        /* Processing states */
+        /* Processing */
         .mic-btn.processing {
             background: #243B53;
             cursor: default;
             animation: none;
+            box-shadow: 0 8px 32px rgba(36, 59, 83, 0.2);
         }
 
         .mic-help {
-            margin-top: 20px;
-            font-size: 15px;
-            color: #64748B;
-            text-align: center;
-        }
-
-        /* ===== TRANSCRIPTION ZONE ===== */
-        .transcription-zone {
-            width: 100%;
-            margin-top: 32px;
-            display: none;
-        }
-
-        .transcription-zone.visible { display: block; }
-
-        .transcription-card {
-            background: #F8FAFC;
-            border: 1px solid #E2E8F0;
-            border-radius: 16px;
-            padding: 16px 20px;
-        }
-
-        .transcription-label {
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #94A3B8;
-            margin-bottom: 8px;
-        }
-
-        .transcription-text {
-            font-size: 15px;
-            line-height: 1.5;
-            color: #1E293B;
-        }
-
-        .transcription-edit-btn {
-            margin-top: 8px;
-            background: none;
-            border: none;
-            color: #6C4CC8;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 4px 0;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .transcription-edit-area {
-            width: 100%;
-            min-height: 60px;
-            border: 1px solid #CBD5E1;
-            border-radius: 8px;
-            padding: 10px 12px;
-            font-size: 15px;
-            font-family: 'Inter', sans-serif;
-            color: #1E293B;
-            resize: vertical;
-            display: none;
-        }
-
-        .transcription-edit-area:focus { outline: none; border-color: #6C4CC8; }
-
-        .transcription-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 10px;
-        }
-
-        .transcription-actions .btn-sm {
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            border: none;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .btn-primary-sm { background: #6C4CC8; color: white; }
-        .btn-ghost-sm { background: #F1F5F9; color: #64748B; }
-
-        /* ===== ANALYSING ZONE ===== */
-        .analysing-zone {
-            display: none;
-            width: 100%;
             margin-top: 24px;
+            font-size: 16px;
+            color: #94A3B8;
             text-align: center;
-        }
-
-        .analysing-zone.visible { display: flex; flex-direction: column; align-items: center; }
-
-        .analysing-avatar {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-bottom: 12px;
-        }
-
-        .analysing-text {
-            font-size: 15px;
-            color: #64748B;
+            letter-spacing: 0.01em;
+            transition: all 0.3s;
         }
 
         .spinner {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 20px; height: 20px;
             border: 2px solid #E2E8F0;
             border-top-color: #6C4CC8;
             border-radius: 50%;
@@ -320,80 +258,127 @@
             vertical-align: middle;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== RESULT AREA ===== */
+        .result-area {
+            width: 100%;
+            margin-top: 32px;
+            padding-bottom: 120px;
         }
+
+        /* ===== TRANSCRIPTION ===== */
+        .transcription-zone { display: none; width: 100%; margin-bottom: 16px; }
+        .transcription-zone.visible { display: block; }
+
+        .transcription-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 14px;
+            padding: 14px 18px;
+        }
+
+        .transcription-label {
+            font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            color: #94A3B8; margin-bottom: 6px;
+        }
+
+        .transcription-text { font-size: 14px; line-height: 1.5; color: #475569; }
+
+        .transcription-edit-btn {
+            margin-top: 6px;
+            background: none; border: none;
+            color: #6C4CC8; font-size: 12px; font-weight: 500;
+            cursor: pointer; padding: 2px 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .transcription-edit-area {
+            width: 100%; min-height: 50px;
+            border: 1px solid #CBD5E1; border-radius: 8px;
+            padding: 10px 12px; font-size: 14px;
+            font-family: 'Inter', sans-serif; color: #1E293B;
+            resize: vertical; display: none;
+        }
+        .transcription-edit-area:focus { outline: none; border-color: #6C4CC8; }
+
+        .transcription-actions { display: flex; gap: 8px; margin-top: 8px; }
+        .transcription-actions .btn-sm {
+            padding: 8px 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 500;
+            border: none; cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .btn-primary-sm { background: #6C4CC8; color: white; }
+        .btn-ghost-sm { background: #F1F5F9; color: #64748B; }
+
+        /* ===== ANALYSING ===== */
+        .analysing-zone { display: none; width: 100%; text-align: center; margin-bottom: 16px; }
+        .analysing-zone.visible { display: flex; flex-direction: column; align-items: center; }
+        .analysing-avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+        .analysing-text { font-size: 14px; color: #94A3B8; }
 
         /* ===== CONFIRMATION CARD ===== */
-        .confirmation-zone {
-            display: none;
-            width: 100%;
-            margin-top: 24px;
-        }
-
+        .confirmation-zone { display: none; width: 100%; }
         .confirmation-zone.visible { display: block; }
 
         .confirmation-card {
             background: #FFFFFF;
-            border: 1px solid #E2E8F0;
+            border: 1px solid #E8EBF0;
             border-radius: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
             overflow: hidden;
         }
 
         .confirmation-header {
-            padding: 16px 20px;
-            background: linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%);
-            border-bottom: 1px solid #D1FAE5;
+            padding: 18px 20px 14px;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .confirmation-header-icon {
-            width: 32px;
-            height: 32px;
-            background: #10B981;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 16px;
+            gap: 8px;
         }
 
         .confirmation-header-text {
-            font-weight: 600;
-            font-size: 15px;
-            color: #065F46;
+            font-weight: 700;
+            font-size: 16px;
+            color: #1E293B;
         }
 
         .confirmation-action {
-            padding: 12px 20px;
-            font-size: 14px;
-            color: #64748B;
-            border-bottom: 1px solid #F1F5F9;
+            padding: 0 20px 16px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
+        .confirmation-action-emoji { font-size: 20px; }
 
         .confirmation-match {
-            padding: 16px 20px;
-            border-bottom: 1px solid #F1F5F9;
+            padding: 12px 20px;
+            border-top: 1px solid #F1F5F9;
         }
-
-        .confirmation-match:last-of-type { border-bottom: none; }
 
         .match-header {
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .match-checkbox {
-            width: 18px;
-            height: 18px;
+            width: 18px; height: 18px;
             accent-color: #6C4CC8;
             cursor: pointer;
+            display: none;
+        }
+        .editing .match-checkbox { display: inline; }
+
+        .match-arrow {
+            color: #94A3B8;
+            font-size: 13px;
         }
 
         .match-name {
@@ -403,9 +388,9 @@
         }
 
         .match-type {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 500;
-            padding: 2px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             text-transform: uppercase;
         }
@@ -413,64 +398,42 @@
         .match-type.seller { background: #FEF3C7; color: #92400E; }
         .match-type.buyer { background: #DBEAFE; color: #1E40AF; }
 
-        .match-confidence {
-            font-size: 11px;
-            padding: 2px 6px;
-            border-radius: 4px;
-        }
-
-        .match-confidence.high { background: #D1FAE5; color: #065F46; }
-        .match-confidence.medium { background: #FEF3C7; color: #92400E; }
-        .match-confidence.low { background: #FEE2E2; color: #991B1B; }
+        .match-confidence { display: none; }
 
         .match-note {
             font-size: 13px;
-            color: #475569;
-            padding: 8px 12px;
-            background: #F8FAFC;
-            border-radius: 8px;
-            margin-bottom: 6px;
+            color: #64748B;
+            padding: 6px 0 2px 20px;
         }
 
         .match-note-edit {
-            width: 100%;
-            min-height: 40px;
-            border: 1px solid #CBD5E1;
-            border-radius: 8px;
-            padding: 8px 12px;
-            font-size: 13px;
-            font-family: 'Inter', sans-serif;
-            color: #1E293B;
-            resize: vertical;
-            display: none;
+            width: 100%; min-height: 36px;
+            border: 1px solid #CBD5E1; border-radius: 8px;
+            padding: 8px 10px; font-size: 13px;
+            font-family: 'Inter', sans-serif; color: #1E293B;
+            resize: vertical; display: none;
+            margin-left: 20px; width: calc(100% - 20px);
         }
 
         .match-next-step {
-            font-size: 12px;
-            color: #6C4CC8;
-            display: flex;
-            align-items: center;
-            gap: 4px;
+            font-size: 12px; color: #6C4CC8;
+            display: flex; align-items: center;
+            gap: 4px; padding: 4px 0 0 20px;
         }
 
         .match-reminder {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 4px;
+            display: flex; align-items: center;
+            gap: 6px; margin-top: 4px; padding-left: 20px;
         }
 
         .match-reminder input[type="date"] {
-            font-size: 12px;
-            font-family: 'Inter', sans-serif;
-            border: 1px solid #E2E8F0;
-            border-radius: 6px;
-            padding: 4px 8px;
-            color: #475569;
+            font-size: 12px; font-family: 'Inter', sans-serif;
+            border: 1px solid #E2E8F0; border-radius: 6px;
+            padding: 3px 8px; color: #475569;
         }
 
         .confirmation-footer {
-            padding: 16px 20px;
+            padding: 14px 20px;
             display: flex;
             gap: 10px;
             border-top: 1px solid #F1F5F9;
@@ -478,9 +441,9 @@
 
         .btn-confirm {
             flex: 1;
-            padding: 12px 20px;
+            padding: 13px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
@@ -492,299 +455,223 @@
             transition: all 0.2s;
         }
 
-        .btn-confirm.primary {
-            background: #6C4CC8;
-            color: white;
-        }
+        .btn-confirm.primary { background: #6C4CC8; color: white; }
         .btn-confirm.primary:hover { background: #5B3FB3; }
         .btn-confirm.primary:disabled { background: #CBD5E1; cursor: default; }
-
-        .btn-confirm.secondary {
-            background: #F1F5F9;
-            color: #64748B;
-        }
+        .btn-confirm.secondary { background: #F1F5F9; color: #64748B; }
         .btn-confirm.secondary:hover { background: #E2E8F0; }
 
-        /* ===== AMBIGUOUS ZONE ===== */
-        .ambiguous-zone {
-            display: none;
-            width: 100%;
-            margin-top: 16px;
-        }
-
+        /* ===== AMBIGUOUS ===== */
+        .ambiguous-zone { display: none; width: 100%; margin-top: 12px; }
         .ambiguous-zone.visible { display: block; }
 
         .ambiguous-card {
-            background: #FFFBEB;
-            border: 1px solid #FDE68A;
-            border-radius: 12px;
-            padding: 16px 20px;
+            background: #FFFBEB; border: 1px solid #FDE68A;
+            border-radius: 12px; padding: 14px 18px; margin-bottom: 8px;
         }
-
-        .ambiguous-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: #92400E;
-            margin-bottom: 10px;
-        }
-
+        .ambiguous-title { font-size: 13px; font-weight: 600; color: #92400E; margin-bottom: 8px; }
         .ambiguous-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            background: white;
-            border: 1px solid #FDE68A;
-            border-radius: 8px;
-            margin-bottom: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; background: white;
+            border: 1px solid #FDE68A; border-radius: 8px;
+            margin-bottom: 6px; cursor: pointer; transition: all 0.2s;
         }
-
         .ambiguous-option:hover { border-color: #6C4CC8; background: #F5F3FF; }
-
         .ambiguous-option-name { font-weight: 500; font-size: 14px; }
         .ambiguous-option-info { font-size: 12px; color: #64748B; }
 
-        /* ===== NO MATCH ZONE ===== */
-        .no-match-zone {
-            display: none;
-            width: 100%;
-            margin-top: 16px;
-        }
-
+        /* ===== NO MATCH ===== */
+        .no-match-zone { display: none; width: 100%; margin-top: 12px; }
         .no-match-zone.visible { display: block; }
-
         .no-match-card {
-            background: #FEF2F2;
-            border: 1px solid #FECACA;
-            border-radius: 12px;
-            padding: 16px 20px;
-            text-align: center;
+            background: #FEF2F2; border: 1px solid #FECACA;
+            border-radius: 12px; padding: 16px 18px; text-align: center;
+        }
+        .no-match-text { font-size: 13px; color: #991B1B; margin-bottom: 10px; }
+        .no-match-names { font-weight: 600; }
+
+        /* ===== ERROR ===== */
+        .error-zone { display: none; width: 100%; margin-top: 12px; }
+        .error-zone.visible { display: block; }
+        .error-card {
+            background: #FEF2F2; border: 1px solid #FECACA;
+            border-radius: 12px; padding: 14px 18px; text-align: center;
+        }
+        .error-text { font-size: 13px; color: #991B1B; margin-bottom: 10px; }
+
+        .btn-retry {
+            padding: 10px 20px; background: #6C4CC8; color: white;
+            border: none; border-radius: 8px; font-size: 13px;
+            font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif;
         }
 
-        .no-match-text {
-            font-size: 14px;
-            color: #991B1B;
-            margin-bottom: 12px;
-        }
-
-        .no-match-names {
-            font-weight: 600;
-            color: #7F1D1D;
-        }
-
-        /* ===== SUCCESS ANIMATION ===== */
+        /* ===== SUCCESS OVERLAY ===== */
         .success-overlay {
             display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(255, 255, 255, 0.95);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.96);
+            z-index: 10000;
+            align-items: center; justify-content: center;
             flex-direction: column;
         }
-
         .success-overlay.visible { display: flex; }
 
         .success-check {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
+            width: 72px; height: 72px; border-radius: 50%;
             background: #10B981;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 40px;
-            animation: success-pop 0.5s ease-out;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 36px;
+            animation: success-pop 0.4s ease-out;
         }
 
         @keyframes success-pop {
             0% { transform: scale(0); opacity: 0; }
-            50% { transform: scale(1.2); }
+            60% { transform: scale(1.15); }
             100% { transform: scale(1); opacity: 1; }
         }
 
         .success-text {
-            margin-top: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #065F46;
+            margin-top: 14px; font-size: 16px;
+            font-weight: 600; color: #065F46;
         }
 
         /* ===== HISTORY ===== */
         .history-zone {
             width: 100%;
-            margin-top: 40px;
+            margin-top: 32px;
+            padding-bottom: 20px;
         }
 
         .history-title {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 14px;
-            font-weight: 700;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #94A3B8;
-            margin-bottom: 12px;
+            letter-spacing: 1px;
+            color: #CBD5E1;
+            margin-bottom: 8px;
         }
 
         .history-empty {
-            font-size: 13px;
-            color: #CBD5E1;
+            font-size: 13px; color: #E2E8F0;
             font-style: italic;
-            text-align: center;
-            padding: 20px 0;
+            text-align: center; padding: 12px 0;
         }
 
         .history-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 12px 0;
-            border-bottom: 1px solid #F1F5F9;
+            display: flex; align-items: center;
+            gap: 10px; padding: 8px 0;
         }
 
-        .history-item:last-child { border-bottom: none; }
-
         .history-time {
-            font-size: 12px;
-            color: #94A3B8;
-            font-weight: 500;
-            white-space: nowrap;
+            font-size: 12px; color: #CBD5E1;
+            font-weight: 500; white-space: nowrap;
             min-width: 42px;
         }
 
-        .history-content { flex: 1; }
+        .history-sep { color: #E2E8F0; font-size: 12px; }
 
         .history-action {
-            font-size: 13px;
-            font-weight: 500;
-            color: #1E293B;
+            font-size: 13px; color: #94A3B8;
+            flex: 1;
         }
 
         .history-contacts {
-            font-size: 12px;
-            color: #64748B;
-            margin-top: 2px;
+            font-size: 12px; color: #CBD5E1;
         }
 
-        .history-status {
-            color: #10B981;
-            font-size: 14px;
-        }
+        .history-check { color: #10B981; font-size: 12px; }
 
-        /* ===== ERROR ZONE ===== */
-        .error-zone {
-            display: none;
-            width: 100%;
-            margin-top: 16px;
-        }
+        /* ===== BOTTOM TAB BAR ===== */
+        .mobile-bottom-bar { display: none; }
 
-        .error-zone.visible { display: block; }
-
-        .error-card {
-            background: #FEF2F2;
-            border: 1px solid #FECACA;
-            border-radius: 12px;
-            padding: 16px 20px;
-            text-align: center;
-        }
-
-        .error-text {
-            font-size: 14px;
-            color: #991B1B;
-            margin-bottom: 12px;
-        }
-
-        .btn-retry {
-            padding: 10px 24px;
-            background: #6C4CC8;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-        }
-
-        /* ===== MOBILE ===== */
+        /* ===== MOBILE OVERRIDES ===== */
         @media (max-width: 768px) {
-            .header {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto;
-                gap: 8px;
-                padding: 10px 14px;
-                border-radius: 0;
-            }
+            .header-desktop { display: none; }
+            .header-mobile { display: flex; }
 
-            .logo { grid-column: 1; grid-row: 1; align-self: center; }
-            .logo img { width: 60px; }
+            .micro-page { padding: 0 24px; }
 
-            .header-actions { display: contents; }
+            .mic-zone { padding-top: calc(18vh - 40px); }
+            .mic-zone.compact { padding-top: 16px; }
 
-            .user-profile { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
-            .user-avatar { width: 32px; height: 32px; }
-            .user-name { display: none; }
-
-            .nav-tabs {
-                grid-column: 1 / -1;
-                grid-row: 2;
-                justify-content: center;
-                gap: 6px;
-            }
-            .nav-text { display: none; }
-            .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
-            .nav-tab span { display: none; }
-
-            .settings-btn { grid-column: 2; grid-row: 1; display: none; }
-
-            .micro-container {
-                padding: 20px 20px 100px;
-                min-height: calc(100vh - 100px);
-            }
-
-            .mic-zone { margin-top: 20px; }
-
-            .mic-btn { width: 140px; height: 140px; font-size: 56px; }
+            .mic-btn { width: 140px; height: 140px; font-size: 52px; }
 
             .mic-waves { width: 140px; height: 140px; }
-
             @keyframes wave-expand {
-                0% { width: 140px; height: 140px; opacity: 1; }
-                100% { width: 220px; height: 220px; opacity: 0; }
+                0% { width: 140px; height: 140px; opacity: 0.6; }
+                100% { width: 260px; height: 260px; opacity: 0; }
             }
+
+            .result-area { padding-bottom: 100px; }
+
+            /* Bottom bar */
+            .mobile-bottom-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: #FFFFFF;
+                border-top: 1px solid #E5E7EB;
+                padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+                z-index: 9999;
+                justify-content: space-around;
+                align-items: flex-end;
+            }
+            .bottom-tab {
+                display: flex; flex-direction: column; align-items: center;
+                text-decoration: none; color: #CBD5E1;
+                font-family: 'Inter', sans-serif;
+                font-size: 10px; font-weight: 500;
+                gap: 2px; padding: 4px 0; min-width: 56px;
+            }
+            .bottom-tab i { font-size: 22px; }
+            .bottom-tab.active { color: #243B53; font-weight: 600; }
+            .bottom-tab-micro {
+                display: flex; align-items: center; justify-content: center;
+                width: 52px; height: 52px; border-radius: 50%;
+                background: #6C4CC8; color: white;
+                text-decoration: none; font-size: 22px;
+                margin-top: -18px;
+                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.35);
+                transition: transform 0.2s;
+            }
+            .bottom-tab-micro:active { transform: scale(0.93); }
+            .bottom-tab-micro.active {
+                background: #5B3FB3;
+                box-shadow: 0 4px 20px rgba(108, 76, 200, 0.5);
+            }
+        }
+
+        /* ===== DESKTOP ===== */
+        @media (min-width: 769px) {
+            .micro-page { padding: 40px 24px 80px; }
+            .mic-zone { padding-top: 40px; }
         }
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- Desktop header (classique avec nav) -->
+    <div class="header-desktop">
         <div class="header-inner">
             <a href="index.html" class="logo">
                 <img src="img/Logo_leon.svg" alt="Léon">
             </a>
-
             <nav class="nav-tabs">
                 <a href="index.html" class="nav-tab">
-                    <i class="fa-solid fa-house"></i> <span>Vendeurs</span>
+                    <i class="fa-solid fa-house"></i> Vendeurs
                 </a>
                 <a href="acquereurs.html" class="nav-tab">
-                    <i class="fa-solid fa-key"></i> <span>Acquéreurs</span>
+                    <i class="fa-solid fa-key"></i> Acquéreurs
                 </a>
                 <a href="dvf.html" class="nav-tab">
-                    <i class="fa-solid fa-chart-simple"></i> <span>Marché</span>
+                    <i class="fa-solid fa-chart-simple"></i> Marché
                 </a>
                 <a href="social.html" class="nav-tab">
-                    <i class="fa-solid fa-share-nodes"></i> <span>Social</span>
+                    <i class="fa-solid fa-share-nodes"></i> Social
                 </a>
                 <a href="micro.html" class="nav-tab active">
-                    <i class="fa-solid fa-microphone"></i> <span>Micro</span>
+                    <i class="fa-solid fa-microphone"></i> Micro
                 </a>
             </nav>
-
             <div class="header-actions">
                 <a href="parametres.html" class="settings-btn" title="Paramètres">
                     <i class="fa-solid fa-gear"></i>
@@ -794,77 +681,83 @@
         </div>
     </div>
 
-    <div class="micro-container">
+    <!-- Mobile header (minimal : logo + prénom) -->
+    <div class="header-mobile">
+        <a href="index.html" class="logo-mobile">
+            <img src="img/Logo_leon.svg" alt="Léon">
+        </a>
+        <span class="user-firstname" id="userFirstname"></span>
+    </div>
+
+    <!-- Page content -->
+    <div class="micro-page">
         <!-- Zone Micro -->
-        <div class="mic-zone">
-            <button class="mic-btn idle" id="micBtn">
-                <i class="fa-solid fa-microphone"></i>
-            </button>
-            <div class="mic-waves" id="micWaves"></div>
-            <p class="mic-help" id="micHelp">Appuyez pour parler</p>
-        </div>
-
-        <!-- Zone Transcription -->
-        <div class="transcription-zone" id="transcriptionZone">
-            <div class="transcription-card">
-                <div class="transcription-label">Transcription</div>
-                <div class="transcription-text" id="transcriptionText"></div>
-                <button class="transcription-edit-btn" id="transcriptionEditBtn">
-                    <i class="fa-solid fa-pen"></i> Corriger
+        <div class="mic-zone" id="micZone">
+            <div class="mic-btn-wrap">
+                <button class="mic-btn idle" id="micBtn">
+                    <i class="fa-solid fa-microphone"></i>
                 </button>
-                <textarea class="transcription-edit-area" id="transcriptionEditArea"></textarea>
-                <div class="transcription-actions" id="transcriptionActions" style="display:none;">
-                    <button class="btn-sm btn-primary-sm" id="transcriptionSaveBtn">Analyser</button>
-                    <button class="btn-sm btn-ghost-sm" id="transcriptionCancelBtn">Annuler</button>
-                </div>
+                <div class="mic-waves" id="micWaves"></div>
             </div>
+            <p class="mic-help" id="micHelp">Appuyez et parlez à Léon</p>
         </div>
 
-        <!-- Zone Analyse -->
-        <div class="analysing-zone" id="analysingZone">
-            <img src="img/Leon.png" alt="Léon" class="analysing-avatar" onerror="this.style.display='none'">
-            <p class="analysing-text"><span class="spinner"></span>Léon analyse...</p>
-        </div>
-
-        <!-- Zone Confirmation -->
-        <div class="confirmation-zone" id="confirmationZone">
-            <div class="confirmation-card">
-                <div class="confirmation-header">
-                    <div class="confirmation-header-icon"><i class="fa-solid fa-check"></i></div>
-                    <div class="confirmation-header-text">Léon a compris</div>
-                </div>
-                <div class="confirmation-action" id="confirmationAction"></div>
-                <div id="confirmationMatches"></div>
-                <div class="confirmation-footer">
-                    <button class="btn-confirm primary" id="confirmBtn">
-                        <i class="fa-solid fa-check"></i> Confirmer
+        <!-- Result area -->
+        <div class="result-area">
+            <!-- Transcription -->
+            <div class="transcription-zone" id="transcriptionZone">
+                <div class="transcription-card">
+                    <div class="transcription-label">Transcription</div>
+                    <div class="transcription-text" id="transcriptionText"></div>
+                    <button class="transcription-edit-btn" id="transcriptionEditBtn">
+                        <i class="fa-solid fa-pen" style="font-size:10px"></i> Corriger
                     </button>
-                    <button class="btn-confirm secondary" id="editBtn">
-                        <i class="fa-solid fa-pen"></i> Modifier
-                    </button>
+                    <textarea class="transcription-edit-area" id="transcriptionEditArea"></textarea>
+                    <div class="transcription-actions" id="transcriptionActions" style="display:none;">
+                        <button class="btn-sm btn-primary-sm" id="transcriptionSaveBtn">Analyser</button>
+                        <button class="btn-sm btn-ghost-sm" id="transcriptionCancelBtn">Annuler</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Zone Ambiguë -->
-        <div class="ambiguous-zone" id="ambiguousZone"></div>
-
-        <!-- Zone Aucun match -->
-        <div class="no-match-zone" id="noMatchZone"></div>
-
-        <!-- Zone Erreur -->
-        <div class="error-zone" id="errorZone">
-            <div class="error-card">
-                <p class="error-text" id="errorText">Léon n'a pas pu analyser.</p>
-                <button class="btn-retry" id="retryBtn">Réessayer</button>
+            <!-- Analyse -->
+            <div class="analysing-zone" id="analysingZone">
+                <img src="img/Leon.png" alt="Léon" class="analysing-avatar" onerror="this.style.display='none'">
+                <p class="analysing-text"><span class="spinner"></span>Léon analyse...</p>
             </div>
-        </div>
 
-        <!-- Historique -->
-        <div class="history-zone" id="historyZone">
-            <div class="history-title">Historique</div>
-            <div id="historyList">
-                <p class="history-empty">Aucune dictée pour le moment</p>
+            <!-- Confirmation -->
+            <div class="confirmation-zone" id="confirmationZone">
+                <div class="confirmation-card">
+                    <div class="confirmation-header">
+                        <div class="confirmation-header-text">Léon a compris</div>
+                    </div>
+                    <div class="confirmation-action" id="confirmationAction"></div>
+                    <div id="confirmationMatches"></div>
+                    <div class="confirmation-footer">
+                        <button class="btn-confirm primary" id="confirmBtn">Confirmer</button>
+                        <button class="btn-confirm secondary" id="editBtn">Modifier</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ambigu -->
+            <div class="ambiguous-zone" id="ambiguousZone"></div>
+
+            <!-- Aucun match -->
+            <div class="no-match-zone" id="noMatchZone"></div>
+
+            <!-- Erreur -->
+            <div class="error-zone" id="errorZone">
+                <div class="error-card">
+                    <p class="error-text" id="errorText">Léon n'a pas pu analyser.</p>
+                    <button class="btn-retry" id="retryBtn">Réessayer</button>
+                </div>
+            </div>
+
+            <!-- Historique -->
+            <div class="history-zone" id="historyZone">
+                <div id="historyList"></div>
             </div>
         </div>
     </div>
@@ -875,6 +768,29 @@
         <p class="success-text" id="successText">Notes enregistrées !</p>
     </div>
 
+    <!-- Bottom Mobile Tab Bar -->
+    <nav class="mobile-bottom-bar">
+        <a href="index.html" class="bottom-tab">
+            <i class="fa-solid fa-house"></i>
+            <span>Vendeurs</span>
+        </a>
+        <a href="acquereurs.html" class="bottom-tab">
+            <i class="fa-solid fa-key"></i>
+            <span>Acquéreurs</span>
+        </a>
+        <a href="micro.html" class="bottom-tab-micro active">
+            <i class="fa-solid fa-microphone"></i>
+        </a>
+        <a href="dvf.html" class="bottom-tab">
+            <i class="fa-solid fa-chart-simple"></i>
+            <span>Marché</span>
+        </a>
+        <a href="social.html" class="bottom-tab">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Social</span>
+        </a>
+    </nav>
+
     <script>
     (async function() {
         // ===== STATE =====
@@ -882,11 +798,12 @@
         let currentTranscription = '';
         let currentResult = null;
         let isEditing = false;
-        let allLeads = null; // cache
+        let allLeads = null;
         let history = [];
         let userId = null;
 
         // ===== DOM =====
+        const micZone = document.getElementById('micZone');
         const micBtn = document.getElementById('micBtn');
         const micWaves = document.getElementById('micWaves');
         const micHelp = document.getElementById('micHelp');
@@ -918,6 +835,11 @@
             if (!session) return;
             userId = session.user.id;
 
+            // Set mobile firstname
+            const meta = session.user.user_metadata || {};
+            const firstName = (meta.full_name || meta.name || session.user.email || '').split(' ')[0];
+            document.getElementById('userFirstname').textContent = firstName;
+
             recorder = new AudioRecorder({
                 maxDuration: 30000,
                 silenceTimeout: 3000,
@@ -927,51 +849,49 @@
         }
 
         function handleRecorderState(state, msg) {
-            if (state === 'recording') {
-                setMicState('recording');
-            } else if (state === 'transcribing') {
-                setMicState('transcribing');
-            } else if (state === 'error') {
-                setMicState('idle');
-                showError(msg || 'Erreur d\'enregistrement');
-            }
+            if (state === 'recording') setMicState('recording');
+            else if (state === 'transcribing') setMicState('transcribing');
+            else if (state === 'error') { setMicState('idle'); showError(msg || 'Erreur d\'enregistrement'); }
         }
 
         // ===== MIC STATES =====
         function setMicState(state) {
             micBtn.className = 'mic-btn';
-            micWaves.style.display = 'none';
+            micWaves.classList.remove('active');
 
             switch (state) {
                 case 'idle':
                     micBtn.classList.add('idle');
                     micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-                    micHelp.textContent = 'Appuyez pour parler';
+                    micHelp.textContent = 'Appuyez et parlez à Léon';
                     micBtn.disabled = false;
+                    micZone.classList.remove('compact');
                     break;
                 case 'recording':
                     micBtn.classList.add('recording');
                     micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-                    micWaves.style.display = 'block';
-                    micHelp.textContent = 'Parlez... (appuyez pour arrêter)';
+                    micWaves.classList.add('active');
+                    micHelp.textContent = 'Je t\'écoute...';
                     micBtn.disabled = false;
                     break;
                 case 'transcribing':
                     micBtn.classList.add('processing');
                     micBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:32px;height:32px;border-width:3px;margin:0"></span>';
-                    micHelp.textContent = 'Transcription en cours...';
+                    micHelp.textContent = 'Transcription...';
                     micBtn.disabled = true;
+                    micZone.classList.add('compact');
                     break;
                 case 'analysing':
                     micBtn.classList.add('processing');
                     micBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:32px;height:32px;border-width:3px;margin:0"></span>';
                     micHelp.textContent = 'Léon analyse...';
                     micBtn.disabled = true;
+                    micZone.classList.add('compact');
                     break;
             }
         }
 
-        // ===== HIDE ALL RESULT ZONES =====
+        // ===== HIDE ALL =====
         function hideAllZones() {
             transcriptionZone.classList.remove('visible');
             analysingZone.classList.remove('visible');
@@ -983,10 +903,7 @@
 
         // ===== RECORD FLOW =====
         micBtn.addEventListener('click', async () => {
-            if (recorder && recorder.isRecording) {
-                recorder.stop();
-                return;
-            }
+            if (recorder && recorder.isRecording) { recorder.stop(); return; }
 
             hideAllZones();
             currentResult = null;
@@ -994,10 +911,7 @@
 
             try {
                 const text = await recorder.record();
-                if (!text || !text.trim()) {
-                    setMicState('idle');
-                    return;
-                }
+                if (!text || !text.trim()) { setMicState('idle'); return; }
 
                 currentTranscription = text.trim();
                 showTranscription(currentTranscription);
@@ -1008,7 +922,7 @@
             }
         });
 
-        // ===== SHOW TRANSCRIPTION =====
+        // ===== TRANSCRIPTION =====
         function showTranscription(text) {
             transcriptionText.textContent = text;
             transcriptionEditArea.value = text;
@@ -1018,7 +932,6 @@
             transcriptionZone.classList.add('visible');
         }
 
-        // ===== EDIT TRANSCRIPTION =====
         transcriptionEditBtn.addEventListener('click', () => {
             transcriptionEditArea.value = currentTranscription;
             transcriptionText.style.display = 'none';
@@ -1047,55 +960,32 @@
             await analyseTranscription(newText);
         });
 
-        // ===== LOAD LEADS (cached) =====
+        // ===== LOAD LEADS =====
         async function loadUserLeads() {
             if (allLeads) return allLeads;
-
             const [sellersRes, buyersRes] = await Promise.all([
                 supabaseClient.from('sellers')
                     .select('id, first_name, last_name, phone, address, status')
                     .eq('user_id', userId)
-                    .order('updated_at', { ascending: false })
-                    .limit(500),
+                    .order('updated_at', { ascending: false }).limit(500),
                 supabaseClient.from('buyers')
                     .select('id, first_name, last_name, phone, sector, status')
                     .eq('user_id', userId)
-                    .order('updated_at', { ascending: false })
-                    .limit(500)
+                    .order('updated_at', { ascending: false }).limit(500)
             ]);
-
-            const sellers = (sellersRes.data || []).map(s => ({
-                id: s.id, type: 'seller',
-                first_name: s.first_name, last_name: s.last_name,
-                phone: s.phone, address: s.address
-            }));
-            const buyers = (buyersRes.data || []).map(b => ({
-                id: b.id, type: 'buyer',
-                first_name: b.first_name, last_name: b.last_name,
-                phone: b.phone, sector: b.sector
-            }));
-
+            const sellers = (sellersRes.data || []).map(s => ({ id: s.id, type: 'seller', first_name: s.first_name, last_name: s.last_name, phone: s.phone, address: s.address }));
+            const buyers = (buyersRes.data || []).map(b => ({ id: b.id, type: 'buyer', first_name: b.first_name, last_name: b.last_name, phone: b.phone, sector: b.sector }));
             allLeads = [...sellers, ...buyers];
             return allLeads;
         }
 
-        // ===== PRE-FILTER LEADS =====
         function preFilterLeads(leads, transcription) {
-            const words = transcription.toLowerCase()
-                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .split(/\s+/)
-                .filter(w => w.length > 2);
-
+            const words = transcription.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(w => w.length > 2);
             const matched = leads.filter(lead => {
-                const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`
-                    .toLowerCase()
-                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return words.some(word => fullName.includes(word));
             });
-
-            // Si aucun pré-match, envoyer les 50 plus récents
-            if (matched.length === 0) return leads.slice(0, 50);
-            return matched;
+            return matched.length === 0 ? leads.slice(0, 50) : matched;
         }
 
         // ===== ANALYSE =====
@@ -1110,13 +1000,11 @@
             try {
                 const leads = await loadUserLeads();
                 const relevant = preFilterLeads(leads, text);
-
                 const today = new Date().toISOString().split('T')[0];
                 const headers = await getAuthHeaders();
 
                 const response = await fetch('/api/parse-voice-note', {
-                    method: 'POST',
-                    headers,
+                    method: 'POST', headers,
                     body: JSON.stringify({ transcription: text, leads: relevant, today })
                 });
 
@@ -1128,6 +1016,7 @@
                 currentResult = await response.json();
                 analysingZone.classList.remove('visible');
                 setMicState('idle');
+                micZone.classList.add('compact');
                 showResult(currentResult);
             } catch (err) {
                 analysingZone.classList.remove('visible');
@@ -1142,50 +1031,33 @@
             const hasAmbiguous = result.ambiguous_contacts && result.ambiguous_contacts.length > 0;
             const hasUnmatched = result.unmatched_contacts && result.unmatched_contacts.length > 0;
 
-            if (hasMatches) {
-                showConfirmation(result);
-            }
-
-            if (hasAmbiguous) {
-                showAmbiguous(result.ambiguous_contacts);
-            }
-
-            if (hasUnmatched && !hasMatches && !hasAmbiguous) {
-                showNoMatch(result.unmatched_contacts);
-            }
-
-            if (!hasMatches && !hasAmbiguous && !hasUnmatched) {
-                showNoMatch(['(aucun contact identifié)']);
-            }
+            if (hasMatches) showConfirmation(result);
+            if (hasAmbiguous) showAmbiguous(result.ambiguous_contacts);
+            if (hasUnmatched && !hasMatches && !hasAmbiguous) showNoMatch(result.unmatched_contacts);
+            if (!hasMatches && !hasAmbiguous && !hasUnmatched) showNoMatch(['(aucun contact identifié)']);
         }
 
         // ===== CONFIRMATION =====
         function showConfirmation(result) {
-            confirmationAction.textContent = result.action_understood || '';
+            confirmationAction.innerHTML = `<span class="confirmation-action-emoji"></span>${escHtml(result.action_understood || '')}`;
 
             let html = '';
             result.contacts_matched.forEach((match, i) => {
                 const typeClass = match.lead_type === 'seller' ? 'seller' : 'buyer';
                 const typeLabel = match.lead_type === 'seller' ? 'vendeur' : 'acquéreur';
-                const confClass = match.confidence || 'high';
-                const confLabel = { high: 'sûr', medium: 'probable', low: 'incertain' }[confClass] || confClass;
 
                 html += `
                 <div class="confirmation-match" data-index="${i}">
                     <div class="match-header">
                         <input type="checkbox" class="match-checkbox" data-index="${i}" checked>
+                        <span class="match-arrow">→</span>
                         <span class="match-name">${escHtml(match.lead_name)}</span>
                         <span class="match-type ${typeClass}">${typeLabel}</span>
-                        <span class="match-confidence ${confClass}">${confLabel}</span>
                     </div>
                     <div class="match-note" data-index="${i}">${escHtml(match.note_content)}</div>
                     <textarea class="match-note-edit" data-index="${i}">${escHtml(match.note_content)}</textarea>
-                    ${match.next_step ? `<div class="match-next-step"><i class="fa-solid fa-lightbulb"></i> ${escHtml(match.next_step)}</div>` : ''}
-                    ${match.reminder_date ? `
-                    <div class="match-reminder">
-                        <i class="fa-solid fa-calendar"></i>
-                        <input type="date" data-index="${i}" value="${match.reminder_date}">
-                    </div>` : ''}
+                    ${match.next_step ? `<div class="match-next-step"><i class="fa-solid fa-lightbulb" style="font-size:11px"></i> ${escHtml(match.next_step)}</div>` : ''}
+                    ${match.reminder_date ? `<div class="match-reminder"><i class="fa-solid fa-calendar" style="font-size:11px;color:#94A3B8"></i><input type="date" data-index="${i}" value="${match.reminder_date}"></div>` : ''}
                 </div>`;
             });
 
@@ -1196,22 +1068,22 @@
         // ===== EDIT MODE =====
         editBtn.addEventListener('click', () => {
             isEditing = !isEditing;
+            const card = confirmationZone.querySelector('.confirmation-card');
+            card.classList.toggle('editing', isEditing);
+
             const notes = confirmationMatches.querySelectorAll('.match-note');
             const edits = confirmationMatches.querySelectorAll('.match-note-edit');
-
             notes.forEach(el => el.style.display = isEditing ? 'none' : '');
             edits.forEach(el => el.style.display = isEditing ? '' : 'none');
 
-            editBtn.innerHTML = isEditing
-                ? '<i class="fa-solid fa-eye"></i> Aperçu'
-                : '<i class="fa-solid fa-pen"></i> Modifier';
+            editBtn.textContent = isEditing ? 'Aperçu' : 'Modifier';
         });
 
         // ===== CONFIRM =====
         confirmBtn.addEventListener('click', async () => {
             if (!currentResult || !currentResult.contacts_matched) return;
             confirmBtn.disabled = true;
-            confirmBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:16px;height:16px;margin:0"></span> Enregistrement...';
+            confirmBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:16px;height:16px;margin:0"></span>';
 
             try {
                 const matches = currentResult.contacts_matched;
@@ -1222,19 +1094,14 @@
                     const checkbox = confirmationMatches.querySelector(`.match-checkbox[data-index="${i}"]`);
                     if (checkbox && !checkbox.checked) continue;
 
-                    // Note content (may be edited)
                     const editArea = confirmationMatches.querySelector(`.match-note-edit[data-index="${i}"]`);
                     const noteContent = (editArea && editArea.value.trim()) || match.note_content;
 
-                    // Insert note
                     const noteCol = match.lead_type === 'seller' ? 'seller_id' : 'buyer_id';
                     await supabaseClient.from('lead_notes').insert({
-                        user_id: userId,
-                        [noteCol]: match.lead_id,
-                        content: noteContent
+                        user_id: userId, [noteCol]: match.lead_id, content: noteContent
                     });
 
-                    // Update reminder if provided
                     const dateInput = confirmationMatches.querySelector(`input[type="date"][data-index="${i}"]`);
                     const reminderDate = dateInput ? dateInput.value : match.reminder_date;
 
@@ -1242,21 +1109,13 @@
                     const updates = { updated_at: new Date().toISOString() };
                     if (reminderDate) updates.reminder = reminderDate;
 
-                    await supabaseClient.from(table)
-                        .update(updates)
-                        .eq('id', match.lead_id)
-                        .eq('user_id', userId);
-
+                    await supabaseClient.from(table).update(updates).eq('id', match.lead_id).eq('user_id', userId);
                     saved++;
                 }
 
-                // Add to history
                 addToHistory(currentResult, saved);
 
-                // Show success
-                successText.textContent = saved === 1
-                    ? '1 note enregistrée !'
-                    : `${saved} notes enregistrées !`;
+                successText.textContent = saved === 1 ? '1 note enregistrée !' : `${saved} notes enregistrées !`;
                 successOverlay.classList.add('visible');
 
                 setTimeout(() => {
@@ -1264,15 +1123,14 @@
                     hideAllZones();
                     setMicState('idle');
                     currentResult = null;
-                    allLeads = null; // Invalider le cache des leads
-                }, 1800);
-
+                    allLeads = null;
+                }, 1600);
             } catch (err) {
                 console.error('Confirm error:', err);
-                showError('Erreur lors de l\'enregistrement : ' + err.message);
+                showError('Erreur : ' + err.message);
             } finally {
                 confirmBtn.disabled = false;
-                confirmBtn.innerHTML = '<i class="fa-solid fa-check"></i> Confirmer';
+                confirmBtn.textContent = 'Confirmer';
             }
         });
 
@@ -1280,9 +1138,8 @@
         function showAmbiguous(ambiguousContacts) {
             let html = '';
             ambiguousContacts.forEach(amb => {
-                html += `<div class="ambiguous-card" style="margin-bottom:10px">
-                    <div class="ambiguous-title">Plusieurs "${escHtml(amb.name_mentioned)}" trouvés :</div>`;
-
+                html += `<div class="ambiguous-card">
+                    <div class="ambiguous-title">Plusieurs « ${escHtml(amb.name_mentioned)} » trouvés :</div>`;
                 amb.possible_matches.forEach(pm => {
                     html += `<div class="ambiguous-option" onclick="resolveAmbiguous('${escHtml(amb.name_mentioned)}', '${pm.lead_id}', '${pm.lead_type || 'seller'}', '${escHtml(pm.lead_name)}')">
                         <span class="ambiguous-option-name">${escHtml(pm.lead_name)}</span>
@@ -1291,34 +1148,22 @@
                 });
                 html += '</div>';
             });
-
             ambiguousZone.innerHTML = html;
             ambiguousZone.classList.add('visible');
         }
 
-        // Global for onclick
         window.resolveAmbiguous = function(nameMentioned, leadId, leadType, leadName) {
-            // Add the resolved match to currentResult
             if (!currentResult) return;
             if (!currentResult.contacts_matched) currentResult.contacts_matched = [];
-
             currentResult.contacts_matched.push({
-                lead_id: leadId,
-                lead_type: leadType,
-                lead_name: leadName,
+                lead_id: leadId, lead_type: leadType, lead_name: leadName,
                 confidence: 'high',
                 note_content: `📝 ${currentResult.action_understood || currentTranscription}`,
-                next_step: null,
-                reminder_date: null
+                next_step: null, reminder_date: null
             });
-
-            // Remove from ambiguous
             if (currentResult.ambiguous_contacts) {
-                currentResult.ambiguous_contacts = currentResult.ambiguous_contacts.filter(
-                    a => a.name_mentioned !== nameMentioned
-                );
+                currentResult.ambiguous_contacts = currentResult.ambiguous_contacts.filter(a => a.name_mentioned !== nameMentioned);
             }
-
             ambiguousZone.classList.remove('visible');
             showConfirmation(currentResult);
         };
@@ -1327,16 +1172,8 @@
         function showNoMatch(names) {
             noMatchZone.innerHTML = `
                 <div class="no-match-card">
-                    <p class="no-match-text">
-                        Léon n'a pas trouvé de lead correspondant à
-                        <span class="no-match-names">${names.map(n => escHtml(n)).join(', ')}</span>
-                    </p>
-                    <button class="btn-retry" onclick="window.location.href='index.html'">
-                        <i class="fa-solid fa-plus"></i> Créer un lead vendeur
-                    </button>
-                    <button class="btn-retry" style="margin-left:6px;background:#2E86DE" onclick="window.location.href='acquereurs.html'">
-                        <i class="fa-solid fa-plus"></i> Créer un lead acquéreur
-                    </button>
+                    <p class="no-match-text">Léon n'a pas trouvé <span class="no-match-names">${names.map(n => escHtml(n)).join(', ')}</span></p>
+                    <button class="btn-retry" onclick="window.location.href='index.html'"><i class="fa-solid fa-plus"></i> Créer un lead</button>
                 </div>`;
             noMatchZone.classList.add('visible');
         }
@@ -1349,54 +1186,35 @@
 
         retryBtn.addEventListener('click', async () => {
             errorZone.classList.remove('visible');
-            if (currentTranscription) {
-                await analyseTranscription(currentTranscription);
-            } else {
-                setMicState('idle');
-            }
+            if (currentTranscription) await analyseTranscription(currentTranscription);
+            else setMicState('idle');
         });
 
         // ===== HISTORY =====
         function addToHistory(result, savedCount) {
             const now = new Date();
             const time = now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-            const contacts = (result.contacts_matched || [])
-                .map(m => {
-                    const parts = m.lead_name.split(' ');
-                    const first = parts[0] || '';
-                    const lastInitial = parts.length > 1 ? parts[parts.length - 1][0] + '.' : '';
-                    return `${first} ${lastInitial}`.trim();
-                })
-                .join(' + ');
+            const contacts = (result.contacts_matched || []).map(m => {
+                const parts = m.lead_name.split(' ');
+                return parts[0] + (parts.length > 1 ? ' ' + parts[parts.length-1][0] + '.' : '');
+            }).join(' + ');
 
-            history.unshift({
-                time,
-                action: result.action_understood || 'Action enregistrée',
-                contacts,
-                count: savedCount
-            });
-
-            // Keep last 10
+            history.unshift({ time, action: result.action_understood || 'Note ajoutée', contacts, count: savedCount });
             if (history.length > 10) history = history.slice(0, 10);
             renderHistory();
         }
 
         function renderHistory() {
-            if (history.length === 0) {
-                historyList.innerHTML = '<p class="history-empty">Aucune dictée pour le moment</p>';
-                return;
-            }
+            if (history.length === 0) { historyList.innerHTML = ''; return; }
 
-            historyList.innerHTML = history.map(h => `
+            historyList.innerHTML = '<div class="history-title">Historique</div>' +
+                history.map(h => `
                 <div class="history-item">
                     <span class="history-time">${h.time}</span>
-                    <div class="history-content">
-                        <div class="history-action">${escHtml(h.action)}</div>
-                        <div class="history-contacts">${escHtml(h.contacts)}</div>
-                    </div>
-                    <span class="history-status"><i class="fa-solid fa-circle-check"></i></span>
-                </div>
-            `).join('');
+                    <span class="history-sep">—</span>
+                    <span class="history-action">${escHtml(h.action)}</span>
+                    <span class="history-check"><i class="fa-solid fa-circle-check"></i></span>
+                </div>`).join('');
         }
 
         // ===== UTILS =====
@@ -1409,68 +1227,5 @@
         init();
     })();
     </script>
-
-    <!-- Bottom Mobile Tab Bar -->
-    <nav class="mobile-bottom-bar">
-        <a href="index.html" class="bottom-tab">
-            <i class="fa-solid fa-house"></i>
-            <span>Vendeurs</span>
-        </a>
-        <a href="acquereurs.html" class="bottom-tab">
-            <i class="fa-solid fa-key"></i>
-            <span>Acquéreurs</span>
-        </a>
-        <a href="micro.html" class="bottom-tab-micro active">
-            <i class="fa-solid fa-microphone"></i>
-        </a>
-        <a href="dvf.html" class="bottom-tab">
-            <i class="fa-solid fa-chart-simple"></i>
-            <span>Marché</span>
-        </a>
-        <a href="social.html" class="bottom-tab">
-            <i class="fa-solid fa-share-nodes"></i>
-            <span>Social</span>
-        </a>
-    </nav>
-    <style>
-        .mobile-bottom-bar { display: none; }
-        @media (max-width: 768px) {
-            .nav-tabs { display: none !important; }
-            .mobile-bottom-bar {
-                display: flex;
-                position: fixed;
-                bottom: 0; left: 0; right: 0;
-                background: #FFFFFF;
-                border-top: 1px solid #E5E7EB;
-                padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-                z-index: 9999;
-                justify-content: space-around;
-                align-items: flex-end;
-            }
-            .bottom-tab {
-                display: flex; flex-direction: column; align-items: center;
-                text-decoration: none; color: #94A3B8;
-                font-family: 'Inter', sans-serif;
-                font-size: 10px; font-weight: 500;
-                gap: 2px; padding: 4px 0; min-width: 56px;
-            }
-            .bottom-tab i { font-size: 22px; }
-            .bottom-tab.active { color: #243B53; font-weight: 600; }
-            .bottom-tab-micro {
-                display: flex; align-items: center; justify-content: center;
-                width: 56px; height: 56px; border-radius: 50%;
-                background: #6C4CC8; color: white;
-                text-decoration: none; font-size: 24px;
-                margin-top: -20px;
-                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
-                transition: transform 0.2s;
-            }
-            .bottom-tab-micro:active { transform: scale(0.93); }
-            .bottom-tab-micro.active {
-                background: #5B3FB3;
-                box-shadow: 0 4px 20px rgba(108, 76, 200, 0.6);
-            }
-        }
-    </style>
 </body>
 </html>
