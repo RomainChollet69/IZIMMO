@@ -4179,6 +4179,15 @@
             </div>`;
         }
 
+        function showMatchToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2C3E50;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:30000;opacity:0;transition:opacity 0.3s';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.style.opacity = '1');
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+        }
+
         // Store pending rejection info for the modal
         let pendingReject = null;
 
@@ -4234,7 +4243,7 @@
                 console.error('[Match] Rejection error:', error);
                 card.style.transform = '';
                 card.style.opacity = '';
-                showToast('Erreur lors de l\'enregistrement', 'error');
+                showMatchToast('Erreur lors de l\'enregistrement');
                 return;
             }
 
@@ -4247,7 +4256,7 @@
                 updateMatchCountAfterReject();
             }, 350);
 
-            showToast('Match écarté', 'success');
+            showMatchToast('Match écarté');
             pendingReject = null;
         }
 
@@ -4274,10 +4283,10 @@
 
         async function restoreMatch(rejectionId) {
             const { error } = await supabaseClient.from('match_rejections').delete().eq('id', rejectionId);
-            if (error) { console.error('[Match] Restore error:', error); showToast('Erreur', 'error'); return; }
+            if (error) { console.error('[Match] Restore error:', error); showMatchToast('Erreur'); return; }
             // Remove from cache
             if (matchRejections) matchRejections = matchRejections.filter(r => r.id !== rejectionId);
-            showToast('Match restauré', 'success');
+            showMatchToast('Match restauré');
             // Reload the matching tab
             loadMatchingBuyers();
         }
