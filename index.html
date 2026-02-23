@@ -480,11 +480,11 @@
             word-wrap: break-word; /* Retour à la ligne des longs mots */
         }
 
-        /* Forcer le retour à la ligne des emails et URLs longs */
+        /* Retour à la ligne propre (ne pas couper les mots) */
         .lead-card.expanded .card-info,
         .lead-card.expanded .card-extended {
-            word-break: break-all; /* Plus agressif pour couper les longs emails */
-            overflow-wrap: anywhere;
+            overflow-wrap: break-word;
+            word-break: normal;
             max-width: 100%;
         }
 
@@ -5598,6 +5598,19 @@
             return null;
         }
 
+        // Retourne l'adresse sans la partie "code postal + ville"
+        function extractStreet(address) {
+            if (!address) return null;
+            const trimmed = address.trim();
+            // Retirer "69160 Tassin-la-Demi-Lune" à la fin
+            const cpMatch = trimmed.match(/^(.+?)\s*\d{5}\s+.+$/);
+            if (cpMatch) return cpMatch[1].trim();
+            // Retirer après la dernière virgule
+            const commaMatch = trimmed.match(/^(.+),\s*[^,]+$/);
+            if (commaMatch) return commaMatch[1].trim();
+            return trimmed;
+        }
+
         function createSellerCard(seller) {
             const card = document.createElement('div');
             card.className = 'lead-card';
@@ -5650,8 +5663,9 @@
 
             if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
-            // Address (full)
-            if (seller.address) ext += `<div class="card-info">📍 ${escapeHtml(seller.address)}</div>`;
+            // Address (rue seule, la ville est déjà en compact)
+            const street = extractStreet(seller.address);
+            if (street) ext += `<div class="card-info">📍 ${escapeHtml(street)}</div>`;
 
             // Phone
             if (seller.phone) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;

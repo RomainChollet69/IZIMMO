@@ -2810,6 +2810,16 @@
             return null;
         }
 
+        function extractStreet(address) {
+            if (!address) return null;
+            const trimmed = address.trim();
+            const cpMatch = trimmed.match(/^(.+?)\s*\d{5}\s+.+$/);
+            if (cpMatch) return cpMatch[1].trim();
+            const commaMatch = trimmed.match(/^(.+),\s*[^,]+$/);
+            if (commaMatch) return commaMatch[1].trim();
+            return trimmed;
+        }
+
         async function loadMatchingSellers() {
             const container = document.getElementById('matchingContent');
             container.innerHTML = '<div class="match-empty">Chargement des vendeurs...</div>';
