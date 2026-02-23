@@ -867,6 +867,31 @@
             background: #EBEDF0;
         }
 
+        .co-contact-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #9CA3AF;
+            text-decoration: none;
+            margin-bottom: 8px;
+            transition: color 0.2s;
+        }
+        .co-contact-toggle:hover { color: #667eea; }
+        .co-contact-toggle.active { display: none; }
+        .co-contact-section {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            margin-bottom: 0;
+        }
+        .co-contact-section.active {
+            max-height: 300px;
+            opacity: 1;
+            margin-bottom: 12px;
+            overflow: visible;
+        }
         .referrer-group {
             max-height: 0;
             overflow: hidden;
@@ -3436,6 +3461,26 @@
                         <div class="form-group">
                             <label class="form-label">Email</label>
                             <input type="email" class="form-input" id="email" placeholder="jean.dupont@email.com">
+                        </div>
+                    </div>
+
+                    <a href="#" class="co-contact-toggle" id="coContactToggle" onclick="event.preventDefault();toggleCoContact()">
+                        <i class="fa-solid fa-user-plus"></i> Ajouter un co-contact
+                    </a>
+                    <div class="co-contact-section" id="coContactSection">
+                        <div class="form-group" style="margin-bottom:12px">
+                            <label class="form-label">Nom du co-contact</label>
+                            <input type="text" class="form-input" id="contact2Name" placeholder="Marie Dupont">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" class="form-input" id="contact2Phone" placeholder="06 00 00 00 00">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" id="contact2Email" placeholder="marie@email.com">
+                            </div>
                         </div>
                     </div>
 
@@ -6322,6 +6367,13 @@
             document.getElementById('mandatePrice').value = '';
             document.getElementById('mandateCountdown').innerHTML = '';
 
+            // Reset co-contact
+            document.getElementById('contact2Name').value = '';
+            document.getElementById('contact2Phone').value = '';
+            document.getElementById('contact2Email').value = '';
+            document.getElementById('coContactSection').classList.remove('active');
+            document.getElementById('coContactToggle').classList.remove('active');
+
             // Reset RDV + commission
             document.getElementById('rdvDone').checked = false;
             document.getElementById('commissionRate').value = 4;
@@ -6401,6 +6453,14 @@
             document.getElementById('date').value = seller.date || '';
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('rdvDone').checked = seller.rdv_done || false;
+            // Co-contact
+            document.getElementById('contact2Name').value = seller.contact2_name || '';
+            document.getElementById('contact2Phone').value = seller.contact2_phone || '';
+            document.getElementById('contact2Email').value = seller.contact2_email || '';
+            if (seller.contact2_name || seller.contact2_phone || seller.contact2_email) {
+                document.getElementById('coContactSection').classList.add('active');
+                document.getElementById('coContactToggle').classList.add('active');
+            }
             document.getElementById('budget').value = seller.budget || '';
 
             // Mandate fields
@@ -6449,6 +6509,13 @@
             if (!address) return;
             const url = 'dvf.html?adresse=' + encodeURIComponent(address);
             window.open(url, '_blank');
+        }
+
+        function toggleCoContact() {
+            const section = document.getElementById('coContactSection');
+            const toggle = document.getElementById('coContactToggle');
+            section.classList.add('active');
+            toggle.classList.add('active');
         }
 
         function toggleNameFields() {
@@ -6555,6 +6622,9 @@
                 reminder: document.getElementById('reminder').value || null,
                 budget: document.getElementById('budget').value.trim() || null,
                 rdv_done: document.getElementById('rdvDone').checked || false,
+                contact2_name: document.getElementById('contact2Name').value.trim() || null,
+                contact2_phone: document.getElementById('contact2Phone').value.trim() || null,
+                contact2_email: document.getElementById('contact2Email').value.trim() || null,
                 commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
                 commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
                 links: currentLinks.length > 0 ? currentLinks : []
