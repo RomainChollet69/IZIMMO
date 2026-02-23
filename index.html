@@ -2341,6 +2341,24 @@
         .match-notif-btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .match-notif-btn-secondary { background: #f0f2f5; color: #666; }
 
+        /* Match rejection */
+        .match-card { position: relative; }
+        .match-card-reject-btn { position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 16px; color: #bbb; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; z-index: 2; transition: color 0.2s, background 0.2s; }
+        .match-card-reject-btn:hover { color: #E53935; background: rgba(229,57,53,0.08); }
+        .match-reject-popover { position: absolute; top: 0; right: 0; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 10px 12px; z-index: 100; display: flex; flex-wrap: wrap; gap: 6px; min-width: 200px; animation: matchFadeIn 0.15s ease; }
+        .match-reject-popover .reject-title { width: 100%; font-size: 12px; font-weight: 600; color: #666; margin-bottom: 2px; }
+        .match-reject-chip { padding: 5px 10px; border-radius: 16px; border: 1px solid #E0E0E0; background: #fafafa; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .match-reject-chip:hover { background: #FFF3E0; border-color: #FB8C00; color: #E65100; }
+        @keyframes matchFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+        .match-card.rejecting { transition: all 0.3s ease; transform: translateX(-100%); opacity: 0; max-height: 0; padding: 0; margin: 0; overflow: hidden; }
+        .match-card.rejected { opacity: 0.45; filter: grayscale(0.6); }
+        .match-card.rejected .match-card-reject-btn { display: none; }
+        .match-rejected-toggle { font-size: 12px; color: #999; cursor: pointer; margin-top: 8px; padding: 6px 0; border: none; background: none; }
+        .match-rejected-toggle:hover { color: #667eea; }
+        .match-rejected-section { margin-top: 8px; }
+        .match-restore-btn { padding: 4px 10px; border-radius: 12px; border: 1px dashed #667eea; background: none; color: #667eea; font-size: 11px; font-weight: 600; cursor: pointer; position: absolute; top: 6px; right: 6px; z-index: 2; transition: all 0.2s; }
+        .match-restore-btn:hover { background: #667eea; color: white; }
+
         /* ===== ONBOARDING GUIDÉ ===== */
         #onboarding-overlay {
             position: fixed;
@@ -3671,6 +3689,7 @@
         let currentVisits = [];
         let matchBuyers = null;
         let sellerMatchCounts = {};
+        let matchRejections = null;
 
         // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
         const EXAMPLE_SELLERS = [
@@ -3998,11 +4017,53 @@
                 details.push({ label: 'Annexes', score: as, max: 15 });
             }
 
+            // === APPRENTISSAGE : pénalité basée sur les rejections passées ===
+            if (matchRejections && matchRejections.length > 0) {
+                const penalties = getBuyerRejectionPenalties(buyer.id);
+                const penaltyMap = { budget: 'Budget', localisation: 'Localisation', surface: 'Surface', type_bien: 'Type' };
+                Object.entries(penaltyMap).forEach(([reason, label]) => {
+                    const count = penalties[reason] || 0;
+                    if (count > 0) {
+                        const penalty = Math.min(count * 5, 10); // -5 par rejet, max -10
+                        const detail = details.find(d => d.label === label);
+                        if (detail && detail.score > 0) {
+                            const reduction = Math.min(penalty, detail.score);
+                            detail.score -= reduction;
+                            score -= reduction;
+                        }
+                    }
+                });
+            }
+
             const percent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
             return { score, maxScore, percent, details, eliminated: false };
         }
 
         function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
+
+        async function loadMatchRejections(forceRefresh) {
+            if (matchRejections !== null && !forceRefresh) return matchRejections;
+            const userId = await getCurrentUserId();
+            if (!userId) return [];
+            const { data } = await supabaseClient.from('match_rejections').select('*').eq('user_id', userId);
+            matchRejections = data || [];
+            return matchRejections;
+        }
+
+        function isMatchRejected(sellerId, buyerId) {
+            if (!matchRejections) return false;
+            return matchRejections.some(r => r.seller_id === sellerId && r.buyer_id === buyerId);
+        }
+
+        function getBuyerRejectionPenalties(buyerId) {
+            if (!matchRejections) return {};
+            const penalties = {};
+            const buyerRejections = matchRejections.filter(r => r.buyer_id === buyerId);
+            buyerRejections.forEach(r => {
+                penalties[r.reason] = (penalties[r.reason] || 0) + 1;
+            });
+            return penalties;
+        }
 
         async function loadBuyersForMatching() {
             if (matchBuyers !== null) return matchBuyers;
@@ -4015,9 +4076,14 @@
 
         async function computeMatchCounts() {
             const buyers = await loadBuyersForMatching();
+            await loadMatchRejections();
             const counts = {};
             sellers.forEach(seller => {
-                const mc = buyers.filter(b => { const r = calculateMatchScore(seller, b); return !r.eliminated && r.percent >= 50; }).length;
+                const mc = buyers.filter(b => {
+                    if (isMatchRejected(seller.id, b.id)) return false;
+                    const r = calculateMatchScore(seller, b);
+                    return !r.eliminated && r.percent >= 50;
+                }).length;
                 if (mc > 0) counts[seller.id] = mc;
             });
             sellerMatchCounts = counts;
@@ -4029,25 +4095,51 @@
 
             matchBuyers = null; // Force refresh
             const buyers = await loadBuyersForMatching();
+            await loadMatchRejections(true); // Force refresh rejections
             const editId = document.getElementById('submitBtn').dataset.editId;
             const seller = sellers.find(s => s.id === editId);
             if (!seller) { container.innerHTML = '<div class="match-empty">Vendeur introuvable</div>'; return; }
 
-            const matches = buyers
+            const allMatches = buyers
                 .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
                 .filter(m => !m.eliminated && m.percent >= 50)
                 .sort((a, b) => b.percent - a.percent);
 
-            if (matches.length === 0) {
+            // Separate active matches from rejected
+            const matches = allMatches.filter(m => !isMatchRejected(seller.id, m.buyer.id));
+            const rejected = allMatches.filter(m => isMatchRejected(seller.id, m.buyer.id));
+
+            if (matches.length === 0 && rejected.length === 0) {
                 container.innerHTML = '<div class="match-empty">Aucun acquéreur correspondant (seuil : 50%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
                 return;
             }
 
-            container.innerHTML = `<div style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div><div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer')).join('')}</div>`;
+            let html = '';
+            if (matches.length > 0) {
+                html += `<div data-match-count style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>`;
+                html += `<div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer', { sellerId: seller.id })).join('')}</div>`;
+            } else {
+                html += '<div class="match-empty">Tous les acquéreurs ont été écartés</div>';
+            }
+
+            // Rejected section
+            if (rejected.length > 0) {
+                html += `<button class="match-rejected-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.nextElementSibling.style.display==='none'?'Voir les ${rejected.length} écarté${rejected.length>1?'s':''}':'Masquer les écartés'">Voir les ${rejected.length} écarté${rejected.length > 1 ? 's' : ''}</button>`;
+                html += `<div class="match-rejected-section" style="display:none"><div class="match-list">`;
+                rejected.forEach(m => {
+                    const rej = matchRejections.find(r => r.seller_id === seller.id && r.buyer_id === m.buyer.id);
+                    html += renderMatchCard(m, 'buyer', { rejected: true, rejectionId: rej ? rej.id : '' });
+                });
+                html += '</div></div>';
+            }
+
+            container.innerHTML = html;
         }
 
-        function renderMatchCard(m, type) {
+        function renderMatchCard(m, type, opts) {
+            opts = opts || {};
             const person = type === 'buyer' ? m.buyer : m.seller;
+            const sellerId = opts.sellerId || '';
             const name = escapeHtml((person.first_name || '') + ' ' + (person.last_name || ''));
             const detailParts = [];
             if (type === 'buyer') {
@@ -4065,7 +4157,17 @@
                 return `<div class="match-detail-bar"><span class="bar-label">${d.label}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
             }).join('');
 
-            return `<div class="match-card" onclick="window.open('${type === 'buyer' ? 'acquereurs' : 'index'}.html','_blank')">
+            let actionBtn = '';
+            if (opts.rejected) {
+                const rejId = opts.rejectionId || '';
+                actionBtn = `<button class="match-restore-btn" onclick="event.stopPropagation();restoreMatch('${rejId}')">Restaurer</button>`;
+            } else if (sellerId && type === 'buyer') {
+                actionBtn = `<button class="match-card-reject-btn" onclick="event.stopPropagation();rejectMatch('${sellerId}','${person.id}',this)" title="Écarter ce match">&times;</button>`;
+            }
+
+            const cardClass = 'match-card' + (opts.rejected ? ' rejected' : '');
+            return `<div class="${cardClass}" data-buyer-id="${person.id}" onclick="window.open('${type === 'buyer' ? 'acquereurs' : 'index'}.html','_blank')">
+                ${actionBtn}
                 <div class="match-score-circle ${getScoreClass(m.percent)}">${m.percent}%</div>
                 <div class="match-info">
                     <div class="match-name">${name}</div>
@@ -4075,14 +4177,100 @@
             </div>`;
         }
 
+        function rejectMatch(sellerId, buyerId, btn) {
+            // Close any existing popover
+            document.querySelectorAll('.match-reject-popover').forEach(p => p.remove());
+            const card = btn.closest('.match-card');
+            const popover = document.createElement('div');
+            popover.className = 'match-reject-popover';
+            popover.innerHTML = `
+                <div class="reject-title">Pourquoi ce match ne colle pas ?</div>
+                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','budget',this)">💰 Budget</span>
+                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','localisation',this)">📍 Localisation</span>
+                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','surface',this)">📐 Surface</span>
+                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','type_bien',this)">🏠 Type de bien</span>
+                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','autre',this)">❓ Autre</span>
+            `;
+            card.appendChild(popover);
+            // Close on outside click
+            setTimeout(() => {
+                const handler = (e) => { if (!popover.contains(e.target) && e.target !== btn) { popover.remove(); document.removeEventListener('click', handler); } };
+                document.addEventListener('click', handler);
+            }, 10);
+        }
+
+        async function confirmRejectMatch(sellerId, buyerId, reason, chip) {
+            const popover = chip.closest('.match-reject-popover');
+            const card = popover.closest('.match-card');
+            if (popover) popover.remove();
+
+            // Animate card out
+            card.classList.add('rejecting');
+
+            const userId = await getCurrentUserId();
+            const { error } = await supabaseClient.from('match_rejections').insert({
+                user_id: userId, seller_id: sellerId, buyer_id: buyerId, reason: reason
+            });
+
+            if (error) {
+                console.error('[Match] Rejection error:', error);
+                card.classList.remove('rejecting');
+                showToast('Erreur lors de l\'enregistrement', 'error');
+                return;
+            }
+
+            // Update local cache
+            if (matchRejections) matchRejections.push({ user_id: userId, seller_id: sellerId, buyer_id: buyerId, reason: reason, id: 'temp-' + Date.now() });
+
+            // After animation, remove card and update UI
+            setTimeout(() => {
+                card.remove();
+                updateMatchCountAfterReject();
+            }, 300);
+
+            showToast('Match écarté', 'success');
+        }
+
+        function updateMatchCountAfterReject() {
+            const container = document.getElementById('matchingContent');
+            const remaining = container.querySelectorAll('.match-list .match-card:not(.rejected)');
+            const countEl = container.querySelector('[data-match-count]');
+            if (countEl) countEl.textContent = remaining.length + ' acquéreur' + (remaining.length > 1 ? 's' : '') + ' correspondant' + (remaining.length > 1 ? 's' : '');
+            if (remaining.length === 0) {
+                const listEl = container.querySelector('.match-list');
+                if (listEl) listEl.innerHTML = '<div class="match-empty">Aucun acquéreur correspondant</div>';
+            }
+            // Update seller card badge
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (editId && sellerMatchCounts[editId]) {
+                sellerMatchCounts[editId] = Math.max(0, (sellerMatchCounts[editId] || 0) - 1);
+                const badge = document.querySelector(`.seller-card[data-id="${editId}"] .match-indicator`);
+                if (badge) {
+                    if (sellerMatchCounts[editId] === 0) badge.remove();
+                    else badge.textContent = '🎯 ' + sellerMatchCounts[editId] + ' match' + (sellerMatchCounts[editId] > 1 ? 'es' : '');
+                }
+            }
+        }
+
+        async function restoreMatch(rejectionId) {
+            const { error } = await supabaseClient.from('match_rejections').delete().eq('id', rejectionId);
+            if (error) { console.error('[Match] Restore error:', error); showToast('Erreur', 'error'); return; }
+            // Remove from cache
+            if (matchRejections) matchRejections = matchRejections.filter(r => r.id !== rejectionId);
+            showToast('Match restauré', 'success');
+            // Reload the matching tab
+            loadMatchingBuyers();
+        }
+
         async function showMatchNotification(sellerId) {
             const buyers = await loadBuyersForMatching();
+            await loadMatchRejections();
             const seller = sellers.find(s => s.id === sellerId);
             if (!seller) return;
 
             const matches = buyers
                 .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
-                .filter(m => !m.eliminated && m.percent >= 70)
+                .filter(m => !m.eliminated && m.percent >= 70 && !isMatchRejected(sellerId, m.buyer.id))
                 .sort((a, b) => b.percent - a.percent)
                 .slice(0, 3);
 
