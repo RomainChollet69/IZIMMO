@@ -662,24 +662,77 @@
         const card = btn.closest('.suggestion-card');
         const suggestion = JSON.parse(card.dataset.suggestion.replace(/&apos;/g, "'"));
 
-        // Switch to story mode
-        document.getElementById('storyArea').classList.add('active');
-        document.getElementById('storyBtn').classList.add('active');
-        document.getElementById('suggestionBtn').classList.remove('active');
+        if (!currentProfile) {
+            alert('Profil non configuré. Recharge la page.');
+            return;
+        }
 
-        // Fill textarea with context
-        const context = suggestion.type === 'sale'
-            ? `Vente : ${suggestion.data.property_type || 'bien'} ${suggestion.data.address || ''}, ${suggestion.data.budget ? suggestion.data.budget + '€' : ''}`
-            : suggestion.type === 'visits'
-            ? `${suggestion.data.count} visites cette semaine`
-            : suggestion.type === 'mandate'
-            ? `Mandat ${suggestion.data.property_type || 'bien'} ${suggestion.data.address || ''} depuis ${suggestion.data.days} jours`
-            : `${suggestion.data.count} estimations ce mois`;
+        // Check if voice profile modal should be shown (first time only)
+        const shouldShowVoiceModal = await checkAndShowVoiceModal();
+        if (shouldShowVoiceModal) {
+            // Store suggestion context for after voice profile is saved
+            window.pendingSuggestion = suggestion;
+            return;
+        }
 
-        document.getElementById('storyInput').value = context;
-        document.getElementById('storyInput').focus();
-        updateStoryInputState();
+        await generateFromSuggestion(suggestion, btn);
     };
+
+    async function generateFromSuggestion(suggestion, btn) {
+        const platforms = currentProfile.platforms_active || [];
+        if (platforms.length === 0) {
+            alert('Aucune plateforme active dans ton profil');
+            return;
+        }
+
+        // Disable button during generation
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ En cours...';
+        }
+
+        try {
+            currentResults = [];
+
+            for (const platform of platforms) {
+                console.log(`[Social] Generating suggestion post for ${platform}...`);
+
+                const response = await fetch('/api/generate-social-post', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(),
+                    body: JSON.stringify({
+                        mode: 'suggestion',
+                        platform,
+                        suggestion_context: suggestion
+                    })
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || `Erreur ${platform}`);
+                }
+
+                const result = await response.json();
+                currentResults.push({ platform, ...result });
+                console.log(`[Social] Generated for ${platform}:`, result);
+            }
+
+            // Display results
+            displayResults();
+
+            // Reload history
+            await loadHistory();
+
+        } catch (err) {
+            console.error('[Social] Generate suggestion error:', err);
+            alert('Erreur lors de la génération: ' + err.message);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = 'Raconter cette histoire';
+            }
+        }
+    }
 
     // ===== TEMPLATE POPOVER =====
     window.showTemplatePopover = function(templateName, platform, dayName) {
@@ -2071,6 +2124,23 @@
         // Only show if voice_profile_set is false
         if (currentProfile.voice_profile_set) return false;
 
+        // Pre-fill with existing data if available
+        if (currentProfile.tone) {
+            const toneValue = currentProfile.tone === 'professionnel' ? 15
+                : currentProfile.tone === 'decontracte' ? 85 : 50;
+            document.getElementById('voiceToneSlider').value = toneValue;
+        }
+        if (currentProfile.tutoiement !== undefined && currentProfile.tutoiement !== null) {
+            const radio = document.querySelector(`input[name="voice_tutoiement"][value="${currentProfile.tutoiement}"]`);
+            if (radio) radio.checked = true;
+        }
+        if (currentProfile.sample_posts) {
+            const posts = Array.isArray(currentProfile.sample_posts)
+                ? currentProfile.sample_posts.join('\n\n---\n\n')
+                : currentProfile.sample_posts;
+            document.getElementById('voiceSamplePosts').value = posts;
+        }
+
         document.getElementById('voiceBackdrop').classList.add('active');
         return true; // Modal shown, pause generation
     }
@@ -2096,7 +2166,14 @@
             document.getElementById('voiceBackdrop').classList.remove('active');
 
             // If there was a pending generation, continue it
-            if (window.pendingUserInput) {
+            if (window.pendingSuggestion) {
+                const suggestion = window.pendingSuggestion;
+                window.pendingSuggestion = null;
+
+                setTimeout(() => {
+                    generateFromSuggestion(suggestion, null);
+                }, 300);
+            } else if (window.pendingUserInput) {
                 const userInput = window.pendingUserInput;
                 window.pendingUserInput = null;
 

@@ -28,7 +28,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { mode, platform, user_input, template_override } = req.body || {};
+    const { mode, platform, user_input, template_override, suggestion_context } = req.body || {};
 
     if (!platform) {
         return res.status(400).json({ error: 'Platform required' });
@@ -74,8 +74,12 @@ export default async function handler(req, res) {
         let userPrompt = '';
         if (mode === 'free_input') {
             userPrompt = `Génère un post ${platform} à partir de ce vécu :\n\n"${user_input}"\n\nRetourne UNIQUEMENT le JSON sans explication.`;
+        } else if (mode === 'suggestion' && suggestion_context) {
+            // Suggestion mode: generate from CRM suggestion context
+            const ctx = suggestion_context;
+            userPrompt = `Génère un post ${platform} basé sur cette suggestion CRM :\n\nType : ${ctx.type}\nTitre : ${ctx.title || ''}\nDescription : ${ctx.description || ''}\nDonnées : ${JSON.stringify(ctx.data || {})}\n\nRetourne UNIQUEMENT le JSON sans explication.`;
         } else {
-            // For Sprint 2: calendar-based suggestions
+            // Calendar-based suggestions (fallback)
             userPrompt = `Génère le post ${platform} du jour selon les données CRM fournies.\n\nRetourne UNIQUEMENT le JSON sans explication.`;
         }
 
