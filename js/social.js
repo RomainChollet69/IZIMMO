@@ -1415,7 +1415,7 @@
                         <button class="action-btn" onclick="regeneratePost('${result.platform}')">
                             🔄 Régénérer
                         </button>
-                        <button class="action-btn success" onclick="markPublished('${result.platform}')">
+                        <button class="action-btn success" onclick="markPublished('${result.platform}', this)">
                             ✅ Marquer partagé
                         </button>
                     </div>
@@ -1531,36 +1531,54 @@
         alert('Régénération en cours... (fonctionnalité à améliorer)');
     };
 
-    window.markPublished = async function(platform) {
+    window.markPublished = async function(platform, btn) {
         const result = currentResults.find(r => r.platform === platform);
-        if (!result || !result.post_id) return;
+        if (!result || !result.post_id) {
+            console.error('[Social] No post_id found for platform:', platform, 'results:', currentResults);
+            alert('Impossible de marquer comme partagé : post non sauvegardé');
+            return;
+        }
 
         try {
-            await supabaseClient
+            // Also save any edits the user made to the textarea
+            const textarea = document.getElementById(`textarea-${platform}`);
+            const editedContent = textarea ? textarea.value : null;
+
+            const updateData = {
+                status: 'published',
+                published_at: new Date().toISOString()
+            };
+
+            if (editedContent && editedContent !== result.content) {
+                updateData.content = editedContent;
+                updateData.user_edited = true;
+            }
+
+            const { error } = await supabaseClient
                 .from('social_posts')
-                .update({
-                    status: 'published',
-                    published_at: new Date().toISOString()
-                })
+                .update(updateData)
                 .eq('id', result.post_id);
 
-            // Visual feedback
-            const btn = event.target.closest('.action-btn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '✅ Partagé !';
-            btn.style.background = '#43A047';
-            btn.style.color = 'white';
+            if (error) throw error;
 
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.style.background = '';
-                btn.style.color = '';
-            }, 2000);
+            // Visual feedback
+            if (btn) {
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '✅ Partagé !';
+                btn.style.background = '#43A047';
+                btn.style.color = 'white';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            }
 
             await loadHistory();
         } catch (err) {
             console.error('[Social] Mark published error:', err);
-            alert('Erreur lors de la mise à jour');
+            alert('Erreur lors de la mise à jour: ' + err.message);
         }
     };
 
