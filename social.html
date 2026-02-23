@@ -1075,20 +1075,15 @@
             gap: 8px;
             width: 100%;
             padding: 14px 32px;
-            background: #CBD5E0;
+            background: linear-gradient(135deg, #2B6CB0 0%, #3B82F6 100%);
             border: none;
             border-radius: 28px;
             font-family: 'Inter', sans-serif;
             font-weight: 600;
             font-size: 16px;
             color: white;
-            cursor: default;
-            transition: all 0.25s ease;
-        }
-
-        .generate-btn:not(:disabled) {
-            background: linear-gradient(135deg, #2B6CB0 0%, #3B82F6 100%);
             cursor: pointer;
+            transition: all 0.25s ease;
             box-shadow: 0 4px 16px rgba(43, 108, 176, 0.3);
         }
 
@@ -1098,7 +1093,7 @@
         }
 
         .generate-btn:disabled {
-            opacity: 1;
+            opacity: 0.7;
             cursor: not-allowed;
         }
 
