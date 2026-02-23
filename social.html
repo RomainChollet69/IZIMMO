@@ -826,11 +826,24 @@
             opacity: 1;
         }
 
+        /* Léa specifically: left side, bigger */
+        .card-illustration-lea {
+            left: 10px;
+            right: auto;
+            height: 260px;
+        }
+
         /* Constrain content so it doesn't overlap illustration */
         .card-content-wrap {
             position: relative;
             z-index: 1;
             max-width: calc(100% - 140px);
+        }
+
+        /* Left card: content pushed to the right to leave room for Léa */
+        .create-card-left .card-content-wrap {
+            margin-left: auto;
+            max-width: calc(100% - 180px);
         }
 
         /* Empty state illustration */
@@ -1033,7 +1046,7 @@
         .generate-btn {
             flex: 1;
             padding: 12px 24px;
-            background: linear-gradient(135deg, #2B6CB0 0%, #243B53 100%);
+            background: #243B53;
             border: none;
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
@@ -1041,13 +1054,14 @@
             font-size: 15px;
             color: white;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(43, 108, 176, 0.3);
+            transition: all 0.25s ease;
+            box-shadow: 0 2px 8px rgba(36, 59, 83, 0.25);
         }
 
         .generate-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(43, 108, 176, 0.4);
+            background: #1a2d40;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(36, 59, 83, 0.3);
         }
 
         .generate-btn:disabled {
@@ -2297,6 +2311,11 @@
             .card-content-wrap {
                 max-width: 100%;
             }
+
+            .create-card-left .card-content-wrap {
+                margin-left: 0;
+                max-width: 100%;
+            }
         }
 
         /* Sprint 2: Suggestions */
@@ -2549,7 +2568,7 @@
                             </div>
                         </div>
                     </div>
-                    <img src="img/lea_social.png" alt="" class="card-illustration" aria-hidden="true">
+                    <img src="img/lea_social.png" alt="" class="card-illustration card-illustration-lea" aria-hidden="true">
                 </div>
 
                 <!-- Card droite — Raconter -->
