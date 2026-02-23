@@ -1540,9 +1540,13 @@
         if (posts.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">📭</div>
-                    <div class="empty-state-text">Aucune histoire partagée cette semaine</div>
-                    <div class="empty-state-subtext">Commence par raconter ton premier moment ci-dessus</div>
+                    <img src="img/lea-empty-state.svg" alt="Léa" class="empty-state-illustration">
+                    <div class="empty-state-title">Aucune histoire partagée cette semaine</div>
+                    <div class="empty-state-separator"></div>
+                    <div class="empty-state-subtitle">Prête à créer du contenu ? Lance ta première publication !</div>
+                    <button class="empty-state-cta" onclick="document.getElementById('suggestionBtn').click()">
+                        + Créer une nouvelle story
+                    </button>
                 </div>
             `;
             return;
