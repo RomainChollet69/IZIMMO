@@ -124,10 +124,38 @@
 
         .header-mobile .logo-mobile img { height: 28px; width: auto; }
 
+        .header-mobile .user-mobile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .header-mobile .user-firstname {
             font-size: 15px;
             font-weight: 500;
             color: #64748B;
+        }
+
+        .header-mobile .user-avatar-mobile {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #E5E7EB;
+        }
+
+        .header-mobile .user-initial-mobile {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: #243b53;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
         }
 
         /* ===== MAIN LAYOUT ===== */
@@ -675,7 +703,7 @@
             .mic-zone { padding-top: calc(18vh - 40px); }
             .mic-zone.compact { padding-top: 16px; }
 
-            .mic-btn { width: 140px; height: 140px; font-size: 52px; }
+            .mic-btn { width: 140px; height: 140px; font-size: 52px; background: #6C4CC8; box-shadow: 0 8px 40px rgba(108, 76, 200, 0.3); }
 
             .mic-waves { width: 140px; height: 140px; }
             @keyframes wave-expand {
@@ -709,16 +737,16 @@
             .bottom-tab-micro {
                 display: flex; align-items: center; justify-content: center;
                 width: 52px; height: 52px; border-radius: 50%;
-                background: #26a1e8; color: white;
+                background: #6C4CC8; color: white;
                 text-decoration: none; font-size: 22px;
                 margin-top: -18px;
-                box-shadow: 0 4px 16px rgba(38, 161, 232, 0.4);
+                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
                 transition: transform 0.2s;
             }
             .bottom-tab-micro:active { transform: scale(0.93); }
             .bottom-tab-micro.active {
-                background: #1e8fd0;
-                box-shadow: 0 4px 20px rgba(38, 161, 232, 0.5);
+                background: #5B3FB3;
+                box-shadow: 0 4px 20px rgba(108, 76, 200, 0.5);
             }
         }
 
@@ -775,12 +803,15 @@
         </div>
     </div>
 
-    <!-- Mobile header (minimal : logo + prénom) -->
+    <!-- Mobile header (logo + prénom + photo) -->
     <div class="header-mobile">
         <a href="index.html" class="logo-mobile">
             <img src="img/Logo_leon.svg" alt="Léon">
         </a>
-        <span class="user-firstname" id="userFirstname"></span>
+        <div class="user-mobile">
+            <span class="user-firstname" id="userFirstname"></span>
+            <div id="userAvatarMobile"></div>
+        </div>
     </div>
 
     <!-- Page content -->
@@ -957,10 +988,19 @@
             if (!session) return;
             userId = session.user.id;
 
-            // Set mobile firstname
+            // Set mobile firstname + avatar
             const meta = session.user.user_metadata || {};
             const firstName = (meta.full_name || meta.name || session.user.email || '').split(' ')[0];
             document.getElementById('userFirstname').textContent = firstName;
+
+            const avatarContainer = document.getElementById('userAvatarMobile');
+            const avatarUrl = meta.avatar_url || meta.picture || null;
+            if (avatarUrl) {
+                avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="${firstName}" class="user-avatar-mobile" referrerpolicy="no-referrer">`;
+            } else {
+                const initial = (firstName || '?')[0].toUpperCase();
+                avatarContainer.innerHTML = `<div class="user-initial-mobile">${initial}</div>`;
+            }
 
             recorder = new AudioRecorder({
                 maxDuration: 30000,
