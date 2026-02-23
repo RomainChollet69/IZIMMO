@@ -4166,7 +4166,8 @@
             }
 
             const cardClass = 'match-card' + (opts.rejected ? ' rejected' : '');
-            return `<div class="${cardClass}" data-buyer-id="${person.id}" onclick="window.open('${type === 'buyer' ? 'acquereurs' : 'index'}.html','_blank')">
+            const openPage = type === 'buyer' ? 'acquereurs' : 'index';
+            return `<div class="${cardClass}" data-buyer-id="${person.id}" onclick="if(!this.dataset.popoverOpen)window.open('${openPage}.html','_blank')">
                 ${actionBtn}
                 <div class="match-score-circle ${getScoreClass(m.percent)}">${m.percent}%</div>
                 <div class="match-info">
@@ -4181,22 +4182,31 @@
             // Close any existing popover
             document.querySelectorAll('.match-reject-popover').forEach(p => p.remove());
             const card = btn.closest('.match-card');
+            // Disable card click while popover is open
+            card.dataset.popoverOpen = 'true';
             const popover = document.createElement('div');
             popover.className = 'match-reject-popover';
+            popover.onclick = function(e) { e.stopPropagation(); };
             popover.innerHTML = `
                 <div class="reject-title">Pourquoi ce match ne colle pas ?</div>
-                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','budget',this)">💰 Budget</span>
-                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','localisation',this)">📍 Localisation</span>
-                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','surface',this)">📐 Surface</span>
-                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','type_bien',this)">🏠 Type de bien</span>
-                <span class="match-reject-chip" onclick="confirmRejectMatch('${sellerId}','${buyerId}','autre',this)">❓ Autre</span>
+                <span class="match-reject-chip" onclick="event.stopPropagation();confirmRejectMatch('${sellerId}','${buyerId}','budget',this)">💰 Budget</span>
+                <span class="match-reject-chip" onclick="event.stopPropagation();confirmRejectMatch('${sellerId}','${buyerId}','localisation',this)">📍 Localisation</span>
+                <span class="match-reject-chip" onclick="event.stopPropagation();confirmRejectMatch('${sellerId}','${buyerId}','surface',this)">📐 Surface</span>
+                <span class="match-reject-chip" onclick="event.stopPropagation();confirmRejectMatch('${sellerId}','${buyerId}','type_bien',this)">🏠 Type de bien</span>
+                <span class="match-reject-chip" onclick="event.stopPropagation();confirmRejectMatch('${sellerId}','${buyerId}','autre',this)">❓ Autre</span>
             `;
             card.appendChild(popover);
-            // Close on outside click
-            setTimeout(() => {
-                const handler = (e) => { if (!popover.contains(e.target) && e.target !== btn) { popover.remove(); document.removeEventListener('click', handler); } };
-                document.addEventListener('click', handler);
-            }, 10);
+            // Close on outside click (delayed to avoid catching current event)
+            requestAnimationFrame(() => {
+                const handler = (e) => {
+                    if (!popover.contains(e.target) && e.target !== btn) {
+                        popover.remove();
+                        delete card.dataset.popoverOpen;
+                        document.removeEventListener('click', handler, true);
+                    }
+                };
+                document.addEventListener('click', handler, true);
+            });
         }
 
         async function confirmRejectMatch(sellerId, buyerId, reason, chip) {
