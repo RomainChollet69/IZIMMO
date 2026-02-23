@@ -1628,8 +1628,10 @@
             return;
         }
 
+        const MAX_VISIBLE = 3;
         let html = '';
-        for (const post of posts) {
+        for (let i = 0; i < posts.length; i++) {
+            const post = posts[i];
             const date = new Date(post.generated_at);
             const dateStr = `${DAYS_SHORT[date.getDay()]} ${date.getDate()}/${date.getMonth() + 1}`;
 
@@ -1652,8 +1654,10 @@
             const hookText = post.hook || post.content.split('\n')[0];
             const preview = hookText.length > 50 ? hookText.substring(0, 50) + '…' : hookText;
 
+            const hiddenClass = i >= MAX_VISIBLE ? ' history-hidden' : '';
+
             html += `
-                <div class="history-item ${post.status}">
+                <div class="history-item ${post.status}${hiddenClass}">
                     <div class="history-header">
                         <div class="history-date">${dateStr}</div>
                         <div class="history-platform-icon">${icon} ${platformName}</div>
@@ -1665,8 +1669,32 @@
             `;
         }
 
+        if (posts.length > MAX_VISIBLE) {
+            html += `
+                <button class="history-toggle-btn" onclick="toggleHistory(this)">
+                    Voir les ${posts.length - MAX_VISIBLE} autres publications <i class="fas fa-chevron-down"></i>
+                </button>
+            `;
+        }
+
         container.innerHTML = html;
     }
+
+    window.toggleHistory = function(btn) {
+        const items = document.querySelectorAll('.history-hidden');
+        const isExpanded = btn.classList.contains('expanded');
+
+        items.forEach(item => {
+            item.style.display = isExpanded ? 'none' : '';
+        });
+
+        btn.classList.toggle('expanded');
+        if (isExpanded) {
+            btn.innerHTML = `Voir les ${items.length} autres publications <i class="fas fa-chevron-down"></i>`;
+        } else {
+            btn.innerHTML = `Masquer <i class="fas fa-chevron-up"></i>`;
+        }
+    };
 
     window.reopenPost = async function(postId) {
         try {
