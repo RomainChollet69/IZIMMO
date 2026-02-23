@@ -325,13 +325,13 @@
         await loadProfile();
 
         // Render calendar
-        renderCalendar();
+        try { renderCalendar(); } catch (e) { console.error('[Social] renderCalendar error:', e); }
 
         // Load history
-        await loadHistory();
+        try { await loadHistory(); } catch (e) { console.error('[Social] loadHistory error:', e); }
 
-        // Load suggestions (Sprint 2)
-        await loadSuggestions();
+        // Load suggestions
+        try { await loadSuggestions(); } catch (e) { console.error('[Social] loadSuggestions error:', e); }
 
         // Setup event listeners
         setupListeners();
@@ -340,7 +340,7 @@
         updateStoryInputState();
 
         // Léa briefing (once per day)
-        await maybeShowLeaBriefing();
+        try { await maybeShowLeaBriefing(); } catch (e) { console.error('[Social] briefing error:', e); }
 
         console.log('[Social] Initialized');
     }
@@ -691,6 +691,8 @@
 
     async function loadSuggestions() {
         const container = document.getElementById('suggestionsContainer');
+
+        try {
         const today = DAYS_FR[new Date().getDay()];
 
         // Weekend
@@ -733,6 +735,13 @@
         renderCarousel(container);
         initCarouselEvents();
         startCarouselTimer();
+
+        } catch (err) {
+            console.error('[Social] loadSuggestions error:', err);
+            container.innerHTML = `<div class="suggestion-empty">
+                <p style="color:var(--text-light);">Impossible de charger les suggestions.</p>
+            </div>`;
+        }
     }
 
     // ===== CAROUSEL RENDERING & NAVIGATION =====
@@ -961,7 +970,10 @@
                 streak = count > 0 ? 1 : 0;
             }
 
-            return { posts, created, published, streak, today };
+            const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+            const firstName = fullName.split(' ')[0] || 'Agent';
+
+            return { posts, created, published, streak, today, firstName };
         } catch (err) {
             console.error('[Social] Briefing data error:', err);
             return null;
@@ -978,9 +990,7 @@
         const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
         const dateStr = `${dayNames[now.getDay()]} ${now.getDate()} ${monthNames[now.getMonth()]}`;
 
-        const user = (await supabaseClient.auth.getUser()).data.user;
-        const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || '';
-        const firstName = fullName.split(' ')[0] || 'Agent';
+        const firstName = data.firstName || 'Agent';
 
         // Build posts HTML
         const platformIcons = {
