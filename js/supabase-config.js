@@ -349,6 +349,25 @@ function formatEuro(amount) {
     return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(num);
 }
 
+// ===== CALCUL COMMISSION IMMOBILIÈRE =====
+// La commission s'applique sur le net vendeur, pas sur le prix FAI.
+// prix FAI = net vendeur × (1 + taux/100)
+// Donc : commission = prix FAI - (prix FAI / (1 + taux/100))
+function calcCommission(prixFAI, tauxPct) {
+    if (!prixFAI || prixFAI <= 0 || !tauxPct || tauxPct <= 0) return 0;
+    return Math.round(prixFAI - (prixFAI / (1 + tauxPct / 100)));
+}
+
+// Calcul inverse : retrouver le taux à partir du montant et du prix FAI
+// commission = prixFAI - netVendeur → netVendeur = prixFAI - commission
+// taux = commission / netVendeur × 100
+function calcRateFromAmount(prixFAI, commission) {
+    if (!prixFAI || prixFAI <= 0 || !commission || commission <= 0) return 0;
+    const netVendeur = prixFAI - commission;
+    if (netVendeur <= 0) return 0;
+    return parseFloat((commission / netVendeur * 100).toFixed(1));
+}
+
 // ===== AUTOCOMPLETE ADRESSE (api-adresse.data.gouv.fr) =====
 (function () {
     const style = document.createElement('style');

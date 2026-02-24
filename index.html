@@ -5415,10 +5415,9 @@
             const idx = sellers.findIndex(s => s.id === sellerId);
             if (idx !== -1) sellers[idx].mandate_price = newPrice;
 
-            // Recalculer la commission
+            // Recalculer la commission (sur net vendeur)
             const rate = parseFloat(document.getElementById('commissionRate').value) || 4;
-            const newCommission = Math.round(newPrice * rate / 100);
-            document.getElementById('commissionAmount').value = newCommission;
+            document.getElementById('commissionAmount').value = calcCommission(newPrice, rate);
 
             // Fermer le formulaire et re-render
             document.getElementById('priceChangeForm').classList.remove('active');
@@ -5438,7 +5437,7 @@
 
             const budgetNum = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
             const rate = seller.commission_rate || 4;
-            const amount = seller.commission_amount || Math.round(budgetNum * rate / 100);
+            const amount = seller.commission_amount || calcCommission(budgetNum, rate);
 
             div.classList.add('editing');
             div.innerHTML = `💼 <input class="commission-inline-input amount" type="number" value="${Math.round(amount)}"> € TTC (<input class="commission-inline-input rate" type="number" value="${rate}" step="0.1">%)`;
@@ -5448,12 +5447,12 @@
 
             rateInput.addEventListener('input', () => {
                 const r = parseFloat(rateInput.value) || 0;
-                if (budgetNum > 0) amountInput.value = Math.round(budgetNum * r / 100);
+                if (budgetNum > 0) amountInput.value = calcCommission(budgetNum, r);
             });
 
             amountInput.addEventListener('input', () => {
                 const a = parseFloat(amountInput.value) || 0;
-                if (budgetNum > 0) rateInput.value = (a / budgetNum * 100).toFixed(1);
+                if (budgetNum > 0) rateInput.value = calcRateFromAmount(budgetNum, a);
             });
 
             const save = async () => {
@@ -5789,7 +5788,7 @@
             const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
             if (priceForComm > 0) {
                 const cRate = seller.commission_rate || 4;
-                const cAmount = seller.commission_amount || Math.round(priceForComm * cRate / 100);
+                const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
                 ext += `<div class="card-commission" onclick="editCommissionInline(event, '${seller.id}')">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
             }
 
@@ -6737,7 +6736,7 @@
             // Commission fields
             document.getElementById('commissionRate').value = seller.commission_rate || 4;
             const budgetForComm = parseAmount(seller.budget);
-            document.getElementById('commissionAmount').value = seller.commission_amount || (budgetForComm > 0 ? Math.round(budgetForComm * (seller.commission_rate || 4) / 100) : '');
+            document.getElementById('commissionAmount').value = seller.commission_amount || (budgetForComm > 0 ? calcCommission(budgetForComm, seller.commission_rate || 4) : '');
 
             // Links
             currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
@@ -6907,7 +6906,7 @@
             if (!sellerData.commission_amount) {
                 const budgetNum = parseAmount(sellerData.budget);
                 if (budgetNum > 0) {
-                    sellerData.commission_amount = Math.round(budgetNum * sellerData.commission_rate / 100);
+                    sellerData.commission_amount = calcCommission(budgetNum, sellerData.commission_rate);
                 }
             }
 
@@ -8144,7 +8143,7 @@
                 { label: 'Taux Commission', getValue: s => s.commission_rate || 4 },
                 { label: 'Montant Commission', getValue: s => {
                     const price = parseAmount(s.status === 'mandate' && s.mandate_price ? s.mandate_price : s.budget);
-                    return s.commission_amount || Math.round(price * (s.commission_rate || 4) / 100);
+                    return s.commission_amount || calcCommission(price, s.commission_rate || 4);
                 }},
                 { label: 'Type Mandat', getValue: s => s.mandate_type || '' }
             ];
@@ -8165,7 +8164,7 @@
             let totalMandat = 0, totalVendu = 0;
             data.forEach(s => {
                 const price = parseAmount(s.status === 'mandate' && s.mandate_price ? s.mandate_price : s.budget);
-                const amount = s.commission_amount || Math.round(price * (s.commission_rate || 4) / 100);
+                const amount = s.commission_amount || calcCommission(price, s.commission_rate || 4);
                 if (s.status === 'mandate') totalMandat += amount;
                 else if (s.status === 'sold') totalVendu += amount;
             });
@@ -8614,22 +8613,22 @@
             // Mise à jour countdown selon date fin
             document.getElementById('mandateEndDate').addEventListener('change', updateMandateCountdown);
 
-            // Commission auto-calculation
+            // Commission auto-calculation (sur net vendeur, pas sur prix FAI)
             document.getElementById('budget').addEventListener('input', () => {
                 const budget = parseAmount(document.getElementById('budget').value);
                 const rate = parseFloat(document.getElementById('commissionRate').value) || 4;
-                if (budget > 0) document.getElementById('commissionAmount').value = Math.round(budget * rate / 100);
+                if (budget > 0) document.getElementById('commissionAmount').value = calcCommission(budget, rate);
                 else document.getElementById('commissionAmount').value = '';
             });
             document.getElementById('commissionRate').addEventListener('input', () => {
                 const budget = parseAmount(document.getElementById('budget').value);
                 const rate = parseFloat(document.getElementById('commissionRate').value) || 0;
-                if (budget > 0) document.getElementById('commissionAmount').value = Math.round(budget * rate / 100);
+                if (budget > 0) document.getElementById('commissionAmount').value = calcCommission(budget, rate);
             });
             document.getElementById('commissionAmount').addEventListener('input', () => {
                 const budget = parseAmount(document.getElementById('budget').value);
                 const amount = parseFloat(document.getElementById('commissionAmount').value) || 0;
-                if (budget > 0 && amount > 0) document.getElementById('commissionRate').value = (amount / budget * 100).toFixed(1);
+                if (budget > 0 && amount > 0) document.getElementById('commissionRate').value = calcRateFromAmount(budget, amount);
             });
 
             document.addEventListener('keydown', e => {
