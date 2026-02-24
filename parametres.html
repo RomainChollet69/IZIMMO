@@ -1288,6 +1288,174 @@
             .import-summary-content { flex-direction: column; gap: 6px; }
             .import-summary { padding: 12px 14px; }
         }
+
+        /* ===== GOOGLE CALENDAR SECTION ===== */
+        .calendar-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .calendar-status.disconnected {
+            background: #FFF3E0;
+            border: 1px solid #FFE0B2;
+        }
+        .calendar-status.connected {
+            background: #E8F5E9;
+            border: 1px solid #C8E6C9;
+        }
+        .calendar-status-icon {
+            font-size: 24px;
+        }
+        .calendar-status-text {
+            flex: 1;
+        }
+        .calendar-status-text strong {
+            display: block;
+            margin-bottom: 2px;
+        }
+        .calendar-status-text small {
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        .calendar-connect-btn {
+            padding: 12px 24px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-connect-btn:hover {
+            background: #3367D6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+        }
+        .calendar-disconnect-btn {
+            padding: 8px 16px;
+            background: transparent;
+            color: #FF4757;
+            border: 1px solid #FF4757;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+        }
+        .calendar-disconnect-btn:hover {
+            background: #FFF0F0;
+        }
+        .calendar-prefs {
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        .calendar-prefs-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 16px;
+            color: var(--text-dark);
+        }
+        .days-checkboxes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .day-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            user-select: none;
+        }
+        .day-checkbox:has(input:checked) {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.08);
+            color: #667eea;
+            font-weight: 600;
+        }
+        .day-checkbox input {
+            accent-color: #667eea;
+        }
+        .time-inputs-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .time-input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .time-input-group label {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+        .time-input-group input[type="time"] {
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+        }
+        .time-input-group input[type="time"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .time-input-group input[type="number"] {
+            padding: 10px 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            width: 100px;
+        }
+        .calendar-toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            animation: slideDown 0.3s ease, fadeOut 0.3s ease 3s forwards;
+        }
+        .calendar-toast.success {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        .calendar-toast.error {
+            background: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -1314,6 +1482,9 @@
                 </a>
                 <a href="micro.html" class="nav-tab">
                     <i class="fa-solid fa-microphone"></i> Micro
+                </a>
+                <a href="assistant.html" class="nav-tab">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Assistant
                 </a>
             </nav>
 
@@ -1384,6 +1555,69 @@
             <div style="display:flex;align-items:center;margin-top:8px;">
                 <button class="save-btn" id="saveProfileBtn">Enregistrer</button>
                 <span class="save-success" id="saveSuccess">Enregistré</span>
+            </div>
+        </div>
+
+        <!-- Section Google Calendar -->
+        <div class="settings-section" id="calendarSection">
+            <h2 class="section-title">📅 Google Calendar</h2>
+
+            <div id="calendarStatusZone">
+                <!-- Rempli dynamiquement par loadCalendarIntegration() -->
+            </div>
+
+            <div id="calendarPrefsZone" style="display:none;">
+                <div class="calendar-prefs">
+                    <div class="calendar-prefs-title">Préférences horaires</div>
+
+                    <div class="time-inputs-row">
+                        <div class="time-input-group">
+                            <label>Début de journée</label>
+                            <input type="time" id="calWorkStart" value="08:30">
+                        </div>
+                        <div class="time-input-group">
+                            <label>Fin de journée</label>
+                            <input type="time" id="calWorkEnd" value="19:00">
+                        </div>
+                    </div>
+
+                    <div class="time-inputs-row">
+                        <div class="time-input-group">
+                            <label>Pause déjeuner début</label>
+                            <input type="time" id="calLunchStart" value="12:00">
+                        </div>
+                        <div class="time-input-group">
+                            <label>Pause déjeuner fin</label>
+                            <input type="time" id="calLunchEnd" value="14:00">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Jours travaillés</label>
+                        <div class="days-checkboxes">
+                            <label class="day-checkbox"><input type="checkbox" value="1" class="cal-day" checked> Lun</label>
+                            <label class="day-checkbox"><input type="checkbox" value="2" class="cal-day" checked> Mar</label>
+                            <label class="day-checkbox"><input type="checkbox" value="3" class="cal-day" checked> Mer</label>
+                            <label class="day-checkbox"><input type="checkbox" value="4" class="cal-day" checked> Jeu</label>
+                            <label class="day-checkbox"><input type="checkbox" value="5" class="cal-day" checked> Ven</label>
+                            <label class="day-checkbox"><input type="checkbox" value="6" class="cal-day"> Sam</label>
+                            <label class="day-checkbox"><input type="checkbox" value="7" class="cal-day"> Dim</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Durée RDV par défaut</label>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="number" id="calDefaultDuration" value="60" min="15" max="240" step="15" class="time-input-group input">
+                            <span style="color:var(--text-light);font-size:14px;">minutes</span>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;align-items:center;margin-top:8px;">
+                        <button class="save-btn" id="saveCalendarPrefsBtn">Enregistrer les préférences</button>
+                        <span class="save-success" id="calSaveSuccess" style="display:none;">Enregistré</span>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1637,6 +1871,7 @@
 
             await loadProfile();
             await loadContacts();
+            await loadCalendarIntegration();
 
             if ('contacts' in navigator && 'ContactsManager' in window) {
                 document.getElementById('importNativeBtn').style.display = 'inline-flex';
@@ -1644,6 +1879,29 @@
 
             // Profile
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+
+            // Calendar preferences
+            document.getElementById('saveCalendarPrefsBtn').addEventListener('click', saveCalendarPreferences);
+
+            // Calendar URL params (retour OAuth)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('calendar') === 'connected') {
+                showCalendarToast('Google Calendar connecté avec succès !', 'success');
+                window.history.replaceState({}, '', window.location.pathname);
+                await loadCalendarIntegration();
+            } else if (urlParams.get('calendar') === 'error') {
+                const reason = urlParams.get('reason') || 'unknown';
+                const messages = {
+                    access_denied: 'Tu as refusé l\'accès à Google Calendar.',
+                    invalid_state: 'Le lien d\'autorisation a expiré. Réessaie.',
+                    expired_state: 'Le lien d\'autorisation a expiré. Réessaie.',
+                    token_exchange_failed: 'Erreur lors de la connexion à Google. Réessaie.',
+                    storage_failed: 'Erreur de sauvegarde. Réessaie.',
+                    internal_error: 'Erreur inattendue. Réessaie.'
+                };
+                showCalendarToast(messages[reason] || 'Erreur de connexion Calendar.', 'error');
+                window.history.replaceState({}, '', window.location.pathname);
+            }
 
             // Import
             document.getElementById('importNativeBtn').addEventListener('click', importNativeContacts);
@@ -1685,6 +1943,160 @@
                 document.getElementById('importSummary').style.display = 'none';
             });
         });
+
+        // ===== GOOGLE CALENDAR =====
+
+        async function loadCalendarIntegration() {
+            const statusZone = document.getElementById('calendarStatusZone');
+            const prefsZone = document.getElementById('calendarPrefsZone');
+
+            const { data: integration, error } = await supabaseClient
+                .from('user_integrations')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .maybeSingle();
+
+            if (error) {
+                console.error('[Calendar] Erreur chargement intégration:', error);
+            }
+
+            if (integration && integration.google_calendar_connected) {
+                // État connecté
+                statusZone.innerHTML = `
+                    <div class="calendar-status connected">
+                        <span class="calendar-status-icon">✅</span>
+                        <div class="calendar-status-text">
+                            <strong>Google Calendar connecté</strong>
+                            <small>${integration.google_email || 'Compte Google'}</small>
+                        </div>
+                        <button class="calendar-disconnect-btn" onclick="disconnectGoogleCalendar()">Déconnecter</button>
+                    </div>
+                `;
+                prefsZone.style.display = 'block';
+
+                // Charger les préférences
+                if (integration.work_start) document.getElementById('calWorkStart').value = integration.work_start.substring(0, 5);
+                if (integration.work_end) document.getElementById('calWorkEnd').value = integration.work_end.substring(0, 5);
+                if (integration.lunch_slot_start) document.getElementById('calLunchStart').value = integration.lunch_slot_start.substring(0, 5);
+                if (integration.lunch_slot_end) document.getElementById('calLunchEnd').value = integration.lunch_slot_end.substring(0, 5);
+                if (integration.default_meeting_duration) document.getElementById('calDefaultDuration').value = integration.default_meeting_duration;
+
+                // Working days checkboxes
+                const days = integration.working_days || [1, 2, 3, 4, 5];
+                document.querySelectorAll('.cal-day').forEach(cb => {
+                    cb.checked = days.includes(parseInt(cb.value));
+                });
+            } else {
+                // État déconnecté
+                statusZone.innerHTML = `
+                    <div class="calendar-status disconnected">
+                        <span class="calendar-status-icon">📅</span>
+                        <div class="calendar-status-text">
+                            <strong>Google Calendar non connecté</strong>
+                            <small>Connecte ton agenda pour que Léon puisse consulter tes disponibilités et créer des événements.</small>
+                        </div>
+                    </div>
+                    <button class="calendar-connect-btn" onclick="connectGoogleCalendar()">
+                        <i class="fa-brands fa-google"></i> Connecter Google Calendar
+                    </button>
+                `;
+                prefsZone.style.display = 'none';
+            }
+        }
+
+        async function connectGoogleCalendar() {
+            try {
+                const headers = await getAuthHeaders();
+                const response = await fetch('/api/google-auth-init', {
+                    method: 'POST',
+                    headers
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+                    console.error('[Calendar] Erreur init OAuth:', err);
+                    showCalendarToast('Erreur lors de l\'initialisation. Réessaie.', 'error');
+                    return;
+                }
+
+                const { auth_url } = await response.json();
+                window.location.href = auth_url;
+            } catch (err) {
+                console.error('[Calendar] Erreur connexion:', err);
+                showCalendarToast('Erreur de connexion. Vérifie ta connexion internet.', 'error');
+            }
+        }
+
+        async function disconnectGoogleCalendar() {
+            if (!confirm('Déconnecter Google Calendar ? Léon ne pourra plus accéder à ton agenda.')) return;
+
+            const { error } = await supabaseClient
+                .from('user_integrations')
+                .update({
+                    google_calendar_connected: false,
+                    google_access_token: null,
+                    google_refresh_token: null,
+                    google_token_expires_at: null,
+                    google_email: null
+                })
+                .eq('user_id', currentUserId);
+
+            if (error) {
+                console.error('[Calendar] Erreur déconnexion:', error);
+                showCalendarToast('Erreur lors de la déconnexion.', 'error');
+                return;
+            }
+
+            showCalendarToast('Google Calendar déconnecté.', 'success');
+            await loadCalendarIntegration();
+        }
+
+        async function saveCalendarPreferences() {
+            const btn = document.getElementById('saveCalendarPrefsBtn');
+            btn.disabled = true;
+            btn.textContent = 'Enregistrement...';
+
+            const workingDays = Array.from(document.querySelectorAll('.cal-day:checked'))
+                .map(cb => parseInt(cb.value));
+
+            const prefs = {
+                work_start: document.getElementById('calWorkStart').value + ':00',
+                work_end: document.getElementById('calWorkEnd').value + ':00',
+                lunch_slot_start: document.getElementById('calLunchStart').value + ':00',
+                lunch_slot_end: document.getElementById('calLunchEnd').value + ':00',
+                default_meeting_duration: parseInt(document.getElementById('calDefaultDuration').value) || 60,
+                working_days: workingDays
+            };
+
+            const { error } = await supabaseClient
+                .from('user_integrations')
+                .update(prefs)
+                .eq('user_id', currentUserId);
+
+            btn.disabled = false;
+            btn.textContent = 'Enregistrer les préférences';
+
+            if (error) {
+                console.error('[Calendar] Erreur sauvegarde préférences:', error);
+                showCalendarToast('Erreur de sauvegarde.', 'error');
+                return;
+            }
+
+            const successEl = document.getElementById('calSaveSuccess');
+            successEl.style.display = 'inline-flex';
+            setTimeout(() => { successEl.style.display = 'none'; }, 2000);
+        }
+
+        function showCalendarToast(message, type) {
+            const existing = document.querySelector('.calendar-toast');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `calendar-toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
 
         // ===== PROFILE CRUD =====
         async function loadProfile() {

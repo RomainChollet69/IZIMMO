@@ -1,0 +1,1418 @@
+<!--
+  Léon — Assistant Organisationnel (assistant.html)
+  Interface conversationnelle IA pour gestion d'agenda et communication.
+  Auth requise (js/auth.js). Intégration Google Calendar.
+  Dépendances : supabase-config.js, auth.js, audio-recorder.js
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Léon. — Assistant</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — Assistant Organisationnel">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/audio-recorder.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== HEADER ===== */
+        .header-desktop {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-right: 48px;
+        }
+        .logo img { height: 36px; width: auto; }
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .nav-tab {
+            color: #6B7280;
+            text-decoration: none;
+            padding: 20px 24px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-tab i { font-size: 16px; }
+        .nav-tab:hover { color: #243B53; }
+        .nav-tab.active {
+            color: #243B53;
+            font-weight: 600;
+            border-bottom-color: #243B53;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .settings-btn {
+            color: #6B7280;
+            font-size: 18px;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .settings-btn:hover { color: #243B53; background: #F3F4F6; }
+
+        /* ===== MOBILE HEADER ===== */
+        .header-mobile {
+            display: none;
+            background: #FFFFFF;
+            padding: 12px 16px;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .logo-mobile img { height: 28px; }
+        .user-mobile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-firstname {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        /* ===== CONVERSATION ZONE ===== */
+        .conversation-container {
+            flex: 1;
+            max-width: 700px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px 16px 200px;
+            overflow-y: auto;
+        }
+
+        /* Chat bubbles */
+        .msg { margin-bottom: 16px; display: flex; }
+        .msg.user { justify-content: flex-end; }
+        .msg.leon { justify-content: flex-start; gap: 10px; }
+
+        .msg-bubble {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .msg.user .msg-bubble {
+            background: var(--gradient);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .msg.leon .msg-bubble {
+            background: white;
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+            box-shadow: var(--shadow);
+        }
+
+        .leon-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        /* Thinking indicator */
+        .thinking {
+            display: flex;
+            gap: 4px;
+            padding: 16px;
+        }
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            background: #B0BEC5;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+        }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            box-shadow: var(--shadow);
+            max-width: 100%;
+        }
+        .card-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Slots card */
+        .slot-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .slot-item:hover { border-color: #667eea; background: rgba(102, 126, 234, 0.04); }
+        .slot-item.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.08); }
+        .slot-item input[type="checkbox"] { accent-color: #667eea; }
+        .slot-label { flex: 1; font-size: 14px; }
+        .slot-time { font-weight: 600; color: #667eea; font-size: 13px; }
+
+        /* Message card */
+        .message-preview {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 10px 0;
+            white-space: pre-wrap;
+        }
+        .message-preview textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font: inherit;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+        }
+        .message-subject {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-bottom: 8px;
+        }
+
+        /* Planning card */
+        .event-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f2f5;
+        }
+        .event-item:last-child { border-bottom: none; }
+        .event-time {
+            font-weight: 700;
+            font-size: 14px;
+            color: #667eea;
+            margin-bottom: 4px;
+        }
+        .event-title { font-weight: 600; font-size: 14px; }
+        .event-location {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+
+        /* Preview / confirmation cards */
+        .preview-card {
+            border-left: 4px solid #FFB74D;
+        }
+        .confirmed-card {
+            border-left: 4px solid #66BB6A;
+        }
+        .disambiguation-card .event-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .disambiguation-card .event-option:hover {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.04);
+        }
+        .disambiguation-card .event-option input[type="radio"] { accent-color: #667eea; }
+
+        /* Calendar not connected */
+        .calendar-cta {
+            text-align: center;
+            padding: 24px;
+        }
+        .calendar-cta-icon { font-size: 48px; margin-bottom: 12px; }
+        .calendar-cta-text {
+            font-size: 15px;
+            color: var(--text-light);
+            margin-bottom: 16px;
+        }
+
+        /* Action buttons */
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .card-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card-btn.primary {
+            background: var(--gradient);
+            color: white;
+        }
+        .card-btn.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .card-btn.secondary {
+            background: #f0f2f5;
+            color: var(--text-dark);
+        }
+        .card-btn.secondary:hover { background: #E5E7EB; }
+        .card-btn.danger {
+            background: transparent;
+            color: #FF4757;
+            border: 1px solid #FF4757;
+        }
+        .card-btn.danger:hover { background: #FFF0F0; }
+        .card-btn.success {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        /* ===== INPUT ZONE ===== */
+        .input-zone {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            padding: 12px 16px;
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+        .input-zone-inner {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        #textInput {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 24px;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        #textInput:focus { border-color: #667eea; }
+        .btn-voice, .btn-send {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .btn-voice {
+            background: #f0f2f5;
+            color: #667eea;
+        }
+        .btn-voice:hover { background: #E5E7EB; }
+        .btn-voice.recording {
+            background: #FF4757;
+            color: white;
+            animation: pulse-record 1.5s infinite;
+        }
+        @keyframes pulse-record {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
+        }
+        .btn-send {
+            background: var(--gradient);
+            color: white;
+        }
+        .btn-send:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .btn-send:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Quick chips */
+        .quick-chips {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            -webkit-overflow-scrolling: touch;
+        }
+        .quick-chips::-webkit-scrollbar { display: none; }
+        .quick-chip {
+            white-space: nowrap;
+            padding: 6px 14px;
+            border-radius: 16px;
+            background: #f0f2f5;
+            border: 1px solid var(--border-color);
+            color: var(--text-dark);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+        .quick-chip:hover {
+            background: white;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 9999;
+            background: #E8F5E9;
+            color: #2E7D32;
+            animation: slideDown 0.3s ease, fadeOut 0.3s ease 2s forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+        @keyframes fadeOut { to { opacity: 0; } }
+
+        /* ===== BOTTOM NAV MOBILE ===== */
+        .bottom-navigation {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #E5E7EB;
+            z-index: 200;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .bottom-nav-inner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 56px;
+        }
+        .bottom-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            text-decoration: none;
+            color: #9CA3AF;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 4px 8px;
+            transition: color 0.2s;
+        }
+        .bottom-tab i { font-size: 18px; }
+        .bottom-tab.active { color: #667eea; font-weight: 700; }
+        .bottom-tab:hover { color: #667eea; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header-desktop { display: none; }
+            .header-mobile { display: flex; }
+            .bottom-navigation { display: block; }
+            .conversation-container { padding: 12px 12px 260px; }
+            .input-zone { bottom: 56px; }
+            .msg-bubble { max-width: 90%; font-size: 14px; }
+            .leon-avatar { width: 28px; height: 28px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Desktop header -->
+    <div class="header-desktop">
+        <div class="header-inner">
+            <a href="index.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab"><i class="fa-solid fa-house"></i> Vendeurs</a>
+                <a href="acquereurs.html" class="nav-tab"><i class="fa-solid fa-key"></i> Acquéreurs</a>
+                <a href="dvf.html" class="nav-tab"><i class="fa-solid fa-chart-simple"></i> Marché</a>
+                <a href="social.html" class="nav-tab"><i class="fa-solid fa-share-nodes"></i> Social</a>
+                <a href="micro.html" class="nav-tab"><i class="fa-solid fa-microphone"></i> Micro</a>
+                <a href="assistant.html" class="nav-tab active"><i class="fa-solid fa-wand-magic-sparkles"></i> Assistant</a>
+            </nav>
+            <div class="header-actions">
+                <a href="parametres.html" class="settings-btn" title="Paramètres"><i class="fa-solid fa-gear"></i></a>
+                <div class="user-profile" id="userProfile"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile header -->
+    <div class="header-mobile">
+        <a href="index.html" class="logo-mobile">
+            <img src="img/Logo_leon.svg" alt="Léon">
+        </a>
+        <div class="user-mobile">
+            <span class="user-firstname" id="userFirstname"></span>
+            <div id="userAvatarMobile"></div>
+        </div>
+    </div>
+
+    <!-- Conversation -->
+    <div class="conversation-container" id="conversation"></div>
+
+    <!-- Input zone -->
+    <div class="input-zone">
+        <div class="input-zone-inner">
+            <div class="input-row">
+                <input type="text" id="textInput" placeholder="Tape ta demande..." autocomplete="off">
+                <button class="btn-voice" id="voiceBtn" title="Dicter"><i class="fa-solid fa-microphone"></i></button>
+                <button class="btn-send" id="sendBtn" title="Envoyer"><i class="fa-solid fa-paper-plane"></i></button>
+            </div>
+            <div class="quick-chips" id="quickChips">
+                <button class="quick-chip" data-text="Qu'est-ce que j'ai demain ?">Mon planning demain</button>
+                <button class="quick-chip" data-text="Trouve-moi un créneau cette semaine">Trouver un créneau</button>
+                <button class="quick-chip" data-text="Bloque 2h de prospection demain matin">Bloquer du temps</button>
+                <button class="quick-chip" data-text="Mon planning de la semaine">Ma semaine</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom nav mobile -->
+    <div class="bottom-navigation">
+        <div class="bottom-nav-inner">
+            <a href="index.html" class="bottom-tab"><i class="fa-solid fa-house"></i><span>Vendeurs</span></a>
+            <a href="acquereurs.html" class="bottom-tab"><i class="fa-solid fa-key"></i><span>Acquéreurs</span></a>
+            <a href="micro.html" class="bottom-tab"><i class="fa-solid fa-microphone"></i><span>Micro</span></a>
+            <a href="assistant.html" class="bottom-tab active"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Assistant</span></a>
+            <a href="social.html" class="bottom-tab"><i class="fa-solid fa-share-nodes"></i><span>Social</span></a>
+        </div>
+    </div>
+
+    <script>
+    /**
+     * assistant.html — JavaScript
+     * Flux conversationnel IA : saisie → orchestrateur → actions Calendar → UI
+     * Gère multi-turn, confirmation, désambiguïsation, vocal.
+     */
+
+    // ===== STATE =====
+    const conversationHistory = [];
+    const MAX_HISTORY = 10;
+    let userName = '';
+    let currentUserId = '';
+    let calendarConnected = false;
+    let isProcessing = false;
+    let recorder = null;
+    let isRecording = false;
+
+    // ===== INIT =====
+    document.addEventListener('DOMContentLoaded', async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        currentUserId = session.user.id;
+        const meta = session.user.user_metadata;
+        userName = (meta.full_name || meta.name || '').split(' ')[0] || 'Agent';
+
+        // Mobile header
+        const fnEl = document.getElementById('userFirstname');
+        if (fnEl) fnEl.textContent = userName;
+
+        // Init AudioRecorder
+        recorder = new AudioRecorder({
+            maxDuration: 30000,
+            silenceTimeout: 3000,
+            silenceThreshold: 0.01,
+            onStateChange: handleVoiceState
+        });
+
+        // Check calendar
+        await checkCalendarConnection();
+
+        // Welcome message
+        appendLeonMessage(`Salut ${userName} ! Qu'est-ce que je peux organiser pour toi ?`);
+
+        // Event listeners
+        document.getElementById('sendBtn').addEventListener('click', onSendClick);
+        document.getElementById('textInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                onSendClick();
+            }
+        });
+        document.getElementById('voiceBtn').addEventListener('click', onVoiceClick);
+
+        // Quick chips
+        document.querySelectorAll('.quick-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const text = chip.dataset.text;
+                document.getElementById('textInput').value = text;
+                onSendClick();
+            });
+        });
+    });
+
+    async function checkCalendarConnection() {
+        const { data } = await supabaseClient
+            .from('user_integrations')
+            .select('google_calendar_connected')
+            .eq('user_id', currentUserId)
+            .maybeSingle();
+
+        calendarConnected = data?.google_calendar_connected || false;
+    }
+
+    async function getContactsList() {
+        try {
+            // Récupérer les 50 contacts les plus récents (sellers + buyers + contacts)
+            const contacts = [];
+
+            const { data: sellers } = await supabaseClient
+                .from('sellers')
+                .select('first_name, last_name, phone')
+                .eq('user_id', currentUserId)
+                .order('updated_at', { ascending: false })
+                .limit(20);
+
+            const { data: buyers } = await supabaseClient
+                .from('buyers')
+                .select('first_name, last_name, phone')
+                .eq('user_id', currentUserId)
+                .order('updated_at', { ascending: false })
+                .limit(20);
+
+            const { data: contactsDb } = await supabaseClient
+                .from('contacts')
+                .select('name, phone')
+                .eq('user_id', currentUserId)
+                .order('updated_at', { ascending: false })
+                .limit(10);
+
+            if (sellers) sellers.forEach(s => contacts.push(`${s.first_name || ''} ${s.last_name || ''} — ${s.phone || ''}`));
+            if (buyers) buyers.forEach(b => contacts.push(`${b.first_name || ''} ${b.last_name || ''} — ${b.phone || ''}`));
+            if (contactsDb) contactsDb.forEach(c => contacts.push(`${c.name || ''} — ${c.phone || ''}`));
+
+            return JSON.stringify(contacts.slice(0, 50));
+        } catch (e) {
+            console.error('[Assistant] Erreur chargement contacts:', e);
+            return '[]';
+        }
+    }
+
+    // ===== INPUT HANDLING =====
+
+    function onSendClick() {
+        const input = document.getElementById('textInput');
+        const text = input.value.trim();
+        if (!text || isProcessing) return;
+        input.value = '';
+        handleUserInput(text);
+    }
+
+    async function onVoiceClick() {
+        if (!recorder) return;
+
+        if (isRecording) {
+            recorder.stop();
+            return;
+        }
+
+        try {
+            isRecording = true;
+            document.getElementById('voiceBtn').classList.add('recording');
+            const result = await recorder.record();
+
+            if (result && result.text) {
+                handleUserInput(result.text);
+            }
+        } catch (err) {
+            console.error('[Assistant] Erreur vocale:', err);
+        } finally {
+            isRecording = false;
+            document.getElementById('voiceBtn').classList.remove('recording');
+        }
+    }
+
+    function handleVoiceState(state, msg) {
+        const btn = document.getElementById('voiceBtn');
+        switch (state) {
+            case 'recording':
+                btn.classList.add('recording');
+                btn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+                break;
+            case 'transcribing':
+                btn.classList.remove('recording');
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                break;
+            case 'done':
+            case 'idle':
+            case 'error':
+                btn.classList.remove('recording');
+                btn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                isRecording = false;
+                break;
+        }
+    }
+
+    // ===== MAIN FLOW =====
+
+    async function handleUserInput(input) {
+        if (isProcessing) return;
+        isProcessing = true;
+
+        // Hide quick chips after first interaction
+        document.getElementById('quickChips').style.display = 'none';
+
+        appendUserMessage(input);
+        conversationHistory.push({ role: 'user', content: input });
+        if (conversationHistory.length > MAX_HISTORY) conversationHistory.splice(0, 2);
+
+        const thinkingId = appendThinking();
+
+        // Check calendar connection
+        if (!calendarConnected) {
+            await checkCalendarConnection();
+        }
+        if (!calendarConnected) {
+            removeThinking(thinkingId);
+            appendCalendarNotConnected();
+            isProcessing = false;
+            return;
+        }
+
+        try {
+            const headers = await getAuthHeaders();
+
+            // Call orchestrator
+            const orchResponse = await fetch('/api/assistant-orchestrator', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    input,
+                    context: {
+                        today: new Date().toISOString().split('T')[0],
+                        user_name: userName,
+                        contacts_json: await getContactsList()
+                    },
+                    conversation_history: conversationHistory.slice(0, -1)
+                })
+            });
+
+            if (!orchResponse.ok) {
+                throw new Error(`Orchestrator error: ${orchResponse.status}`);
+            }
+
+            const orch = await orchResponse.json();
+
+            removeThinking(thinkingId);
+            appendLeonMessage(orch.leon_response);
+
+            conversationHistory.push({ role: 'assistant', content: orch.leon_response });
+            if (conversationHistory.length > MAX_HISTORY) conversationHistory.splice(0, 2);
+
+            // Execute based on intent
+            await executeIntent(orch, headers);
+
+        } catch (err) {
+            removeThinking(thinkingId);
+            console.error('[Assistant] Erreur:', err);
+            appendLeonMessage('Oups, quelque chose n\'a pas marché. Réessaie !');
+        }
+
+        isProcessing = false;
+        scrollToBottom();
+    }
+
+    async function executeIntent(orch, headers) {
+        const { intent, params } = orch;
+
+        switch (intent) {
+            case 'find_slots': {
+                const data = await callCalendar(headers, 'find_slots', {
+                    date_from: params.date_range?.from,
+                    date_to: params.date_range?.to,
+                    slot_type: params.slot_type || 'any',
+                    duration_minutes: params.duration_minutes || 60
+                });
+                if (data.slots) {
+                    appendSlotsCard(data.slots, params);
+                    conversationHistory.push({ role: 'assistant', content: `Créneaux trouvés: ${JSON.stringify(data.slots)}` });
+                }
+                break;
+            }
+
+            case 'find_slots_and_draft': {
+                const data = await callCalendar(headers, 'find_slots', {
+                    date_from: params.date_range?.from,
+                    date_to: params.date_range?.to,
+                    slot_type: params.slot_type || 'any',
+                    duration_minutes: params.duration_minutes || 60
+                });
+                if (data.slots) {
+                    appendSlotsCard(data.slots, params);
+                    conversationHistory.push({ role: 'assistant', content: `Créneaux trouvés: ${JSON.stringify(data.slots)}` });
+                }
+
+                // Draft message
+                const msgResponse = await fetch('/api/assistant-draft-message', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        who: params.who,
+                        who_role: params.who_role,
+                        context: params.context,
+                        tone: params.message_tone || 'professionnel',
+                        channel: params.message_channel || 'whatsapp',
+                        slots: data.slots || [],
+                        user_name: userName
+                    })
+                });
+                if (msgResponse.ok) {
+                    const msgData = await msgResponse.json();
+                    appendMessageCard(msgData, params);
+                }
+                break;
+            }
+
+            case 'create_event': {
+                appendEventPreview(params);
+                break;
+            }
+
+            case 'update_event': {
+                if (params.needs_disambiguation) {
+                    const data = await callCalendar(headers, 'list_events', params.disambiguation_query);
+                    appendDisambiguationCard(data.events || [], 'update', params);
+                } else {
+                    appendUpdatePreview(params);
+                }
+                break;
+            }
+
+            case 'delete_event': {
+                if (params.needs_disambiguation) {
+                    const data = await callCalendar(headers, 'list_events', params.disambiguation_query);
+                    appendDisambiguationCard(data.events || [], 'delete', params);
+                } else {
+                    appendDeletePreview(params);
+                }
+                break;
+            }
+
+            case 'list_events': {
+                const data = await callCalendar(headers, 'list_events', {
+                    date_from: params.date_range?.from,
+                    date_to: params.date_range?.to
+                });
+                appendPlanningCard(data.events || [], params.label);
+                break;
+            }
+
+            case 'draft_message': {
+                const msgResponse = await fetch('/api/assistant-draft-message', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        who: params.who,
+                        who_role: params.who_role,
+                        context: params.context,
+                        tone: params.message_tone || 'professionnel',
+                        channel: params.message_channel || 'whatsapp',
+                        slots: null,
+                        user_name: userName
+                    })
+                });
+                if (msgResponse.ok) {
+                    const msgData = await msgResponse.json();
+                    appendMessageCard(msgData, params);
+                }
+                break;
+            }
+
+            case 'confirm_action':
+            case 'unknown':
+            default:
+                break;
+        }
+    }
+
+    async function callCalendar(headers, action, params) {
+        const response = await fetch('/api/calendar', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ action, ...params })
+        });
+        if (!response.ok) {
+            const err = await response.json();
+            if (err.error === 'calendar_not_connected') {
+                calendarConnected = false;
+                appendCalendarNotConnected();
+                throw new Error('Calendar not connected');
+            }
+            if (err.error === 'token_refresh_failed') {
+                calendarConnected = false;
+                appendLeonMessage('Ton accès Calendar a expiré. Reconnecte-le dans les paramètres.');
+                throw new Error('Token refresh failed');
+            }
+            throw new Error(err.error || 'Calendar error');
+        }
+        return response.json();
+    }
+
+    // ===== UI COMPONENTS =====
+
+    function appendUserMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'msg user';
+        div.innerHTML = `<div class="msg-bubble">${escapeHtml(text)}</div>`;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendLeonMessage(text) {
+        const div = document.createElement('div');
+        div.className = 'msg leon';
+        div.innerHTML = `
+            <div class="leon-avatar">🤖</div>
+            <div class="msg-bubble">${escapeHtml(text)}</div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendThinking() {
+        const id = 'thinking-' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'msg leon';
+        div.id = id;
+        div.innerHTML = `
+            <div class="leon-avatar">🤖</div>
+            <div class="msg-bubble">
+                <div class="thinking">
+                    <div class="thinking-dot"></div>
+                    <div class="thinking-dot"></div>
+                    <div class="thinking-dot"></div>
+                </div>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+        return id;
+    }
+
+    function removeThinking(id) {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    }
+
+    function appendCalendarNotConnected() {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <div class="calendar-cta">
+                <div class="calendar-cta-icon">📅</div>
+                <div class="calendar-cta-text">Connecte ton Google Calendar pour que Léon puisse gérer ton agenda.</div>
+                <a href="parametres.html" class="card-btn primary" style="text-decoration:none;">
+                    <i class="fa-solid fa-gear"></i> Aller dans Paramètres
+                </a>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendSlotsCard(slots, params) {
+        if (!slots || slots.length === 0) {
+            appendLeonMessage('Aucun créneau trouvé sur cette période. Tu veux que j\'élargisse la recherche ?');
+            return;
+        }
+
+        const cardId = 'slots-' + Date.now();
+        const slotsHtml = slots.map((s, i) => `
+            <label class="slot-item" onclick="this.classList.toggle('selected')">
+                <input type="checkbox" value="${i}" class="slot-cb-${cardId}">
+                <span class="slot-label">${s.day_label}</span>
+                <span class="slot-time">${s.start} – ${s.end}</span>
+            </label>
+        `).join('');
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <div class="card-title">📅 ${slots.length} créneau${slots.length > 1 ? 'x' : ''} trouvé${slots.length > 1 ? 's' : ''}</div>
+            ${slotsHtml}
+            <div class="card-actions">
+                <button class="card-btn primary" onclick="blockSelectedSlots('${cardId}', ${JSON.stringify(slots).replace(/"/g, '&quot;')}, ${JSON.stringify(params || {}).replace(/"/g, '&quot;')})">
+                    📅 Bloquer le(s) créneau(x)
+                </button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    async function blockSelectedSlots(cardId, slots, params) {
+        const checked = document.querySelectorAll(`.slot-cb-${cardId}:checked`);
+        if (checked.length === 0) {
+            showToast('Sélectionne au moins un créneau');
+            return;
+        }
+
+        const headers = await getAuthHeaders();
+        for (const cb of checked) {
+            const slot = slots[parseInt(cb.value)];
+            const title = params.context
+                ? `${params.context}${params.who ? ' — ' + params.who : ''}`
+                : params.who ? `RDV ${params.who}` : 'Événement';
+
+            try {
+                const result = await callCalendar(headers, 'create_event', {
+                    title,
+                    date: slot.date,
+                    start_time: slot.start,
+                    end_time: slot.end
+                });
+                appendEventConfirmed(result.event);
+            } catch (e) {
+                appendLeonMessage(`Erreur lors de la création de l'événement du ${slot.day_label}.`);
+            }
+        }
+    }
+
+    function appendMessageCard(msgData, params) {
+        const cardId = 'msg-' + Date.now();
+        const channelLabels = { whatsapp: 'WhatsApp', sms: 'SMS', email: 'Email' };
+        const channelLabel = channelLabels[msgData.channel] || msgData.channel;
+
+        let subjectHtml = '';
+        if (msgData.subject) {
+            subjectHtml = `<div class="message-subject">Objet : ${escapeHtml(msgData.subject)}</div>`;
+        }
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.id = cardId;
+        div.innerHTML = `
+            <div class="card-title">💬 Message pour ${escapeHtml(params.who || 'le contact')} (${channelLabel})</div>
+            ${subjectHtml}
+            <div class="message-preview" id="msgText-${cardId}">${escapeHtml(msgData.message)}</div>
+            <div class="card-actions">
+                <button class="card-btn primary" onclick="copyMessage('msgText-${cardId}')">📋 Copier</button>
+                ${msgData.channel === 'whatsapp' ? `<button class="card-btn secondary" onclick="openWhatsApp('${escapeHtml(params.who || '')}', 'msgText-${cardId}')">💬 WhatsApp</button>` : ''}
+                <button class="card-btn secondary" onclick="regenerateMessage(${JSON.stringify(params).replace(/"/g, '&quot;')}, '${cardId}')">🔄 Régénérer</button>
+                <button class="card-btn secondary" onclick="editMessage('${cardId}')">✏️ Modifier</button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendPlanningCard(events, label) {
+        if (!events || events.length === 0) {
+            appendLeonMessage(`Ton planning ${label || ''} est libre ! Parfait pour de la prospection.`);
+            return;
+        }
+
+        const eventsHtml = events.map(e => {
+            const startTime = e.start ? formatEventTime(e.start) : '';
+            const endTime = e.end ? formatEventTime(e.end) : '';
+            const timeStr = e.all_day ? 'Toute la journée' : `${startTime} – ${endTime}`;
+            return `
+                <div class="event-item">
+                    <div class="event-time">${timeStr}</div>
+                    <div class="event-title">${escapeHtml(e.summary)}</div>
+                    ${e.location ? `<div class="event-location">📍 ${escapeHtml(e.location)}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+            <div class="card-title">📅 Ton planning ${escapeHtml(label || '')}</div>
+            ${eventsHtml}
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendEventPreview(params) {
+        const div = document.createElement('div');
+        div.className = 'card preview-card';
+        const previewId = 'preview-' + Date.now();
+        div.id = previewId;
+        div.innerHTML = `
+            <div class="card-title">📅 Créer cet événement ?</div>
+            <div class="event-item">
+                <div class="event-title">📌 ${escapeHtml(params.title || 'Événement')}</div>
+                <div class="event-time">🕐 ${params.date || ''} ${params.start_time || ''} – ${params.end_time || ''}</div>
+                ${params.location ? `<div class="event-location">📍 ${escapeHtml(params.location)}</div>` : ''}
+            </div>
+            <div class="card-actions">
+                <button class="card-btn primary" onclick="confirmCreateEvent(${JSON.stringify(params).replace(/"/g, '&quot;')}, '${previewId}')">✅ Confirmer</button>
+                <button class="card-btn danger" onclick="cancelAction('${previewId}')">❌ Annuler</button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    async function confirmCreateEvent(params, previewId) {
+        const previewEl = document.getElementById(previewId);
+        if (previewEl) {
+            previewEl.querySelector('.card-actions').innerHTML = '<span style="color:var(--text-light);font-size:13px;">Création en cours...</span>';
+        }
+
+        try {
+            const headers = await getAuthHeaders();
+            const result = await callCalendar(headers, 'create_event', params);
+            if (previewEl) previewEl.remove();
+            appendEventConfirmed(result.event);
+            appendLeonMessage('C\'est calé !');
+        } catch (e) {
+            appendLeonMessage('Erreur lors de la création. Réessaie.');
+        }
+    }
+
+    function appendEventConfirmed(event) {
+        const div = document.createElement('div');
+        div.className = 'card confirmed-card';
+        div.innerHTML = `
+            <div class="card-title">✅ Événement créé</div>
+            <div class="event-item">
+                <div class="event-title">📅 ${escapeHtml(event.summary || '')}</div>
+                <div class="event-time">🕐 ${formatEventTime(event.start)} – ${formatEventTime(event.end)}</div>
+            </div>
+            ${event.htmlLink ? `
+                <div class="card-actions">
+                    <a href="${event.htmlLink}" target="_blank" class="card-btn secondary" style="text-decoration:none;">
+                        Voir dans Google Calendar ↗
+                    </a>
+                </div>
+            ` : ''}
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    function appendUpdatePreview(params) {
+        const div = document.createElement('div');
+        div.className = 'card preview-card';
+        const previewId = 'update-' + Date.now();
+        div.id = previewId;
+        div.innerHTML = `
+            <div class="card-title">✏️ Modifier cet événement ?</div>
+            <div class="event-item">
+                <div class="event-title">${escapeHtml(params.title || params.original_request || 'Événement')}</div>
+                ${params.date ? `<div class="event-time">🕐 ${params.date} ${params.start_time || ''} – ${params.end_time || ''}</div>` : ''}
+            </div>
+            <div class="card-actions">
+                <button class="card-btn primary" onclick="confirmUpdateEvent(${JSON.stringify(params).replace(/"/g, '&quot;')}, '${previewId}')">✅ Confirmer</button>
+                <button class="card-btn danger" onclick="cancelAction('${previewId}')">❌ Annuler</button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    async function confirmUpdateEvent(params, previewId) {
+        const previewEl = document.getElementById(previewId);
+        if (previewEl) previewEl.remove();
+
+        try {
+            const headers = await getAuthHeaders();
+            const result = await callCalendar(headers, 'update_event', params);
+            appendEventConfirmed(result.event);
+            appendLeonMessage('Modification effectuée !');
+        } catch (e) {
+            appendLeonMessage('Erreur lors de la modification. Réessaie.');
+        }
+    }
+
+    function appendDeletePreview(params) {
+        const div = document.createElement('div');
+        div.className = 'card preview-card';
+        const previewId = 'delete-' + Date.now();
+        div.id = previewId;
+        div.innerHTML = `
+            <div class="card-title">🗑️ Supprimer cet événement ?</div>
+            <div class="event-item">
+                <div class="event-title">${escapeHtml(params.title || params.original_request || 'Événement')}</div>
+                ${params.date ? `<div class="event-time">${params.date}</div>` : ''}
+            </div>
+            <div class="card-actions">
+                <button class="card-btn danger" onclick="confirmDeleteEvent(${JSON.stringify(params).replace(/"/g, '&quot;')}, '${previewId}')">🗑️ Supprimer</button>
+                <button class="card-btn secondary" onclick="cancelAction('${previewId}')">Annuler</button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    async function confirmDeleteEvent(params, previewId) {
+        const previewEl = document.getElementById(previewId);
+        if (previewEl) previewEl.remove();
+
+        try {
+            const headers = await getAuthHeaders();
+            await callCalendar(headers, 'delete_event', { event_id: params.event_id });
+            appendLeonMessage('C\'est supprimé !');
+        } catch (e) {
+            appendLeonMessage('Erreur lors de la suppression. Réessaie.');
+        }
+    }
+
+    function appendDisambiguationCard(events, actionType, params) {
+        if (!events || events.length === 0) {
+            appendLeonMessage('Aucun événement trouvé sur cette période.');
+            return;
+        }
+
+        const cardId = 'disamb-' + Date.now();
+        const actionLabel = actionType === 'delete' ? 'supprimer' : 'modifier';
+
+        const eventsHtml = events.map((e, i) => `
+            <label class="event-option">
+                <input type="radio" name="disamb-${cardId}" value="${i}">
+                <span>
+                    <strong>${formatEventTime(e.start)}</strong> — ${escapeHtml(e.summary)}
+                    ${e.location ? `<br><small style="color:var(--text-light)">📍 ${escapeHtml(e.location)}</small>` : ''}
+                </span>
+            </label>
+        `).join('');
+
+        const div = document.createElement('div');
+        div.className = 'card disambiguation-card';
+        div.id = cardId;
+        div.innerHTML = `
+            <div class="card-title">🤔 Quel événement veux-tu ${actionLabel} ?</div>
+            ${eventsHtml}
+            <div class="card-actions">
+                <button class="card-btn primary" onclick="selectDisambiguation('${cardId}', '${actionType}', ${JSON.stringify(events).replace(/"/g, '&quot;')}, ${JSON.stringify(params).replace(/"/g, '&quot;')})">Sélectionner</button>
+            </div>
+        `;
+        document.getElementById('conversation').appendChild(div);
+        scrollToBottom();
+    }
+
+    async function selectDisambiguation(cardId, actionType, events, params) {
+        const selected = document.querySelector(`input[name="disamb-${cardId}"]:checked`);
+        if (!selected) {
+            showToast('Sélectionne un événement');
+            return;
+        }
+
+        const event = events[parseInt(selected.value)];
+        const el = document.getElementById(cardId);
+        if (el) el.remove();
+
+        if (actionType === 'delete') {
+            appendDeletePreview({ ...params, event_id: event.id, title: event.summary });
+        } else {
+            appendUpdatePreview({ ...params, event_id: event.id, title: event.summary });
+        }
+    }
+
+    function cancelAction(previewId) {
+        const el = document.getElementById(previewId);
+        if (el) el.remove();
+        appendLeonMessage('Pas de souci, c\'est annulé.');
+    }
+
+    // ===== ACTION BUTTONS =====
+
+    function copyMessage(textElId) {
+        const el = document.getElementById(textElId);
+        const text = el.querySelector('textarea') ? el.querySelector('textarea').value : el.textContent;
+        navigator.clipboard.writeText(text).then(() => showToast('Copié !'));
+    }
+
+    function openWhatsApp(who, textElId) {
+        const el = document.getElementById(textElId);
+        const text = el.querySelector('textarea') ? el.querySelector('textarea').value : el.textContent;
+        // Essayer de trouver le numéro de téléphone dans les contacts
+        const encoded = encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    async function regenerateMessage(params, cardId) {
+        const card = document.getElementById(cardId);
+        if (!card) return;
+
+        const actionsEl = card.querySelector('.card-actions');
+        const originalActions = actionsEl.innerHTML;
+        actionsEl.innerHTML = '<span style="color:var(--text-light);font-size:13px;">Régénération...</span>';
+
+        try {
+            const headers = await getAuthHeaders();
+            const response = await fetch('/api/assistant-draft-message', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    who: params.who,
+                    who_role: params.who_role,
+                    context: params.context,
+                    tone: params.message_tone || 'professionnel',
+                    channel: params.message_channel || 'whatsapp',
+                    slots: null,
+                    user_name: userName
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const textEl = card.querySelector('.message-preview');
+                textEl.textContent = data.message;
+            }
+        } catch (e) {
+            console.error('[Assistant] Erreur régénération:', e);
+        }
+
+        actionsEl.innerHTML = originalActions;
+    }
+
+    function editMessage(cardId) {
+        const card = document.getElementById(cardId);
+        const textEl = card.querySelector('.message-preview');
+        const currentText = textEl.textContent;
+
+        textEl.innerHTML = `<textarea>${escapeHtml(currentText)}</textarea>`;
+        textEl.querySelector('textarea').focus();
+    }
+
+    // ===== UTILITIES =====
+
+    function scrollToBottom() {
+        const container = document.getElementById('conversation');
+        setTimeout(() => container.scrollTop = container.scrollHeight, 50);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function formatEventTime(isoStr) {
+        if (!isoStr) return '';
+        if (!isoStr.includes('T')) return isoStr; // Date only
+        const date = new Date(isoStr);
+        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function showToast(message) {
+        const existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 2500);
+    }
+    </script>
+</body>
+</html>

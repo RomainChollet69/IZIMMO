@@ -301,6 +301,98 @@ Fonctions partagées par tous les endpoints.
 |----------|------|
 | `verifyAuth(req)` | Extrait le Bearer token, vérifie via `supabase.auth.getUser()`, retourne l'objet user ou `null` |
 | `withCORS(res)` | Ajoute les headers CORS (`Access-Control-Allow-Origin: *`, méthodes POST/OPTIONS) |
+| `getSupabaseAdmin()` | Client Supabase avec `SERVICE_ROLE_KEY` (lazy singleton). Pour les opérations serveur hors contexte utilisateur. |
+
+---
+
+### POST `/api/google-auth-init`
+
+Génère un nonce CSRF et retourne l'URL d'autorisation Google OAuth Calendar.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Bearer token |
+| **Body** | (vide) |
+| **Timeout** | 10s |
+
+**Réponse** :
+```json
+{ "auth_url": "https://accounts.google.com/o/oauth2/v2/auth?..." }
+```
+
+---
+
+### GET `/api/google-auth-callback`
+
+Callback de redirection OAuth Google. Vérifie le nonce, échange le code, stocke les tokens.
+
+| Champ | Valeur |
+|-------|--------|
+| **Méthode** | GET (exception — redirect Google) |
+| **Auth** | Via nonce dans `state` param (pas de Bearer) |
+| **Query params** | `code`, `state`, `error` |
+| **Timeout** | 15s |
+
+**Réponse** : Redirection vers `parametres.html?calendar=connected` ou `?calendar=error&reason=...`
+
+---
+
+### POST `/api/calendar`
+
+CRUD Google Calendar avec refresh automatique des tokens.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Bearer token |
+| **Body** | `{ action: string, ...params }` |
+| **Timeout** | 30s |
+
+**Actions** :
+| Action | Params | Réponse |
+|--------|--------|---------|
+| `list_events` | `{ date_from, date_to }` | `{ events: [...] }` |
+| `find_slots` | `{ date_from, date_to, slot_type, duration_minutes }` | `{ slots: [...], total_found }` |
+| `create_event` | `{ title, date, start_time, end_time, location?, description? }` | `{ event: { id, summary, start, end, htmlLink } }` |
+| `update_event` | `{ event_id, title?, date?, start_time?, end_time?, ... }` | `{ event: { id, summary, start, end, htmlLink } }` |
+| `delete_event` | `{ event_id }` | `{ deleted: true, event_id }` |
+
+---
+
+### POST `/api/assistant-orchestrator`
+
+Compréhension d'intention en langage naturel (NLU). Multi-turn via conversation_history.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Bearer token |
+| **Body** | `{ input, context: { today, user_name, contacts_json }, conversation_history }` |
+| **Service** | Anthropic Claude Haiku |
+| **Timeout** | 20s |
+
+**Réponse** :
+```json
+{ "intent": "find_slots", "confidence": 0.95, "params": {...}, "leon_response": "..." }
+```
+
+**Intents** : `find_slots`, `create_event`, `update_event`, `delete_event`, `list_events`, `draft_message`, `find_slots_and_draft`, `confirm_action`, `unknown`
+
+---
+
+### POST `/api/assistant-draft-message`
+
+Génération de message contextuel (WhatsApp/SMS/Email) pour l'assistant.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Bearer token |
+| **Body** | `{ who, who_role, context, tone, channel, slots, user_name }` |
+| **Service** | Anthropic Claude Haiku |
+| **Timeout** | 20s |
+
+**Réponse** :
+```json
+{ "message": "Salut Mathieu ! ...", "subject": null, "channel": "whatsapp" }
+```
 
 ---
 
@@ -365,7 +457,9 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 | `buyers` | x | x | x | x | acquereurs.html, relance-widget, workflows |
 | `workflow_steps` | x | x | x | — | workflows.js (toutes pages pipeline) |
 | `todos` | x | x | x | x | todo-widget.js |
-| `contacts` | x | — | — | — | supabase-config.js (autocomplétion) |
+| `contacts` | x | — | — | — | supabase-config.js (autocomplétion), assistant.html |
+| `user_integrations` | x | x | x (upsert) | — | parametres.html, api/calendar, api/google-auth-callback |
+| `oauth_states` | x | x | — | x | api/google-auth-init, api/google-auth-callback |
 | `social_profiles` | x | x | x (upsert) | — | social.js |
 | `social_posts` | x | x | x | — | social.js, api/generate-social-post |
 | `visits` | x | x | x | — | social.js (contexte CRM) |
@@ -396,7 +490,11 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 | Variable | Service | Endpoints |
 |----------|---------|-----------|
 | `OPENAI_API_KEY` | OpenAI Whisper | `/api/transcribe` |
-| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/parse-workflow-response`, `/api/scrape-listing` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/parse-workflow-response`, `/api/scrape-listing`, `/api/assistant-orchestrator`, `/api/assistant-draft-message` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase (admin) | `/api/google-auth-init`, `/api/google-auth-callback`, `/api/calendar` |
+| `GOOGLE_CLIENT_ID` | Google OAuth | `/api/google-auth-init`, `/api/google-auth-callback` |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth | `/api/google-auth-callback`, `/api/calendar` (token refresh) |
+| `GOOGLE_REDIRECT_URI` | Google OAuth | `/api/google-auth-init` |
 
 ### Client (publiques — protégées par RLS)
 

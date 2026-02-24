@@ -4,7 +4,78 @@
 
 ---
 
-## Session 2026-02-24
+## Session 2026-02-24 (b) — Assistant Organisationnel Léon
+
+### Résumé
+Implémentation complète de l'assistant organisationnel IA (spec v2.1). L'agent immobilier peut désormais gérer son agenda Google Calendar et rédiger des messages en langage naturel (texte ou vocal) via une interface conversationnelle.
+
+### Modifications
+
+**Spec & corrections pré-implémentation** :
+- `SPEC-ASSISTANT-ORGANISATIONNEL-LEON.md` : Mise à jour v2.1 — corrections OAuth nonce CSRF, multi-turn, confirmation create/update/delete, disambiguation, working_days INT[], textarea au lieu de contenteditable, retrait create_reminder du scope v1
+
+**Sprint 1 — Socle Calendar** :
+- `sql/002_user_integrations.sql` (CRÉÉ) : Tables `user_integrations` + `oauth_states` avec RLS, trigger updated_at
+- `api/_auth.js` (MODIFIÉ) : Ajout `getSupabaseAdmin()` — singleton Supabase avec SERVICE_ROLE_KEY
+- `api/google-auth-init.js` (CRÉÉ) : Génère nonce CSRF + URL OAuth Google Calendar
+- `api/google-auth-callback.js` (CRÉÉ) : GET endpoint — échange code→tokens, upsert intégration, redirect
+- `api/calendar.js` (CRÉÉ) : 5 actions Calendar (list, find_slots, create, update, delete) + refresh token auto
+- `parametres.html` (MODIFIÉ) : Section Google Calendar (connexion/déconnexion, préférences horaires, jours travaillés)
+- `vercel.json` (MODIFIÉ) : Timeouts pour 5 nouvelles fonctions
+
+**Sprint 2 — Orchestrateur IA** :
+- `api/assistant-orchestrator.js` (CRÉÉ) : NLU multi-turn via Claude Haiku — 9 intents, confirmation, disambiguation
+- `api/assistant-draft-message.js` (CRÉÉ) : Génération de messages WhatsApp/SMS/Email contextuels
+
+**Sprint 3 — Page assistant** :
+- `assistant.html` (CRÉÉ) : Interface conversationnelle complète (~850 lignes) — chat bubbles, 8 types de cartes, dictée vocale, quick chips, responsive
+
+**Sprint 4 — Navigation & documentation** :
+- `index.html`, `acquereurs.html`, `social.html`, `dvf.html`, `parametres.html` (MODIFIÉS) : Tab "Assistant" dans la navigation desktop + mobile
+- `micro.html` (MODIFIÉ) : Tab Assistant desktop + bottom nav mobile
+- `docs/DECISIONS.md` (MODIFIÉ) : Ajout D016 (Calendar API directe), D017 (page séparée), D018 (nonce CSRF)
+- `docs/ARCHITECTURE.md` (MODIFIÉ) : 7 nouveaux fichiers dans l'arborescence
+- `docs/API-MAP.md` (MODIFIÉ) : 5 endpoints, 4 env vars, 2 tables, helper getSupabaseAdmin
+- `docs/CHANGELOG.md` (MODIFIÉ) : Cette entrée
+
+### Fichiers créés
+- `sql/002_user_integrations.sql`
+- `api/google-auth-init.js`
+- `api/google-auth-callback.js`
+- `api/calendar.js`
+- `api/assistant-orchestrator.js`
+- `api/assistant-draft-message.js`
+- `assistant.html`
+
+### Fichiers modifiés
+- `SPEC-ASSISTANT-ORGANISATIONNEL-LEON.md`
+- `api/_auth.js`
+- `vercel.json`
+- `parametres.html`
+- `index.html`
+- `acquereurs.html`
+- `social.html`
+- `dvf.html`
+- `micro.html`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/API-MAP.md`
+- `docs/CHANGELOG.md`
+
+### Points d'attention / prérequis manuels
+- **Migration SQL** : Exécuter `sql/002_user_integrations.sql` dans Supabase SQL Editor
+- **Variables Vercel** : Ajouter `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` (`https://avecleon.fr/api/google-auth-callback`), `SUPABASE_SERVICE_ROLE_KEY`
+- **Google Cloud Console** : Ajouter scopes `calendar.readonly` + `calendar.events`, URI de redirection OAuth
+- Feature non testée en production — nécessite les prérequis ci-dessus
+
+### Prochaines étapes prioritaires
+- Configurer les prérequis manuels et tester le flux OAuth complet
+- Tester le flux conversationnel multi-turn (créneaux → confirmation → création)
+- Ajouter la gestion des rappels (`create_reminder`) dans une future version
+
+---
+
+## Session 2026-02-24 (a) — Documentation initiale
 
 ### Modifications
 - **CLAUDE.md** (racine) : Créé par l'utilisateur — définit les règles de comportement Claude Code, les conventions de documentation, le nommage, le logging structuré et les checklists de session

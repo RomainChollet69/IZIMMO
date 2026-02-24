@@ -310,3 +310,65 @@
 - Chaque widget est un fichier JS autonome (encapsulation CSS + HTML + logique)
 - Mobile-friendly (FAB + panels plein écran)
 - Extensible : facile d'ajouter d'autres widgets (matching, statistiques…)
+
+---
+
+## D016 — Google Calendar API directe (pas de librairie tierce)
+
+**Date** : 2026-02-24
+**Statut** : Actif
+
+**Contexte** : L'assistant organisationnel de Léon a besoin de lire et écrire dans Google Calendar.
+
+**Décision** : Appeler l'API Google Calendar v3 directement via fetch(), sans librairie tierce (googleapis, google-auth-library).
+
+**Pourquoi** :
+- Vercel Serverless Functions ont un cold start sensible à la taille des dépendances
+- On n'utilise que 5 opérations Calendar (list, find_slots, create, update, delete)
+- L'API REST Google Calendar est simple et bien documentée
+- Le refresh token est géré manuellement (simple POST vers oauth2.googleapis.com/token)
+- Zéro dépendance supplémentaire = déploiement plus rapide
+
+**Alternatives rejetées** :
+- **googleapis** npm package : 300+ MB de code, cold start +2s, overkill pour 5 endpoints
+- **google-auth-library** : plus propre mais ajoute une dépendance pour 20 lignes de code
+
+---
+
+## D017 — assistant.html séparé de micro.html
+
+**Date** : 2026-02-24
+**Statut** : Actif
+
+**Contexte** : L'assistant organisationnel (agenda, messages) et le mode micro (notes CRM vocales) sont deux features IA vocales.
+
+**Décision** : Deux pages séparées avec liens croisés, pas une extension de micro.html.
+
+**Pourquoi** :
+- micro.html est le mode terrain (quick voice in/out, mobile-first, 1667 lignes stables)
+- assistant.html est le mode bureau (conversationnel, multi-turn, consultation agenda)
+- Les cas d'usage sont fondamentalement différents : dictée rapide vs dialogue structuré
+- Séparation = zéro risque de régression sur micro.html
+- Navigation fluide via tab bar et liens croisés
+
+**Alternatives rejetées** :
+- **Extension de micro.html** : trop risqué, fichier déjà dense, UX différente
+- **Modal/panel dans micro.html** : écran trop petit sur mobile pour deux UX concurrentes
+
+---
+
+## D018 — Nonce CSRF pour OAuth Google Calendar (pas de token en state)
+
+**Date** : 2026-02-24
+**Statut** : Actif
+
+**Contexte** : Le flux OAuth Google renvoie un paramètre `state` visible dans l'URL de callback.
+
+**Décision** : Utiliser un nonce aléatoire stocké en base comme `state`, pas le Supabase access token.
+
+**Pourquoi** :
+- Le `state` est visible dans l'URL, les logs serveur, l'historique navigateur
+- Y mettre un access token serait une fuite de credentials
+- Le nonce sert de protection CSRF (standard OAuth 2.0)
+- La table `oauth_states` fait le lien nonce → user_id côté serveur
+- Nonces à usage unique (supprimés après le callback) et expirés après 15 min

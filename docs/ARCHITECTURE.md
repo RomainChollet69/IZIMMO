@@ -34,7 +34,7 @@ IZIMMO/
 │   └── maps-config.js          # Clé API Google Maps
 │
 ├── api/                        # Vercel Serverless Functions
-│   ├── _auth.js                # Helper auth partagé (vérification Bearer token)
+│   ├── _auth.js                # Helper auth partagé (verifyAuth + withCORS + getSupabaseAdmin)
 │   ├── transcribe.js           # Transcription audio → texte (OpenAI Whisper)
 │   ├── parse-lead.js           # Extraction données structurées d'une dictée (Claude)
 │   ├── parse-import-batch.js   # Parsing import Excel/CSV de contacts
@@ -44,10 +44,18 @@ IZIMMO/
 │   ├── analyze-document.js     # Analyse de documents PDF
 │   ├── parse-voice-note.js     # Parsing notes vocales
 │   ├── map-columns.js          # Mapping colonnes pour imports
-│   └── scrape-listing.js       # Scraping d'annonces immobilières
+│   ├── scrape-listing.js       # Scraping d'annonces immobilières
+│   ├── google-auth-init.js     # Génération nonce OAuth + URL Google Calendar
+│   ├── google-auth-callback.js # Callback OAuth Google (GET) → tokens Calendar
+│   ├── calendar.js             # CRUD Google Calendar (list, find_slots, create, update, delete)
+│   ├── assistant-orchestrator.js # NLU : intention langage naturel → JSON structuré
+│   └── assistant-draft-message.js # Génération messages contextuels (WhatsApp/SMS/Email)
+│
+├── assistant.html              # Assistant organisationnel IA (agenda + messages)
 │
 ├── sql/
-│   └── 001_workflow_steps.sql  # Migration table workflow_steps + RLS + indexes
+│   ├── 001_workflow_steps.sql  # Migration table workflow_steps + RLS + indexes
+│   └── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
