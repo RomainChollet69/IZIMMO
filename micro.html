@@ -1198,8 +1198,8 @@
             transcriptionEditArea.value = currentTranscription;
             transcriptionText.style.display = 'none';
             transcriptionEditBtn.style.display = 'none';
-            transcriptionEditArea.style.display = '';
-            transcriptionActions.style.display = '';
+            transcriptionEditArea.style.display = 'block';
+            transcriptionActions.style.display = 'flex';
             transcriptionEditArea.focus();
             // Scroll vers la zone d'édition sur mobile
             setTimeout(() => transcriptionEditArea.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
