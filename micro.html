@@ -618,6 +618,19 @@
             font-weight: 600;
         }
 
+        /* Screenshot iOS : visible uniquement en mobile */
+        .ios-mic-screenshot {
+            display: none;
+            width: 100%;
+            max-width: 280px;
+            margin: 12px auto 14px;
+            border-radius: 10px;
+            border: 1px solid #FECACA;
+        }
+        @media (max-width: 768px) {
+            .ios-mic-screenshot { display: block; }
+        }
+
         .btn-retry {
             padding: 10px 20px; background: #243b53; color: white;
             border: none; border-radius: 8px; font-size: 13px;
@@ -1534,6 +1547,7 @@
                             <span class="ios-step-text">Revenez ici et réessayez</span>
                         </div>
                     </div>
+                    <img src="img/micro_auth.svg" alt="Activer le micro" class="ios-mic-screenshot">
                     <button class="btn-retry" id="retryBtnIos">Réessayer</button>`;
                 // Re-bind le bouton retry
                 errorCard.querySelector('#retryBtnIos').addEventListener('click', async () => {
