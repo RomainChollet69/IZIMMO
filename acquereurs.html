@@ -3623,26 +3623,39 @@
 
             let imageUrl = null;
             if (hasImage) {
-                const storagePath = `${userId}/notes/buyer_${buyerId}/${Date.now()}_screenshot.jpg`;
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('lead-files')
-                    .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
-                if (uploadError) {
-                    console.error('[Notes] Image upload error:', uploadError);
-                    alert('Erreur lors de l\'envoi de l\'image');
-                    return;
+                try {
+                    const storagePath = `${userId}/notes/buyer_${buyerId}/${Date.now()}_screenshot.jpg`;
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('lead-files')
+                        .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                    if (uploadError) {
+                        console.error('[Notes] Image upload error:', uploadError);
+                    } else {
+                        imageUrl = storagePath;
+                    }
+                } catch (e) {
+                    console.error('[Notes] Image upload exception:', e);
                 }
-                imageUrl = storagePath;
             }
 
+            // Insérer la note (avec image si upload réussi, sans sinon)
             const insertData = { user_id: userId, buyer_id: buyerId, content: text || '' };
             if (imageUrl) insertData.image_url = imageUrl;
 
-            const { data, error } = await supabaseClient
+            let { data, error } = await supabaseClient
                 .from('lead_notes')
                 .insert(insertData)
                 .select()
                 .single();
+
+            // Si échec avec image_url (colonne inexistante ?), réessayer sans
+            if (error && imageUrl) {
+                console.warn('[Notes] Insert with image_url failed, retrying without:', error.message);
+                const fallbackData = { user_id: userId, buyer_id: buyerId, content: text || '' };
+                const result = await supabaseClient.from('lead_notes').insert(fallbackData).select().single();
+                data = result.data;
+                error = result.error;
+            }
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
             input.value = '';

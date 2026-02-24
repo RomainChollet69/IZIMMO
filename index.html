@@ -5985,26 +5985,39 @@
 
             let imageUrl = null;
             if (hasImage) {
-                const storagePath = `${userId}/notes/seller_${sellerId}/${Date.now()}_screenshot.jpg`;
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('lead-files')
-                    .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
-                if (uploadError) {
-                    console.error('[Notes] Image upload error:', uploadError);
-                    alert('Erreur lors de l\'envoi de l\'image');
-                    return;
+                try {
+                    const storagePath = `${userId}/notes/seller_${sellerId}/${Date.now()}_screenshot.jpg`;
+                    const { error: uploadError } = await supabaseClient.storage
+                        .from('lead-files')
+                        .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                    if (uploadError) {
+                        console.error('[Notes] Image upload error:', uploadError);
+                    } else {
+                        imageUrl = storagePath;
+                    }
+                } catch (e) {
+                    console.error('[Notes] Image upload exception:', e);
                 }
-                imageUrl = storagePath;
             }
 
+            // Insérer la note (avec image si upload réussi, sans sinon)
             const insertData = { user_id: userId, seller_id: sellerId, content: text || '' };
             if (imageUrl) insertData.image_url = imageUrl;
 
-            const { data, error } = await supabaseClient
+            let { data, error } = await supabaseClient
                 .from('lead_notes')
                 .insert(insertData)
                 .select()
                 .single();
+
+            // Si échec avec image_url (colonne inexistante ?), réessayer sans
+            if (error && imageUrl) {
+                console.warn('[Notes] Insert with image_url failed, retrying without:', error.message);
+                const fallbackData = { user_id: userId, seller_id: sellerId, content: text || '' };
+                const result = await supabaseClient.from('lead_notes').insert(fallbackData).select().single();
+                data = result.data;
+                error = result.error;
+            }
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
             input.value = '';
@@ -6913,31 +6926,42 @@
                     for (const pn of pendingNotes) {
                         let imageUrl = null;
                         if (pn.pendingImageFile) {
-                            const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
-                            const { error: upErr } = await supabaseClient.storage
-                                .from('lead-files')
-                                .upload(storagePath, pn.pendingImageFile, { cacheControl: '3600', upsert: false });
-                            if (!upErr) imageUrl = storagePath;
-                            else console.error('[Notes] Pending image upload error:', upErr);
+                            try {
+                                const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
+                                const { error: upErr } = await supabaseClient.storage
+                                    .from('lead-files')
+                                    .upload(storagePath, pn.pendingImageFile, { cacheControl: '3600', upsert: false });
+                                if (!upErr) imageUrl = storagePath;
+                                else console.error('[Notes] Pending image upload error:', upErr);
+                            } catch (e) { console.error('[Notes] Pending image upload exception:', e); }
                         }
                         const insertData = { user_id: userId, seller_id: savedId, content: pn.content || '' };
                         if (imageUrl) insertData.image_url = imageUrl;
-                        await supabaseClient.from('lead_notes').insert(insertData);
+                        let { error: insErr } = await supabaseClient.from('lead_notes').insert(insertData);
+                        // Fallback sans image_url si colonne inexistante
+                        if (insErr && imageUrl) {
+                            await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pn.content || '' });
+                        }
                     }
                     pendingNotes = [];
                     // Sauvegarder le texte encore dans l'input (+ image collée en attente)
                     if (pendingNote || pendingNoteImage) {
                         let imageUrl = null;
                         if (pendingNoteImage) {
-                            const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
-                            const { error: upErr } = await supabaseClient.storage
-                                .from('lead-files')
-                                .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
-                            if (!upErr) imageUrl = storagePath;
+                            try {
+                                const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
+                                const { error: upErr } = await supabaseClient.storage
+                                    .from('lead-files')
+                                    .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                                if (!upErr) imageUrl = storagePath;
+                            } catch (e) { console.error('[Notes] Image upload exception:', e); }
                         }
                         const insertData = { user_id: userId, seller_id: savedId, content: pendingNote || '' };
                         if (imageUrl) insertData.image_url = imageUrl;
-                        await supabaseClient.from('lead_notes').insert(insertData);
+                        let { error: insErr } = await supabaseClient.from('lead_notes').insert(insertData);
+                        if (insErr && imageUrl) {
+                            await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pendingNote || '' });
+                        }
                         document.getElementById('noteInput').value = '';
                         clearNoteImagePreview();
                     }
