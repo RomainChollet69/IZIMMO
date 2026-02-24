@@ -1089,6 +1089,7 @@
         function handleRecorderState(state, msg) {
             if (state === 'recording') setMicState('recording');
             else if (state === 'transcribing') setMicState('transcribing');
+            else if (state === 'requesting_permission') setMicState('requesting_permission');
             else if (state === 'error') { setMicState('idle'); showError(msg || 'Erreur d\'enregistrement'); }
         }
 
@@ -1118,6 +1119,12 @@
                     micHelp.textContent = 'Transcription...';
                     micBtn.disabled = true;
                     micZone.classList.add('compact');
+                    break;
+                case 'requesting_permission':
+                    micBtn.classList.add('processing');
+                    micBtn.innerHTML = '<i class="fa-solid fa-shield-halved" style="font-size:36px"></i>';
+                    micHelp.textContent = 'Autorisez le micro quand le dialogue apparaît';
+                    micBtn.disabled = true;
                     break;
                 case 'analysing':
                     micBtn.classList.add('processing');

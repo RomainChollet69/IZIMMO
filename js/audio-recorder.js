@@ -38,6 +38,30 @@ window.AudioRecorder = class AudioRecorder {
         return 'safari';
     }
 
+    // Vérifie l'état de la permission micro via Permissions API (si dispo)
+    // Retourne 'granted', 'denied', 'prompt', ou 'unknown'
+    async checkMicPermission() {
+        try {
+            if (navigator.permissions && navigator.permissions.query) {
+                const status = await navigator.permissions.query({ name: 'microphone' });
+                return status.state; // 'granted' | 'denied' | 'prompt'
+            }
+        } catch (_) {
+            // Permissions API non supportée pour 'microphone' (fréquent sur iOS)
+        }
+        return 'unknown';
+    }
+
+    // Construit le message d'erreur adapté à la plateforme (iOS vs desktop)
+    _buildPermissionErrorMsg() {
+        if (this._isIOS()) {
+            const browser = this._getIOSBrowser();
+            const browserName = browser === 'chrome' ? 'Chrome' : browser === 'firefox' ? 'Firefox' : 'Safari';
+            return `__IOS_MIC_BLOCKED__${browserName}`;
+        }
+        return 'Micro bloqué — autorisez le micro dans les réglages du navigateur';
+    }
+
     _getMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
@@ -117,20 +141,28 @@ window.AudioRecorder = class AudioRecorder {
                 this.onStateChange('error', msg);
                 throw new Error(msg);
             }
+
+            // Pre-check : si la permission est déjà refusée, on évite d'appeler
+            // getUserMedia (qui échouera silencieusement sur iOS sans prompt)
+            const permState = await this.checkMicPermission();
+            if (permState === 'denied') {
+                const msg = this._buildPermissionErrorMsg();
+                this.onStateChange('error', msg);
+                throw new Error(msg);
+            }
+
+            // Si 'prompt' sur iOS, signaler qu'un dialogue va apparaître
+            if (permState === 'prompt' && this._isIOS()) {
+                this.onStateChange('requesting_permission');
+            }
+
             try {
                 this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
                 console.warn('[AudioRecorder] getUserMedia error:', err.name, err.message);
                 let msg;
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    if (this._isIOS()) {
-                        const browser = this._getIOSBrowser();
-                        const browserName = browser === 'chrome' ? 'Chrome' : browser === 'firefox' ? 'Firefox' : 'Safari';
-                        // Sur iOS, le micro doit être autorisé au niveau système (Réglages iPhone)
-                        msg = `__IOS_MIC_BLOCKED__${browserName}`;
-                    } else {
-                        msg = 'Micro bloqué — autorisez le micro dans les réglages du navigateur';
-                    }
+                    msg = this._buildPermissionErrorMsg();
                 } else if (err.name === 'NotFoundError') {
                     msg = 'Aucun micro détecté sur cet appareil';
                 } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {
