@@ -4,6 +4,25 @@
 
 ---
 
+## Session 2026-02-24 (c) — Consolidation API (limite Vercel)
+
+### Résumé
+Refactoring : 5 fichiers API → 2 pour respecter la limite de 12 Serverless Functions Vercel (passé au plan Pro ensuite mais consolidation conservée car meilleure architecture).
+
+### Modifications
+- `api/google-auth-init.js` + `api/google-auth-callback.js` → **`api/google-auth.js`** (POST=init, GET=callback)
+- `api/assistant-orchestrator.js` + `api/assistant-draft-message.js` + `api/calendar.js` → **`api/assistant.js`** (action switch unifié)
+- `assistant.html` : URLs mises à jour (`/api/assistant` + champ `action`)
+- `parametres.html` : URL mise à jour (`/api/google-auth`)
+- `vercel.json` : Timeouts consolidés
+- `docs/ARCHITECTURE.md`, `docs/API-MAP.md` : Mis à jour
+
+### Impact
+- `GOOGLE_REDIRECT_URI` change : `https://avecleon.fr/api/google-auth` (plus `/api/google-auth-callback`)
+- URI de redirection Google Cloud Console à mettre à jour aussi
+
+---
+
 ## Session 2026-02-24 (b) — Assistant Organisationnel Léon
 
 ### Résumé

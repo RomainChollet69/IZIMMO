@@ -45,11 +45,8 @@ IZIMMO/
 │   ├── parse-voice-note.js     # Parsing notes vocales
 │   ├── map-columns.js          # Mapping colonnes pour imports
 │   ├── scrape-listing.js       # Scraping d'annonces immobilières
-│   ├── google-auth-init.js     # Génération nonce OAuth + URL Google Calendar
-│   ├── google-auth-callback.js # Callback OAuth Google (GET) → tokens Calendar
-│   ├── calendar.js             # CRUD Google Calendar (list, find_slots, create, update, delete)
-│   ├── assistant-orchestrator.js # NLU : intention langage naturel → JSON structuré
-│   └── assistant-draft-message.js # Génération messages contextuels (WhatsApp/SMS/Email)
+│   ├── google-auth.js           # OAuth Google Calendar (POST=init nonce, GET=callback tokens)
+│   └── assistant.js             # Assistant unifié (orchestrate, draft_message, calendar CRUD)
 │
 ├── assistant.html              # Assistant organisationnel IA (agenda + messages)
 │
