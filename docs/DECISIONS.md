@@ -372,3 +372,20 @@
 - Le nonce sert de protection CSRF (standard OAuth 2.0)
 - La table `oauth_states` fait le lien nonce → user_id côté serveur
 - Nonces à usage unique (supprimés après le callback) et expirés après 15 min
+
+---
+
+## D019 — Commission sur net vendeur (pas sur prix FAI)
+
+**Date** : 2026-02-24
+**Statut** : Actif
+
+**Contexte** : Le calcul de commission `prix × taux%` revenait à prendre des honoraires sur les honoraires.
+
+**Décision** : `commission = prix FAI - (prix FAI / (1 + taux/100))`. Fonctions centralisées `calcCommission()` et `calcRateFromAmount()` dans `supabase-config.js`.
+
+**Pourquoi** :
+- En immobilier, le taux de commission s'applique sur le net vendeur, pas sur le prix FAI
+- Exemple : 200 000€ à 4% → commission = 7 692€ (pas 8 000€)
+- La différence est significative sur les gros montants
+- Label "TTC" sur tous les affichages (briefing + cartes + formulaire)

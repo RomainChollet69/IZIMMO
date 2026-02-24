@@ -4,6 +4,50 @@
 
 ---
 
+## Session 2026-02-24 (d) — Bugs Micro + Commission
+
+### Résumé
+Correction de 6 bugs sur la page Micro (enregistrement vocal) et refonte du calcul de commission immobilière sur le pipeline vendeurs.
+
+### Modifications
+
+**Page Micro — Transcription et édition** :
+- `micro.html` : Texte de transcription rendu cliquable pour entrer en mode édition (+ bouton "Corriger" agrandi pour mobile)
+- `micro.html` : Fix textarea invisible — `style.display = 'block'` au lieu de `''` (le CSS avait `display: none` par défaut)
+- `micro.html` : Fix texte invisible après 2e dictée — `showTranscription()` remet maintenant `transcriptionText.style.display`
+
+**Page Micro — Enregistrement** :
+- `micro.html` : silenceTimeout 3s→6s, maxDuration 30s→2min (permet de dicter longtemps)
+- `js/audio-recorder.js` : apiTimeout transcription 15s→30s
+
+**Page Micro — Analyse mobile** :
+- `micro.html` : Fix cache `loadUserLeads()` — `[]` est truthy en JS, le cache vide empoisonnait toutes les analyses
+- `micro.html` : Garde `userId` avant enregistrement (retry session si null)
+- `micro.html` : Auto-scroll vers les résultats (confirmation/erreur/ambiguïté) sur mobile
+- `micro.html` : Timeout client 25s sur l'appel API d'analyse
+- `micro.html` : Logs d'erreur Supabase pour debug
+
+**Commission immobilière** :
+- `js/supabase-config.js` : Ajout `calcCommission(prixFAI, taux)` et `calcRateFromAmount(prixFAI, commission)` — formule correcte : honoraires sur net vendeur
+- `index.html` : Remplacement de `prix × taux / 100` par `calcCommission()` dans 8 endroits (cartes pipeline, inline edit, formulaire modal, sauvegarde, changement prix, exports CSV, listeners auto-calcul)
+- `index.html` : Briefing stats — "€ HT" → "€ TTC" pour cohérence
+
+### Fichiers modifiés
+- `micro.html`
+- `js/audio-recorder.js`
+- `js/supabase-config.js`
+- `index.html`
+
+### Points d'attention
+- Les commissions déjà enregistrées en BDD (avec l'ancienne formule) ne sont PAS recalculées automatiquement — seuls les nouveaux calculs/affichages utilisent la bonne formule
+- Les leads existants avec `commission_amount` en dur gardent leur valeur
+
+### Prochaines étapes prioritaires
+- Vérifier que l'analyse mobile fonctionne maintenant (tester sur iPhone Safari)
+- Éventuellement recalculer les commissions existantes en BDD si nécessaire
+
+---
+
 ## Session 2026-02-24 (c) — Consolidation API (limite Vercel)
 
 ### Résumé
