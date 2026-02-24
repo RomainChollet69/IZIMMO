@@ -1,4 +1,6 @@
 // Léon — Widget Panneau Relances (vendeurs + acquéreurs)
+// Panneau latéral affichant les contacts à relancer (date de relance dépassée).
+// Interroge les tables sellers et buyers, champ `reminder`.
 (function () {
     'use strict';
 

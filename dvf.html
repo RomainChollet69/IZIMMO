@@ -1,3 +1,10 @@
+<!--
+  Léon — Carte DVF + DPE (dvf.html)
+  Carte Google Maps superposant DVF (ventes immobilières) et DPE (diagnostics énergie).
+  Données JSON dans Supabase Storage (buckets dvf-data / dpe-data).
+  Filtres : année, type, prix/m², classe DPE, DPE récents.
+  Auth requise (js/auth.js)
+-->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2656,11 +2663,18 @@
             });
         });
 
+        // dpeSplits : départements dont le JSON est trop gros (>50 Mo)
+        // et splittés en plusieurs fichiers (ex: 59_1.json, 59_2.json)
+        let dpeSplits = {};
+
         async function loadDPEIndex() {
             if (dpeIndex) return dpeIndex;
             const resp = await fetch(DPE_STORAGE_URL + '/index.json');
             if (!resp.ok) throw new Error('Impossible de charger l\'index DPE');
-            dpeIndex = await resp.json();
+            const raw = await resp.json();
+            // Extraire la map de splits si présente, puis la retirer de l'index
+            if (raw.splits) { dpeSplits = raw.splits; delete raw.splits; }
+            dpeIndex = raw;
             return dpeIndex;
         }
 
@@ -2675,6 +2689,7 @@
 
             const depts = [];
             for (const [dept, info] of Object.entries(dpeIndex)) {
+                if (!info.bbox) continue;
                 const [bMinLng, bMinLat, bMaxLng, bMaxLat] = info.bbox;
                 if (maxLng >= bMinLng && minLng <= bMaxLng && maxLat >= bMinLat && minLat <= bMaxLat) {
                     depts.push(dept);
@@ -2685,6 +2700,19 @@
 
         async function loadDpeDeptData(dept) {
             if (loadedDpeDepts[dept]) return loadedDpeDepts[dept];
+            // Gestion des départements splittés (fichiers > 50 Mo)
+            if (dpeSplits[dept]) {
+                const parts = await Promise.all(
+                    dpeSplits[dept].map(async file => {
+                        const r = await fetch(DPE_STORAGE_URL + '/' + file);
+                        if (!r.ok) throw new Error('Erreur chargement DPE ' + file);
+                        const j = await r.json();
+                        return j.data;
+                    })
+                );
+                loadedDpeDepts[dept] = parts.flat();
+                return loadedDpeDepts[dept];
+            }
             const resp = await fetch(DPE_STORAGE_URL + '/' + dept + '.json');
             if (!resp.ok) throw new Error('Erreur chargement DPE dept ' + dept);
             const json = await resp.json();

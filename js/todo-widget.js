@@ -1,4 +1,5 @@
 // Léon — Widget Todo List avec dictée vocale
+// Widget flottant de tâches avec saisie vocale (AudioRecorder).
 (function () {
     'use strict';
 

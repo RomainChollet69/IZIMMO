@@ -1,4 +1,5 @@
-// ===== ONBOARDING GUIDÉ — PIPELINE VENDEURS =====
+// Léon — Onboarding guidé — Pipeline Vendeurs
+// Tutorial interactif en 4 étapes pour les nouveaux utilisateurs.
 
 const PipelineOnboarding = {
     currentStep: 0,
