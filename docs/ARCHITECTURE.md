@@ -9,6 +9,7 @@
 ```
 IZIMMO/
 │
+├── CLAUDE.md                   # Règles de comportement Claude Code
 ├── index.html                  # Pipeline Vendeurs — Kanban 6 colonnes (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 4 colonnes (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
@@ -54,6 +55,16 @@ IZIMMO/
 │   ├── F.png                   # Logo Open Graph
 │   └── ORIGINALES/             # Assets design originaux
 │
+├── docs/                       # Documentation vivante
+│   ├── ARCHITECTURE.md         # Ce fichier
+│   ├── DECISIONS.md            # Journal des choix techniques
+│   ├── CHANGELOG.md            # Historique horodaté des modifications
+│   └── API-MAP.md              # Cartographie des endpoints et APIs
+│
+├── tasks/                      # Gestion des tâches
+│   ├── todo.md                 # Plan & suivi des tâches en cours
+│   └── lessons.md              # Erreurs passées & règles apprises
+│
 ├── vercel.json                 # Config Vercel (timeout functions, headers micro)
 ├── package.json                # Dépendance unique : @supabase/supabase-js
 └── package-lock.json
@@ -69,7 +80,7 @@ IZIMMO/
 | Backend      | Supabase (PostgreSQL + Auth + RLS)       |
 | API          | Vercel Serverless Functions (Node.js)    |
 | Auth         | Google OAuth via Supabase Auth           |
-| IA           | Anthropic Claude (parsing, génération) + OpenAI Whisper (transcription) |
+| IA           | Anthropic Claude Haiku (parsing, génération) + OpenAI Whisper (transcription) |
 | Hébergement  | Vercel (auto-deploy depuis GitHub `main`) |
 | Repo         | `github.com/RomainChollet69/IZIMMO`     |
 
@@ -96,7 +107,7 @@ Transcript texte retourné au client
     │
     ▼
 POST /api/parse-lead { text, type: "seller"|"buyer" }
-  └── Claude extrait un JSON structuré (nom, tel, adresse, budget…)
+  └── Claude Haiku extrait un JSON structuré (nom, tel, adresse, budget…)
     │
     ▼
 INSERT dans `sellers` ou `buyers` (Supabase)
@@ -132,7 +143,7 @@ Sélection : canal (SMS / WhatsApp / Email) + scénario
     │
     ▼
 POST /api/generate-message { channel, scenario, leadData, leadType }
-  └── Claude génère un message contextuel adapté au canal
+  └── Claude Haiku génère un message contextuel adapté au canal
     │
     ▼
 Affichage dans modale → copie manuelle par l'utilisateur
@@ -170,6 +181,25 @@ INSERT dans `todos` (Supabase)
 Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 ```
 
+### 3.6 Contenu social
+
+```
+Utilisateur choisit "J'ai un truc à raconter" ou sélectionne un template
+    │
+    ▼
+(si vocal) POST /api/transcribe → transcript
+    │
+    ▼
+POST /api/generate-social-post { mode, platform, user_input }
+  └── Claude Haiku génère hook + contenu + recommandation visuelle
+    │
+    ▼
+INSERT dans `social_posts` (Supabase)
+    │
+    ▼
+Affichage dans calendrier social avec historique
+```
+
 ---
 
 ## 4. Schéma de la base de données
@@ -188,6 +218,7 @@ Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 | `property_type` | TEXT        | `appartement` \| `maison` \| `terrain` \| `immeuble`    |
 | `budget`        | NUMERIC     | Prix estimé (EUR)                                        |
 | `surface`       | NUMERIC     | Surface en m²                                            |
+| `rooms`         | NUMERIC     | Nombre de pièces                                         |
 | `description`   | TEXT        | Description physique du bien                             |
 | `annexes`       | TEXT[]      | `parking`, `cave`, `balcon`, `jardin`, `garage`, `piscine`, `ascenseur` |
 | `status`        | TEXT        | `hot` \| `warm` \| `cold` \| `off_market` …             |
@@ -195,6 +226,9 @@ Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 | `referrer_name` | TEXT        | Nom du recommandant (si source = recommandation)         |
 | `notes`         | TEXT        | Notes relationnelles / commerciales                      |
 | `reminder`      | DATE        | Date de prochaine relance                                |
+| `contact_date`  | DATE        | Date du premier contact                                  |
+| `mandate_start_date` | DATE   | Date de début du mandat                                  |
+| `last_activity_at` | TIMESTAMPTZ | Dernière activité enregistrée                         |
 | `position`      | INT         | Ordre dans la colonne du pipeline                        |
 | `created_at`    | TIMESTAMPTZ | Date de création                                         |
 | `updated_at`    | TIMESTAMPTZ | Dernière modification (trigger auto)                     |
@@ -211,10 +245,14 @@ Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 | `email`         | TEXT        | Email                                                    |
 | `property_type` | TEXT        | Type de bien recherché                                   |
 | `sector`        | TEXT        | Villes / quartiers de recherche                          |
+| `rooms`         | NUMERIC     | Nombre de pièces souhaitées                              |
+| `surface_min`   | NUMERIC     | Surface minimum souhaitée (m²)                           |
 | `budget_min`    | NUMERIC     | Budget minimum (EUR)                                     |
 | `budget_max`    | NUMERIC     | Budget maximum (EUR)                                     |
 | `status`        | TEXT        | `nouveau` \| `actif` \| `achete_avec_moi`               |
 | `source`        | TEXT        | `site_annonce` \| `efficity` \| `recommandation` \| `appel_entrant` \| `reseaux_sociaux` \| `autre` |
+| `criteria`      | TEXT        | Critères de recherche détaillés                          |
+| `dealbreakers`  | TEXT        | Critères éliminatoires                                   |
 | `notes`         | TEXT        | Notes                                                    |
 | `reminder`      | DATE        | Date de prochaine relance                                |
 | `position`      | INT         | Ordre dans la colonne                                    |
@@ -272,9 +310,60 @@ Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 
 Utilisée pour l'autocomplétion dans les formulaires de création de fiches.
 
+### Table `social_profiles`
+
+| Colonne            | Type      | Description                                  |
+|--------------------|-----------|----------------------------------------------|
+| `user_id`          | UUID (FK) | Référence `auth.users(id)`                   |
+| `platform`         | TEXT      | Plateforme principale                        |
+| `neighborhoods`    | TEXT      | Quartiers / zones d'activité                 |
+| `network`          | TEXT      | Type de réseau                               |
+| `tone`             | TEXT      | Ton de communication                         |
+| `tutoiement`       | BOOLEAN   | Tutoyer ou vouvoyer                          |
+| `signature_phrases`| TEXT      | Expressions signatures                       |
+| `objectives`       | TEXT      | Objectifs de contenu                         |
+
+### Table `social_posts`
+
+| Colonne       | Type        | Description                              |
+|---------------|-------------|------------------------------------------|
+| `id`          | UUID (PK)   | Identifiant unique                       |
+| `user_id`     | UUID (FK)   | Référence `auth.users(id)`               |
+| `platform`    | TEXT        | linkedin / instagram / facebook / tiktok |
+| `content`     | TEXT        | Contenu du post                          |
+| `hook`        | TEXT        | Accroche d'ouverture                     |
+| `hook_pattern`| TEXT        | Type de pattern d'accroche               |
+| `status`      | TEXT        | Statut du post                           |
+| `generated_at`| TIMESTAMPTZ | Date de génération                       |
+| `template_id` | TEXT        | Template utilisé                         |
+| `category`    | TEXT        | Catégorie de contenu                     |
+| `source_type` | TEXT        | Source (free_input / suggestion)         |
+
+### Table `visits`
+
+| Colonne      | Type        | Description                              |
+|--------------|-------------|------------------------------------------|
+| `id`         | UUID (PK)   | Identifiant unique                       |
+| `user_id`    | UUID (FK)   | Référence `auth.users(id)`               |
+| `seller_id`  | UUID (FK)   | Référence `sellers(id)`                  |
+| `buyer_id`   | UUID (FK)   | Référence `buyers(id)`                   |
+| `feedback`   | TEXT        | Retour de visite                         |
+| `rating`     | INT         | Note de visite                           |
+| `created_at` | TIMESTAMPTZ | Date de visite                           |
+
+### Table `lead_notes`
+
+| Colonne      | Type        | Description                              |
+|--------------|-------------|------------------------------------------|
+| `id`         | UUID (PK)   | Identifiant unique                       |
+| `user_id`    | UUID (FK)   | Référence `auth.users(id)`               |
+| `lead_id`    | UUID (FK)   | Référence seller ou buyer                |
+| `content`    | TEXT        | Contenu de la note                       |
+| `created_at` | TIMESTAMPTZ | Date de création                         |
+
 ### Sécurité (RLS)
 
-Toutes les tables ont **Row Level Security activé**. Politique unique :
+Toutes les tables ont **Row Level Security activé**. Politique commune :
 
 ```sql
 CREATE POLICY "Users see own records" ON <table>
@@ -283,20 +372,27 @@ CREATE POLICY "Users see own records" ON <table>
 
 Chaque utilisateur ne voit et ne manipule que ses propres données.
 
+### Supabase Storage
+
+| Bucket      | Usage                                       | Accès    |
+|-------------|---------------------------------------------|----------|
+| `dvf-data`  | Fichiers JSON des ventes DVF par département | Public   |
+| `dpe-data`  | Fichiers JSON des diagnostics DPE            | Public   |
+
 ---
 
 ## 5. Dépendances externes
 
 ### Librairies CDN (frontend)
 
-| Librairie                | Version | Usage                                  |
-|--------------------------|---------|----------------------------------------|
-| `@supabase/supabase-js`  | 2.97.0  | Client Supabase (DB + Auth)            |
-| Google Fonts             | —       | Barlow Semi Condensed (titres), Inter (corps) |
-| Font Awesome             | 6.5.1   | Icônes                                 |
-| pdf.js                   | 3.11.174| Lecture de PDF côté client              |
+| Librairie                | Version  | Usage                                  |
+|--------------------------|----------|----------------------------------------|
+| `@supabase/supabase-js`  | 2.97.0   | Client Supabase (DB + Auth)            |
+| Google Fonts             | —        | Barlow Semi Condensed (titres), Inter (corps) |
+| Font Awesome             | 6.5.1    | Icônes                                 |
+| pdf.js                   | 3.11.174 | Lecture de PDF côté client              |
 
-### Dépendance npm
+### Dépendance npm (backend)
 
 | Package                  | Version | Usage                                  |
 |--------------------------|---------|----------------------------------------|
@@ -304,13 +400,13 @@ Chaque utilisateur ne voit et ne manipule que ses propres données.
 
 ### APIs externes
 
-| API                              | Usage                                           | Fichier(s) concerné(s)              |
-|----------------------------------|--------------------------------------------------|-------------------------------------|
-| **Supabase**                     | Base de données PostgreSQL, Auth, RLS            | `js/supabase-config.js`, toutes pages |
+| API                              | Usage                                            | Fichier(s) concerné(s)              |
+|----------------------------------|-------------------------------------------------|-------------------------------------|
+| **Supabase**                     | Base de données PostgreSQL, Auth, RLS, Storage   | `js/supabase-config.js`, toutes pages |
 | **Google OAuth** (via Supabase)  | Authentification utilisateur                     | `login.html`, `js/auth.js`          |
 | **Google Maps**                  | Cartographie (DVF, localisation)                 | `js/maps-config.js`, `dvf.html`     |
 | **OpenAI Whisper**               | Transcription audio → texte (français)           | `api/transcribe.js`                 |
-| **Anthropic Claude**             | Extraction données, génération messages/contenu  | `api/parse-lead.js`, `api/generate-message.js`, `api/generate-social-post.js`, `api/parse-workflow-response.js` |
+| **Anthropic Claude**             | Extraction données, génération messages/contenu  | `api/parse-lead.js`, `api/generate-message.js`, `api/generate-social-post.js`, etc. |
 | **api-adresse.data.gouv.fr**     | Géocodage adresses françaises (gratuit)          | `js/supabase-config.js`             |
 | **DVF (data.gouv.fr)**           | Données de ventes immobilières françaises         | `dvf.html`                          |
 | **ADEME (DPE)**                  | Diagnostics de performance énergétique            | `dvf.html`                          |
@@ -322,7 +418,7 @@ Chaque utilisateur ne voit et ne manipule que ses propres données.
 | `OPENAI_API_KEY`    | Transcription Whisper              |
 | `ANTHROPIC_API_KEY` | Génération IA (Claude)             |
 
-> Les clés Supabase (URL + anon key) sont en dur dans `js/supabase-config.js` (standard pour les clients publics avec RLS).
+> Les clés Supabase (URL + anon key) sont en dur dans `js/supabase-config.js` — c'est le standard pour les clients publics protégés par RLS.
 
 ---
 
@@ -368,7 +464,7 @@ Client Supabase + utilitaires partagés par toutes les pages.
 Guard de session + rendu profil utilisateur dans le header.
 - Redirige vers `login.html` si non authentifié
 - Écoute `onAuthStateChange` pour les changements de session
-- Gère le header mobile responsive
+- Gère le header mobile responsive (< 768px)
 
 ### `workflows.js`
 Définitions des 6 workflows + gestion CRUD des étapes.
