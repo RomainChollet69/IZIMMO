@@ -938,28 +938,9 @@
                 });
                 if (data.slots) {
                     lastFoundSlots = data.slots;
-                    appendSlotsCard(data.slots, params);
+                    // Affiche les créneaux avec bouton "Proposer" — le message sera généré après sélection
+                    appendSlotsCard(data.slots, params, true);
                     conversationHistory.push({ role: 'assistant', content: `Créneaux trouvés: ${JSON.stringify(data.slots)}` });
-                }
-
-                // Draft message
-                const msgResponse = await fetch('/api/assistant', {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({
-                        action: 'draft_message',
-                        who: params.who,
-                        who_role: params.who_role,
-                        context: params.context,
-                        tone: params.message_tone || 'professionnel',
-                        channel: params.message_channel || 'whatsapp',
-                        slots: data.slots || [],
-                        user_name: userName
-                    })
-                });
-                if (msgResponse.ok) {
-                    const msgData = await msgResponse.json();
-                    appendMessageCard(msgData, params);
                 }
                 break;
             }
@@ -1112,7 +1093,7 @@
         scrollToBottom();
     }
 
-    function appendSlotsCard(slots, params) {
+    function appendSlotsCard(slots, params, withDraft) {
         if (!slots || slots.length === 0) {
             appendLeonMessage('Aucun créneau trouvé sur cette période. Tu veux que j\'élargisse la recherche ?');
             return;
@@ -1127,6 +1108,15 @@
             </label>
         `).join('');
 
+        const channel = (params && params.message_channel) || 'whatsapp';
+        const channelLabel = channel === 'sms' ? 'SMS' : channel === 'email' ? 'Email' : 'WhatsApp';
+
+        const draftBtn = withDraft
+            ? `<button class="card-btn" onclick="draftWithSelectedSlots('${cardId}', ${JSON.stringify(slots).replace(/"/g, '&quot;')}, ${JSON.stringify(params || {}).replace(/"/g, '&quot;')})">
+                    💬 Proposer par ${channelLabel}
+                </button>`
+            : '';
+
         const div = document.createElement('div');
         div.className = 'card';
         div.innerHTML = `
@@ -1136,6 +1126,7 @@
                 <button class="card-btn primary" onclick="blockSelectedSlots('${cardId}', ${JSON.stringify(slots).replace(/"/g, '&quot;')}, ${JSON.stringify(params || {}).replace(/"/g, '&quot;')})">
                     📅 Bloquer le(s) créneau(x)
                 </button>
+                ${draftBtn}
             </div>
         `;
         document.getElementById('conversation').appendChild(div);
@@ -1168,6 +1159,49 @@
                 appendLeonMessage(`Erreur lors de la création de l'événement du ${slot.day_label}.`);
             }
         }
+    }
+
+    async function draftWithSelectedSlots(cardId, slots, params) {
+        const checked = document.querySelectorAll(`.slot-cb-${cardId}:checked`);
+        // Si aucun créneau sélectionné, utiliser tous les créneaux
+        const selectedSlots = checked.length > 0
+            ? Array.from(checked).map(cb => slots[parseInt(cb.value)])
+            : slots;
+
+        const thinkingId = appendThinking();
+
+        try {
+            const headers = await getAuthHeaders();
+            const response = await fetch('/api/assistant', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    action: 'draft_message',
+                    who: params.who,
+                    who_role: params.who_role,
+                    context: params.context,
+                    tone: params.message_tone || 'professionnel',
+                    channel: params.message_channel || 'whatsapp',
+                    slots: selectedSlots,
+                    user_name: userName
+                })
+            });
+
+            removeThinking(thinkingId);
+
+            if (response.ok) {
+                const msgData = await response.json();
+                appendMessageCard(msgData, params);
+                lastFoundSlots = selectedSlots;
+            } else {
+                appendLeonMessage('Erreur lors de la rédaction du message. Réessaie !');
+            }
+        } catch (err) {
+            removeThinking(thinkingId);
+            console.error('[Assistant] Erreur draft:', err);
+            appendLeonMessage('Erreur lors de la rédaction du message. Réessaie !');
+        }
+        scrollToBottom();
     }
 
     function appendMessageCard(msgData, params) {
