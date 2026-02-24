@@ -6,19 +6,10 @@
     "api/generate-social-post.js": {
       "maxDuration": 60
     },
-    "api/calendar.js": {
+    "api/assistant.js": {
       "maxDuration": 30
     },
-    "api/assistant-orchestrator.js": {
-      "maxDuration": 30
-    },
-    "api/assistant-draft-message.js": {
-      "maxDuration": 30
-    },
-    "api/google-auth-init.js": {
-      "maxDuration": 10
-    },
-    "api/google-auth-callback.js": {
+    "api/google-auth.js": {
       "maxDuration": 15
     }
   },

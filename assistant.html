@@ -787,10 +787,11 @@
             const headers = await getAuthHeaders();
 
             // Call orchestrator
-            const orchResponse = await fetch('/api/assistant-orchestrator', {
+            const orchResponse = await fetch('/api/assistant', {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
+                    action: 'orchestrate',
                     input,
                     context: {
                         today: new Date().toISOString().split('T')[0],
@@ -857,10 +858,11 @@
                 }
 
                 // Draft message
-                const msgResponse = await fetch('/api/assistant-draft-message', {
+                const msgResponse = await fetch('/api/assistant', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
+                        action: 'draft_message',
                         who: params.who,
                         who_role: params.who_role,
                         context: params.context,
@@ -912,10 +914,11 @@
             }
 
             case 'draft_message': {
-                const msgResponse = await fetch('/api/assistant-draft-message', {
+                const msgResponse = await fetch('/api/assistant', {
                     method: 'POST',
                     headers,
                     body: JSON.stringify({
+                        action: 'draft_message',
                         who: params.who,
                         who_role: params.who_role,
                         context: params.context,
@@ -940,7 +943,7 @@
     }
 
     async function callCalendar(headers, action, params) {
-        const response = await fetch('/api/calendar', {
+        const response = await fetch('/api/assistant', {
             method: 'POST',
             headers,
             body: JSON.stringify({ action, ...params })
@@ -1348,10 +1351,11 @@
 
         try {
             const headers = await getAuthHeaders();
-            const response = await fetch('/api/assistant-draft-message', {
+            const response = await fetch('/api/assistant', {
                 method: 'POST',
                 headers,
                 body: JSON.stringify({
+                    action: 'draft_message',
                     who: params.who,
                     who_role: params.who_role,
                     context: params.context,

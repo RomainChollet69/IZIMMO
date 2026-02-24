@@ -2007,7 +2007,7 @@
         async function connectGoogleCalendar() {
             try {
                 const headers = await getAuthHeaders();
-                const response = await fetch('/api/google-auth-init', {
+                const response = await fetch('/api/google-auth', {
                     method: 'POST',
                     headers
                 });
