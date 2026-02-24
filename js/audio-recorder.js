@@ -9,7 +9,7 @@ window.AudioRecorder = class AudioRecorder {
         this.maxDuration = options.maxDuration || 30000;
         this.silenceTimeout = options.silenceTimeout || 0; // 0 = désactivé
         this.silenceThreshold = options.silenceThreshold || 0.01;
-        this.apiTimeout = options.apiTimeout || 15000;
+        this.apiTimeout = options.apiTimeout || 30000;
         this.onStateChange = options.onStateChange || (() => {});
         this.mediaRecorder = null;
         this.stream = null;

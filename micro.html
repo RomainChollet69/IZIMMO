@@ -1107,8 +1107,8 @@
             }
 
             recorder = new AudioRecorder({
-                maxDuration: 30000,
-                silenceTimeout: 3000,
+                maxDuration: 120000,    // 2 minutes max
+                silenceTimeout: 6000,   // 6s de silence avant auto-stop
                 silenceThreshold: 0.01,
                 onStateChange: handleRecorderState
             });
@@ -1178,6 +1178,16 @@
         micBtn.addEventListener('click', async () => {
             if (recorder && recorder.isRecording) { recorder.stop(); return; }
 
+            // Garde : userId doit être défini avant d'enregistrer
+            if (!userId) {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) userId = session.user.id;
+                if (!userId) {
+                    showError('Session expirée — reconnectez-vous');
+                    return;
+                }
+            }
+
             hideAllZones();
             stopExamplesCarousel();
             examplesZone.classList.add('hidden');
@@ -1200,6 +1210,7 @@
         // ===== TRANSCRIPTION =====
         function showTranscription(text) {
             transcriptionText.textContent = text;
+            transcriptionText.style.display = '';      // Reset après enterEditMode
             transcriptionEditArea.value = text;
             transcriptionEditBtn.style.display = '';
             transcriptionEditArea.style.display = 'none';
@@ -1242,21 +1253,37 @@
 
         // ===== LOAD LEADS =====
         async function loadUserLeads() {
-            if (allLeads) return allLeads;
-            const [sellersRes, buyersRes] = await Promise.all([
-                supabaseClient.from('sellers')
-                    .select('id, first_name, last_name, phone, address, status')
-                    .eq('user_id', userId)
-                    .order('updated_at', { ascending: false }).limit(500),
-                supabaseClient.from('buyers')
-                    .select('id, first_name, last_name, phone, sector, status')
-                    .eq('user_id', userId)
-                    .order('updated_at', { ascending: false }).limit(500)
-            ]);
-            const sellers = (sellersRes.data || []).map(s => ({ id: s.id, type: 'seller', first_name: s.first_name, last_name: s.last_name, phone: s.phone, address: s.address }));
-            const buyers = (buyersRes.data || []).map(b => ({ id: b.id, type: 'buyer', first_name: b.first_name, last_name: b.last_name, phone: b.phone, sector: b.sector }));
-            allLeads = [...sellers, ...buyers];
-            return allLeads;
+            // Ne pas cacher un résultat vide ([] est truthy en JS)
+            if (allLeads && allLeads.length > 0) return allLeads;
+
+            try {
+                const [sellersRes, buyersRes] = await Promise.all([
+                    supabaseClient.from('sellers')
+                        .select('id, first_name, last_name, phone, address, status')
+                        .eq('user_id', userId)
+                        .order('updated_at', { ascending: false }).limit(500),
+                    supabaseClient.from('buyers')
+                        .select('id, first_name, last_name, phone, sector, status')
+                        .eq('user_id', userId)
+                        .order('updated_at', { ascending: false }).limit(500)
+                ]);
+
+                if (sellersRes.error) console.error('[Micro] Erreur chargement vendeurs:', sellersRes.error);
+                if (buyersRes.error) console.error('[Micro] Erreur chargement acquéreurs:', buyersRes.error);
+
+                const sellers = (sellersRes.data || []).map(s => ({ id: s.id, type: 'seller', first_name: s.first_name, last_name: s.last_name, phone: s.phone, address: s.address }));
+                const buyers = (buyersRes.data || []).map(b => ({ id: b.id, type: 'buyer', first_name: b.first_name, last_name: b.last_name, phone: b.phone, sector: b.sector }));
+                allLeads = [...sellers, ...buyers];
+
+                if (allLeads.length === 0) {
+                    console.warn('[Micro] Aucun lead chargé pour userId:', userId);
+                }
+
+                return allLeads;
+            } catch (err) {
+                console.error('[Micro] loadUserLeads error:', err);
+                return [];
+            }
         }
 
         function preFilterLeads(leads, transcription) {
