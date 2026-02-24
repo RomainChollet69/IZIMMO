@@ -736,7 +736,7 @@ RETOURNE UNIQUEMENT un objet JSON valide (pas de texte autour, pas de markdown) 
     "who": "Mathieu",
     "who_role": "courtier",
     "who_relationship": "professionnel_amical",
-    "context": "déjeuner",
+    "context": "répondre à Mathieu qui a demandé mes disponibilités pour un déjeuner",
     "slot_type": "lunch",
     "duration_minutes": 90,
     "date_range": {
@@ -747,8 +747,17 @@ RETOURNE UNIQUEMENT un objet JSON valide (pas de texte autour, pas de markdown) 
     "message_tone": "amical_pro",
     "needs_confirmation": false
   },
-  "leon_response": "Je cherche un créneau déjeuner pour toi avec Mathieu sur les 2 prochaines semaines. Je te prépare aussi un message !"
+  "leon_response": "Je cherche tes créneaux déjeuner sur les 2 prochaines semaines et je te prépare une réponse WhatsApp pour Mathieu !"
 }
+
+RÈGLE CONTEXT (CRITIQUE) :
+- Le champ "context" doit capturer la SITUATION COMPLÈTE, pas juste le type de RDV
+- Mauvais : "context": "déjeuner"
+- Bon : "context": "répondre à mon courtier qui me demande mes dispos pour déjeuner"
+- Bon : "context": "proposer un déjeuner de networking à mon notaire"
+- Le context est transmis tel quel au rédacteur de message — il doit contenir assez d'info pour que le message soit pertinent
+- Capturer l'initiative : qui a initié ? (l'agent propose OU l'agent répond à une demande)
+- Capturer l'objet : pourquoi ce RDV ? (déjeuner, visite, signature, point dossier...)
 
 Pour list_events, le format de params est :
 {
