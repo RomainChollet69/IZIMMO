@@ -658,6 +658,7 @@
     let isProcessing = false;
     let recorder = null;
     let isRecording = false;
+    let lastFoundSlots = null; // Créneaux du dernier find_slots (pour multi-turn draft_message)
 
     // ===== INIT =====
     document.addEventListener('DOMContentLoaded', async () => {
@@ -771,10 +772,10 @@
         try {
             isRecording = true;
             document.getElementById('voiceBtn').classList.add('recording');
-            const result = await recorder.record();
+            const text = await recorder.record();
 
-            if (result && result.text) {
-                handleUserInput(result.text);
+            if (text && text.trim()) {
+                handleUserInput(text.trim());
             }
         } catch (err) {
             console.error('[Assistant] Erreur vocale:', err);
@@ -887,6 +888,7 @@
                     duration_minutes: params.duration_minutes || 60
                 });
                 if (data.slots) {
+                    lastFoundSlots = data.slots;
                     appendSlotsCard(data.slots, params);
                     conversationHistory.push({ role: 'assistant', content: `Créneaux trouvés: ${JSON.stringify(data.slots)}` });
                 }
@@ -901,6 +903,7 @@
                     duration_minutes: params.duration_minutes || 60
                 });
                 if (data.slots) {
+                    lastFoundSlots = data.slots;
                     appendSlotsCard(data.slots, params);
                     conversationHistory.push({ role: 'assistant', content: `Créneaux trouvés: ${JSON.stringify(data.slots)}` });
                 }
@@ -972,7 +975,7 @@
                         context: params.context,
                         tone: params.message_tone || 'professionnel',
                         channel: params.message_channel || 'whatsapp',
-                        slots: null,
+                        slots: lastFoundSlots,
                         user_name: userName
                     })
                 });
@@ -1409,7 +1412,7 @@
                     context: params.context,
                     tone: params.message_tone || 'professionnel',
                     channel: params.message_channel || 'whatsapp',
-                    slots: null,
+                    slots: lastFoundSlots,
                     user_name: userName
                 })
             });
