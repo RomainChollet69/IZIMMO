@@ -2136,7 +2136,11 @@
             .nav-text { display: none; }
             .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
 
-            /* Ligne 3 : cloche + export + bouton "+" */
+            /* Ligne 3 : simplification mobile — cacher briefing + exporter */
+            .briefing-btn-header { display: none !important; }
+            .export-wrapper { display: none !important; }
+            .header-separator { display: none !important; }
+
             .alert-counter {
                 grid-column: 1;
                 grid-row: 3;
@@ -2150,25 +2154,9 @@
 
             .btn-text { display: none; }
 
-            .export-wrapper { grid-column: 1; grid-row: 4; justify-self: end; }
-            .export-btn {
-                padding: 8px 14px;
-                font-size: 20px;
-                line-height: 1;
-                border-radius: 10px;
-                border-color: rgba(0,0,0,0.15);
-                color: var(--text-dark);
-            }
-            .export-dropdown {
-                right: auto;
-                left: 0;
-                min-width: calc(100vw - 28px);
-            }
-
             .add-btn {
                 grid-column: 2;
                 grid-row: 3;
-                grid-row-end: 5;
                 justify-self: start;
                 align-self: center;
                 padding: 10px 18px;
@@ -4957,7 +4945,27 @@
             viewport.querySelectorAll('.deck-card').forEach(c => c.remove());
 
             // Sellers de la colonne active
-            const columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+            let columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+
+            // Auto-sélectionner le premier tab avec des leads si le courant est vide
+            if (columnSellers.length === 0 && sellers.length > 0) {
+                const firstTabWithLeads = SELLER_TABS.find(t => sellers.some(s => s.status === t.status));
+                if (firstTabWithLeads && firstTabWithLeads.status !== mobileActiveTab) {
+                    mobileActiveTab = firstTabWithLeads.status;
+                    // Mettre à jour l'UI des tabs sans rappeler renderMobileCardDeck (éviter boucle)
+                    const color = COLUMN_COLORS[mobileActiveTab] || '#2DD4BF';
+                    document.querySelectorAll('.mobile-tab').forEach(t => {
+                        const isActive = t.dataset.status === mobileActiveTab;
+                        t.classList.toggle('active', isActive);
+                        t.style.borderBottomColor = isActive ? color : 'transparent';
+                        t.style.color = isActive ? '#243B53' : '';
+                    });
+                    const activeTab = document.querySelector(`.mobile-tab[data-status="${mobileActiveTab}"]`);
+                    if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+                    mobileDeckIndex = 0;
+                }
+            }
 
             if (columnSellers.length === 0) {
                 emptyState.style.display = 'flex';
