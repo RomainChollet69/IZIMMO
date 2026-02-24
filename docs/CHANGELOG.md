@@ -4,6 +4,50 @@
 
 ---
 
+## Session 2026-02-25 — Corrections Assistant + Header
+
+### Résumé
+Alignement du header de la page assistant sur le standard des autres pages, correction de 2 bugs fonctionnels (micro + créneaux), et amélioration du prompt orchestrateur pour de meilleures réponses IA.
+
+### Modifications
+
+**Header assistant.html — Alignement standard** :
+- `assistant.html` : Remplacement du double header (`.header-desktop` + `.header-mobile`) par un unique `.header` identique à dvf.html/index.html
+- `assistant.html` : Ajout alert-bell + header-separator + user-profile complet dans header-actions
+- `assistant.html` : Ajout CSS `.user-dropdown`, `.user-dropdown.active`, `.user-dropdown-item` (menu Paramètres/Déconnexion était affiché en texte brut)
+- `assistant.html` : Suppression du bottom-navigation mobile (aucune autre page n'en a)
+- `assistant.html` : CSS responsive en grid 2 colonnes pour mobile (pattern standard)
+- `assistant.html` : Suppression du tab "Assistant" dans le header (cohérent avec les autres pages)
+
+**Bug micro assistant** :
+- `assistant.html` : `recorder.record()` retourne une string, le code faisait `result.text` (toujours `undefined`) → corrigé en `const text = await recorder.record()` (même pattern que micro.html)
+
+**Bug créneaux non transmis au draft_message** :
+- `assistant.html` : Ajout variable `lastFoundSlots` pour stocker les derniers créneaux trouvés
+- `assistant.html` : Le case `draft_message` standalone passe désormais `lastFoundSlots` au lieu de `null`
+- `assistant.html` : `regenerateMessage()` passe aussi `lastFoundSlots`
+
+**Amélioration orchestrateur IA** :
+- `api/assistant.js` : Règle anti-clarification — ne demande jamais "c'est lequel ?" quand l'utilisateur dit "mon courtier/ma notaire"
+- `api/assistant.js` : Règle `find_slots_and_draft` — toujours choisir cet intent quand créneaux + message demandés ensemble
+- `api/assistant.js` : `leon_response` ne pose jamais de question (sauf intent `unknown`)
+- `api/assistant.js` : Règle CONTEXT — le champ `context` doit capturer la situation complète (qui a initié, pourquoi), pas juste "déjeuner"
+
+**Flow find_slots_and_draft revu** :
+- `assistant.html` : Le message WhatsApp n'est plus généré automatiquement avec TOUS les créneaux
+- `assistant.html` : La carte créneaux affiche un bouton "Proposer par WhatsApp" en plus de "Bloquer"
+- `assistant.html` : Nouvelle fonction `draftWithSelectedSlots()` — génère le message avec uniquement les créneaux cochés
+
+### Fichiers modifiés
+- `assistant.html`
+- `api/assistant.js`
+
+### Points d'attention
+- Les corrections du prompt orchestrateur améliorent le comportement IA mais ne le garantissent pas à 100% (modèle probabiliste)
+- Le bouton "Proposer par WhatsApp" n'apparaît que sur les cartes créneaux issues de `find_slots_and_draft` (pas `find_slots` seul)
+
+---
+
 ## Session 2026-02-24 (d) — Bugs Micro + Commission
 
 ### Résumé
