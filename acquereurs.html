@@ -3675,6 +3675,18 @@
             return '';
         }
 
+        function isNoteLong(content) {
+            if (!content) return false;
+            const lineBreaks = (content.match(/\n/g) || []).length;
+            return content.length > 150 || lineBreaks > 2;
+        }
+
+        function toggleNoteExpand(btn) {
+            const noteContent = btn.previousElementSibling;
+            const isExpanded = noteContent.classList.toggle('expanded');
+            btn.textContent = isExpanded ? 'Voir moins ▲' : 'Voir plus ▼';
+        }
+
         function renderBuyerNotes() {
             const timeline = document.getElementById('notesTimeline');
             const countEl = document.getElementById('notesCount');
@@ -3685,9 +3697,13 @@
             }
             timeline.innerHTML = currentNotes.map(n => {
                 const imgHtml = renderNoteImageHtml(n);
+                const long = isNoteLong(n.content);
+                const collapsibleClass = long ? ' collapsible' : '';
+                const toggleHtml = long ? '<span class="note-toggle" onclick="toggleNoteExpand(this)">Voir plus ▼</span>' : '';
                 return `<div class="note-item" data-id="${n.id}">
                     <div class="note-date">${formatNoteDate(n.created_at)}</div>
-                    <div class="note-content">${n.content ? escapeHtml(n.content) : ''}${imgHtml}</div>
+                    <div class="note-content${collapsibleClass}">${n.content ? escapeHtml(n.content) : ''}${imgHtml}</div>
+                    ${toggleHtml}
                     <div class="note-actions">
                         <button type="button" class="note-action-btn" onclick="editBuyerNote('${n.id}')" title="Modifier">✏️</button>
                         <button type="button" class="note-action-btn delete" onclick="deleteBuyerNote('${n.id}')" title="Supprimer">🗑️</button>

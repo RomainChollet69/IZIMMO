@@ -83,6 +83,7 @@ RÈGLES :
 - "en veut 300K€" → 300000. Extraire le nombre même si entouré de texte
 - Convertir toute date en YYYY-MM-DD (gérer DD/MM/YYYY, dates Excel sérialisées, formats français abrégés)
 - Ne JAMAIS inventer de données. Si un champ n'est pas dans la ligne, mettre null
+- IMPORTANT : Pour "notes" et "contact_notes", préserve INTÉGRALEMENT et VERBATIM tout le contenu des cellules. Ne résume JAMAIS, ne tronque JAMAIS, ne sélectionne pas. Chaque ligne de texte doit être conservée mot pour mot dans son intégralité
 ${statusRules}
 
 Retourne UNIQUEMENT un JSON valide au format :
@@ -118,7 +119,7 @@ Le row_index correspond à la position de la ligne dans le batch (0-indexed).`;
             },
             body: JSON.stringify({
                 model: 'claude-haiku-4-5-20251001',
-                max_tokens: 8000,
+                max_tokens: 16000,
                 system: systemPrompt,
                 messages: [{ role: 'user', content: userContent }]
             }),
