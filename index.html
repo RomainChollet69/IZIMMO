@@ -5677,13 +5677,36 @@
             return `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${parts.join(' · ')}</div>`;
         }
 
+        // Ajoute l'arrondissement pour Paris, Lyon, Marseille à partir du code postal
+        function addArrondissement(city, postalCode) {
+            if (!postalCode || !city) return city;
+            const cityLower = city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const cp = postalCode.trim();
+            if (cityLower === 'paris' && cp.startsWith('75') && cp !== '75000') {
+                const arr = parseInt(cp.slice(3), 10); // 75008 → 8
+                if (arr >= 1 && arr <= 20) return `Paris ${arr}ème`;
+            }
+            if (cityLower === 'lyon' && cp.startsWith('690') && cp !== '69000') {
+                const arr = parseInt(cp.slice(4), 10); // 69003 → 3
+                if (arr >= 1 && arr <= 9) return `Lyon ${arr}ème`;
+            }
+            if (cityLower === 'marseille' && cp.startsWith('130') && cp !== '13000') {
+                const arr = parseInt(cp.slice(3), 10); // 13006 → 6
+                if (arr >= 1 && arr <= 16) return `Marseille ${arr}ème`;
+            }
+            return city;
+        }
+
         function extractCity(address) {
             if (!address) return null;
             const trimmed = address.trim();
-            const cpMatch = trimmed.match(/\d{5}\s+(.+)$/);
-            if (cpMatch) return cpMatch[1].trim();
+            // Code postal + ville (ex: "69003 Lyon")
+            const cpMatch = trimmed.match(/(\d{5})\s+(.+)$/);
+            if (cpMatch) return addArrondissement(cpMatch[2].trim(), cpMatch[1]);
+            // Après la dernière virgule
             const commaMatch = trimmed.match(/,\s*([^,]+)$/);
             if (commaMatch) return commaMatch[1].trim();
+            // Adresse courte (≤3 mots) → retourner telle quelle
             if (trimmed.split(/\s+/).length <= 3) return trimmed;
             return null;
         }
