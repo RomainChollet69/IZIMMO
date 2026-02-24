@@ -4939,7 +4939,9 @@
             const viewport = document.getElementById('deckViewport');
             const emptyState = document.getElementById('deckEmpty');
             const posIndicator = document.getElementById('deckPosition');
-            if (!viewport) return;
+            if (!viewport) { console.warn('[MobileCardDeck] viewport introuvable'); return; }
+
+            console.log('[MobileCardDeck] Rendu — sellers:', sellers.length, 'tab:', mobileActiveTab, 'index:', mobileDeckIndex);
 
             // Retirer les cartes précédentes
             viewport.querySelectorAll('.deck-card').forEach(c => c.remove());
@@ -5324,11 +5326,12 @@
                 .eq('user_id', userId)
                 .order('position', { ascending: true })
                 .order('created_at', { ascending: false });
-            if (error) { console.error('Erreur chargement:', error); return; }
+            if (error) { console.error('[loadSellers] Erreur chargement:', error); return; }
             sellers = data || [];
-            await loadVisitCounts();
-            await loadNotePreviews();
-            await loadFileCounts();
+            console.log('[loadSellers] Chargé', sellers.length, 'sellers. Statuts:', [...new Set(sellers.map(s => s.status))].join(', '));
+            try { await loadVisitCounts(); } catch(e) { console.error('[loadSellers] loadVisitCounts error:', e); }
+            try { await loadNotePreviews(); } catch(e) { console.error('[loadSellers] loadNotePreviews error:', e); }
+            try { await loadFileCounts(); } catch(e) { console.error('[loadSellers] loadFileCounts error:', e); }
             renderSellers();
             // Recompute matching badges (non-blocking)
             if (matchBuyers !== null) computeMatchCounts().then(() => renderSellers()).catch(() => {});
@@ -6270,6 +6273,17 @@
 
         // ===== RENDU =====
         function renderSellers() {
+            // Mobile card deck : rendu EN PREMIER, indépendant du desktop
+            // (évite que le deck ne se rende pas si le rendu desktop crash)
+            if (isMobile()) {
+                try {
+                    renderMobileCardDeck();
+                    updateMobileTabCounts();
+                } catch (e) {
+                    console.error('[MobileCardDeck] Erreur rendu mobile:', e);
+                }
+            }
+
             const containers = {
                 hot: document.getElementById('hot-container'),
                 warm: document.getElementById('warm-container'),
@@ -6319,11 +6333,6 @@
 
             setupCardToggles();
             updateCounts();
-
-            // Mobile : mettre à jour le card deck
-            if (isMobile()) {
-                renderMobileCardDeck();
-            }
         }
 
         function setupCardToggles() {
@@ -9222,6 +9231,13 @@
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
             loadSellers().then(async () => {
+                console.log('[Pipeline] Sellers chargés:', sellers.length, 'isMobile:', isMobile());
+
+                // Forcer le rendu mobile card deck après chargement des sellers
+                if (isMobile() && sellers.length > 0) {
+                    renderMobileCardDeck();
+                }
+
                 // Onboarding if 0 leads
                 if (sellers.length === 0) {
                     showOnboarding();
@@ -9247,6 +9263,8 @@
                     // Briefing du matin (non-bloquant, après chargement)
                     maybeShowBriefing().catch(() => {});
                 }
+            }).catch(err => {
+                console.error('[Pipeline] Erreur chargement sellers:', err);
             });
             setupDragAndDrop();
             initMobileTabs();
