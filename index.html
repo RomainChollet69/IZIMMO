@@ -1707,6 +1707,25 @@
             line-height: 1.4;
             word-break: break-word;
         }
+        .note-content.collapsible {
+            max-height: 60px;
+            overflow: hidden;
+            position: relative;
+        }
+        .note-content.collapsible.expanded {
+            max-height: none;
+        }
+        .note-toggle {
+            display: inline-block;
+            font-size: 12px;
+            color: #667eea;
+            cursor: pointer;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .note-toggle:hover {
+            text-decoration: underline;
+        }
         .note-actions {
             position: absolute;
             top: 10px;
@@ -1769,6 +1788,56 @@
             color: var(--text-light);
             font-style: italic;
             padding: 12px 0;
+        }
+        /* Preview image collée dans notes */
+        .note-image-preview {
+            position: relative;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 2px dashed rgba(102, 126, 234, 0.25);
+            border-radius: 8px;
+            background: #f8f7ff;
+            text-align: center;
+        }
+        .note-image-preview img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            object-fit: contain;
+        }
+        .note-image-remove {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #FF4757;
+            color: #fff;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .note-image-hint {
+            display: block;
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+        }
+        /* Image affichée dans une note de la timeline */
+        .note-image {
+            margin-top: 6px;
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 6px;
+            cursor: pointer;
+            object-fit: contain;
+        }
+        .note-image:hover {
+            opacity: 0.9;
         }
         .card-notes-preview {
             font-size: 12px;
@@ -3549,6 +3618,12 @@
                             <textarea class="notes-textarea" id="noteInput" placeholder="Ajouter une note..." rows="2"></textarea>
                             <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><i class="fa-solid fa-microphone"></i></button>
                             <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
+                        </div>
+                        <!-- Preview image collée -->
+                        <div class="note-image-preview" id="noteImagePreview" style="display:none">
+                            <img id="noteImagePreviewImg" src="" alt="Aperçu">
+                            <button type="button" class="note-image-remove" id="noteImageRemoveBtn" title="Retirer l'image">&times;</button>
+                            <span class="note-image-hint">📋 Image collée — sera ajoutée avec la note</span>
                         </div>
                         <div class="notes-timeline" id="notesTimeline">
                             <div class="notes-empty">Aucune note pour le moment</div>
@@ -5866,6 +5941,7 @@
         // ===== NOTES HORODATÉES =====
         let currentNotes = [];
         let pendingNotes = []; // Notes en attente pour un lead non encore enregistré
+        let pendingNoteImage = null; // File compressé d'une image collée dans les notes
         let noteRecorder = null;
 
         async function loadNotes(sellerId) {
@@ -5885,31 +5961,64 @@
         async function addNote(sellerId) {
             const input = document.getElementById('noteInput');
             const text = input.value.trim();
-            if (!text) return;
+            const hasImage = !!pendingNoteImage;
+            if (!text && !hasImage) return; // Rien à sauvegarder
 
             // Lead pas encore enregistré → queuer en local
             if (!sellerId) {
-                pendingNotes.unshift({ id: 'pending-' + Date.now(), content: text, created_at: new Date().toISOString(), pending: true });
+                pendingNotes.unshift({
+                    id: 'pending-' + Date.now(),
+                    content: text,
+                    created_at: new Date().toISOString(),
+                    pending: true,
+                    pendingImageFile: hasImage ? pendingNoteImage : null,
+                    pendingImageUrl: hasImage ? URL.createObjectURL(pendingNoteImage) : null
+                });
                 input.value = '';
+                clearNoteImagePreview();
                 renderNotes();
                 return;
             }
 
             const userId = await getCurrentUserId();
             if (!userId) return;
+
+            let imageUrl = null;
+            if (hasImage) {
+                const storagePath = `${userId}/notes/seller_${sellerId}/${Date.now()}_screenshot.jpg`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('lead-files')
+                    .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                if (uploadError) {
+                    console.error('[Notes] Image upload error:', uploadError);
+                    alert('Erreur lors de l\'envoi de l\'image');
+                    return;
+                }
+                imageUrl = storagePath;
+            }
+
+            const insertData = { user_id: userId, seller_id: sellerId, content: text || '' };
+            if (imageUrl) insertData.image_url = imageUrl;
+
             const { data, error } = await supabaseClient
                 .from('lead_notes')
-                .insert({ user_id: userId, seller_id: sellerId, content: text })
+                .insert(insertData)
                 .select()
                 .single();
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
             input.value = '';
+            clearNoteImagePreview();
             renderNotes();
         }
 
         async function deleteNote(noteId) {
             if (!confirm('Supprimer cette note ?')) return;
+            const note = currentNotes.find(n => n.id === noteId);
+            // Supprimer l'image de Storage si présente
+            if (note?.image_url) {
+                await supabaseClient.storage.from('lead-files').remove([note.image_url]);
+            }
             const { error } = await supabaseClient
                 .from('lead_notes')
                 .delete()
@@ -5925,6 +6034,28 @@
             return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()}h${String(d.getMinutes()).padStart(2,'0')}`;
         }
 
+        function renderNoteImageHtml(note) {
+            if (note.pending && note.pendingImageUrl) {
+                return `<img class="note-image" src="${note.pendingImageUrl}" alt="Image" onclick="window.open(this.src,'_blank')">`;
+            }
+            if (note.image_url) {
+                return `<img class="note-image" data-path="${escapeHtml(note.image_url)}" src="" alt="Image" onclick="window.open(this.src,'_blank')">`;
+            }
+            return '';
+        }
+
+        function isNoteLong(content) {
+            if (!content) return false;
+            const lineBreaks = (content.match(/\n/g) || []).length;
+            return content.length > 150 || lineBreaks > 2;
+        }
+
+        function toggleNoteExpand(btn) {
+            const noteContent = btn.previousElementSibling;
+            const isExpanded = noteContent.classList.toggle('expanded');
+            btn.textContent = isExpanded ? 'Voir moins ▲' : 'Voir plus ▼';
+        }
+
         function renderNotes() {
             const timeline = document.getElementById('notesTimeline');
             const countEl = document.getElementById('notesCount');
@@ -5936,10 +6067,15 @@
                 return;
             }
             timeline.innerHTML = allNotes.map(n => {
+                const imgHtml = renderNoteImageHtml(n);
+                const long = isNoteLong(n.content);
+                const collapsibleClass = long ? ' collapsible' : '';
+                const toggleHtml = long ? '<span class="note-toggle" onclick="toggleNoteExpand(this)">Voir plus ▼</span>' : '';
                 if (n.pending) {
                     return `<div class="note-item note-pending" data-id="${n.id}">
                         <div class="note-date" style="color:#667eea">En attente d'enregistrement</div>
-                        <div class="note-content">${escapeHtml(n.content)}</div>
+                        <div class="note-content${collapsibleClass}">${n.content ? escapeHtml(n.content) : ''}${imgHtml}</div>
+                        ${toggleHtml}
                         <div class="note-actions">
                             <button type="button" class="note-action-btn delete" onclick="removePendingNote('${n.id}')" title="Supprimer">🗑️</button>
                         </div>
@@ -5947,16 +6083,26 @@
                 }
                 return `<div class="note-item" data-id="${n.id}">
                     <div class="note-date">${formatNoteDate(n.created_at)}</div>
-                    <div class="note-content">${escapeHtml(n.content)}</div>
+                    <div class="note-content${collapsibleClass}">${n.content ? escapeHtml(n.content) : ''}${imgHtml}</div>
+                    ${toggleHtml}
                     <div class="note-actions">
                         <button type="button" class="note-action-btn" onclick="editNote('${n.id}')" title="Modifier">✏️</button>
                         <button type="button" class="note-action-btn delete" onclick="deleteNote('${n.id}')" title="Supprimer">🗑️</button>
                     </div>
                 </div>`;
             }).join('');
+
+            // Charger les URLs signées pour les images sauvegardées
+            timeline.querySelectorAll('.note-image[data-path]').forEach(async (img) => {
+                const url = await getSignedUrl(img.dataset.path);
+                if (url) img.src = url;
+                else img.style.display = 'none';
+            });
         }
 
         function removePendingNote(id) {
+            const note = pendingNotes.find(n => n.id === id);
+            if (note?.pendingImageUrl) URL.revokeObjectURL(note.pendingImageUrl);
             pendingNotes = pendingNotes.filter(n => n.id !== id);
             renderNotes();
         }
@@ -6045,24 +6191,69 @@
             }
         }
 
+        // ===== COLLAGE IMAGE DANS NOTES =====
+        const MAX_NOTE_IMAGE_RAW_SIZE = 10 * 1024 * 1024; // 10 Mo max avant compression
+
+        function handleNotePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (!file) return;
+                    if (file.size > MAX_NOTE_IMAGE_RAW_SIZE) {
+                        alert('Image trop volumineuse (max 10 Mo)');
+                        return;
+                    }
+                    setNoteImagePreview(file);
+                    return;
+                }
+            }
+        }
+
+        async function setNoteImagePreview(file) {
+            const compressed = await compressImage(file, 1600, 0.7);
+            pendingNoteImage = compressed;
+            const preview = document.getElementById('noteImagePreview');
+            const img = document.getElementById('noteImagePreviewImg');
+            if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            img.src = URL.createObjectURL(compressed);
+            preview.style.display = 'block';
+        }
+
+        function clearNoteImagePreview() {
+            pendingNoteImage = null;
+            const preview = document.getElementById('noteImagePreview');
+            const img = document.getElementById('noteImagePreviewImg');
+            if (img && img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            if (img) img.src = '';
+            if (preview) preview.style.display = 'none';
+        }
+
         // Event listeners pour notes (attachés dans DOMContentLoaded)
         function setupNoteEvents() {
             const micBtn = document.getElementById('noteMicBtn');
             const addBtn = document.getElementById('noteAddBtn');
             const input = document.getElementById('noteInput');
+            const removeImgBtn = document.getElementById('noteImageRemoveBtn');
 
             if (micBtn) micBtn.addEventListener('click', startNoteRecording);
             if (addBtn) addBtn.addEventListener('click', () => {
                 const editId = document.getElementById('submitBtn').dataset.editId;
                 addNote(editId || null);
             });
-            if (input) input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    const editId = document.getElementById('submitBtn').dataset.editId;
-                    addNote(editId || null);
-                }
-            });
+            if (input) {
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const editId = document.getElementById('submitBtn').dataset.editId;
+                        addNote(editId || null);
+                    }
+                });
+                input.addEventListener('paste', handleNotePaste);
+            }
+            if (removeImgBtn) removeImgBtn.addEventListener('click', clearNoteImagePreview);
         }
 
         // ===== DICTÉE VOCALE MODALE (MediaRecorder + Whisper) =====
@@ -6437,6 +6628,7 @@
             // Reset notes
             currentNotes = [];
             pendingNotes = [];
+            clearNoteImagePreview();
             renderNotes();
             if (noteRecorder) noteRecorder.stop();
             if (sellerRecorder) sellerRecorder.stop();
@@ -6712,20 +6904,42 @@
                 }
             }
 
-            // Auto-save note input + pending notes
+            // Auto-save note input + pending notes (avec images)
             const pendingNote = document.getElementById('noteInput').value.trim();
             if (savedId) {
                 const userId = await getCurrentUserId();
                 if (userId) {
-                    // Sauvegarder les pendingNotes en attente
+                    // Sauvegarder les pendingNotes en attente (texte + images)
                     for (const pn of pendingNotes) {
-                        await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pn.content });
+                        let imageUrl = null;
+                        if (pn.pendingImageFile) {
+                            const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
+                            const { error: upErr } = await supabaseClient.storage
+                                .from('lead-files')
+                                .upload(storagePath, pn.pendingImageFile, { cacheControl: '3600', upsert: false });
+                            if (!upErr) imageUrl = storagePath;
+                            else console.error('[Notes] Pending image upload error:', upErr);
+                        }
+                        const insertData = { user_id: userId, seller_id: savedId, content: pn.content || '' };
+                        if (imageUrl) insertData.image_url = imageUrl;
+                        await supabaseClient.from('lead_notes').insert(insertData);
                     }
                     pendingNotes = [];
-                    // Sauvegarder le texte encore dans l'input
-                    if (pendingNote) {
-                        await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: savedId, content: pendingNote });
+                    // Sauvegarder le texte encore dans l'input (+ image collée en attente)
+                    if (pendingNote || pendingNoteImage) {
+                        let imageUrl = null;
+                        if (pendingNoteImage) {
+                            const storagePath = `${userId}/notes/seller_${savedId}/${Date.now()}_screenshot.jpg`;
+                            const { error: upErr } = await supabaseClient.storage
+                                .from('lead-files')
+                                .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                            if (!upErr) imageUrl = storagePath;
+                        }
+                        const insertData = { user_id: userId, seller_id: savedId, content: pendingNote || '' };
+                        if (imageUrl) insertData.image_url = imageUrl;
+                        await supabaseClient.from('lead_notes').insert(insertData);
                         document.getElementById('noteInput').value = '';
+                        clearNoteImagePreview();
                     }
                 }
             }

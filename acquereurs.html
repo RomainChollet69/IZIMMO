@@ -1300,6 +1300,10 @@
         .note-item:last-child { border-bottom: none; }
         .note-date { font-size: 11px; color: var(--text-light); margin-bottom: 3px; }
         .note-content { font-size: 13px; color: var(--text-dark); line-height: 1.4; word-break: break-word; }
+        .note-content.collapsible { max-height: 60px; overflow: hidden; position: relative; }
+        .note-content.collapsible.expanded { max-height: none; }
+        .note-toggle { display: inline-block; font-size: 12px; color: #667eea; cursor: pointer; margin-top: 4px; font-weight: 500; }
+        .note-toggle:hover { text-decoration: underline; }
         .note-actions {
             position: absolute; top: 10px; right: 0; display: flex; gap: 2px;
             opacity: 0; transition: opacity 0.2s;
@@ -1326,6 +1330,13 @@
         .note-edit-cancel { background: #f0f2f5; color: var(--text-dark); }
         @media (max-width: 768px) { .note-actions { opacity: 1; } }
         .notes-empty { font-size: 13px; color: var(--text-light); font-style: italic; padding: 12px 0; }
+        /* Preview image collée dans notes */
+        .note-image-preview { position: relative; margin-bottom: 10px; padding: 8px; border: 2px dashed rgba(102, 126, 234, 0.25); border-radius: 8px; background: #f8f7ff; text-align: center; }
+        .note-image-preview img { max-width: 100%; max-height: 200px; border-radius: 6px; object-fit: contain; }
+        .note-image-remove { position: absolute; top: 4px; right: 4px; width: 24px; height: 24px; border-radius: 50%; background: #FF4757; color: #fff; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .note-image-hint { display: block; font-size: 11px; color: #999; margin-top: 4px; }
+        .note-image { margin-top: 6px; max-width: 100%; max-height: 300px; border-radius: 6px; cursor: pointer; object-fit: contain; }
+        .note-image:hover { opacity: 0.9; }
         .card-notes-preview { font-size: 12px; color: var(--text-light); font-style: italic; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .card-notes-badge { font-size: 11px; color: #667eea; background: #f0f2ff; padding: 2px 6px; border-radius: 4px; display: inline-block; }
 
@@ -2457,6 +2468,12 @@
                             <button type="button" class="notes-mic-btn" id="noteMicBtn" title="Dictée vocale"><i class="fa-solid fa-microphone"></i></button>
                             <button type="button" class="notes-add-btn" id="noteAddBtn">➕</button>
                         </div>
+                        <!-- Preview image collée -->
+                        <div class="note-image-preview" id="noteImagePreview" style="display:none">
+                            <img id="noteImagePreviewImg" src="" alt="Aperçu">
+                            <button type="button" class="note-image-remove" id="noteImageRemoveBtn" title="Retirer l'image">&times;</button>
+                            <span class="note-image-hint">📋 Image collée — sera ajoutée avec la note</span>
+                        </div>
                         <div class="notes-timeline" id="notesTimeline">
                             <div class="notes-empty">Aucune note pour le moment</div>
                         </div>
@@ -3339,6 +3356,7 @@
             if (buyerRecorder) buyerRecorder.stop();
             // Reset notes
             currentNotes = [];
+            clearNoteImagePreview();
             renderBuyerNotes();
             if (noteRecorder) noteRecorder.stop();
             document.getElementById('noteInput').value = '';
@@ -3577,6 +3595,7 @@
 
         // ===== NOTES HORODATÉES =====
         let currentNotes = [];
+        let pendingNoteImage = null; // File compressé d'une image collée dans les notes
         let noteRecorder = null;
 
         async function loadBuyerNotes(buyerId) {
@@ -3596,23 +3615,47 @@
         async function addBuyerNote(buyerId) {
             const input = document.getElementById('noteInput');
             const text = input.value.trim();
-            if (!text) return;
+            const hasImage = !!pendingNoteImage;
+            if (!text && !hasImage) return;
             if (!buyerId) { alert('Enregistrez le lead avant d\'ajouter des notes.'); return; }
             const userId = await getCurrentUserId();
             if (!userId) return;
+
+            let imageUrl = null;
+            if (hasImage) {
+                const storagePath = `${userId}/notes/buyer_${buyerId}/${Date.now()}_screenshot.jpg`;
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('lead-files')
+                    .upload(storagePath, pendingNoteImage, { cacheControl: '3600', upsert: false });
+                if (uploadError) {
+                    console.error('[Notes] Image upload error:', uploadError);
+                    alert('Erreur lors de l\'envoi de l\'image');
+                    return;
+                }
+                imageUrl = storagePath;
+            }
+
+            const insertData = { user_id: userId, buyer_id: buyerId, content: text || '' };
+            if (imageUrl) insertData.image_url = imageUrl;
+
             const { data, error } = await supabaseClient
                 .from('lead_notes')
-                .insert({ user_id: userId, buyer_id: buyerId, content: text })
+                .insert(insertData)
                 .select()
                 .single();
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
             input.value = '';
+            clearNoteImagePreview();
             renderBuyerNotes();
         }
 
         async function deleteBuyerNote(noteId) {
             if (!confirm('Supprimer cette note ?')) return;
+            const note = currentNotes.find(n => n.id === noteId);
+            if (note?.image_url) {
+                await supabaseClient.storage.from('lead-files').remove([note.image_url]);
+            }
             const { error } = await supabaseClient.from('lead_notes').delete().eq('id', noteId);
             if (error) { console.error('Note delete error:', error); return; }
             currentNotes = currentNotes.filter(n => n.id !== noteId);
@@ -3625,6 +3668,13 @@
             return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} à ${d.getHours()}h${String(d.getMinutes()).padStart(2,'0')}`;
         }
 
+        function renderNoteImageHtml(note) {
+            if (note.image_url) {
+                return `<img class="note-image" data-path="${escapeHtml(note.image_url)}" src="" alt="Image" onclick="window.open(this.src,'_blank')">`;
+            }
+            return '';
+        }
+
         function renderBuyerNotes() {
             const timeline = document.getElementById('notesTimeline');
             const countEl = document.getElementById('notesCount');
@@ -3633,16 +3683,24 @@
                 timeline.innerHTML = '<div class="notes-empty">Aucune note pour le moment</div>';
                 return;
             }
-            timeline.innerHTML = currentNotes.map(n => `
-                <div class="note-item" data-id="${n.id}">
+            timeline.innerHTML = currentNotes.map(n => {
+                const imgHtml = renderNoteImageHtml(n);
+                return `<div class="note-item" data-id="${n.id}">
                     <div class="note-date">${formatNoteDate(n.created_at)}</div>
-                    <div class="note-content">${escapeHtml(n.content)}</div>
+                    <div class="note-content">${n.content ? escapeHtml(n.content) : ''}${imgHtml}</div>
                     <div class="note-actions">
                         <button type="button" class="note-action-btn" onclick="editBuyerNote('${n.id}')" title="Modifier">✏️</button>
                         <button type="button" class="note-action-btn delete" onclick="deleteBuyerNote('${n.id}')" title="Supprimer">🗑️</button>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
+
+            // Charger les URLs signées pour les images sauvegardées
+            timeline.querySelectorAll('.note-image[data-path]').forEach(async (img) => {
+                const url = await getSignedUrl(img.dataset.path);
+                if (url) img.src = url;
+                else img.style.display = 'none';
+            });
         }
 
         function editBuyerNote(noteId) {
@@ -3726,6 +3784,46 @@
             } catch (err) {
                 console.error('Note recording error:', err);
             }
+        }
+
+        // ===== COLLAGE IMAGE DANS NOTES =====
+        const MAX_NOTE_IMAGE_RAW_SIZE = 10 * 1024 * 1024; // 10 Mo max avant compression
+
+        function handleNotePaste(e) {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const file = item.getAsFile();
+                    if (!file) return;
+                    if (file.size > MAX_NOTE_IMAGE_RAW_SIZE) {
+                        alert('Image trop volumineuse (max 10 Mo)');
+                        return;
+                    }
+                    setNoteImagePreview(file);
+                    return;
+                }
+            }
+        }
+
+        async function setNoteImagePreview(file) {
+            const compressed = await compressImage(file, 1600, 0.7);
+            pendingNoteImage = compressed;
+            const preview = document.getElementById('noteImagePreview');
+            const img = document.getElementById('noteImagePreviewImg');
+            if (img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            img.src = URL.createObjectURL(compressed);
+            preview.style.display = 'block';
+        }
+
+        function clearNoteImagePreview() {
+            pendingNoteImage = null;
+            const preview = document.getElementById('noteImagePreview');
+            const img = document.getElementById('noteImagePreviewImg');
+            if (img && img.src && img.src.startsWith('blob:')) URL.revokeObjectURL(img.src);
+            if (img) img.src = '';
+            if (preview) preview.style.display = 'none';
         }
 
         // Note previews for cards
@@ -4267,9 +4365,9 @@
                 }
             }
 
-            // Auto-save note si non vide
+            // Auto-save note si non vide (texte + image collée)
             const pendingNote = document.getElementById('noteInput').value.trim();
-            if (pendingNote && savedId) {
+            if ((pendingNote || pendingNoteImage) && savedId) {
                 await addBuyerNote(savedId);
             }
 
@@ -5071,6 +5169,8 @@
                     else alert('Enregistrez le lead avant d\'ajouter des notes.');
                 }
             });
+            document.getElementById('noteInput').addEventListener('paste', handleNotePaste);
+            document.getElementById('noteImageRemoveBtn')?.addEventListener('click', clearNoteImagePreview);
 
             document.getElementById('dictateBtn').addEventListener('click', handleBuyerDictateClick);
             document.getElementById('addBuyerBtn').addEventListener('click', () => openModal());
