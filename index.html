@@ -16,11 +16,7 @@
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-        if (window.innerWidth <= 768 && !new URLSearchParams(window.location.search).has('v')) {
-            window.location.replace('micro.html');
-        }
-    </script>
+    <!-- Redirect mobile supprimé : le pipeline vendeur est l'expérience mobile principale -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/workflows.js"></script>
@@ -2101,6 +2097,10 @@
             cursor: pointer;
         }
 
+        /* Card deck & detail overlay : cachés sur desktop */
+        .mobile-card-deck,
+        .mobile-detail-overlay { display: none; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             body { padding: 10px; }
@@ -2180,6 +2180,7 @@
             }
 
             /* --- MOBILE TAB BAR --- */
+            /* --- MOBILE TAB BAR (couleur active dynamique) --- */
             .mobile-tabs {
                 display: flex;
                 gap: 0;
@@ -2188,7 +2189,7 @@
                 background: white;
                 border-radius: 12px;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                margin-bottom: 12px;
+                margin-bottom: 0;
                 position: sticky;
                 top: 0;
                 z-index: 50;
@@ -2208,62 +2209,313 @@
                 border-bottom: 3px solid transparent;
                 transition: all 0.2s;
             }
-            .mobile-tab.active { color: var(--text-dark); border-bottom-color: #2DD4BF; }
+            .mobile-tab.active { color: var(--text-dark); }
             .mobile-tab .tab-count { font-weight: 400; }
 
-            /* --- PIPELINE : onglet unique --- */
-            .pipeline {
+            /* --- PIPELINE KANBAN : caché sur mobile (remplacé par card deck) --- */
+            .pipeline { display: none !important; }
+
+            /* ===== CARD DECK ===== */
+            .mobile-card-deck {
                 display: block !important;
-                overflow: visible !important;
-                gap: 0 !important;
-                padding-bottom: 0 !important;
-            }
-            .column {
-                display: none !important;
-                min-width: 100% !important;
-                width: 100% !important;
-                flex: none !important;
-                padding: 0 !important;
-                min-height: auto;
-            }
-            .column.mobile-active { display: block !important; }
-            .column.mobile-active .column-header,
-            .column.mobile-active .column-title,
-            .column.mobile-active .column-count { display: none; }
-
-            /* --- CARTES MOBILE --- */
-            .lead-card {
+                flex: 1;
+                position: relative;
                 padding: 16px;
-                border-radius: 12px;
-                width: 100%;
+                padding-bottom: 60px;
+                overflow: hidden;
+                min-height: calc(100vh - 200px);
             }
-            .lead-card:hover { transform: none; }
-            .card-tag { padding: 4px 8px; font-size: 10px; margin-bottom: 6px; }
-            .card-name { font-size: 16px; margin-bottom: 6px; }
-            .card-info { font-size: 13px; margin-bottom: 4px; line-height: 1.4; }
-            .card-date { display: none; }
-            .card-notes-preview { font-size: 12px; }
-            .card-followup { font-size: 11px; padding: 4px 8px; margin-top: 6px; }
-            .badge-alert { font-size: 9px; padding: 3px 6px; }
-            .cards-container { gap: 10px; min-height: 60px; }
+            .deck-viewport {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                min-height: 400px;
+                touch-action: pan-y;
+            }
+            .deck-card {
+                position: absolute;
+                top: 0; left: 0;
+                width: 100%;
+                background: #FFFFFF;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border-left: 4px solid #ccc;
+                padding: 24px 20px;
+                will-change: transform, opacity;
+                transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                            opacity 0.35s ease;
+                user-select: none;
+                -webkit-user-select: none;
+            }
+            .deck-card.active {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+                z-index: 3;
+            }
+            .deck-card.prev {
+                transform: translateX(-105%) scale(0.95);
+                opacity: 0;
+                z-index: 1;
+                pointer-events: none;
+            }
+            .deck-card.next {
+                transform: translateX(105%) scale(0.95);
+                opacity: 0;
+                z-index: 1;
+                pointer-events: none;
+            }
+            .deck-card.swiping {
+                transition: none;
+            }
 
-            /* Actions : boutons tactiles */
-            .card-actions {
-                margin-top: 10px;
+            /* --- Contenu carte deck --- */
+            .deck-card .mc-source { margin-bottom: 8px; }
+            .deck-card .mc-source .card-tag {
+                padding: 4px 10px;
+                font-size: 11px;
+                border-radius: 6px;
+                font-weight: 700;
+            }
+            .deck-card .mc-name {
+                font-family: 'Barlow Semi Condensed', sans-serif;
+                font-size: 22px;
+                font-weight: 700;
+                color: #243B53;
+                margin-bottom: 12px;
+                line-height: 1.2;
+            }
+            .deck-card .mc-property {
+                font-size: 15px;
+                color: #546E7A;
+                font-weight: 500;
+                margin-bottom: 6px;
+            }
+            .deck-card .mc-city {
+                font-size: 15px;
+                color: #374151;
+                font-weight: 600;
+                margin-bottom: 2px;
+            }
+            .deck-card .mc-address {
+                font-size: 13px;
+                color: #6B7280;
+                margin-bottom: 12px;
+            }
+            .deck-card .mc-phone { margin-bottom: 12px; }
+            .deck-card .mc-phone a {
+                display: inline-flex;
+                align-items: center;
                 gap: 6px;
+                color: #243B53;
+                text-decoration: none;
+                font-size: 16px;
+                font-weight: 600;
+                padding: 8px 14px;
+                background: #F0F2F5;
+                border-radius: 10px;
+                transition: background 0.2s;
+            }
+            .deck-card .mc-phone a:active { background: #E2E8F0; }
+            .deck-card .mc-commission {
+                display: inline-block;
+                font-size: 13px;
+                color: #F57F17;
+                background: #FFF8E1;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-weight: 600;
+                margin-bottom: 8px;
+            }
+            .deck-card .mc-date {
+                font-size: 12px;
+                color: var(--text-light);
+                margin-bottom: 12px;
+            }
+            .deck-card .mc-followup {
+                font-size: 12px;
+                padding: 6px 10px;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                display: inline-block;
+            }
+            .deck-card .mc-followup.followup-overdue {
+                background: #FEE2E2;
+                color: #DC2626;
+            }
+            .deck-card .mc-followup.followup-due {
+                background: #FEF3C7;
+                color: #D97706;
+            }
+            .deck-card .mc-followup.followup-ok {
+                background: #E0F2FE;
+                color: #0284C7;
+            }
+            .deck-card .mc-actions {
                 display: flex;
                 justify-content: flex-end;
+                gap: 8px;
+                margin-top: 16px;
+                padding-top: 12px;
+                border-top: 1px solid #E5E7EB;
             }
-            .card-btn {
-                font-size: 16px;
-                padding: 8px;
+            .deck-card .mc-actions .card-btn {
+                font-size: 18px;
+                padding: 10px;
                 min-width: 44px;
                 min-height: 44px;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
+                background: #F8F9FA;
+                border-radius: 10px;
+                border: none;
+                cursor: pointer;
+                transition: background 0.2s;
             }
-            .mobile-move-btn { display: inline-flex !important; }
+            .deck-card .mc-actions .card-btn:active { background: #E2E8F0; }
+
+            /* --- Indicateur de position (N/M) --- */
+            .deck-position {
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0,0,0,0.65);
+                color: white;
+                padding: 6px 16px;
+                border-radius: 20px;
+                font-size: 14px;
+                font-weight: 600;
+                font-family: 'Inter', sans-serif;
+                z-index: 60;
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+            }
+            .deck-position .deck-pos-sep {
+                margin: 0 2px;
+                opacity: 0.6;
+            }
+
+            /* --- État vide colonne --- */
+            .deck-empty {
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                height: 300px;
+                color: #94A3B8;
+                text-align: center;
+            }
+            .deck-empty-icon { font-size: 48px; margin-bottom: 12px; }
+            .deck-empty-text { font-size: 16px; font-weight: 500; }
+
+            /* ===== VUE DÉTAIL OVERLAY ===== */
+            .mobile-detail-overlay {
+                display: none;
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 2000;
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+            }
+            .mobile-detail-overlay.active { display: block; }
+            .mobile-detail-content {
+                position: absolute;
+                bottom: 0; left: 0; right: 0;
+                max-height: 92vh;
+                background: white;
+                border-radius: 20px 20px 0 0;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                transform: translateY(100%);
+                transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+                padding-bottom: env(safe-area-inset-bottom, 0px);
+            }
+            .mobile-detail-overlay.active .mobile-detail-content {
+                transform: translateY(0);
+            }
+            .detail-handle {
+                width: 40px;
+                height: 5px;
+                background: #D1D5DB;
+                border-radius: 3px;
+                margin: 12px auto;
+            }
+            .detail-body {
+                padding: 8px 20px 24px;
+            }
+            .detail-body .detail-section { margin-bottom: 20px; }
+            .detail-body .detail-section-title {
+                font-family: 'Barlow Semi Condensed', sans-serif;
+                font-size: 14px;
+                font-weight: 700;
+                text-transform: uppercase;
+                color: #94A3B8;
+                letter-spacing: 0.5px;
+                margin-bottom: 8px;
+            }
+            .detail-body .detail-name {
+                font-family: 'Barlow Semi Condensed', sans-serif;
+                font-size: 26px;
+                font-weight: 800;
+                color: #243B53;
+                margin-bottom: 4px;
+            }
+            .detail-body .detail-info-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 15px;
+                color: #374151;
+                padding: 10px 0;
+                border-bottom: 1px solid #F3F4F6;
+            }
+            .detail-body .detail-info-row .detail-label {
+                color: #94A3B8;
+                min-width: 28px;
+                text-align: center;
+            }
+            .detail-body .detail-notes {
+                background: #F8F9FA;
+                border-radius: 12px;
+                padding: 16px;
+                font-size: 14px;
+                color: #374151;
+                line-height: 1.6;
+                max-height: 200px;
+                overflow-y: auto;
+            }
+            .detail-body .detail-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            .detail-body .detail-action-btn {
+                flex: 1;
+                padding: 14px;
+                border: none;
+                border-radius: 12px;
+                font-family: 'Inter', sans-serif;
+                font-size: 15px;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            }
+            .detail-action-btn.primary {
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+            }
+            .detail-action-btn.secondary {
+                background: #F3F4F6;
+                color: #374151;
+            }
+            .detail-action-btn.danger {
+                background: #FEE2E2;
+                color: #DC2626;
+            }
 
             /* --- MODALE : pleine largeur --- */
             .modal.active { padding: 0; align-items: flex-end; }
@@ -3270,15 +3522,39 @@
         </div>
     </div>
 
-    <!-- Mobile Tab Bar -->
+    <!-- Mobile Tab Bar (card deck) -->
     <div class="mobile-tabs" id="mobileTabs">
-        <button class="mobile-tab active" data-status="hot">🔥 Chaudes <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="warm">🟠 Tièdes <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="cold">🔵 Froides <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="mandate">📋 Mandats <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="competitor">🏢 Concurrents / PAP <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="sold">✅ Vendus <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="lost">❌ Perdus <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab active" data-status="hot" data-color="#FF6B6B">🔥 Chaudes <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="warm" data-color="#FFA726">🟠 Tièdes <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="cold" data-color="#42A5F5">🔵 Froides <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="off_market" data-color="#9B59B6">🔒 Off Market <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="mandate" data-color="#66BB6A">📋 Mandats <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="competitor" data-color="#78909C">🏢 Concurrents <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="sold" data-color="#AB47BC">✅ Vendus <span class="tab-count">(0)</span></button>
+        <button class="mobile-tab" data-status="lost" data-color="#BDBDBD">❌ Perdus <span class="tab-count">(0)</span></button>
+    </div>
+
+    <!-- Mobile Card Deck (visible uniquement sur mobile, remplace le pipeline Kanban) -->
+    <div class="mobile-card-deck" id="mobileCardDeck">
+        <div class="deck-viewport" id="deckViewport">
+            <div class="deck-empty" id="deckEmpty" style="display:none;">
+                <div class="deck-empty-icon">📋</div>
+                <div class="deck-empty-text">Aucun lead dans cette colonne</div>
+            </div>
+        </div>
+        <div class="deck-position" id="deckPosition">
+            <span class="deck-pos-current" id="deckPosCurrent">0</span>
+            <span class="deck-pos-sep">/</span>
+            <span class="deck-pos-total" id="deckPosTotal">0</span>
+        </div>
+    </div>
+
+    <!-- Mobile Detail Overlay (vue détail plein écran, bottom sheet) -->
+    <div class="mobile-detail-overlay" id="mobileDetailOverlay">
+        <div class="mobile-detail-content" id="mobileDetailContent">
+            <div class="detail-handle"></div>
+            <div class="detail-body" id="detailBody"></div>
+        </div>
     </div>
 
     <!-- Bandeau d'encouragement (onboarding) -->
@@ -4491,14 +4767,45 @@
 
         function isMobile() { return window.innerWidth <= 768; }
 
+        // ===== MOBILE CARD DECK STATE =====
+        const COLUMN_COLORS = {
+            hot: '#FF6B6B',
+            warm: '#FFA726',
+            cold: '#42A5F5',
+            off_market: '#9B59B6',
+            mandate: '#66BB6A',
+            competitor: '#78909C',
+            sold: '#AB47BC',
+            lost: '#BDBDBD'
+        };
+        let mobileDeckIndex = 0;
+        const MOBILE_DECK_STATE_KEY = 'leon_mobile_deck_state';
+
         function setMobileTab(status) {
             mobileActiveTab = status;
             localStorage.setItem('leon_mobile_tab_sellers', status);
-            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.toggle('active', t.dataset.status === status));
+
+            // Couleur dynamique sur tab active (couleur de la colonne)
+            const color = COLUMN_COLORS[status] || '#2DD4BF';
+            document.querySelectorAll('.mobile-tab').forEach(t => {
+                const isActive = t.dataset.status === status;
+                t.classList.toggle('active', isActive);
+                t.style.borderBottomColor = isActive ? color : 'transparent';
+                t.style.color = isActive ? '#243B53' : '';
+            });
+
+            // Desktop : toggle column visibility
             document.querySelectorAll('.column').forEach(c => c.classList.toggle('mobile-active', c.dataset.status === status));
+
             // Scroll active tab into view
             const activeTab = document.querySelector(`.mobile-tab[data-status="${status}"]`);
             if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+
+            // Mobile : reset deck à la première carte et render
+            if (isMobile()) {
+                mobileDeckIndex = 0;
+                renderMobileCardDeck();
+            }
         }
 
         function updateMobileTabCounts() {
@@ -4514,23 +4821,12 @@
                 tab.addEventListener('click', () => setMobileTab(tab.dataset.status));
             });
 
-            // Swipe detection
-            const pipeline = document.querySelector('.pipeline');
-            let touchStartX = 0, touchStartY = 0;
-            pipeline.addEventListener('touchstart', e => {
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-            }, { passive: true });
-            pipeline.addEventListener('touchend', e => {
-                const dx = e.changedTouches[0].clientX - touchStartX;
-                const dy = e.changedTouches[0].clientY - touchStartY;
-                if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
-                    const statuses = SELLER_TABS.map(t => t.status);
-                    const idx = statuses.indexOf(mobileActiveTab);
-                    if (dx < 0 && idx < statuses.length - 1) setMobileTab(statuses[idx + 1]);
-                    else if (dx > 0 && idx > 0) setMobileTab(statuses[idx - 1]);
-                }
-            }, { passive: true });
+            // Mobile card deck : init swipe + restore state (pas de swipe entre colonnes)
+            if (isMobile()) {
+                restoreDeckState();
+                initDeckSwipe();
+                initDetailSwipeClose();
+            }
 
             setMobileTab(mobileActiveTab);
 
@@ -4553,6 +4849,421 @@
         function closeMovePopup() {
             document.getElementById('movePopup').classList.remove('active');
         }
+
+        // ===== MOBILE CARD DECK — Fonctions =====
+
+        /**
+         * createMobileCard(seller)
+         * Crée un élément DOM .deck-card pour le card deck mobile.
+         * Affiche : source, nom, bien, ville, téléphone, commission, relance, actions.
+         */
+        function createMobileCard(seller) {
+            const card = document.createElement('div');
+            card.className = 'deck-card';
+            card.dataset.id = seller.id;
+
+            const color = COLUMN_COLORS[seller.status] || '#ccc';
+            card.style.borderLeftColor = color;
+
+            let html = '';
+
+            // Source tag
+            if (seller.source) {
+                html += `<div class="mc-source">${getSourceTag(seller.source)}</div>`;
+            }
+
+            // Nom du contact
+            const name = [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') || 'Sans nom';
+            html += `<div class="mc-name">${escapeHtml(name)}</div>`;
+
+            // Infos bien : type emoji · surface · prix
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const propParts = [];
+            if (seller.property_type) propParts.push(typeEmojis[seller.property_type] || '🏠');
+            if (seller.surface) propParts.push(formatSurface(seller.surface));
+            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            if (price) propParts.push(formatEuro(price));
+            if (propParts.length > 0) {
+                html += `<div class="mc-property">${propParts.join(' · ')}</div>`;
+            }
+
+            // Ville puis adresse
+            const city = extractCity(seller.address);
+            if (city) html += `<div class="mc-city">📍 ${escapeHtml(city)}</div>`;
+            const street = extractStreet(seller.address);
+            if (street && street !== city) html += `<div class="mc-address">${escapeHtml(street)}</div>`;
+
+            // Téléphone (clickable tel:)
+            if (seller.phone) {
+                html += `<div class="mc-phone"><a href="tel:${escapeHtml(seller.phone)}">📞 ${escapeHtml(seller.phone)}</a></div>`;
+            }
+
+            // Commission badge
+            const priceForComm = parseAmount(price);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
+                html += `<div class="mc-commission">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
+            }
+
+            // Relance (followup)
+            if (seller.reminder) {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
+                const diff = Math.ceil((rd - today) / 86400000);
+                const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+                if (diff < 0) html += `<div class="mc-followup followup-overdue">⚠️ Relance ${fmt}</div>`;
+                else if (diff === 0) html += `<div class="mc-followup followup-due">🔔 Aujourd'hui</div>`;
+                else html += `<div class="mc-followup followup-ok">📅 Relance ${fmt}</div>`;
+            }
+
+            // Date de contact
+            if (seller.date) {
+                html += `<div class="mc-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
+            }
+
+            // Actions
+            html += `<div class="mc-actions">
+                <button class="card-btn" onclick="event.stopPropagation(); openMovePopup('${seller.id}')" title="Déplacer">📂</button>
+                <button class="card-btn" onclick="event.stopPropagation(); editSeller('${seller.id}')" title="Modifier">✏️</button>
+                <button class="card-btn" onclick="event.stopPropagation(); confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
+            </div>`;
+
+            card.innerHTML = html;
+
+            // Tap sur la carte → vue détail (sauf si tap sur lien ou bouton)
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('a, button')) return;
+                openMobileDetail(seller.id);
+            });
+
+            return card;
+        }
+
+        /**
+         * renderMobileCardDeck()
+         * Rend les cartes du deck pour le tab actif.
+         * Lazy : ne rend que ±2 cartes autour de l'index courant.
+         */
+        function renderMobileCardDeck() {
+            if (!isMobile()) return;
+
+            const viewport = document.getElementById('deckViewport');
+            const emptyState = document.getElementById('deckEmpty');
+            const posIndicator = document.getElementById('deckPosition');
+            if (!viewport) return;
+
+            // Retirer les cartes précédentes
+            viewport.querySelectorAll('.deck-card').forEach(c => c.remove());
+
+            // Sellers de la colonne active
+            const columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+
+            if (columnSellers.length === 0) {
+                emptyState.style.display = 'flex';
+                posIndicator.style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            posIndicator.style.display = '';
+
+            // Clamp index
+            if (mobileDeckIndex >= columnSellers.length) mobileDeckIndex = columnSellers.length - 1;
+            if (mobileDeckIndex < 0) mobileDeckIndex = 0;
+
+            // Lazy render : ±2 cartes autour de l'index courant
+            const RENDER_RANGE = 2;
+            const start = Math.max(0, mobileDeckIndex - RENDER_RANGE);
+            const end = Math.min(columnSellers.length - 1, mobileDeckIndex + RENDER_RANGE);
+
+            for (let i = start; i <= end; i++) {
+                const card = createMobileCard(columnSellers[i]);
+                if (i === mobileDeckIndex) {
+                    card.classList.add('active');
+                } else if (i < mobileDeckIndex) {
+                    card.classList.add('prev');
+                } else {
+                    card.classList.add('next');
+                }
+                viewport.appendChild(card);
+            }
+
+            // Indicateur de position
+            document.getElementById('deckPosCurrent').textContent = mobileDeckIndex + 1;
+            document.getElementById('deckPosTotal').textContent = columnSellers.length;
+
+            saveDeckState();
+        }
+
+        /** navigateDeck(direction) — Passe à la carte suivante (+1) ou précédente (-1) */
+        function navigateDeck(direction) {
+            const columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+            const newIndex = mobileDeckIndex + direction;
+            if (newIndex < 0 || newIndex >= columnSellers.length) return;
+            mobileDeckIndex = newIndex;
+            renderMobileCardDeck();
+        }
+
+        /** saveDeckState() — Persiste tab + index dans localStorage */
+        function saveDeckState() {
+            localStorage.setItem(MOBILE_DECK_STATE_KEY, JSON.stringify({
+                tab: mobileActiveTab,
+                index: mobileDeckIndex
+            }));
+        }
+
+        /** restoreDeckState() — Restaure tab + index depuis localStorage */
+        function restoreDeckState() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(MOBILE_DECK_STATE_KEY));
+                if (saved) {
+                    if (saved.tab) mobileActiveTab = saved.tab;
+                    if (typeof saved.index === 'number') mobileDeckIndex = saved.index;
+                }
+            } catch (e) { /* ignore corrupt state */ }
+        }
+
+        /**
+         * initDeckSwipe()
+         * Moteur de swipe touch pour naviguer entre cartes.
+         * Seuil : 50px ou vélocité 0.3px/ms. Rubber-band aux extrémités.
+         */
+        function initDeckSwipe() {
+            const viewport = document.getElementById('deckViewport');
+            if (!viewport) return;
+
+            let startX = 0, startY = 0, currentX = 0, isDragging = false, startTime = 0;
+            const SWIPE_THRESHOLD_PX = 50;
+            const VELOCITY_THRESHOLD = 0.3; // px/ms
+
+            viewport.addEventListener('touchstart', (e) => {
+                const activeCard = viewport.querySelector('.deck-card.active');
+                if (!activeCard) return;
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                currentX = startX;
+                startTime = Date.now();
+                isDragging = false;
+            }, { passive: true });
+
+            viewport.addEventListener('touchmove', (e) => {
+                if (!startX) return;
+                currentX = e.touches[0].clientX;
+                const dx = currentX - startX;
+                const dy = e.touches[0].clientY - startY;
+
+                // Activer le drag horizontal seulement si mouvement clairement horizontal
+                if (!isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+                    isDragging = true;
+                }
+                if (!isDragging) return;
+
+                e.preventDefault(); // Bloquer scroll vertical pendant swipe horizontal
+
+                const activeCard = viewport.querySelector('.deck-card.active');
+                if (!activeCard) return;
+                activeCard.classList.add('swiping');
+
+                // Rubber-band aux extrémités
+                const columnSellers = sellers.filter(s => s.status === mobileActiveTab);
+                const atStart = mobileDeckIndex === 0 && dx > 0;
+                const atEnd = mobileDeckIndex === columnSellers.length - 1 && dx < 0;
+                const dampened = (atStart || atEnd) ? dx * 0.3 : dx;
+
+                activeCard.style.transform = `translateX(${dampened}px) scale(${1 - Math.abs(dampened) * 0.0003})`;
+                activeCard.style.opacity = 1 - Math.abs(dampened) * 0.001;
+            }, { passive: false });
+
+            viewport.addEventListener('touchend', () => {
+                if (!isDragging) { startX = 0; return; }
+
+                const activeCard = viewport.querySelector('.deck-card.active');
+                if (activeCard) {
+                    activeCard.classList.remove('swiping');
+                    activeCard.style.transform = '';
+                    activeCard.style.opacity = '';
+                }
+
+                const dx = currentX - startX;
+                const elapsed = Date.now() - startTime;
+                const velocity = Math.abs(dx) / Math.max(elapsed, 1);
+
+                if (Math.abs(dx) > SWIPE_THRESHOLD_PX || velocity > VELOCITY_THRESHOLD) {
+                    if (dx < 0) navigateDeck(1);   // Swipe gauche → carte suivante
+                    else navigateDeck(-1);          // Swipe droite → carte précédente
+                }
+                // Sinon snap-back automatique (inline styles retirés)
+
+                startX = 0;
+                isDragging = false;
+            }, { passive: true });
+        }
+
+        // ===== MOBILE DETAIL VIEW =====
+
+        /**
+         * openMobileDetail(sellerId)
+         * Ouvre la vue détail plein écran (bottom sheet) pour un vendeur.
+         */
+        function openMobileDetail(sellerId) {
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+
+            const overlay = document.getElementById('mobileDetailOverlay');
+            const body = document.getElementById('detailBody');
+            const color = COLUMN_COLORS[seller.status] || '#ccc';
+
+            const name = [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') || 'Sans nom';
+            const city = extractCity(seller.address);
+            const street = extractStreet(seller.address);
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+
+            let html = '';
+
+            // Barre colorée
+            html += `<div style="height:4px;background:${color};border-radius:2px;margin-bottom:16px"></div>`;
+
+            // Source + Nom
+            if (seller.source) html += `<div style="margin-bottom:8px">${getSourceTag(seller.source)}</div>`;
+            html += `<div class="detail-name">${escapeHtml(name)}</div>`;
+
+            // Statut
+            const tabInfo = SELLER_TABS.find(t => t.status === seller.status);
+            if (tabInfo) html += `<div style="font-size:13px;color:${color};font-weight:600;margin-bottom:16px">${tabInfo.icon} ${tabInfo.label}</div>`;
+
+            // Section Bien
+            html += '<div class="detail-section"><div class="detail-section-title">Bien</div>';
+            if (seller.property_type) html += `<div class="detail-info-row"><span class="detail-label">${typeEmojis[seller.property_type] || '🏠'}</span>${seller.property_type}</div>`;
+            if (seller.surface) html += `<div class="detail-info-row"><span class="detail-label">📐</span>${formatSurface(seller.surface)}</div>`;
+            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            if (price) html += `<div class="detail-info-row"><span class="detail-label">💰</span>${formatEuro(price)}</div>`;
+            if (city) html += `<div class="detail-info-row"><span class="detail-label">📍</span>${escapeHtml(city)}</div>`;
+            if (street && street !== city) html += `<div class="detail-info-row"><span class="detail-label">🏠</span>${escapeHtml(street)}</div>`;
+            html += '</div>';
+
+            // Section Contact
+            html += '<div class="detail-section"><div class="detail-section-title">Contact</div>';
+            if (seller.phone) html += `<div class="detail-info-row"><span class="detail-label">📞</span><a href="tel:${escapeHtml(seller.phone)}" style="color:#243B53;font-weight:600;text-decoration:none">${escapeHtml(seller.phone)}</a></div>`;
+            if (seller.email) html += `<div class="detail-info-row"><span class="detail-label">📧</span><a href="mailto:${escapeHtml(seller.email)}" style="color:#667eea;text-decoration:none">${escapeHtml(seller.email)}</a></div>`;
+            if (seller.contact2_name) html += `<div class="detail-info-row"><span class="detail-label">👤</span>${escapeHtml(seller.contact2_name)}${seller.contact2_phone ? ' — ' + escapeHtml(seller.contact2_phone) : ''}</div>`;
+            html += '</div>';
+
+            // Commission
+            const priceForComm = parseAmount(price);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
+                html += `<div style="margin-bottom:16px"><span class="mc-commission">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</span></div>`;
+            }
+
+            // Mandat (si applicable)
+            if (seller.status === 'mandate') {
+                html += '<div class="detail-section"><div class="detail-section-title">Mandat</div>';
+                if (seller.mandate_type) html += `<div class="detail-info-row"><span class="detail-label">📄</span>${seller.mandate_type}</div>`;
+                if (seller.mandate_reference) html += `<div class="detail-info-row"><span class="detail-label">🔢</span>${escapeHtml(seller.mandate_reference)}</div>`;
+                if (seller.mandate_start_date) html += `<div class="detail-info-row"><span class="detail-label">📅</span>Du ${new Date(seller.mandate_start_date).toLocaleDateString('fr-FR')}</div>`;
+                if (seller.mandate_end_date) html += `<div class="detail-info-row"><span class="detail-label">⏰</span>Au ${new Date(seller.mandate_end_date).toLocaleDateString('fr-FR')}</div>`;
+                html += '</div>';
+            }
+
+            // Concurrent (si applicable)
+            if (seller.status === 'competitor') {
+                html += '<div class="detail-section"><div class="detail-section-title">Concurrent</div>';
+                if (seller.competitor_agency) html += `<div class="detail-info-row"><span class="detail-label">🏢</span>${escapeHtml(seller.competitor_agency)}</div>`;
+                if (seller.competitor_url) html += `<div class="detail-info-row"><span class="detail-label">🔗</span><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;text-decoration:none;word-break:break-all">Voir l'annonce</a></div>`;
+                html += '</div>';
+            }
+
+            // Dernière note
+            const notePreview = notesPreviews?.[seller.id];
+            if (notePreview && notePreview.lastContent) {
+                html += '<div class="detail-section"><div class="detail-section-title">Dernière note</div>';
+                html += `<div class="detail-notes">${escapeHtml(notePreview.lastContent)}</div>`;
+                html += '</div>';
+            }
+
+            // Relance
+            if (seller.reminder) {
+                const rd = new Date(seller.reminder);
+                html += `<div class="detail-section"><div class="detail-section-title">Relance</div>`;
+                html += `<div class="detail-info-row"><span class="detail-label">🔔</span>${rd.toLocaleDateString('fr-FR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}</div>`;
+                html += '</div>';
+            }
+
+            // Date de contact
+            if (seller.date) {
+                html += `<div style="font-size:12px;color:#94A3B8;margin-bottom:16px">📅 Premier contact : ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}</div>`;
+            }
+
+            // Actions
+            html += '<div class="detail-actions">';
+            html += `<button class="detail-action-btn primary" onclick="closeMobileDetail(); editSeller('${seller.id}')">✏️ Modifier</button>`;
+            html += `<button class="detail-action-btn secondary" onclick="closeMobileDetail(); openMovePopup('${seller.id}')">📂 Déplacer</button>`;
+            html += `<button class="detail-action-btn danger" onclick="closeMobileDetail(); confirmDeleteSeller('${seller.id}')">🗑️</button>`;
+            html += '</div>';
+
+            body.innerHTML = html;
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        /** closeMobileDetail() — Ferme la vue détail */
+        function closeMobileDetail() {
+            const overlay = document.getElementById('mobileDetailOverlay');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        /**
+         * initDetailSwipeClose()
+         * Swipe-down pour fermer la vue détail (seulement si scrollTop ≈ 0).
+         * Seuil : 120px de déplacement vertical.
+         */
+        function initDetailSwipeClose() {
+            const overlay = document.getElementById('mobileDetailOverlay');
+            const content = document.getElementById('mobileDetailContent');
+            let startY = 0, currentY = 0, isDragging = false;
+
+            content.addEventListener('touchstart', (e) => {
+                if (content.scrollTop > 5) return;
+                startY = e.touches[0].clientY;
+                currentY = startY;
+                isDragging = false;
+            }, { passive: true });
+
+            content.addEventListener('touchmove', (e) => {
+                if (!startY) return;
+                currentY = e.touches[0].clientY;
+                const dy = currentY - startY;
+
+                if (!isDragging && dy > 10) isDragging = true;
+
+                if (isDragging && dy > 0) {
+                    e.preventDefault();
+                    content.style.transition = 'none';
+                    content.style.transform = `translateY(${dy}px)`;
+                }
+            }, { passive: false });
+
+            content.addEventListener('touchend', () => {
+                content.style.transition = '';
+                content.style.transform = '';
+
+                if (isDragging && (currentY - startY) > 120) {
+                    closeMobileDetail();
+                }
+                startY = 0;
+                isDragging = false;
+            }, { passive: true });
+
+            // Tap backdrop pour fermer
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) closeMobileDetail();
+            });
+        }
+
+        // ===== FIN MOBILE CARD DECK =====
 
         async function moveSeller(sellerId, newStatus) {
             closeMovePopup();
@@ -4579,6 +5290,12 @@
             // Auto-open competitor popup if first time
             if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
                 showCompetitorPopup(sellerId);
+            }
+
+            // Mobile card deck : re-index après déplacement
+            if (isMobile()) {
+                const remaining = sellers.filter(s => s.status === mobileActiveTab);
+                if (mobileDeckIndex >= remaining.length) mobileDeckIndex = Math.max(0, remaining.length - 1);
             }
         }
 
@@ -5594,6 +6311,11 @@
 
             setupCardToggles();
             updateCounts();
+
+            // Mobile : mettre à jour le card deck
+            if (isMobile()) {
+                renderMobileCardDeck();
+            }
         }
 
         function setupCardToggles() {
@@ -6798,6 +7520,13 @@
             const ok = await deleteSellerDB(id);
             if (ok) {
                 sellers = sellers.filter(s => s.id !== id);
+
+                // Mobile card deck : re-index après suppression
+                if (isMobile()) {
+                    const remaining = sellers.filter(s => s.status === mobileActiveTab);
+                    if (mobileDeckIndex >= remaining.length) mobileDeckIndex = Math.max(0, remaining.length - 1);
+                }
+
                 renderSellers();
 
                 // Reset onboarding flag si tous les leads sont supprimés
@@ -8830,7 +9559,7 @@
 
     <!-- Bottom Mobile Tab Bar -->
     <nav class="mobile-bottom-bar">
-        <a href="index.html?v=1" class="bottom-tab active">
+        <a href="index.html" class="bottom-tab active">
             <i class="fa-solid fa-house"></i>
             <span>Vendeurs</span>
         </a>
