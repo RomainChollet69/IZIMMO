@@ -328,15 +328,30 @@
             color: #94A3B8; margin-bottom: 6px;
         }
 
-        .transcription-text { font-size: 14px; line-height: 1.5; color: #475569; }
+        .transcription-text {
+            font-size: 14px; line-height: 1.5; color: #475569;
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 4px 6px;
+            margin: -4px -6px;
+            transition: background 0.15s;
+        }
+        .transcription-text:hover { background: #EDF2F7; }
+        .transcription-text:active { background: #E2E8F0; }
 
         .transcription-edit-btn {
-            margin-top: 6px;
-            background: none; border: none;
-            color: #243b53; font-size: 12px; font-weight: 500;
-            cursor: pointer; padding: 2px 0;
+            margin-top: 8px;
+            background: #F1F5F9; border: 1px solid #E2E8F0;
+            color: #243b53; font-size: 13px; font-weight: 500;
+            cursor: pointer; padding: 8px 14px;
             font-family: 'Inter', sans-serif;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            -webkit-tap-highlight-color: transparent;
         }
+        .transcription-edit-btn:active { background: #E2E8F0; }
 
         .transcription-edit-area {
             width: 100%; min-height: 50px;
@@ -1179,14 +1194,19 @@
             transcriptionZone.classList.add('visible');
         }
 
-        transcriptionEditBtn.addEventListener('click', () => {
+        function enterEditMode() {
             transcriptionEditArea.value = currentTranscription;
             transcriptionText.style.display = 'none';
             transcriptionEditBtn.style.display = 'none';
             transcriptionEditArea.style.display = '';
             transcriptionActions.style.display = '';
             transcriptionEditArea.focus();
-        });
+            // Scroll vers la zone d'édition sur mobile
+            setTimeout(() => transcriptionEditArea.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+        }
+
+        transcriptionEditBtn.addEventListener('click', enterEditMode);
+        transcriptionText.addEventListener('click', enterEditMode);
 
         transcriptionCancelBtn.addEventListener('click', () => {
             transcriptionText.style.display = '';
@@ -1236,6 +1256,8 @@
         }
 
         // ===== ANALYSE =====
+        const ANALYSIS_TIMEOUT_MS = 25000; // Timeout client pour l'analyse
+
         async function analyseTranscription(text) {
             setMicState('analysing');
             analysingZone.classList.add('visible');
@@ -1250,10 +1272,15 @@
                 const today = new Date().toISOString().split('T')[0];
                 const headers = await getAuthHeaders();
 
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
+
                 const response = await fetch('/api/parse-voice-note', {
                     method: 'POST', headers,
-                    body: JSON.stringify({ transcription: text, leads: relevant, today })
+                    body: JSON.stringify({ transcription: text, leads: relevant, today }),
+                    signal: controller.signal
                 });
+                clearTimeout(timeout);
 
                 if (!response.ok) {
                     const err = await response.json().catch(() => ({}));
@@ -1268,8 +1295,17 @@
             } catch (err) {
                 analysingZone.classList.remove('visible');
                 setMicState('idle');
-                showError(err.message || 'Erreur lors de l\'analyse');
+                const msg = err.name === 'AbortError'
+                    ? 'L\'analyse a pris trop de temps. Réessayez.'
+                    : (err.message || 'Erreur lors de l\'analyse');
+                showError(msg);
             }
+        }
+
+        // Scroll automatique vers la zone de résultat sur mobile
+        function scrollToResult(el) {
+            if (!el) return;
+            setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 150);
         }
 
         // ===== SHOW RESULT =====
@@ -1310,6 +1346,7 @@
 
             confirmationMatches.innerHTML = html;
             confirmationZone.classList.add('visible');
+            scrollToResult(confirmationZone);
         }
 
         // ===== CLOSE CONFIRMATION =====
@@ -1429,6 +1466,7 @@
             if (!html) return;
             ambiguousZone.innerHTML = html;
             ambiguousZone.classList.add('visible');
+            scrollToResult(ambiguousZone);
 
             // Event delegation for clicks
             ambiguousZone.querySelectorAll('.ambiguous-option').forEach(el => {
@@ -1463,6 +1501,7 @@
                     <button class="btn-retry" onclick="window.location.href='index.html'"><i class="fa-solid fa-plus"></i> Créer un lead</button>
                 </div>`;
             noMatchZone.classList.add('visible');
+            scrollToResult(noMatchZone);
         }
 
         // ===== ERROR =====
@@ -1511,6 +1550,7 @@
                 });
             }
             errorZone.classList.add('visible');
+            scrollToResult(errorZone);
         }
 
         // Note : le retry est géré dynamiquement dans showError()
