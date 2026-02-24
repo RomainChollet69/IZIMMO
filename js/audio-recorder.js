@@ -24,6 +24,20 @@ window.AudioRecorder = class AudioRecorder {
         this._analyser = null;
     }
 
+    // Détection iOS (iPhone, iPad, iPod)
+    _isIOS() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+               (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    // Détection du navigateur sur iOS (Chrome = CriOS, Firefox = FxiOS)
+    _getIOSBrowser() {
+        const ua = navigator.userAgent;
+        if (/CriOS/.test(ua)) return 'chrome';
+        if (/FxiOS/.test(ua)) return 'firefox';
+        return 'safari';
+    }
+
     _getMimeType() {
         if (typeof MediaRecorder === 'undefined') return '';
         if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
@@ -106,10 +120,17 @@ window.AudioRecorder = class AudioRecorder {
             try {
                 this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch (err) {
-                console.warn('getUserMedia error:', err.name, err.message);
+                console.warn('[AudioRecorder] getUserMedia error:', err.name, err.message);
                 let msg;
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    msg = 'Micro bloqué — autorisez le micro dans les réglages du navigateur';
+                    if (this._isIOS()) {
+                        const browser = this._getIOSBrowser();
+                        const browserName = browser === 'chrome' ? 'Chrome' : browser === 'firefox' ? 'Firefox' : 'Safari';
+                        // Sur iOS, le micro doit être autorisé au niveau système (Réglages iPhone)
+                        msg = `__IOS_MIC_BLOCKED__${browserName}`;
+                    } else {
+                        msg = 'Micro bloqué — autorisez le micro dans les réglages du navigateur';
+                    }
                 } else if (err.name === 'NotFoundError') {
                     msg = 'Aucun micro détecté sur cet appareil';
                 } else if (err.name === 'NotReadableError' || err.name === 'AbortError') {

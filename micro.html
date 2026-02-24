@@ -558,7 +558,50 @@
             background: #FEF2F2; border: 1px solid #FECACA;
             border-radius: 12px; padding: 14px 18px; text-align: center;
         }
-        .error-text { font-size: 13px; color: #991B1B; margin-bottom: 10px; }
+        .error-text { font-size: 13px; color: #991B1B; margin-bottom: 10px; line-height: 1.5; }
+
+        /* Guide iOS pour activer le micro */
+        .ios-mic-guide {
+            text-align: left;
+            margin: 12px 0 14px;
+            padding: 0;
+        }
+        .ios-mic-guide .guide-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #991B1B;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .ios-mic-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+        }
+        .ios-mic-step + .ios-mic-step {
+            border-top: 1px solid #FECACA;
+        }
+        .ios-step-num {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: #991B1B;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .ios-step-text {
+            font-size: 13px;
+            color: #7F1D1D;
+            line-height: 1.4;
+        }
+        .ios-step-text strong {
+            font-weight: 600;
+        }
 
         .btn-retry {
             padding: 10px 20px; background: #243b53; color: white;
@@ -1010,8 +1053,6 @@
         const ambiguousZone = document.getElementById('ambiguousZone');
         const noMatchZone = document.getElementById('noMatchZone');
         const errorZone = document.getElementById('errorZone');
-        const errorText = document.getElementById('errorText');
-        const retryBtn = document.getElementById('retryBtn');
         const historyList = document.getElementById('historyList');
         const successOverlay = document.getElementById('successOverlay');
         const successText = document.getElementById('successText');
@@ -1419,15 +1460,53 @@
 
         // ===== ERROR =====
         function showError(msg) {
-            errorText.textContent = msg || 'Léon n\'a pas pu analyser.';
+            // Détection du marqueur iOS pour afficher un guide étape par étape
+            if (msg && msg.startsWith('__IOS_MIC_BLOCKED__')) {
+                const browserName = msg.replace('__IOS_MIC_BLOCKED__', '');
+                const errorCard = errorZone.querySelector('.error-card');
+                errorCard.innerHTML = `
+                    <div class="ios-mic-guide">
+                        <p class="guide-title"><i class="fa-solid fa-lock" style="margin-right:4px"></i> Micro bloqué sur iPhone</p>
+                        <div class="ios-mic-step">
+                            <span class="ios-step-num">1</span>
+                            <span class="ios-step-text">Ouvrez l'app <strong>Réglages</strong> de votre iPhone</span>
+                        </div>
+                        <div class="ios-mic-step">
+                            <span class="ios-step-num">2</span>
+                            <span class="ios-step-text">Descendez et appuyez sur <strong>${browserName}</strong></span>
+                        </div>
+                        <div class="ios-mic-step">
+                            <span class="ios-step-num">3</span>
+                            <span class="ios-step-text">Activez <strong>Microphone</strong> <i class="fa-solid fa-toggle-on" style="color:#10B981"></i></span>
+                        </div>
+                        <div class="ios-mic-step">
+                            <span class="ios-step-num">4</span>
+                            <span class="ios-step-text">Revenez ici et réessayez</span>
+                        </div>
+                    </div>
+                    <button class="btn-retry" id="retryBtnIos">Réessayer</button>`;
+                // Re-bind le bouton retry
+                errorCard.querySelector('#retryBtnIos').addEventListener('click', async () => {
+                    errorZone.classList.remove('visible');
+                    if (currentTranscription) await analyseTranscription(currentTranscription);
+                    else setMicState('idle');
+                });
+            } else {
+                // Erreur classique (non-iOS)
+                const errorCard = errorZone.querySelector('.error-card');
+                errorCard.innerHTML = `
+                    <p class="error-text" id="errorText">${escHtml(msg || 'Léon n\'a pas pu analyser.')}</p>
+                    <button class="btn-retry" id="retryBtnStd">Réessayer</button>`;
+                errorCard.querySelector('#retryBtnStd').addEventListener('click', async () => {
+                    errorZone.classList.remove('visible');
+                    if (currentTranscription) await analyseTranscription(currentTranscription);
+                    else setMicState('idle');
+                });
+            }
             errorZone.classList.add('visible');
         }
 
-        retryBtn.addEventListener('click', async () => {
-            errorZone.classList.remove('visible');
-            if (currentTranscription) await analyseTranscription(currentTranscription);
-            else setMicState('idle');
-        });
+        // Note : le retry est géré dynamiquement dans showError()
 
         // ===== HISTORY =====
         function addToHistory(result, savedCount) {
