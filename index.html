@@ -7780,7 +7780,7 @@
                 let statsLine = `📝 Mandats signés : <strong>${mandatesCount}</strong> <span class="briefing-stats-sep">·</span> ✅ Ventes : <strong>${salesCount}</strong>`;
                 if (totalCommission > 0) {
                     const fmtComm = totalCommission >= 1000 ? (totalCommission / 1000).toFixed(1).replace('.0', '') + 'K' : totalCommission;
-                    statsLine += ` <span class="briefing-stats-sep">·</span> 💰 ${fmtComm}€ HT`;
+                    statsLine += ` <span class="briefing-stats-sep">·</span> 💰 ${fmtComm}€ TTC`;
                 }
                 html += `<div class="briefing-stats-card">${statsLine}</div>`;
                 html += `</div>`;
