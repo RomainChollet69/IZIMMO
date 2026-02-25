@@ -2,19 +2,12 @@
   Léon — Micro / Enregistrement vocal (micro.html)
   Interface d'enregistrement audio avec transcription vocale.
   Version mobile optimisée. Auth requise (js/auth.js)
-  NOTE: micro.html n'est plus la page d'accueil mobile — redirect vers index.html
 -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script>
-        // Redirect mobile vers index.html (le pipeline vendeur est l'expérience principale)
-        if (/Mobi|Android/i.test(navigator.userAgent)) {
-            window.location.replace('index.html?from=micro');
-        }
-    </script>
     <title>Léon. — Micro</title>
     <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
     <meta property="og:title" content="Léon. — Micro">
