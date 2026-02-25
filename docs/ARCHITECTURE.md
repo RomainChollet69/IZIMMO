@@ -436,15 +436,26 @@ Utilisée pour l'autocomplétion dans les formulaires de création de fiches.
 
 ### Table `visits`
 
-| Colonne      | Type        | Description                              |
-|--------------|-------------|------------------------------------------|
-| `id`         | UUID (PK)   | Identifiant unique                       |
-| `user_id`    | UUID (FK)   | Référence `auth.users(id)`               |
-| `seller_id`  | UUID (FK)   | Référence `sellers(id)`                  |
-| `buyer_id`   | UUID (FK)   | Référence `buyers(id)`                   |
-| `feedback`   | TEXT        | Retour de visite                         |
-| `rating`     | INT         | Note de visite                           |
-| `created_at` | TIMESTAMPTZ | Date de visite                           |
+Liaison acquéreur ↔ vendeur pour le suivi des visites de biens.
+Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
+
+| Colonne            | Type        | Description                                          |
+|--------------------|-------------|------------------------------------------------------|
+| `id`               | UUID (PK)   | Identifiant unique                                   |
+| `user_id`          | UUID (FK)   | Référence `auth.users(id)`                           |
+| `seller_id`        | UUID (FK)   | Référence `sellers(id)` — le bien visité             |
+| `buyer_id`         | UUID (FK)   | Référence `buyers(id)` — l'acquéreur visiteur        |
+| `buyer_name`       | TEXT        | Nom acquéreur (fallback texte libre, legacy)         |
+| `visit_date`       | DATE        | Date de la visite                                    |
+| `visit_time`       | TIME        | Heure de la visite (optionnel)                       |
+| `status`           | TEXT        | `planifiee` / `effectuee` / `annulee`                |
+| `feedback_rating`  | TEXT        | `coup_de_coeur` / `interessant` / `pas_convaincu` / `pas_du_tout` |
+| `price_perception` | TEXT        | `adapte` / `un_peu_eleve` / `trop_eleve`             |
+| `rating`           | INT         | Note de visite (legacy 1-5, remplacé par feedback_rating) |
+| `notes`            | TEXT        | Observations libres                                  |
+| `feedback`         | TEXT        | Retour de visite (legacy)                            |
+| `created_at`       | TIMESTAMPTZ | Date de création                                     |
+| `updated_at`       | TIMESTAMPTZ | Dernière modification                                |
 
 ### Table `lead_notes`
 

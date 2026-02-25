@@ -1805,6 +1805,83 @@
         .match-indicator { position: absolute; top: 8px; right: 8px; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid #A7F3D0; cursor: pointer; z-index: 2; transition: background 0.2s; }
         .match-indicator:hover { background: #D1FAE5; }
 
+        /* ===== VISITES DANS MATCHING ===== */
+        .visits-match-section { margin-bottom: 8px; }
+        .visits-match-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .visits-match-title { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 15px; font-weight: 700; color: #2C3E50; }
+        .visit-quick-add-btn { padding: 5px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: opacity 0.2s; }
+        .visit-quick-add-btn:hover { opacity: 0.9; }
+        .visit-creation-form { padding: 14px; background: white; border-radius: 10px; border: 1px solid #E0E0E0; margin-bottom: 10px; animation: matchFadeIn 0.15s ease; }
+        .visit-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .visit-form-full { grid-column: 1 / -1; }
+        .visit-form-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .visit-confirm-btn { flex: 1; padding: 9px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; }
+        .visit-cancel-btn { padding: 9px 14px; background: #f8f9fa; color: #2C3E50; border: 1px solid #E0E0E0; border-radius: 8px; font-weight: 500; font-size: 13px; cursor: pointer; }
+        .visit-search-wrap { position: relative; }
+        .visit-search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #E0E0E0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; max-height: 200px; overflow-y: auto; display: none; }
+        .visit-search-option { padding: 9px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+        .visit-search-option:hover { background: #f8f9fa; }
+        .visit-search-option:last-child { border-bottom: none; }
+        .visit-match-list { display: flex; flex-direction: column; gap: 6px; }
+        .visit-match-empty { text-align: center; padding: 16px; color: #bbb; font-size: 13px; }
+        .visit-group-label { font-size: 11px; font-weight: 700; color: #78909C; text-transform: uppercase; letter-spacing: 0.5px; margin: 6px 0 2px; }
+        .visit-match-card { position: relative; padding: 10px 14px; background: white; border-radius: 10px; border: 1px solid #E0E0E0; transition: border-color 0.2s; }
+        .visit-match-card:hover { border-color: #667eea; }
+        .visit-match-card.planifiee { border-left: 3px solid #667eea; }
+        .visit-match-card.effectuee { border-left: 3px solid #66BB6A; }
+        .visit-match-card.annulee { border-left: 3px solid #E0E0E0; opacity: 0.6; }
+        .visit-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; }
+        .visit-status-badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
+        .visit-status-badge.planned { background: #E8EAF6; color: #3F51B5; }
+        .visit-status-badge.done { background: #E8F5E9; color: #2E7D32; }
+        .visit-status-badge.cancelled { background: #F5F5F5; color: #9E9E9E; }
+        .visit-card-date { font-size: 12px; color: #78909C; }
+        .visit-card-person { font-weight: 600; font-size: 13px; color: #2C3E50; }
+        .visit-card-feedback { font-size: 12px; margin-top: 2px; }
+        .visit-card-price { font-size: 12px; color: #78909C; }
+        .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 2px; max-height: 40px; overflow: hidden; }
+        .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
+        .visit-action-done, .visit-action-cancel, .visit-action-feedback { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .visit-action-done { background: #E8F5E9; color: #2E7D32; }
+        .visit-action-cancel { background: #FFF3E0; color: #E65100; }
+        .visit-action-feedback { background: #E8EAF6; color: #3F51B5; }
+        .visit-delete-btn-match { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
+        .visit-match-card:hover .visit-delete-btn-match { opacity: 1; }
+        .visits-match-separator { height: 1px; background: #E0E0E0; margin: 12px 0; }
+        .match-card { position: relative; }
+        .match-visit-btn { position: absolute; bottom: 6px; right: 6px; background: #E8EAF6; border: none; font-size: 13px; cursor: pointer; padding: 3px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.2s; z-index: 2; }
+        .match-card:hover .match-visit-btn { opacity: 1; }
+        .match-visit-btn:hover { background: #C5CAE9; }
+        /* Match rejection */
+        .match-card-reject-btn { position: absolute; top: 6px; right: 6px; background: none; border: none; font-size: 16px; color: #bbb; cursor: pointer; padding: 2px 6px; border-radius: 4px; line-height: 1; z-index: 2; transition: color 0.2s, background 0.2s; }
+        .match-card-reject-btn:hover { color: #E53935; background: rgba(229,57,53,0.08); }
+        .reject-modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 20000; display: flex; align-items: center; justify-content: center; animation: matchFadeIn 0.15s ease; }
+        .reject-modal-card { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 20px 24px; max-width: 320px; width: 90%; }
+        .reject-modal-card .reject-title { font-size: 14px; font-weight: 700; color: #2C3E50; margin-bottom: 12px; text-align: center; }
+        .reject-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .match-reject-chip { padding: 5px 10px; border-radius: 16px; border: 1px solid #E0E0E0; background: #fafafa; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+        .match-reject-chip:hover { background: #FFF3E0; border-color: #FB8C00; color: #E65100; }
+        @keyframes matchFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .match-card.rejected { opacity: 0.45; filter: grayscale(0.6); }
+        .match-card.rejected .match-card-reject-btn { display: none; }
+        .match-rejected-toggle { font-size: 12px; color: #999; cursor: pointer; margin-top: 8px; padding: 6px 0; border: none; background: none; }
+        .match-rejected-toggle:hover { color: #667eea; }
+        .match-rejected-section { margin-top: 8px; }
+        .match-restore-btn { padding: 4px 10px; border-radius: 12px; border: 1px dashed #667eea; background: none; color: #667eea; font-size: 11px; font-weight: 600; cursor: pointer; position: absolute; top: 6px; right: 6px; z-index: 2; transition: all 0.2s; }
+        .match-restore-btn:hover { background: #667eea; color: white; }
+        .feedback-modal-card { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 20px 24px; max-width: 380px; width: 90%; }
+        .feedback-title { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 17px; font-weight: 700; color: #2C3E50; margin-bottom: 14px; text-align: center; }
+        .feedback-section { margin-bottom: 14px; }
+        .feedback-label { font-size: 13px; font-weight: 600; color: #546E7A; margin-bottom: 6px; }
+        .feedback-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .feedback-chip { padding: 7px 12px; border-radius: 20px; border: 1px solid #E0E0E0; background: white; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .feedback-chip:hover { border-color: #667eea; background: #f0f0ff; }
+        .feedback-chip.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .feedback-notes { width: 100%; padding: 8px 10px; border: 1px solid #E0E0E0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; resize: vertical; box-sizing: border-box; }
+        .feedback-actions { display: flex; gap: 8px; }
+        .feedback-save-btn { flex: 1; padding: 9px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .feedback-skip-btn { padding: 9px 14px; background: #f8f9fa; color: #78909C; border: 1px solid #E0E0E0; border-radius: 8px; cursor: pointer; }
+
         /* Sector tags */
         .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
         .sector-tags-wrap:focus-within { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
@@ -2548,6 +2625,46 @@
                 </div>
 
                 <div id="tabMatching" style="display:none">
+                    <!-- Section Visites (au-dessus du matching) -->
+                    <div id="visitsMatchSection" class="visits-match-section">
+                        <div class="visits-match-header">
+                            <span class="visits-match-title">📅 Visites</span>
+                            <button type="button" class="visit-quick-add-btn" onclick="toggleVisitForm()">+ Planifier une visite</button>
+                        </div>
+                        <div id="visitCreationForm" class="visit-creation-form" style="display:none">
+                            <div class="visit-form-row">
+                                <div class="form-group visit-form-full">
+                                    <label class="form-label">Bien / Vendeur</label>
+                                    <div class="visit-search-wrap">
+                                        <input type="text" class="form-input" id="visitSellerSearchInput" placeholder="Rechercher un vendeur ou une adresse..." autocomplete="off">
+                                        <div class="visit-search-dropdown" id="visitSellerDropdown"></div>
+                                    </div>
+                                    <input type="hidden" id="visitSelectedSellerId">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Date</label>
+                                    <input type="date" class="form-input" id="visitNewDate">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Heure</label>
+                                    <input type="time" class="form-input" id="visitNewTime">
+                                </div>
+                                <div class="form-group visit-form-full">
+                                    <label class="form-label">Notes (optionnel)</label>
+                                    <input type="text" class="form-input" id="visitNewNotes" placeholder="Observations...">
+                                </div>
+                            </div>
+                            <div class="visit-form-actions">
+                                <button type="button" class="visit-confirm-btn" onclick="confirmCreateMatchVisit()">Planifier</button>
+                                <button type="button" class="visit-cancel-btn" onclick="cancelMatchVisitForm()">Annuler</button>
+                            </div>
+                        </div>
+                        <div id="visitMatchList" class="visit-match-list">
+                            <div class="visit-match-empty">Aucune visite</div>
+                        </div>
+                    </div>
+                    <div class="visits-match-separator"></div>
+                    <!-- Matching existant -->
                     <div id="matchingContent">
                         <div class="match-empty">Chargement...</div>
                     </div>
@@ -2570,6 +2687,8 @@
         let draggedCard = null;
         let matchSellers = null;
         let buyerMatchCounts = {};
+        let matchRejections = null;
+        let pendingReject = null;
 
         // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
         const EXAMPLE_BUYERS = [
@@ -2823,42 +2942,555 @@
             return trimmed;
         }
 
+        // ===== MATCH REJECTIONS =====
+
+        async function loadMatchRejections(forceRefresh) {
+            if (matchRejections !== null && !forceRefresh) return matchRejections;
+            const userId = await getCurrentUserId();
+            if (!userId) return [];
+            const { data } = await supabaseClient.from('match_rejections').select('*').eq('user_id', userId);
+            matchRejections = data || [];
+            return matchRejections;
+        }
+
+        function isMatchRejected(sellerId, buyerId) {
+            if (!matchRejections) return false;
+            return matchRejections.some(r => r.seller_id === sellerId && r.buyer_id === buyerId);
+        }
+
+        function rejectMatch(sellerId, buyerId, btn) {
+            pendingReject = { sellerId, buyerId, card: btn.closest('.match-card') };
+            const old = document.getElementById('rejectModal');
+            if (old) old.remove();
+            const modal = document.createElement('div');
+            modal.id = 'rejectModal';
+            modal.className = 'reject-modal-overlay';
+            modal.innerHTML = `
+                <div class="reject-modal-card">
+                    <div class="reject-title">Pourquoi ce match ne colle pas ?</div>
+                    <div class="reject-chips">
+                        <span class="match-reject-chip" data-reason="budget">💰 Budget</span>
+                        <span class="match-reject-chip" data-reason="localisation">📍 Localisation</span>
+                        <span class="match-reject-chip" data-reason="surface">📐 Surface</span>
+                        <span class="match-reject-chip" data-reason="type_bien">🏠 Type de bien</span>
+                        <span class="match-reject-chip" data-reason="autre">❓ Autre</span>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) { modal.remove(); pendingReject = null; }
+            });
+            modal.querySelectorAll('.match-reject-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    const reason = this.dataset.reason;
+                    modal.remove();
+                    if (pendingReject) confirmRejectMatch(pendingReject.sellerId, pendingReject.buyerId, reason, pendingReject.card);
+                });
+            });
+        }
+
+        async function confirmRejectMatch(sellerId, buyerId, reason, card) {
+            card.style.transition = 'all 0.3s ease';
+            card.style.transform = 'translateX(-100%)';
+            card.style.opacity = '0';
+
+            const userId = await getCurrentUserId();
+            const { error } = await supabaseClient.from('match_rejections').insert({
+                user_id: userId, seller_id: sellerId, buyer_id: buyerId, reason: reason
+            });
+
+            if (error) {
+                console.error('[Match] Rejection error:', error);
+                card.style.transform = '';
+                card.style.opacity = '';
+                showMatchToast('Erreur lors de l\'enregistrement');
+                return;
+            }
+
+            if (matchRejections) matchRejections.push({ user_id: userId, seller_id: sellerId, buyer_id: buyerId, reason: reason, id: 'temp-' + Date.now() });
+
+            setTimeout(() => {
+                card.remove();
+                updateMatchCountAfterReject();
+            }, 350);
+
+            showMatchToast('Match écarté');
+            pendingReject = null;
+        }
+
+        function updateMatchCountAfterReject() {
+            const container = document.getElementById('matchingContent');
+            const remaining = container.querySelectorAll('.match-list .match-card:not(.rejected)');
+            const countEl = container.querySelector('[data-match-count]');
+            if (countEl) countEl.textContent = remaining.length + ' vendeur' + (remaining.length > 1 ? 's' : '') + ' correspondant' + (remaining.length > 1 ? 's' : '');
+            if (remaining.length === 0) {
+                const listEl = container.querySelector('.match-list');
+                if (listEl) listEl.innerHTML = '<div class="match-empty">Aucun vendeur correspondant</div>';
+            }
+            // Update buyer card badge
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (editId && buyerMatchCounts[editId] !== undefined) {
+                buyerMatchCounts[editId] = Math.max(0, (buyerMatchCounts[editId] || 0) - 1);
+                const badge = document.querySelector(`.buyer-card[data-id="${editId}"] .match-indicator`);
+                if (badge) {
+                    if (buyerMatchCounts[editId] === 0) badge.remove();
+                    else badge.textContent = '🎯 ' + buyerMatchCounts[editId] + ' bien' + (buyerMatchCounts[editId] > 1 ? 's' : '');
+                }
+            }
+        }
+
+        async function restoreMatch(rejectionId) {
+            const { error } = await supabaseClient.from('match_rejections').delete().eq('id', rejectionId);
+            if (error) { console.error('[Match] Restore error:', error); showMatchToast('Erreur'); return; }
+            if (matchRejections) matchRejections = matchRejections.filter(r => r.id !== rejectionId);
+            showMatchToast('Match restauré');
+            loadMatchingSellers();
+        }
+
         async function loadMatchingSellers() {
             const container = document.getElementById('matchingContent');
             container.innerHTML = '<div class="match-empty">Chargement des vendeurs...</div>';
 
+            // Charger les visites pour cet acquéreur
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            loadMatchingVisits(editId);
+
             matchSellers = null; // Force refresh
             const allSellers = await loadSellersForMatching();
-            const editId = document.getElementById('submitBtn').dataset.editId;
+            await loadMatchRejections(true);
             const buyer = buyers.find(b => b.id === editId);
             if (!buyer) { container.innerHTML = '<div class="match-empty">Acquéreur introuvable</div>'; return; }
 
-            const matches = allSellers
+            const allMatches = allSellers
                 .filter(s => s.status !== 'sold' && s.status !== 'lost')
                 .map(s => ({ seller: s, ...calculateMatchScore(s, buyer) }))
                 .filter(m => !m.eliminated && m.percent >= 50)
                 .sort((a, b) => b.percent - a.percent);
 
-            if (matches.length === 0) {
+            // Séparer actifs et écartés
+            const matches = allMatches.filter(m => !isMatchRejected(m.seller.id, editId));
+            const rejected = allMatches.filter(m => isMatchRejected(m.seller.id, editId));
+
+            if (matches.length === 0 && rejected.length === 0) {
                 container.innerHTML = '<div class="match-empty">Aucun vendeur correspondant (seuil : 50%)<br><span style="font-size:12px;color:#bbb">Renseignez plus de champs pour améliorer le matching</span></div>';
                 return;
             }
 
-            container.innerHTML = `<div style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} vendeur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div><div class="match-list">${matches.map(m => {
-                const s = m.seller;
-                const name = escapeHtml((s.first_name || '') + ' ' + (s.last_name || ''));
-                const detailParts = [];
-                if (s.budget) detailParts.push(formatEuro(s.budget));
-                if (s.address) detailParts.push('📍 ' + escapeHtml(extractCity(s.address) || s.address));
-                if (s.surface) detailParts.push(s.surface + ' m²');
-                const barsHTML = m.details.map(d => {
-                    const pct = d.max > 0 ? Math.round((d.score / d.max) * 100) : 0;
-                    const color = pct >= 70 ? '#43A047' : pct >= 50 ? '#FB8C00' : '#E53935';
-                    return '<div class="match-detail-bar"><span class="bar-label">' + d.label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
-                }).join('');
-                const offBadge = s.status === 'off_market' ? ' <span class="off-market-badge">🔒 Off Market</span>' : '';
-                return '<div class="match-card" onclick="window.open(\'index.html\',\'_blank\')"><div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
-            }).join('')}</div>`;
+            let html = '';
+
+            if (matches.length > 0) {
+                html += `<div data-match-count style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} vendeur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>`;
+                html += '<div class="match-list">' + matches.map(m => renderSellerMatchCard(m, editId, false)).join('') + '</div>';
+            } else {
+                html += '<div class="match-empty">Tous les vendeurs ont été écartés</div>';
+            }
+
+            // Section écartés
+            if (rejected.length > 0) {
+                html += `<button class="match-rejected-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'; this.textContent=this.nextElementSibling.style.display==='none'?'Voir les ${rejected.length} écarté${rejected.length>1?'s':''}':'Masquer les écartés'">Voir les ${rejected.length} écarté${rejected.length > 1 ? 's' : ''}</button>`;
+                html += '<div class="match-rejected-section" style="display:none"><div class="match-list">';
+                rejected.forEach(m => {
+                    const rej = matchRejections.find(r => r.seller_id === m.seller.id && r.buyer_id === editId);
+                    html += renderSellerMatchCard(m, editId, true, rej ? rej.id : '');
+                });
+                html += '</div></div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function renderSellerMatchCard(m, buyerId, isRejected, rejectionId) {
+            const s = m.seller;
+            const name = escapeHtml((s.first_name || '') + ' ' + (s.last_name || ''));
+            const detailParts = [];
+            if (s.budget) detailParts.push(formatEuro(s.budget));
+            if (s.address) detailParts.push('📍 ' + escapeHtml(extractCity(s.address) || s.address));
+            if (s.surface) detailParts.push(s.surface + ' m²');
+            const barsHTML = m.details.map(d => {
+                const pct = d.max > 0 ? Math.round((d.score / d.max) * 100) : 0;
+                const color = pct >= 70 ? '#43A047' : pct >= 50 ? '#FB8C00' : '#E53935';
+                return '<div class="match-detail-bar"><span class="bar-label">' + d.label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div></div>';
+            }).join('');
+            const offBadge = s.status === 'off_market' ? ' <span class="off-market-badge">🔒 Off Market</span>' : '';
+
+            let actionBtn = '';
+            let visitBtn = '';
+            if (isRejected) {
+                actionBtn = '<button class="match-restore-btn" onclick="event.stopPropagation();restoreMatch(\'' + (rejectionId || '') + '\')">Restaurer</button>';
+            } else {
+                actionBtn = '<button class="match-card-reject-btn" onclick="event.stopPropagation();event.preventDefault();rejectMatch(\'' + s.id + '\',\'' + buyerId + '\',this)" title="Écarter ce match">&times;</button>';
+                visitBtn = '<button class="match-visit-btn" onclick="event.stopPropagation();planVisitFromMatch(\'' + s.id + '\',\'' + escapeHtml(name) + '\')" title="Planifier une visite">📅</button>';
+            }
+
+            const cardClass = 'match-card' + (isRejected ? ' rejected' : '');
+            return '<div class="' + cardClass + '" data-seller-id="' + s.id + '" onclick="window.open(\'index.html\',\'_blank\')">' + actionBtn + visitBtn + '<div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
+        }
+
+        // ===== VISITES DANS MATCHING TAB =====
+        let currentMatchVisits = [];
+
+        const FEEDBACK_LABELS = {
+            coup_de_coeur: { emoji: '😍', label: 'Coup de coeur' },
+            interessant: { emoji: '😊', label: 'Intéressant' },
+            pas_convaincu: { emoji: '😕', label: 'Pas convaincu' },
+            pas_du_tout: { emoji: '😞', label: 'Pas du tout' }
+        };
+        const PRICE_LABELS = {
+            adapte: '✅ Adapté',
+            un_peu_eleve: '⚠️ Un peu élevé',
+            trop_eleve: '🚫 Trop élevé'
+        };
+
+        async function loadMatchingVisits(buyerId) {
+            const container = document.getElementById('visitMatchList');
+            if (!container || !buyerId) return;
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+
+            const { data, error } = await supabaseClient
+                .from('visits')
+                .select('*, sellers(first_name, last_name, address)')
+                .eq('buyer_id', buyerId)
+                .eq('user_id', userId)
+                .order('visit_date', { ascending: false });
+
+            if (error) { console.error('[Visits] Load error:', error); container.innerHTML = ''; return; }
+            currentMatchVisits = data || [];
+            renderMatchingVisits();
+        }
+
+        function renderMatchingVisits() {
+            const container = document.getElementById('visitMatchList');
+            if (!container) return;
+
+            if (currentMatchVisits.length === 0) {
+                container.innerHTML = '<div class="visit-match-empty">Aucune visite</div>';
+                return;
+            }
+
+            const scheduled = currentMatchVisits
+                .filter(v => v.status === 'planifiee')
+                .sort((a, b) => new Date(a.visit_date) - new Date(b.visit_date));
+            const past = currentMatchVisits
+                .filter(v => v.status !== 'planifiee')
+                .sort((a, b) => new Date(b.visit_date) - new Date(a.visit_date));
+
+            let html = '';
+            if (scheduled.length > 0) {
+                html += '<div class="visit-group-label">À venir</div>';
+                scheduled.forEach(v => { html += renderVisitCard(v); });
+            }
+            if (past.length > 0) {
+                html += '<div class="visit-group-label">Passées</div>';
+                past.forEach(v => { html += renderVisitCard(v); });
+            }
+            container.innerHTML = html;
+        }
+
+        function renderVisitCard(visit) {
+            const STATUS_BADGES = {
+                planifiee: '<span class="visit-status-badge planned">📅 Planifiée</span>',
+                effectuee: '<span class="visit-status-badge done">✅ Effectuée</span>',
+                annulee: '<span class="visit-status-badge cancelled">❌ Annulée</span>'
+            };
+
+            let sellerInfo = '';
+            if (visit.sellers) {
+                const sName = [(visit.sellers.first_name || ''), (visit.sellers.last_name || '')].filter(Boolean).join(' ');
+                const addr = visit.sellers.address ? extractCity(visit.sellers.address) || visit.sellers.address : '';
+                sellerInfo = sName + (addr ? ' — 📍 ' + addr : '');
+            }
+            if (!sellerInfo) sellerInfo = 'Bien inconnu';
+
+            const dateStr = visit.visit_date
+                ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' })
+                : '';
+            const timeStr = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+            const fb = visit.feedback_rating ? FEEDBACK_LABELS[visit.feedback_rating] : null;
+            const pp = visit.price_perception ? PRICE_LABELS[visit.price_perception] : null;
+
+            let actions = '';
+            if (visit.status === 'planifiee') {
+                actions = `<div class="visit-card-actions">
+                    <button class="visit-action-done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">✅ Effectuée</button>
+                    <button class="visit-action-cancel" onclick="event.stopPropagation();cancelMatchVisit('${visit.id}')">❌ Annuler</button>
+                </div>`;
+            } else if (visit.status === 'effectuee' && !visit.feedback_rating) {
+                actions = `<div class="visit-card-actions">
+                    <button class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">📝 Donner un retour</button>
+                </div>`;
+            }
+
+            return `<div class="visit-match-card ${visit.status}" data-visit-id="${visit.id}">
+                <div class="visit-card-top">
+                    ${STATUS_BADGES[visit.status] || ''}
+                    <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
+                </div>
+                <div class="visit-card-person">${escapeHtml(sellerInfo)}</div>
+                ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
+                ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
+                ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
+                ${actions}
+                <button class="visit-delete-btn-match" onclick="event.stopPropagation();confirmDeleteMatchVisit('${visit.id}')" title="Supprimer">🗑️</button>
+            </div>`;
+        }
+
+        // --- Formulaire de création ---
+
+        function toggleVisitForm() {
+            const form = document.getElementById('visitCreationForm');
+            const visible = form.style.display !== 'none';
+            form.style.display = visible ? 'none' : 'block';
+            if (!visible) {
+                document.getElementById('visitSellerSearchInput').focus();
+                setupVisitSellerAutocomplete();
+            }
+        }
+
+        function cancelMatchVisitForm() {
+            document.getElementById('visitCreationForm').style.display = 'none';
+            document.getElementById('visitSellerSearchInput').value = '';
+            document.getElementById('visitSelectedSellerId').value = '';
+            document.getElementById('visitNewDate').value = '';
+            document.getElementById('visitNewTime').value = '';
+            document.getElementById('visitNewNotes').value = '';
+        }
+
+        function planVisitFromMatch(sellerId, sellerName) {
+            const form = document.getElementById('visitCreationForm');
+            form.style.display = 'block';
+            document.getElementById('visitSellerSearchInput').value = sellerName;
+            document.getElementById('visitSelectedSellerId').value = sellerId;
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('visitNewDate').value = tomorrow.toISOString().split('T')[0];
+            document.getElementById('visitSellerSearchInput').focus();
+            setupVisitSellerAutocomplete();
+            form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        let visitAutocompleteInit = false;
+        function setupVisitSellerAutocomplete() {
+            if (visitAutocompleteInit) return;
+            visitAutocompleteInit = true;
+            const input = document.getElementById('visitSellerSearchInput');
+            const dropdown = document.getElementById('visitSellerDropdown');
+            if (!input || !dropdown) return;
+
+            let timer = null;
+            input.addEventListener('input', function() {
+                clearTimeout(timer);
+                const q = this.value.trim().toLowerCase();
+                document.getElementById('visitSelectedSellerId').value = '';
+                if (q.length < 2) { dropdown.style.display = 'none'; return; }
+
+                timer = setTimeout(async () => {
+                    let allSellers = matchSellers;
+                    if (!allSellers) allSellers = await loadSellersForMatching();
+                    const results = allSellers.filter(s => {
+                        const name = ((s.first_name || '') + ' ' + (s.last_name || '')).toLowerCase();
+                        const addr = (s.address || '').toLowerCase();
+                        return name.includes(q) || addr.includes(q);
+                    }).slice(0, 8);
+
+                    if (results.length === 0) { dropdown.style.display = 'none'; return; }
+                    dropdown.innerHTML = results.map(s => {
+                        const name = ((s.first_name || '') + ' ' + (s.last_name || '')).trim();
+                        const addr = s.address ? ' — 📍 ' + (extractCity(s.address) || s.address) : '';
+                        return `<div class="visit-search-option" onclick="selectVisitSeller('${s.id}','${escapeHtml(name + addr)}')">${escapeHtml(name)}${escapeHtml(addr)}</div>`;
+                    }).join('');
+                    dropdown.style.display = 'block';
+                }, 200);
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display = 'none';
+            });
+        }
+
+        function selectVisitSeller(sellerId, label) {
+            document.getElementById('visitSellerSearchInput').value = label;
+            document.getElementById('visitSelectedSellerId').value = sellerId;
+            document.getElementById('visitSellerDropdown').style.display = 'none';
+        }
+
+        async function createVisit(visit) {
+            const userId = await getCurrentUserId();
+            if (!userId) return null;
+            visit.user_id = userId;
+            const { data, error } = await supabaseClient.from('visits').insert([visit]).select();
+            if (error) { console.error('[Visits] Create error:', error); alert('Erreur: ' + error.message); return null; }
+            return data[0];
+        }
+
+        async function deleteVisitDB(id) {
+            const userId = await getCurrentUserId();
+            if (!userId) return false;
+            const { error } = await supabaseClient.from('visits').delete().eq('id', id).eq('user_id', userId);
+            if (error) { console.error('[Visits] Delete error:', error); return false; }
+            return true;
+        }
+
+        async function confirmCreateMatchVisit() {
+            const buyerId = document.getElementById('submitBtn').dataset.editId;
+            const sellerId = document.getElementById('visitSelectedSellerId').value;
+            const sellerSearch = document.getElementById('visitSellerSearchInput').value.trim();
+            const visitDate = document.getElementById('visitNewDate').value;
+
+            if (!visitDate) { alert('Veuillez renseigner une date.'); return; }
+            if (!sellerId && !sellerSearch) { alert('Veuillez sélectionner un vendeur.'); return; }
+
+            const visit = {
+                seller_id: sellerId || null,
+                buyer_id: buyerId,
+                buyer_name: sellerSearch,
+                visit_date: visitDate,
+                visit_time: document.getElementById('visitNewTime').value || null,
+                notes: document.getElementById('visitNewNotes').value.trim() || null,
+                status: 'planifiee'
+            };
+
+            const created = await createVisit(visit);
+            if (created) {
+                const editId = document.getElementById('submitBtn').dataset.editId;
+                await loadMatchingVisits(editId);
+                cancelMatchVisitForm();
+                showMatchToast('Visite planifiée');
+            }
+        }
+
+        function showMatchToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#2C3E50;color:white;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:600;z-index:30000;opacity:0;transition:opacity 0.3s';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.style.opacity = '1');
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+        }
+
+        // --- Actions sur les visites ---
+
+        async function markVisitDone(visitId) {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { error } = await supabaseClient.from('visits')
+                .update({ status: 'effectuee', updated_at: new Date().toISOString() })
+                .eq('id', visitId).eq('user_id', userId);
+            if (error) { console.error('[Visits] Update error:', error); return; }
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            if (visit) visit.status = 'effectuee';
+            renderMatchingVisits();
+            openFeedbackForm(visitId);
+        }
+
+        async function cancelMatchVisit(visitId) {
+            if (!confirm('Annuler cette visite ?')) return;
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { error } = await supabaseClient.from('visits')
+                .update({ status: 'annulee', updated_at: new Date().toISOString() })
+                .eq('id', visitId).eq('user_id', userId);
+            if (error) { console.error('[Visits] Cancel error:', error); return; }
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            if (visit) visit.status = 'annulee';
+            renderMatchingVisits();
+            showMatchToast('Visite annulée');
+        }
+
+        async function confirmDeleteMatchVisit(visitId) {
+            if (!confirm('Supprimer cette visite ?')) return;
+            const ok = await deleteVisitDB(visitId);
+            if (ok) {
+                currentMatchVisits = currentMatchVisits.filter(v => v.id !== visitId);
+                renderMatchingVisits();
+                showMatchToast('Visite supprimée');
+            }
+        }
+
+        // --- Feedback post-visite ---
+
+        function openFeedbackForm(visitId) {
+            const old = document.getElementById('feedbackModal');
+            if (old) old.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'feedbackModal';
+            modal.className = 'reject-modal-overlay';
+            modal.innerHTML = `
+                <div class="feedback-modal-card">
+                    <div class="feedback-title">Retour de visite</div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Ressenti global</div>
+                        <div class="feedback-chips" id="feedbackRatingChips">
+                            <span class="feedback-chip" data-value="coup_de_coeur">😍 Coup de coeur</span>
+                            <span class="feedback-chip" data-value="interessant">😊 Intéressant</span>
+                            <span class="feedback-chip" data-value="pas_convaincu">😕 Pas convaincu</span>
+                            <span class="feedback-chip" data-value="pas_du_tout">😞 Pas du tout</span>
+                        </div>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Perception du prix</div>
+                        <div class="feedback-chips" id="feedbackPriceChips">
+                            <span class="feedback-chip" data-value="adapte">✅ Adapté</span>
+                            <span class="feedback-chip" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
+                            <span class="feedback-chip" data-value="trop_eleve">🚫 Trop élevé</span>
+                        </div>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Notes</div>
+                        <textarea class="feedback-notes" id="feedbackNotes" rows="2" placeholder="Observations de l'acquéreur..."></textarea>
+                    </div>
+                    <div class="feedback-actions">
+                        <button class="feedback-save-btn" onclick="saveFeedback('${visitId}')">Enregistrer</button>
+                        <button class="feedback-skip-btn" onclick="closeFeedbackModal()">Plus tard</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeFeedbackModal();
+            });
+            modal.querySelectorAll('.feedback-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    this.parentElement.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        function closeFeedbackModal() {
+            const modal = document.getElementById('feedbackModal');
+            if (modal) modal.remove();
+        }
+
+        async function saveFeedback(visitId) {
+            const ratingChip = document.querySelector('#feedbackRatingChips .feedback-chip.active');
+            const priceChip = document.querySelector('#feedbackPriceChips .feedback-chip.active');
+            const notes = document.getElementById('feedbackNotes').value.trim();
+
+            if (!ratingChip) { alert('Sélectionnez un ressenti.'); return; }
+
+            const updates = {
+                feedback_rating: ratingChip.dataset.value,
+                price_perception: priceChip ? priceChip.dataset.value : null,
+                updated_at: new Date().toISOString()
+            };
+            if (notes) updates.notes = notes;
+
+            const userId = await getCurrentUserId();
+            const { error } = await supabaseClient.from('visits')
+                .update(updates).eq('id', visitId).eq('user_id', userId);
+
+            if (error) { console.error('[Visits] Feedback error:', error); alert('Erreur'); return; }
+
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            if (visit) Object.assign(visit, updates);
+
+            closeFeedbackModal();
+            renderMatchingVisits();
+            showMatchToast('Retour enregistré');
         }
 
         // ===== MOBILE TABS =====

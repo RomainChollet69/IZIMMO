@@ -512,3 +512,41 @@
 - Les meta tags et cache-busting sont des filets de sécurité côté client
 - Impact minime sur les performances (les fichiers sont petits, pas de CDN statique nécessaire)
 - En dernier recours, les utilisateurs doivent supprimer/réinstaller Chrome sur iOS
+
+---
+
+## D026 — Visites dans l'onglet Matching (pas un onglet séparé)
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : Le système de visites acquéreur ↔ vendeur devait être accessible facilement. Deux options : un nouvel onglet "Visites" ou une section intégrée dans l'onglet Matching.
+
+**Décision** : Les visites sont affichées directement dans l'onglet Matching, au-dessus des suggestions automatiques. Pas de 4ème onglet.
+
+**Alternatives envisagées** :
+- Onglet "Visites" séparé → plus de navigation, sépare la visite du contexte matching
+- Section dans les notes → perd la structure (date, statut, feedback)
+
+**Pourquoi** :
+- Tout au même endroit : on voit les matchs ET les visites en cours dans la même vue
+- Réduit les clics : pas besoin de changer d'onglet pour voir les visites
+- Contexte préservé : en voyant les matchs automatiques, on voit aussi les visites déjà planifiées
+- Le bouton "Planifier une visite" sur les cartes match crée un raccourci naturel
+
+---
+
+## D027 — ALTER TABLE visits (pas DROP/CREATE)
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : La table `visits` existait déjà avec des données (buyer_name texte, rating 1-5). La nouvelle version nécessite buyer_id FK, status, feedback_rating, price_perception.
+
+**Décision** : ALTER TABLE pour ajouter les nouvelles colonnes, avec migration des données existantes.
+
+**Pourquoi** :
+- Préserve les visites déjà enregistrées
+- `buyer_name` reste en fallback pour les anciens enregistrements sans `buyer_id`
+- `rating` 1-5 est migré automatiquement vers `feedback_rating`
+- Les CHECK constraints garantissent l'intégrité des nouvelles données

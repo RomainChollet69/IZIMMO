@@ -4,6 +4,52 @@
 
 ---
 
+## Session 2026-02-25d — Système de visites acquéreur ↔ vendeur
+
+### Résumé
+Ajout d'un système complet de suivi des visites reliant acquéreurs et vendeurs. Chaque visite est visible des deux côtés (fiche vendeur ET fiche acquéreur) dans l'onglet Matching, avec statut planifiée/effectuée/annulée et feedback structuré post-visite.
+
+### Modifications
+
+**Migration BDD (`sql/003_visits_upgrade.sql`)** :
+- Ajout colonnes `buyer_id` (FK), `status`, `feedback_rating`, `price_perception`, `visit_time`, `updated_at`
+- Index sur `buyer_id`, `seller_id`, `status`
+- CHECK constraints sur les valeurs autorisées
+- Migration des anciens `rating` 1-5 vers `feedback_rating`
+
+**Côté vendeur (`index.html`)** :
+- Section "Visites" ajoutée dans l'onglet Matching, au-dessus des suggestions de match
+- Bouton "+ Planifier une visite" avec formulaire inline (autocomplete acquéreurs, date, heure, notes)
+- Bouton 📅 sur chaque carte match pour planifier rapidement une visite
+- Actions : marquer comme effectuée (ouvre feedback), annuler, supprimer
+- Modale feedback post-visite : chips ressenti (😍→😞) + perception prix + notes
+- Suppression de l'ancien formulaire de visites dans l'onglet Gestion Mandat
+- Compteur visites dans la vue mobile détail
+
+**Côté acquéreur (`acquereurs.html`)** :
+- Même système miroir : section Visites dans l'onglet Matching
+- Autocomplete vendeurs (par nom ou adresse)
+- Bouton 📅 sur chaque carte match vendeur
+- Même modale feedback
+
+### Fichiers créés/modifiés
+- `sql/003_visits_upgrade.sql` (nouveau)
+- `index.html` (HTML tabMatching + JS visites + CSS + cleanup ancien système)
+- `acquereurs.html` (HTML tabMatching + JS visites + CSS)
+- `docs/ARCHITECTURE.md` (schéma table visits mis à jour)
+- `docs/CHANGELOG.md` (ce fichier)
+
+### Points d'attention
+- La migration SQL doit être exécutée dans Supabase SQL Editor AVANT de déployer
+- Les anciennes visites (buyer_name texte sans buyer_id) restent affichées en fallback
+- Les visites créées côté acquéreur nécessitent un seller_id pour apparaître côté vendeur
+
+### Prochaines étapes prioritaires
+- Exécuter `sql/003_visits_upgrade.sql` dans Supabase
+- Tester le flow complet : création → feedback → cross-référence
+
+---
+
 ## Session 2026-02-25c — Fix iOS card deck, mobile logout, OAuth login, cache Chrome iOS
 
 ### Résumé
