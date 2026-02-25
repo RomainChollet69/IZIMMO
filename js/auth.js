@@ -10,19 +10,18 @@
         document.body.appendChild(div);
     }
 
-    const info = [];
-    info.push('URL: ' + window.location.href);
-    info.push('hash: ' + (window.location.hash || 'none'));
-    info.push('search: ' + (window.location.search || 'none'));
-
     const { data: { session }, error } = await supabaseClient.auth.getSession();
-    info.push('getSession: ' + (session ? 'SESSION OK (' + session.user.email + ')' : 'NO SESSION'));
-    if (error) info.push('error: ' + JSON.stringify(error));
 
     if (!session) {
-        info.push('→ Redirect vers login.html dans 8s...');
-        showDebug(info);
-        setTimeout(() => { window.location.href = 'login.html'; }, 8000);
+        alert(
+            '[DEBUG AUTH]\n\n' +
+            'URL: ' + window.location.href + '\n' +
+            'hash: ' + (window.location.hash || 'none') + '\n' +
+            'search: ' + (window.location.search || 'none') + '\n' +
+            'getSession: NO SESSION\n' +
+            (error ? 'error: ' + JSON.stringify(error) : 'error: aucune')
+        );
+        window.location.href = 'login.html';
         return;
     }
 
