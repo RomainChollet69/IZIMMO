@@ -63,7 +63,22 @@ Retourne UNIQUEMENT un JSON valide :
       "possible_matches": [{"lead_id": "uuid", "lead_type": "seller ou buyer", "lead_name": "nom complet"}]
     }
   ],
-  "unmatched_contacts": ["noms mentionnés mais non trouvés dans la base"]
+  "unmatched_contacts": [
+    {
+      "name": "nom complet mentionné",
+      "suggested_type": "seller ou buyer (devine d'après le contexte, défaut: seller)",
+      "first_name": "prénom",
+      "last_name": "nom de famille",
+      "budget_max": "nombre en euros si mentionné, sinon null",
+      "property_type": "appartement|maison|terrain|immeuble si mentionné, sinon null",
+      "rooms": "T1|T2|T3|T4|T5+ si mentionné, sinon null",
+      "sector": "zone géographique si mentionnée, sinon null",
+      "criteria": ["jardin", "parking", "cave", "balcon", "garage", "piscine", "ascenseur — uniquement ceux mentionnés"],
+      "phone": "numéro si mentionné, sinon null",
+      "email": "email si mentionné, sinon null",
+      "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note"
+    }
+  ]
 }`;
 
     try {
@@ -79,7 +94,7 @@ Retourne UNIQUEMENT un JSON valide :
             },
             body: JSON.stringify({
                 model: 'claude-haiku-4-5-20251001',
-                max_tokens: 800,
+                max_tokens: 1200,
                 system: systemPrompt,
                 messages: [{
                     role: 'user',

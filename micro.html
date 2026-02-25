@@ -546,7 +546,7 @@
         .ambiguous-option-name { font-weight: 500; font-size: 14px; }
         .ambiguous-option-info { font-size: 12px; color: #64748B; }
 
-        /* ===== NO MATCH ===== */
+        /* ===== NO MATCH / CREATE LEAD ===== */
         .no-match-zone { display: none; width: 100%; margin-top: 12px; }
         .no-match-zone.visible { display: block; }
         .no-match-card {
@@ -555,6 +555,51 @@
         }
         .no-match-text { font-size: 13px; color: #991B1B; margin-bottom: 10px; }
         .no-match-names { font-weight: 600; }
+
+        /* Carte de création de lead depuis micro */
+        .create-lead-card {
+            background: #F8FAFC; border: 1px solid #E2E8F0;
+            border-radius: 12px; padding: 16px 18px; margin-top: 10px; text-align: left;
+        }
+        .create-lead-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700; font-size: 15px; color: #243B53;
+            margin-bottom: 12px; text-align: center;
+        }
+        .create-lead-info { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; justify-content: center; }
+        .create-lead-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+        }
+        .create-lead-tag.type-buyer { background: #DBEAFE; color: #1E40AF; }
+        .create-lead-tag.type-seller { background: #FEF3C7; color: #92400E; }
+        .create-lead-tag.budget { background: #D1FAE5; color: #065F46; }
+        .create-lead-tag.property { background: #EDE9FE; color: #5B21B6; }
+        .create-lead-tag.sector { background: #FEE2E2; color: #991B1B; }
+        .create-lead-tag.criteria { background: #F3F4F6; color: #374151; }
+        .create-lead-note {
+            font-size: 13px; color: #475569; line-height: 1.5;
+            background: white; border: 1px solid #E2E8F0; border-radius: 8px;
+            padding: 10px 12px; margin-bottom: 12px;
+        }
+        .create-lead-type-btns {
+            display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;
+        }
+        .create-lead-type-btn {
+            flex: 1; padding: 10px 12px; border-radius: 8px; border: 2px solid #E2E8F0;
+            background: white; font-size: 13px; font-weight: 600; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.15s;
+        }
+        .create-lead-type-btn:hover { border-color: #94A3B8; }
+        .create-lead-type-btn.selected-buyer { border-color: #3B82F6; background: #EFF6FF; color: #1E40AF; }
+        .create-lead-type-btn.selected-seller { border-color: #F59E0B; background: #FFFBEB; color: #92400E; }
+        .create-lead-confirm {
+            width: 100%; padding: 12px; border: none; border-radius: 10px;
+            background: #243B53; color: white; font-size: 14px; font-weight: 600;
+            font-family: 'Inter', sans-serif; cursor: pointer; transition: opacity 0.15s;
+        }
+        .create-lead-confirm:hover { opacity: 0.9; }
+        .create-lead-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* ===== ERROR ===== */
         .error-zone { display: none; width: 100%; margin-top: 12px; }
@@ -1161,6 +1206,17 @@
             errorZone.classList.remove('visible');
         }
 
+        // Retour à l'état initial (bouton Réessayer)
+        function resetToIdle() {
+            hideAllZones();
+            setMicState('idle');
+            micZone.classList.remove('compact');
+            currentResult = null;
+            allLeads = null;
+            examplesZone.classList.remove('hidden');
+            startExamplesCarousel();
+        }
+
         // ===== RECORD FLOW =====
         micBtn.addEventListener('click', async () => {
             if (recorder && recorder.isRecording) { recorder.stop(); return; }
@@ -1520,15 +1576,172 @@
             });
         }
 
-        // ===== NO MATCH =====
-        function showNoMatch(names) {
-            noMatchZone.innerHTML = `
-                <div class="no-match-card">
-                    <p class="no-match-text">Léon n'a pas trouvé <span class="no-match-names">${names.map(n => escHtml(n)).join(', ')}</span></p>
-                    <button class="btn-retry" onclick="window.location.href='index.html'"><i class="fa-solid fa-plus"></i> Créer un lead</button>
+        // ===== NO MATCH / CREATE LEAD =====
+        function showNoMatch(contacts) {
+            // Backward compat : si c'est un tableau de strings (ancien format ou "(aucun contact)")
+            const isLegacy = contacts.length > 0 && typeof contacts[0] === 'string';
+
+            if (isLegacy) {
+                // Cas "(aucun contact identifié)" ou ancien format — simple message + retry
+                noMatchZone.innerHTML = `
+                    <div class="no-match-card">
+                        <p class="no-match-text">Léon n'a pas trouvé <span class="no-match-names">${contacts.map(n => escHtml(n)).join(', ')}</span></p>
+                        <button class="btn-retry" onclick="resetToIdle()"><i class="fa-solid fa-rotate-right"></i> Réessayer</button>
+                    </div>`;
+                noMatchZone.classList.add('visible');
+                scrollToResult(noMatchZone);
+                return;
+            }
+
+            // Nouveau format : objets avec données structurées — proposer la création
+            let html = '';
+            contacts.forEach((contact, idx) => {
+                const name = escHtml(contact.name || `${contact.first_name || ''} ${contact.last_name || ''}`.trim());
+                const suggestedType = contact.suggested_type || 'seller';
+                const isBuyer = suggestedType === 'buyer';
+
+                // Tags d'info extraites
+                let tagsHtml = '';
+                if (contact.budget_max) {
+                    const budgetStr = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(contact.budget_max);
+                    tagsHtml += `<span class="create-lead-tag budget"><i class="fa-solid fa-coins" style="font-size:10px"></i> ${budgetStr}</span>`;
+                }
+                if (contact.property_type) {
+                    const typeLabels = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble' };
+                    tagsHtml += `<span class="create-lead-tag property"><i class="fa-solid fa-home" style="font-size:10px"></i> ${typeLabels[contact.property_type] || contact.property_type}</span>`;
+                }
+                if (contact.sector) {
+                    tagsHtml += `<span class="create-lead-tag sector"><i class="fa-solid fa-map-marker-alt" style="font-size:10px"></i> ${escHtml(contact.sector)}</span>`;
+                }
+                if (contact.criteria && contact.criteria.length > 0) {
+                    contact.criteria.forEach(c => {
+                        tagsHtml += `<span class="create-lead-tag criteria">${escHtml(c)}</span>`;
+                    });
+                }
+
+                // Note preview
+                const noteText = contact.note_content || currentTranscription;
+
+                html += `
+                <div class="no-match-card" style="margin-bottom:10px">
+                    <p class="no-match-text" style="margin-bottom:6px">Nouveau contact : <span class="no-match-names">${name}</span></p>
+                    <div class="create-lead-card" data-contact-idx="${idx}">
+                        ${tagsHtml ? `<div class="create-lead-info">${tagsHtml}</div>` : ''}
+                        ${noteText ? `<div class="create-lead-note">${escHtml(noteText)}</div>` : ''}
+                        <div class="create-lead-type-btns">
+                            <button class="create-lead-type-btn ${isBuyer ? 'selected-buyer' : ''}" data-idx="${idx}" data-type="buyer" onclick="selectLeadType(this, ${idx}, 'buyer')">
+                                <i class="fa-solid fa-user-tag"></i> Acquéreur
+                            </button>
+                            <button class="create-lead-type-btn ${!isBuyer ? 'selected-seller' : ''}" data-idx="${idx}" data-type="seller" onclick="selectLeadType(this, ${idx}, 'seller')">
+                                <i class="fa-solid fa-building"></i> Vendeur
+                            </button>
+                        </div>
+                        <button class="create-lead-confirm" data-idx="${idx}" onclick="createNewLeadFromMicro(${idx})">
+                            <i class="fa-solid fa-plus"></i> Créer ${isBuyer ? 'l\'acquéreur' : 'le vendeur'}
+                        </button>
+                    </div>
                 </div>`;
+            });
+
+            // Stocker les contacts pour la création
+            window._pendingNewLeads = contacts;
+
+            noMatchZone.innerHTML = html;
             noMatchZone.classList.add('visible');
             scrollToResult(noMatchZone);
+        }
+
+        // Sélection du type vendeur/acquéreur
+        function selectLeadType(btn, idx, type) {
+            const card = btn.closest('.create-lead-card');
+            card.querySelectorAll('.create-lead-type-btn').forEach(b => {
+                b.classList.remove('selected-buyer', 'selected-seller');
+            });
+            btn.classList.add(type === 'buyer' ? 'selected-buyer' : 'selected-seller');
+
+            const confirmBtn = card.querySelector('.create-lead-confirm');
+            confirmBtn.innerHTML = type === 'buyer'
+                ? '<i class="fa-solid fa-plus"></i> Créer l\'acquéreur'
+                : '<i class="fa-solid fa-plus"></i> Créer le vendeur';
+            confirmBtn.dataset.selectedType = type;
+        }
+
+        // Création du lead directement depuis micro
+        async function createNewLeadFromMicro(idx) {
+            const contact = window._pendingNewLeads?.[idx];
+            if (!contact || !userId) return;
+
+            const card = noMatchZone.querySelector(`.create-lead-card[data-contact-idx="${idx}"]`);
+            const confirmBtn = card?.querySelector('.create-lead-confirm');
+            if (!confirmBtn) return;
+
+            // Déterminer le type (depuis le bouton sélectionné ou le suggested_type)
+            const selectedType = confirmBtn.dataset.selectedType
+                || (card.querySelector('.selected-buyer') ? 'buyer' : null)
+                || (card.querySelector('.selected-seller') ? 'seller' : null)
+                || contact.suggested_type || 'seller';
+            const table = selectedType === 'buyer' ? 'buyers' : 'sellers';
+
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:16px;height:16px;margin:0"></span>';
+
+            try {
+                // Préparer les données du lead
+                const firstName = contact.first_name || contact.name?.split(' ')[0] || '';
+                const lastName = contact.last_name || contact.name?.split(' ').slice(1).join(' ') || '';
+
+                const leadData = {
+                    user_id: userId,
+                    first_name: firstName,
+                    last_name: lastName,
+                    status: 'nouveau'
+                };
+
+                // Champs spécifiques aux acquéreurs
+                if (selectedType === 'buyer') {
+                    if (contact.budget_max) leadData.budget_max = contact.budget_max;
+                    if (contact.property_type) leadData.property_type = contact.property_type;
+                    if (contact.rooms) leadData.rooms = contact.rooms;
+                    if (contact.sector) leadData.city = contact.sector;
+                    if (contact.criteria && contact.criteria.length > 0) leadData.criteria = contact.criteria;
+                }
+                if (contact.phone) leadData.phone = contact.phone;
+                if (contact.email) leadData.email = contact.email;
+
+                // Insérer le lead
+                const { data, error } = await supabaseClient.from(table).insert([leadData]).select();
+                if (error) throw new Error(error.message);
+                const newLead = data[0];
+
+                // Ajouter la transcription comme première note
+                const noteContent = contact.note_content || currentTranscription;
+                if (noteContent && newLead) {
+                    const noteCol = selectedType === 'buyer' ? 'buyer_id' : 'seller_id';
+                    await supabaseClient.from('lead_notes').insert({
+                        user_id: userId,
+                        [noteCol]: newLead.id,
+                        content: `🎙️ ${noteContent}`
+                    });
+                }
+
+                // Succès
+                successText.textContent = `${firstName} ${lastName} créé(e) !`;
+                successOverlay.classList.add('visible');
+                setTimeout(() => {
+                    successOverlay.classList.remove('visible');
+                    hideAllZones();
+                    setMicState('idle');
+                    currentResult = null;
+                    allLeads = null;
+                    window._pendingNewLeads = null;
+                }, 1600);
+            } catch (err) {
+                console.error('[Micro] Erreur création lead:', err);
+                showError('Erreur lors de la création : ' + err.message);
+            } finally {
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-plus"></i> Créer';
+            }
         }
 
         // ===== ERROR =====
