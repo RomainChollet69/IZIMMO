@@ -4,19 +4,55 @@
 (async function () {
     const { data: { session } } = await supabaseClient.auth.getSession();
 
-    if (!session) {
-        window.location.href = 'login.html';
+    if (session) {
+        // Session trouvée — rendre le profil et écouter les changements
+        renderUserProfile(session.user);
+        renderMobileHeader(session.user);
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT' || !session) {
+                window.location.href = 'login.html';
+            }
+        });
         return;
     }
 
-    renderUserProfile(session.user);
-    renderMobileHeader(session.user);
+    // Pas de session — vérifier si on est sur un retour OAuth (hash ou code)
+    const hash = window.location.hash;
+    const search = window.location.search;
+    const isOAuthCallback = (hash && (hash.includes('access_token') || hash.includes('refresh_token')))
+                         || (search && search.includes('code='));
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
-            window.location.href = 'login.html';
+    if (isOAuthCallback) {
+        // Race condition : Supabase n'a pas encore traité les tokens OAuth
+        // Attendre onAuthStateChange avec timeout de 5s
+        const oauthSession = await new Promise((resolve) => {
+            const AUTH_TIMEOUT_MS = 5000;
+            const timeout = setTimeout(() => resolve(null), AUTH_TIMEOUT_MS);
+            const { data: { subscription } } = supabaseClient.auth.onAuthStateChange((event, s) => {
+                if (s) {
+                    clearTimeout(timeout);
+                    subscription.unsubscribe();
+                    resolve(s);
+                }
+            });
+        });
+
+        if (oauthSession) {
+            // Nettoyer l'URL (retirer hash/code)
+            window.history.replaceState({}, '', window.location.pathname);
+            renderUserProfile(oauthSession.user);
+            renderMobileHeader(oauthSession.user);
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT' || !session) {
+                    window.location.href = 'login.html';
+                }
+            });
+            return;
         }
-    });
+    }
+
+    // Pas de session et pas de callback OAuth → rediriger vers login
+    window.location.href = 'login.html';
 })();
 
 // Inject dropdown CSS (if not already in page CSS)
