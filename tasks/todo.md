@@ -6,24 +6,28 @@
 
 ## En cours
 
-- [ ] Corriger l'affichage mobile card deck sur iOS/WebKit (Chrome iPhone ne fonctionne pas)
-- [ ] Corriger la déconnexion profil sur mobile
+_(rien en cours)_
 
 ## À faire
 
+- [ ] Retirer les console.log de debug mobile une fois stabilisé
+- [ ] Tester le card deck sur différents appareils iOS et Android
+- [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
 - [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN rdv_done BOOLEAN DEFAULT false`
 - [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
 - [ ] Tester filtres DPE en production (classe A-G + DPE récents)
 - [ ] Vérifier chargement des départements splittés (59 Nord, 75 Paris)
-- [ ] Retirer les console.log de debug mobile une fois stabilisé
-- [ ] Tester le card deck sur différents appareils iOS et Android
-- [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
 - [ ] Nettoyer `pipeline-acquereurs.html` (fichier deprecated)
 - [ ] Supprimer `reset-password.html` (inutilisé — auth Google uniquement)
 - [ ] Mettre en place le logging structuré par module (`[DVF]`, `[Pipeline]`, `[Auth]`, `[Workflow]`)
 
 ## Terminé
 
+- [x] Fix CSS iOS WebKit pour card deck (préfixes -webkit-, suppression propriétés problématiques)
+- [x] Ajout dropdown déconnexion dans le header mobile (auth.js)
+- [x] Diagnostic et résolution du bug login OAuth (Client Secret Google changé)
+- [x] Headers anti-cache vercel.json + meta tags + cache-busting scripts
+- [x] Résolution cache Chrome iOS (nécessite réinstallation de Chrome)
 - [x] Créer `CLAUDE.md` — règles de comportement Claude Code
 - [x] Créer `docs/ARCHITECTURE.md` — architecture complète du projet
 - [x] Créer `docs/DECISIONS.md` — journal des choix techniques

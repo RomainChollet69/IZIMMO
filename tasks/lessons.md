@@ -30,3 +30,23 @@
 ### L004 — Commission immobilière : pas d'honoraires sur les honoraires (2026-02-24)
 **Erreur** : `commission = prix × taux%` est faux. On ne prend pas d'honoraires sur les honoraires.
 **Règle** : `commission = prix FAI - (prix FAI / (1 + taux/100))`. Le taux s'applique sur le net vendeur. Utiliser `calcCommission()` et `calcRateFromAmount()` définis dans `supabase-config.js`.
+
+### L005 — Chrome iOS a un cache quasi-indestructible (2026-02-25)
+**Erreur** : Après modification du code, Chrome sur iPhone servait toujours l'ancienne version (avec un redirect JS vers micro.html). Vider le cache, cookies, ajouter des headers anti-cache, des meta tags, du cache-busting `?v=xxx` sur les scripts — RIEN n'a fonctionné.
+**Règle** : Chrome iOS maintient un cache interne très agressif que les mécanismes standards ne contournent pas. La seule solution fiable : **supprimer et réinstaller Chrome**. Safari et Chrome incognito fonctionnent normalement. Préventivement, toujours ajouter `no-cache` headers dans `vercel.json` pour minimiser le problème à l'avenir.
+
+### L006 — Toujours vérifier les credentials OAuth après changement (2026-02-25)
+**Erreur** : L'utilisateur a changé le Client Secret Google dans la Google Cloud Console mais n'a pas mis à jour Supabase. Résultat : `Unable to exchange external code` — le login Google est totalement cassé.
+**Règle** : Quand un Client Secret OAuth est régénéré, il faut mettre à jour TOUS les services qui l'utilisent (Supabase Dashboard → Auth → Providers → Google). Ajouter un debug visible (alert) est plus efficace que console.log pour diagnostiquer les problèmes d'auth (les redirections vident la console).
+
+### L007 — Ne pas ajouter de redirects entre pages sans tester l'impact (2026-02-25)
+**Erreur** : Ajout d'un redirect mobile dans micro.html → index.html pour contourner le cache Chrome. Résultat : micro.html devenait inaccessible sur mobile, cassant l'enregistrement vocal.
+**Règle** : Les redirects entre pages ont des effets de bord. Toujours vérifier que toutes les fonctionnalités de la page source restent accessibles. Préférer les solutions côté serveur (headers) plutôt que les redirects JavaScript.
+
+### L008 — CSS iOS WebKit : propriétés à éviter (2026-02-25)
+**Erreur** : Le card deck était invisible sur iOS Safari/Chrome. Propriétés responsables : `overflow: hidden` sur un parent flex, `height: 100%` quand le parent n'a que `min-height`, `will-change: transform`, `calc(100vh - X)` (100vh != viewport visible sur iOS).
+**Règle** : Sur iOS WebKit, toujours : (1) utiliser `min-height` au lieu de `height: 100%`, (2) éviter `overflow: hidden` sur des containers flex, (3) ne pas utiliser `will-change` sauf nécessité prouvée, (4) éviter `100vh` (utiliser `min-height` fixe ou `-webkit-fill-available`), (5) ajouter les préfixes `-webkit-transform`, `-webkit-transition`, `-webkit-backface-visibility`.
+
+### L009 — Utiliser alert() pour debug mobile, pas console.log (2026-02-25)
+**Erreur** : Les console.log de debug étaient inaccessibles sur iPhone (pas de DevTools intégré). Les logs disparaissaient aussi lors des redirections rapides.
+**Règle** : Pour le debug mobile, utiliser `alert()` — ça bloque toute exécution JavaScript et affiche le message à l'écran. Penser aussi au flag `window._debugShown` pour n'afficher qu'une seule fois. Pour les redirections rapides, `alert()` est la seule méthode fiable car elle bloque le thread.

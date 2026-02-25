@@ -492,3 +492,23 @@
 - Le header doit rester identique et léger sur toutes les pages
 - Le lien vers les paramètres existe déjà dans le dropdown du profil
 - Doublon = confusion UX
+
+## D025 — Headers anti-cache pour HTML et JS (vercel.json)
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : Chrome iOS maintient un cache interne très agressif qui ne se vide pas avec les méthodes classiques (vidage cache/cookies, cache-busting). Après modification du code, les utilisateurs sur Chrome iOS voyaient toujours l'ancienne version.
+
+**Décision** : Ajouter des headers `Cache-Control` dans `vercel.json` : `no-cache, no-store, must-revalidate` pour les fichiers HTML, `no-cache, must-revalidate` pour les fichiers JS. Plus meta tags anti-cache dans le `<head>` et cache-busting `?v=YYMMDD` sur les scripts locaux.
+
+**Alternatives envisagées** :
+- Service Worker avec stratégie network-first → trop complexe pour le projet
+- ETags seuls → insuffisants, Chrome iOS les ignore parfois
+- Redirect entre pages → effets de bord (casse l'accès aux pages redirigées)
+
+**Pourquoi** :
+- Les headers serveur sont la méthode la plus fiable côté réseau
+- Les meta tags et cache-busting sont des filets de sécurité côté client
+- Impact minime sur les performances (les fichiers sont petits, pas de CDN statique nécessaire)
+- En dernier recours, les utilisateurs doivent supprimer/réinstaller Chrome sur iOS

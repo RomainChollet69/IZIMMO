@@ -4,6 +4,54 @@
 
 ---
 
+## Session 2026-02-25c — Fix iOS card deck, mobile logout, OAuth login, cache Chrome iOS
+
+### Résumé
+Corrections multiples sur la version mobile : CSS iOS WebKit pour le card deck, ajout du dropdown de déconnexion au header mobile, diagnostic et résolution du bug de login OAuth (client secret Google changé), et gestion du cache agressif de Chrome iOS via headers anti-cache et cache-busting.
+
+### Modifications
+
+**Fix CSS iOS WebKit pour card deck (index.html)** :
+- Supprimé `overflow: hidden`, `flex: 1`, `height: 100%`, `will-change`, `calc(100vh - 200px)` — tous problématiques sur WebKit iOS
+- Ajouté préfixes `-webkit-transform`, `-webkit-transition`, `-webkit-backface-visibility`
+- Augmenté `min-height` viewport de 400px à 450px
+
+**Dropdown déconnexion mobile (js/auth.js)** :
+- Le header mobile (logo + prénom + avatar) n'avait aucun menu
+- Ajouté dropdown avec Paramètres + Déconnexion au tap sur la zone utilisateur
+- CSS du dropdown injecté dynamiquement avec animation `dropdownSlide`
+
+**Diagnostic OAuth login cassé (js/auth.js, login.html)** :
+- Ajout de debug visible (alert) pour diagnostiquer le flow OAuth
+- Découverte : erreur `Unable to exchange external code` côté Supabase
+- Cause : le Client Secret Google avait été changé sans mise à jour dans Supabase Dashboard
+- Résolution : utilisateur a mis à jour le secret dans Supabase → login restauré
+- Tentative de fix race condition OAuth (revertée) — `getSession()` attend déjà l'init Supabase
+
+**Headers anti-cache (vercel.json, index.html)** :
+- `vercel.json` : HTML → `no-cache, no-store, must-revalidate`, JS → `no-cache, must-revalidate`
+- Meta tags `Cache-Control`, `Pragma`, `Expires` dans `<head>` d'index.html
+- Cache-busting `?v=250225` sur les scripts locaux
+- Chrome iOS nécessite suppression/réinstallation pour vider son cache agressif
+
+### Fichiers créés/modifiés
+- `index.html` (CSS iOS, meta cache, cache-busting scripts)
+- `js/auth.js` (dropdown mobile, debug temporaire retiré)
+- `login.html` (debug temporaire retiré)
+- `vercel.json` (headers anti-cache)
+
+### Points d'attention / bugs connus
+- Chrome iOS a un cache extrêmement agressif — la seule solution fiable est supprimer/réinstaller l'app
+- Les console.log de debug dans `renderMobileCardDeck()` et `loadSellers()` sont toujours présents
+- Le card deck fonctionne sur Safari iOS, Chrome iOS (après réinstall), et desktop responsive
+
+### Prochaines étapes prioritaires
+- Retirer les console.log de debug mobile
+- Tester le card deck sur différents appareils
+- Envisager la refonte card deck pour le pipeline acquéreurs mobile
+
+---
+
 ## Session 2026-02-25b — Images dans notes + arrondissements + nettoyage header
 
 ### Résumé
