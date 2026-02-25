@@ -316,12 +316,16 @@
 
         // ===== GOOGLE =====
         async function signInWithGoogle() {
-            await supabaseClient.auth.signInWithOAuth({
+            const redirectUrl = window.location.origin + '/index.html';
+            console.log('[Login] signInWithGoogle → redirectTo:', redirectUrl);
+            const { data, error } = await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin + '/index.html'
+                    redirectTo: redirectUrl
                 }
             });
+            if (error) console.error('[Login] OAuth error:', error);
+            console.log('[Login] OAuth data:', data);
         }
 
         // ===== CONNEXION EMAIL =====

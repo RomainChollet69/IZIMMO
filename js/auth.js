@@ -2,17 +2,25 @@
 // Include this script AFTER supabase-config.js on protected pages only
 
 (async function () {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    console.log('[Auth] URL:', window.location.href);
+    console.log('[Auth] hash:', window.location.hash ? 'present' : 'none');
+    console.log('[Auth] search:', window.location.search || 'none');
+
+    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    console.log('[Auth] getSession →', session ? 'SESSION OK' : 'NO SESSION', error || '');
 
     if (!session) {
+        console.log('[Auth] Redirecting to login.html...');
         window.location.href = 'login.html';
         return;
     }
 
+    console.log('[Auth] User:', session.user.email);
     renderUserProfile(session.user);
     renderMobileHeader(session.user);
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
+        console.log('[Auth] onAuthStateChange:', event, session ? 'session' : 'no session');
         if (event === 'SIGNED_OUT' || !session) {
             window.location.href = 'login.html';
         }
