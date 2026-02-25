@@ -70,6 +70,14 @@ IZIMMO/
 │   ├── todo.md                 # Plan & suivi des tâches en cours
 │   └── lessons.md              # Erreurs passées & règles apprises
 │
+├── scripts/                    # Scripts data pipeline (Python)
+│   ├── extract-dpe-from-dump.py  # Extraction DPE depuis dump ADEME SQL (63 Go)
+│   ├── generate-dpe-json.py      # DPE CSV → JSON par département
+│   ├── download-dpe-ademe.py     # Téléchargement DPE depuis API ADEME
+│   ├── upload-dpe-storage.py     # Upload JSON DPE → Supabase Storage
+│   ├── generate-dvf-json.py      # DVF CSV → JSON par département
+│   └── upload-dvf-storage.py     # Upload JSON DVF → Supabase Storage
+│
 ├── vercel.json                 # Config Vercel (timeout functions, headers micro)
 ├── package.json                # Dépendance unique : @supabase/supabase-js
 └── package-lock.json
@@ -235,6 +243,56 @@ INSERT dans `social_posts` (Supabase)
     │
     ▼
 Affichage dans calendrier social avec historique
+```
+
+### 3.7 Carte DVF + DPE
+
+```
+Chargement dvf.html
+    │
+    ▼
+Google Maps initialisé (maps-config.js)
+    │
+    ├── DVF (actif par défaut) ──────────────────────────────────────
+    │     Recherche adresse → geocode → centre + rayon
+    │         │
+    │         ▼
+    │     Fetch index.json (Supabase Storage bucket dvf-data)
+    │       → Sélection départements par intersection bbox/rayon
+    │         │
+    │         ▼
+    │     Fetch {dept}.json → filtrage local (année, type, prix, surface)
+    │       → Clustering par parcelle (même coordonnées)
+    │       → Markers couleur par prix/m² + InfoWindow détaillée
+    │
+    └── DPE (inactif par défaut) ────────────────────────────────────
+          Activation toggle → Fetch index.json (bucket dpe-data)
+            │
+            ▼
+          Fetch {dept}.json (ou {dept}_1.json + {dept}_2.json si splittés)
+            → Filtrage : classe DPE (A-G), DPE récents (3/6/12 mois)
+            → Markers couleur par classe énergie
+            → InfoWindow : badge DPE, type, surface, conso, GES
+              └── Section dépliable : adresse (reverse geocoding si absente),
+                  complément (étage/porte), date DPE, alerte passoire
+```
+
+**Pipeline de données DPE** :
+```
+Dump ADEME (63 Go gzip SQL)
+    │
+    ▼
+scripts/extract-dpe-from-dump.py
+  └── Streaming single-pass, filtre date >= 2022, desactive = false
+  └── Croise 5 tables : dpe, caracteristique_generale, emission_ges, ep_conso, geolocalisation
+    │
+    ▼
+96 fichiers JSON par département + index.json
+  Format compact : [dpe_class, ges_class, conso, ges, surface, type, year, postal, lng, lat, date, addr, complement]
+    │
+    ▼
+scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
+  └── Départements > 50 Mo splittés (index.json contient clé "splits")
 ```
 
 ---

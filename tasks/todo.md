@@ -11,6 +11,10 @@
 
 ## À faire
 
+- [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN rdv_done BOOLEAN DEFAULT false`
+- [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
+- [ ] Tester filtres DPE en production (classe A-G + DPE récents)
+- [ ] Vérifier chargement des départements splittés (59 Nord, 75 Paris)
 - [ ] Retirer les console.log de debug mobile une fois stabilisé
 - [ ] Tester le card deck sur différents appareils iOS et Android
 - [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
@@ -26,3 +30,10 @@
 - [x] Créer `docs/API-MAP.md` — cartographie des endpoints et APIs
 - [x] Créer `docs/CHANGELOG.md` — historique horodaté
 - [x] Créer `tasks/todo.md` et `tasks/lessons.md`
+- [x] Fix InfoWindow whitespace DPE (CSS aggressif)
+- [x] Fix filtres DPE invisibles (sortis du panel repliable)
+- [x] Fix sidebar overflow quand DPE + DVF actifs ensemble
+- [x] Extraction complète DPE (14.1M, 96 départements)
+- [x] Upload DPE vers Supabase Storage (97 fichiers, 1.34 Go)
+- [x] Support fichiers DPE splittés (59, 75)
+- [x] En-têtes documentation sur tous les fichiers HTML/JS

@@ -412,3 +412,45 @@
 - Exemple : 200 000€ à 4% → commission = 7 692€ (pas 8 000€)
 - La différence est significative sur les gros montants
 - Label "TTC" sur tous les affichages (briefing + cartes + formulaire)
+
+---
+
+## D021 — DPE : extraction depuis le dump SQL (pas l'API ADEME)
+
+**Date** : 2026-02-26
+**Statut** : Actif
+
+**Contexte** : L'API ADEME (data.ademe.fr) est limitée en volume et ne fournit pas toutes les données nécessaires (date du DPE, adresse, complément). Le dump PostgreSQL complet (63 Go) contient toutes les tables croisées.
+
+**Décision** : Extraction single-pass via `extract-dpe-from-dump.py` depuis le dump SQL gzippé, en croisant 5 tables (dpe, caracteristique_generale, emission_ges, ep_conso, geolocalisation).
+
+**Pourquoi** :
+- L'API ADEME rate-limited (600 req/60s) = des jours pour 14M DPE
+- Le dump contient les adresses (`ban_label`), compléments (étage/porte), et dates exactes
+- Extraction complète en 45 min vs plusieurs jours via API
+- Format compact (13 champs par DPE) pour un poids raisonnable (1.34 Go)
+
+**Alternatives rejetées** :
+- **API ADEME paginée** (`download-dpe-ademe.py`) : trop lent, données incomplètes
+- **Import PostgreSQL local** : nécessite 100+ Go de disque et une instance PostgreSQL
+
+---
+
+## D022 — DPE : split des gros départements (pas d'augmentation de limite Supabase)
+
+**Date** : 2026-02-26
+**Statut** : Actif
+
+**Contexte** : Le plan Supabase gratuit limite les fichiers Storage à 50 Mo. Le Nord (59) fait 52 Mo et Paris (75) fait 66 Mo.
+
+**Décision** : Splitter les départements > 50 Mo en 2 fichiers (`{dept}_1.json`, `{dept}_2.json`). L'index.json contient une clé `splits` qui map les départements vers leurs fichiers. Le front-end charge les parties en parallèle et les merge.
+
+**Pourquoi** :
+- Pas de surcoût (reste sur le plan gratuit Supabase)
+- Chargement parallèle des 2 parties = quasi aucun impact sur les perfs
+- Seuls 2 départements sur 96 sont concernés
+- Solution extensible si d'autres départements grossissent
+
+**Alternatives rejetées** :
+- **Passer au plan Supabase Pro** : 25$/mois pour un problème qui touche 2 fichiers
+- **Compression gzip côté client** : complexité inutile, les fichiers non-splittés passent

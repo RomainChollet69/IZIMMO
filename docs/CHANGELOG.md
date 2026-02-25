@@ -4,6 +4,46 @@
 
 ---
 
+## Session 2026-02-26 — DVF/DPE : filtres, InfoWindow, extraction complète + documentation
+
+### Résumé
+Correction des filtres DPE invisibles, réduction de l'espace blanc InfoWindow, sidebar scrollable, extraction complète des 14M DPE avec nouveaux champs (date, adresse, complément), upload Supabase Storage, et ajout des en-têtes de documentation sur tous les fichiers.
+
+### Modifications
+
+**Carte DVF/DPE (dvf.html)** :
+- Fix InfoWindow whitespace : CSS agressif sur `.gm-style-iw-c` (padding:0), `.gm-style-iw-tc` (masqué)
+- Fix filtres DPE invisibles : sortis du panel repliable `#filterPanel` vers un conteneur indépendant `#dpeFiltersContainer`
+- Fix sidebar overflow : `overflow: hidden` → `overflow-y: auto` + `flex-shrink: 0` sur toutes les sections
+- Support fichiers DPE splittés : `dpeSplits` map dans `index.json`, chargement parallèle des parties
+- Garde `if (!info.bbox) continue` dans `findDpeDepts()` pour ignorer les clés non-département
+
+**Pipeline DPE (scripts/)** :
+- `extract-dpe-from-dump.py` : extraction des 14,155,763 DPE depuis le dump 63 Go (45 min)
+- Nouveaux champs extraits : `date_etablissement_dpe`, `ban_label`/`adresse_brut`, `complement_adresse`
+- Upload 97 fichiers (1.34 Go) vers Supabase Storage bucket `dpe-data`
+- Split départements > 50 Mo : 59 (Nord) et 75 (Paris) en 2 fichiers chacun
+
+**Documentation** :
+- En-têtes HTML ajoutés sur 10 fichiers (commentaire descriptif avant `<!DOCTYPE html>`)
+- En-têtes JS enrichis sur 4 fichiers (supabase-config, relance-widget, onboarding, todo-widget)
+
+### Fichiers créés/modifiés
+- `dvf.html` (CSS InfoWindow, filtres DPE, sidebar scroll, split DPE)
+- `index.html`, `acquereurs.html`, `formulaire.html`, `login.html`, `landing.html`, `social.html`, `parametres.html`, `micro.html`, `reset-password.html` (en-têtes HTML)
+- `js/supabase-config.js`, `js/relance-widget.js`, `js/onboarding.js`, `js/todo-widget.js` (en-têtes JS)
+
+### Points d'attention / bugs connus
+- Limite Supabase Storage : 50 Mo par fichier (plan gratuit) — départements volumineux doivent être splittés
+- Les nouveaux champs DPE (date, adresse, complément) ne seront visibles dans les InfoWindows que si les fichiers JSON contiennent ces données (extraction depuis le dump ADEME)
+
+### Prochaines étapes prioritaires
+- Tester les filtres DPE (classe A-G + DPE récents) en production
+- Vérifier le chargement des départements splittés (59, 75)
+- SQL migrations en attente : `rdv_done`, `contact2_name/phone/email` sur sellers
+
+---
+
 ## Session 2026-02-25 — Refonte Pipeline Vendeurs Mobile (Card Deck)
 
 ### Résumé
