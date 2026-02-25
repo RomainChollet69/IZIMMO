@@ -4947,7 +4947,24 @@
             const posIndicator = document.getElementById('deckPosition');
             if (!viewport) { console.warn('[MobileCardDeck] viewport introuvable'); return; }
 
-            console.log('[MobileCardDeck] Rendu — sellers:', sellers.length, 'tab:', mobileActiveTab, 'index:', mobileDeckIndex);
+            // DEBUG TEMPORAIRE — alert sur mobile pour diagnostiquer
+            if (window._mobileDebugShown !== true && sellers.length > 0) {
+                window._mobileDebugShown = true;
+                const deck = document.getElementById('mobileCardDeck');
+                const deckStyle = deck ? window.getComputedStyle(deck) : {};
+                const vpStyle = window.getComputedStyle(viewport);
+                alert(
+                    '[DECK DEBUG]\n' +
+                    'sellers: ' + sellers.length + '\n' +
+                    'tab: ' + mobileActiveTab + '\n' +
+                    'deck display: ' + (deckStyle.display || '?') + '\n' +
+                    'deck height: ' + (deck ? deck.offsetHeight : '?') + '\n' +
+                    'viewport display: ' + vpStyle.display + '\n' +
+                    'viewport height: ' + viewport.offsetHeight + '\n' +
+                    'viewport children: ' + viewport.children.length + '\n' +
+                    'innerWidth: ' + window.innerWidth
+                );
+            }
 
             // Retirer les cartes précédentes
             viewport.querySelectorAll('.deck-card').forEach(c => c.remove());

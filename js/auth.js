@@ -2,25 +2,9 @@
 // Include this script AFTER supabase-config.js on protected pages only
 
 (async function () {
-    // DEBUG TEMPORAIRE — affiche un diagnostic visible sur la page
-    function showDebug(lines) {
-        const div = document.createElement('div');
-        div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1a2e;color:#0f0;font:13px/1.6 monospace;padding:16px;white-space:pre-wrap;';
-        div.textContent = lines.join('\n');
-        document.body.appendChild(div);
-    }
-
-    const { data: { session }, error } = await supabaseClient.auth.getSession();
+    const { data: { session } } = await supabaseClient.auth.getSession();
 
     if (!session) {
-        alert(
-            '[DEBUG AUTH]\n\n' +
-            'URL: ' + window.location.href + '\n' +
-            'hash: ' + (window.location.hash || 'none') + '\n' +
-            'search: ' + (window.location.search || 'none') + '\n' +
-            'getSession: NO SESSION\n' +
-            (error ? 'error: ' + JSON.stringify(error) : 'error: aucune')
-        );
         window.location.href = 'login.html';
         return;
     }
