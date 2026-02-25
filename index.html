@@ -2216,7 +2216,7 @@
             .deck-viewport {
                 position: relative;
                 width: 100%;
-                min-height: 450px;
+                min-height: 460px;
                 overflow-x: clip;
             }
             .deck-card {
@@ -2225,10 +2225,10 @@
                 left: 0;
                 width: 100%;
                 background: #FFFFFF;
-                border-radius: 16px;
-                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border-radius: 20px;
+                box-shadow: 0 6px 28px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
                 border-left: 4px solid #ccc;
-                padding: 24px 20px;
+                padding: 28px 24px;
                 -webkit-transform: translateX(0);
                 transform: translateX(0);
                 -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
@@ -2265,22 +2265,53 @@
                 transition: none;
             }
 
-            /* --- Contenu carte deck --- */
-            .deck-card .mc-source { margin-bottom: 8px; }
-            .deck-card .mc-source .card-tag {
-                padding: 4px 10px;
-                font-size: 11px;
-                border-radius: 6px;
-                font-weight: 700;
-            }
+            /* --- Contenu carte deck — Hiérarchie 3 niveaux --- */
+
+            /* === NIVEAU 1 — Centré, accrocheur === */
             .deck-card .mc-name {
                 font-family: 'Barlow Semi Condensed', sans-serif;
-                font-size: 22px;
+                font-size: 24px;
                 font-weight: 700;
                 color: #243B53;
-                margin-bottom: 12px;
+                text-align: center;
+                letter-spacing: 0.01em;
+                margin-bottom: 18px;
                 line-height: 1.2;
             }
+            .deck-card .mc-followup {
+                display: block;
+                text-align: center;
+                font-size: 14px;
+                font-weight: 600;
+                padding: 10px 16px;
+                border-radius: 10px;
+                margin-bottom: 12px;
+            }
+            .deck-card .mc-followup.followup-overdue {
+                background: #FEE2E2;
+                color: #DC2626;
+            }
+            .deck-card .mc-followup.followup-due {
+                background: #FEF3C7;
+                color: #D97706;
+            }
+            .deck-card .mc-followup.followup-ok {
+                background: #E0F2FE;
+                color: #0284C7;
+            }
+            .deck-card .mc-commission {
+                display: block;
+                text-align: center;
+                font-size: 14px;
+                color: #F57F17;
+                background: #FFF8E1;
+                padding: 6px 12px;
+                border-radius: 8px;
+                font-weight: 700;
+                margin-bottom: 14px;
+            }
+
+            /* === NIVEAU 2 — Scan rapide, aligné gauche === */
             .deck-card .mc-property {
                 font-size: 15px;
                 color: #546E7A;
@@ -2307,53 +2338,42 @@
                 text-decoration: none;
                 font-size: 16px;
                 font-weight: 600;
-                padding: 8px 14px;
-                background: #F0F2F5;
-                border-radius: 10px;
+                padding: 10px 16px;
+                background: #F0F4F8;
+                border: 1px solid #E2E8F0;
+                border-radius: 12px;
                 transition: background 0.2s;
             }
             .deck-card .mc-phone a:active { background: #E2E8F0; }
-            .deck-card .mc-commission {
-                display: inline-block;
-                font-size: 13px;
-                color: #F57F17;
-                background: #FFF8E1;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-weight: 600;
-                margin-bottom: 8px;
+
+            /* === NIVEAU 3 — Contexte, discret === */
+            .deck-card .mc-context-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 4px;
+            }
+            .deck-card .mc-source { display: inline; }
+            .deck-card .mc-source .card-tag {
+                padding: 3px 8px;
+                font-size: 10px;
+                border-radius: 5px;
+                font-weight: 700;
             }
             .deck-card .mc-date {
-                font-size: 12px;
+                font-size: 11px;
                 color: var(--text-light);
-                margin-bottom: 12px;
             }
-            .deck-card .mc-followup {
-                font-size: 12px;
-                padding: 6px 10px;
-                border-radius: 8px;
-                margin-bottom: 8px;
-                display: inline-block;
-            }
-            .deck-card .mc-followup.followup-overdue {
-                background: #FEE2E2;
-                color: #DC2626;
-            }
-            .deck-card .mc-followup.followup-due {
-                background: #FEF3C7;
-                color: #D97706;
-            }
-            .deck-card .mc-followup.followup-ok {
-                background: #E0F2FE;
-                color: #0284C7;
-            }
+
+            /* === ACTIONS === */
             .deck-card .mc-actions {
                 display: flex;
                 justify-content: flex-end;
                 gap: 8px;
-                margin-top: 16px;
-                padding-top: 12px;
-                border-top: 1px solid #E5E7EB;
+                margin-top: 14px;
+                padding: 8px;
+                background: #F8FAFC;
+                border-radius: 12px;
             }
             .deck-card .mc-actions .card-btn {
                 font-size: 18px;
@@ -2363,25 +2383,25 @@
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
-                background: #F8F9FA;
+                background: transparent;
                 border-radius: 10px;
                 border: none;
                 cursor: pointer;
-                transition: background 0.2s;
+                transition: background 0.15s;
             }
             .deck-card .mc-actions .card-btn:active { background: #E2E8F0; }
 
             /* --- Indicateur de position (N/M) --- */
             .deck-position {
                 position: fixed;
-                bottom: 80px;
+                bottom: 86px;
                 left: 50%;
                 transform: translateX(-50%);
-                background: rgba(0,0,0,0.65);
+                background: rgba(0,0,0,0.5);
                 color: white;
                 padding: 6px 16px;
                 border-radius: 20px;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 600;
                 font-family: 'Inter', sans-serif;
                 z-index: 60;
@@ -4864,21 +4884,41 @@
 
             let html = '';
 
-            // Source tag
-            if (seller.source) {
-                html += `<div class="mc-source">${getSourceTag(seller.source)}</div>`;
-            }
+            // Prix (calculé tôt car utilisé par commission ET property info)
+            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+
+            // ===== NIVEAU 1 — Centré, accrocheur =====
 
             // Nom du contact
             const name = [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') || 'Sans nom';
             html += `<div class="mc-name">${escapeHtml(name)}</div>`;
+
+            // Relance (bouton d'action)
+            if (seller.reminder) {
+                const today = new Date(); today.setHours(0,0,0,0);
+                const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
+                const diff = Math.ceil((rd - today) / 86400000);
+                const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+                if (diff < 0) html += `<div class="mc-followup followup-overdue">⚠️ Relance ${fmt}</div>`;
+                else if (diff === 0) html += `<div class="mc-followup followup-due">🔔 Aujourd'hui</div>`;
+                else html += `<div class="mc-followup followup-ok">📅 Relance ${fmt}</div>`;
+            }
+
+            // Commission badge
+            const priceForComm = parseAmount(price);
+            if (priceForComm > 0) {
+                const cRate = seller.commission_rate || 4;
+                const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
+                html += `<div class="mc-commission">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
+            }
+
+            // ===== NIVEAU 2 — Scan rapide, aligné gauche =====
 
             // Infos bien : type emoji · surface · prix
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
             const propParts = [];
             if (seller.property_type) propParts.push(typeEmojis[seller.property_type] || '🏠');
             if (seller.surface) propParts.push(formatSurface(seller.surface));
-            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
             if (price) propParts.push(formatEuro(price));
             if (propParts.length > 0) {
                 html += `<div class="mc-property">${propParts.join(' · ')}</div>`;
@@ -4895,31 +4935,19 @@
                 html += `<div class="mc-phone"><a href="tel:${escapeHtml(seller.phone)}">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
 
-            // Commission badge
-            const priceForComm = parseAmount(price);
-            if (priceForComm > 0) {
-                const cRate = seller.commission_rate || 4;
-                const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
-                html += `<div class="mc-commission">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</div>`;
+            // ===== NIVEAU 3 — Contexte, discret =====
+
+            // Source + Date (côte à côte)
+            const hasSource = !!seller.source;
+            const hasDate = !!seller.date;
+            if (hasSource || hasDate) {
+                html += `<div class="mc-context-row">`;
+                if (hasSource) html += `<span class="mc-source">${getSourceTag(seller.source)}</span>`;
+                if (hasDate) html += `<span class="mc-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</span>`;
+                html += `</div>`;
             }
 
-            // Relance (followup)
-            if (seller.reminder) {
-                const today = new Date(); today.setHours(0,0,0,0);
-                const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
-                const diff = Math.ceil((rd - today) / 86400000);
-                const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-                if (diff < 0) html += `<div class="mc-followup followup-overdue">⚠️ Relance ${fmt}</div>`;
-                else if (diff === 0) html += `<div class="mc-followup followup-due">🔔 Aujourd'hui</div>`;
-                else html += `<div class="mc-followup followup-ok">📅 Relance ${fmt}</div>`;
-            }
-
-            // Date de contact
-            if (seller.date) {
-                html += `<div class="mc-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
-            }
-
-            // Actions
+            // ===== ACTIONS =====
             html += `<div class="mc-actions">
                 <button class="card-btn" onclick="event.stopPropagation(); openMovePopup('${seller.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="event.stopPropagation(); editSeller('${seller.id}')" title="Modifier">✏️</button>
