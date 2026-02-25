@@ -4,6 +4,59 @@
 
 ---
 
+## Session 2026-02-25b — Images dans notes + arrondissements + nettoyage header
+
+### Résumé
+Ajout du collage d'images (screenshots) dans les notes des fiches leads (vendeurs + acquéreurs), affichage des arrondissements sur les cartes leads pour Paris/Lyon/Marseille, et suppression de l'icône Paramètres des headers de toutes les pages.
+
+### Modifications
+
+**Collage d'images dans les notes (index.html, acquereurs.html)** :
+- Ajout d'un listener `paste` sur le textarea des notes pour détecter les images du presse-papiers
+- Compression automatique via `compressImage()` (1600px, JPEG 70%) avant upload
+- Zone de prévisualisation avec bouton de suppression sous le textarea
+- Upload vers Supabase Storage (`lead-files` bucket, path `{userId}/notes/seller_{id}/`)
+- Affichage inline dans la timeline des notes avec URLs signées
+- Support des notes en attente (pending) pour leads non encore créés (vendeurs)
+- Suppression du fichier Storage à la suppression d'une note
+- Code résilient : si l'upload échoue, la note texte est quand même sauvegardée
+- Fallback si colonne `image_url` inexistante : retry de l'insert sans le champ
+
+**Arrondissements sur les cartes leads (index.html)** :
+- Nouvelle fonction `addArrondissement(city, postalCode)` dans `extractCity()`
+- Paris (75001-75020), Lyon (69001-69009), Marseille (13001-13016) affichent maintenant l'arrondissement
+- Ex: `75008 Paris` → "Paris 8ème", `69003 Lyon` → "Lyon 3ème"
+
+**Suppression icône Paramètres du header (7 fichiers)** :
+- Retrait du `<a class="settings-btn">` et du CSS associé de toutes les pages
+- Les paramètres restent accessibles via le menu déroulant du profil utilisateur
+
+### Fichiers créés/modifiés
+- `index.html` (image notes, CSS preview, JS paste/upload/render, arrondissements, header nettoyé)
+- `acquereurs.html` (image notes, CSS preview, JS paste/upload/render, header nettoyé)
+- `social.html` (header nettoyé)
+- `dvf.html` (header nettoyé)
+- `micro.html` (header nettoyé)
+- `assistant.html` (header nettoyé)
+- `parametres.html` (header nettoyé)
+
+### Migration DB requise
+```sql
+ALTER TABLE lead_notes ADD COLUMN image_url text;
+```
+
+### Points d'attention / bugs connus
+- La colonne `image_url` doit être ajoutée manuellement dans Supabase SQL Editor
+- Sans cette migration, les images ne sont pas persistées (mais les notes texte fonctionnent)
+- Les URLs signées expirent après 1h (rechargement de la modale les renouvelle)
+
+### Prochaines étapes prioritaires
+- Exécuter la migration SQL `image_url`
+- Tester le collage d'image sur mobile (iOS Safari / Android Chrome)
+- Vérifier que le bucket `lead-files` accepte les uploads dans le sous-dossier `notes/`
+
+---
+
 ## Session 2026-02-26 — DVF/DPE : filtres, InfoWindow, extraction complète + documentation
 
 ### Résumé

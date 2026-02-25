@@ -454,3 +454,41 @@
 **Alternatives rejetées** :
 - **Passer au plan Supabase Pro** : 25$/mois pour un problème qui touche 2 fichiers
 - **Compression gzip côté client** : complexité inutile, les fichiers non-splittés passent
+
+---
+
+## D023 — Images dans notes via Supabase Storage (pas base64 en DB)
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : Permettre de coller des captures d'écran dans les notes des fiches leads (utile lors de la pige immobilière).
+
+**Décision** : Stocker les images dans le bucket Supabase Storage `lead-files` (sous-dossier `notes/`) et ajouter une colonne `image_url` (text) à la table `lead_notes` contenant le chemin Storage. Les images sont affichées via URL signée (1h d'expiration).
+
+**Pourquoi** :
+- Le bucket `lead-files` existe déjà pour les documents joints
+- `compressImage()` (canvas JPEG 1600px, 70%) est déjà disponible — screenshots réduits à ~200-500 Ko
+- Pas de bloat en DB : une URL texte vs des Mo de base64
+- Les URLs signées garantissent la sécurité (pas d'accès public direct)
+
+**Alternatives rejetées** :
+- **Base64 dans le champ `content`** : Bloaterait la table `lead_notes`, ralentirait toutes les requêtes de notes
+- **Table séparée `note_images`** : Over-engineering pour un besoin simple (1 image par note)
+- **Bucket Storage séparé** : Inutile, le bucket `lead-files` gère déjà les fichiers par utilisateur
+
+---
+
+## D024 — Suppression de l'icône Paramètres du header
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : L'icône ⚙ dans le header poussait le bouton "Briefing" sur deux lignes et alourdissait visuellement la barre de navigation.
+
+**Décision** : Supprimer l'icône des 7 pages. Les paramètres restent accessibles via le menu déroulant du profil utilisateur (`js/auth.js` → dropdown "Paramètres").
+
+**Pourquoi** :
+- Le header doit rester identique et léger sur toutes les pages
+- Le lien vers les paramètres existe déjà dans le dropdown du profil
+- Doublon = confusion UX
