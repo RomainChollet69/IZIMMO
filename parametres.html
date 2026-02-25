@@ -3430,42 +3430,62 @@
                     source: getValue('source') || defaultSource || null
                 };
 
-                // Additional fields — build address from address + postal_code + city
-                const addressParts = [];
-                const address = getValue('address');
-                if (address) addressParts.push(address);
-                const postalCode = getValue('postal_code');
-                if (postalCode) addressParts.push(postalCode);
-                const city = getValue('city');
-                if (city) addressParts.push(city);
-                if (addressParts.length > 0) lead.address = addressParts.join(' ');
-
-                const description = getValue('description');
-                if (description) lead.description = description;
-
-                const budget = getValue('budget');
-                if (budget) {
-                    const parsed = parseBudget(budget);
-                    if (parsed) lead.budget = parsed;
-                }
-
-                const date = parseExcelDate(getValue('date'));
-                if (date && importType === 'sellers') lead.date = date;
-
                 const reminder = parseExcelDate(getValue('reminder'));
                 if (reminder) lead.reminder = reminder;
 
                 const propertyType = getValue('property_type');
                 if (propertyType) lead.property_type = propertyType.toLowerCase();
 
-                const rawSurface = getValue('surface');
-                if (rawSurface) {
-                    const surfNum = parseInt(rawSurface.toString().replace(/[^\d]/g, ''));
-                    if (!isNaN(surfNum) && surfNum > 0) lead.surface = surfNum;
+                // Seller-specific fields (colonnes qui n'existent que dans sellers)
+                if (importType === 'sellers') {
+                    const addressParts = [];
+                    const address = getValue('address');
+                    if (address) addressParts.push(address);
+                    const postalCode = getValue('postal_code');
+                    if (postalCode) addressParts.push(postalCode);
+                    const city = getValue('city');
+                    if (city) addressParts.push(city);
+                    if (addressParts.length > 0) lead.address = addressParts.join(' ');
+
+                    const description = getValue('description');
+                    if (description) lead.description = description;
+
+                    const budget = getValue('budget');
+                    if (budget) {
+                        const parsed = parseBudget(budget);
+                        if (parsed) lead.budget = parsed;
+                    }
+
+                    const date = parseExcelDate(getValue('date'));
+                    if (date) lead.date = date;
+
+                    const rawSurface = getValue('surface');
+                    if (rawSurface) {
+                        const surfNum = parseInt(rawSurface.toString().replace(/[^\d]/g, ''));
+                        if (!isNaN(surfNum) && surfNum > 0) lead.surface = surfNum;
+                    }
                 }
 
-                const rooms = getValue('rooms');
-                if (rooms) lead.rooms = rooms;
+                // Buyer-specific fields (colonnes qui n'existent que dans buyers)
+                if (importType === 'buyers') {
+                    const rooms = getValue('rooms');
+                    if (rooms) lead.rooms = rooms;
+
+                    const budget = getValue('budget');
+                    if (budget) {
+                        const parsed = parseBudget(budget);
+                        if (parsed) lead.budget_max = parsed;
+                    }
+
+                    const sector = getValue('sector');
+                    if (sector) lead.sector = sector;
+
+                    const rawSurface = getValue('surface');
+                    if (rawSurface) {
+                        const surfNum = parseInt(rawSurface.toString().replace(/[^\d]/g, ''));
+                        if (!isNaN(surfNum) && surfNum > 0) lead.surface_min = surfNum;
+                    }
+                }
 
                 // Collect notes from notes field
                 const generalNotes = getValue('notes');
@@ -3747,19 +3767,26 @@
                                 source: source
                             };
 
-                            if (aiLead.address) lead.address = aiLead.address;
-                            if (aiLead.description) lead.description = aiLead.description;
-                            if (aiLead.budget && typeof aiLead.budget === 'number') lead.budget = aiLead.budget;
                             if (aiLead.property_type) lead.property_type = aiLead.property_type;
-                            if (aiLead.surface && typeof aiLead.surface === 'number') lead.surface = aiLead.surface;
-                            if (aiLead.date && importType === 'sellers') lead.date = aiLead.date;
                             if (aiLead.reminder) lead.reminder = aiLead.reminder;
 
-                            // Buyer-specific fields
+                            // Seller-specific fields (colonnes qui n'existent que dans sellers)
+                            if (importType === 'sellers') {
+                                if (aiLead.address) lead.address = aiLead.address;
+                                if (aiLead.description) lead.description = aiLead.description;
+                                if (aiLead.budget && typeof aiLead.budget === 'number') lead.budget = aiLead.budget;
+                                if (aiLead.surface && typeof aiLead.surface === 'number') lead.surface = aiLead.surface;
+                                if (aiLead.date) lead.date = aiLead.date;
+                            }
+
+                            // Buyer-specific fields (colonnes qui n'existent que dans buyers)
                             if (importType === 'buyers') {
                                 if (aiLead.budget_min && typeof aiLead.budget_min === 'number') lead.budget_min = aiLead.budget_min;
                                 if (aiLead.budget_max && typeof aiLead.budget_max === 'number') lead.budget_max = aiLead.budget_max;
                                 if (aiLead.sector) lead.sector = aiLead.sector;
+                                if (aiLead.rooms) lead.rooms = aiLead.rooms;
+                                const surfVal = aiLead.surface_min || aiLead.surface;
+                                if (surfVal && typeof surfVal === 'number') lead.surface_min = surfVal;
                             }
 
                             const generalNotes = aiLead.notes || null;

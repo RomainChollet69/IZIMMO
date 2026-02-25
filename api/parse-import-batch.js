@@ -38,14 +38,13 @@ export default async function handler(req, res) {
 - "last_name": string ou null — nom de famille
 - "phone": string ou null — téléphone au format "06 12 34 56 78"
 - "email": string ou null
-- "address": string ou null — adresse / secteur recherché
 - "budget_min": number ou null — budget minimum en euros
 - "budget_max": number ou null — budget maximum en euros
 - "source": string ou null — parmi "site_annonce", "efficity", "recommandation", "appel_entrant", "reseaux_sociaux", "autre"
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble"
-- "surface": number ou null — surface en m²
+- "surface_min": number ou null — surface minimum recherchée en m²
 - "rooms": string ou null — nombre de pièces (T1, T2, T3...)
-- "sector": string ou null — ville ou quartier recherché
+- "sector": string ou null — ville, quartier ou code postal recherché
 - "status": string ou null — parmi "new", "active", "offer", "closed"
 - "notes": string ou null — informations complémentaires
 - "contact_notes": array de strings ou null — historique de contacts`;
