@@ -2,25 +2,34 @@
 // Include this script AFTER supabase-config.js on protected pages only
 
 (async function () {
-    console.log('[Auth] URL:', window.location.href);
-    console.log('[Auth] hash:', window.location.hash ? 'present' : 'none');
-    console.log('[Auth] search:', window.location.search || 'none');
+    // DEBUG TEMPORAIRE — affiche un diagnostic visible sur la page
+    function showDebug(lines) {
+        const div = document.createElement('div');
+        div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1a1a2e;color:#0f0;font:13px/1.6 monospace;padding:16px;white-space:pre-wrap;';
+        div.textContent = lines.join('\n');
+        document.body.appendChild(div);
+    }
+
+    const info = [];
+    info.push('URL: ' + window.location.href);
+    info.push('hash: ' + (window.location.hash || 'none'));
+    info.push('search: ' + (window.location.search || 'none'));
 
     const { data: { session }, error } = await supabaseClient.auth.getSession();
-    console.log('[Auth] getSession →', session ? 'SESSION OK' : 'NO SESSION', error || '');
+    info.push('getSession: ' + (session ? 'SESSION OK (' + session.user.email + ')' : 'NO SESSION'));
+    if (error) info.push('error: ' + JSON.stringify(error));
 
     if (!session) {
-        console.log('[Auth] Redirecting to login.html...');
-        window.location.href = 'login.html';
+        info.push('→ Redirect vers login.html dans 8s...');
+        showDebug(info);
+        setTimeout(() => { window.location.href = 'login.html'; }, 8000);
         return;
     }
 
-    console.log('[Auth] User:', session.user.email);
     renderUserProfile(session.user);
     renderMobileHeader(session.user);
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
-        console.log('[Auth] onAuthStateChange:', event, session ? 'session' : 'no session');
         if (event === 'SIGNED_OUT' || !session) {
             window.location.href = 'login.html';
         }
