@@ -375,6 +375,29 @@
 
 ---
 
+## D020 — Card deck mobile dans index.html (pas de page séparée)
+
+**Date** : 2026-02-25
+**Statut** : Actif
+
+**Contexte** : Le pipeline vendeurs mobile devait passer d'une liste verticale à un card deck style Tinder.
+
+**Décision** : Modifier le rendu mobile DANS `index.html` plutôt que créer un fichier `mobile-vendeurs.html` séparé.
+
+**Pourquoi** :
+- Toute la logique métier est déjà dans index.html (load, create, edit, delete, move, workflows)
+- Créer un fichier séparé dupliquerait ~3000+ lignes de JS
+- Les changements CSS sont scopés sous `@media (max-width: 768px)` → zéro impact desktop
+- Les nouvelles fonctions JS sont gated par `isMobile()` → zéro impact desktop
+- Le pipeline Kanban desktop est caché sur mobile (`display: none !important`)
+- Le card deck est caché sur desktop (`.mobile-card-deck { display: none; }`)
+
+**Alternatives rejetées** :
+- **Fichier `mobile-vendeurs.html` séparé** : duplication massive de code, maintenance double
+- **CSS-only responsive** : impossible pour le swipe touch et le card deck
+
+---
+
 ## D019 — Commission sur net vendeur (pas sur prix FAI)
 
 **Date** : 2026-02-24

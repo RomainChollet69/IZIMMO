@@ -96,12 +96,28 @@ function renderMobileHeader(user) {
         <a href="index.html" class="logo-mobile">
             <img src="img/Logo_leon.svg" alt="Léon">
         </a>
-        <div class="mobile-hdr-user">
+        <div class="mobile-hdr-user" id="mobileHdrUser">
             <span class="mobile-hdr-name">${firstName}</span>
             ${avatarHTML}
+            <div class="mobile-hdr-dropdown" id="mobileHdrDropdown">
+                <a href="parametres.html" class="mobile-hdr-dropdown-item">Paramètres</a>
+                <button class="mobile-hdr-dropdown-item" onclick="logout()">Déconnexion</button>
+            </div>
         </div>
     `;
     desktopHeader.parentNode.insertBefore(mobileHeader, desktopHeader.nextSibling);
+
+    // Toggle mobile dropdown on user area tap
+    const mobileUser = mobileHeader.querySelector('#mobileHdrUser');
+    mobileUser.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const dd = document.getElementById('mobileHdrDropdown');
+        if (dd) dd.classList.toggle('active');
+    });
+    document.addEventListener('click', function() {
+        const dd = document.getElementById('mobileHdrDropdown');
+        if (dd) dd.classList.remove('active');
+    });
 
     // Inject mobile header CSS
     const style = document.createElement('style');
@@ -133,6 +149,42 @@ function renderMobileHeader(user) {
             background: #243b53; color: white;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
+        }
+        .mobile-hdr-user {
+            position: relative; cursor: pointer;
+        }
+        .mobile-hdr-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        .mobile-hdr-dropdown.active {
+            display: block;
+            animation: dropdownSlide 0.2s ease;
+        }
+        .mobile-hdr-dropdown-item {
+            display: block; width: 100%;
+            padding: 14px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px; font-weight: 500;
+            color: #334155;
+            background: none; border: none;
+            text-align: left; text-decoration: none;
+            cursor: pointer;
+        }
+        .mobile-hdr-dropdown-item:hover,
+        .mobile-hdr-dropdown-item:active {
+            background: #F1F5F9;
+        }
+        .mobile-hdr-dropdown-item + .mobile-hdr-dropdown-item {
+            border-top: 1px solid #E2E8F0;
         }
         @media (max-width: 768px) {
             .header-mobile { display: flex; }

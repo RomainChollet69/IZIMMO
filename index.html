@@ -2203,56 +2203,62 @@
             /* --- PIPELINE KANBAN : caché sur mobile (remplacé par card deck) --- */
             .pipeline { display: none !important; }
 
-            /* ===== CARD DECK ===== */
+            /* ===== CARD DECK (compatible iOS WebKit) ===== */
             .mobile-card-deck {
                 display: block !important;
-                flex: 1;
                 position: relative;
                 padding: 16px;
-                padding-bottom: 60px;
-                overflow: hidden;
-                min-height: calc(100vh - 200px);
+                padding-bottom: 80px;
             }
             .deck-viewport {
                 position: relative;
                 width: 100%;
-                height: 100%;
-                min-height: 400px;
-                touch-action: pan-y;
+                min-height: 450px;
+                overflow-x: clip;
             }
             .deck-card {
                 position: absolute;
-                top: 0; left: 0;
+                top: 0;
+                left: 0;
                 width: 100%;
                 background: #FFFFFF;
                 border-radius: 16px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.08);
                 border-left: 4px solid #ccc;
                 padding: 24px 20px;
-                will-change: transform, opacity;
+                -webkit-transform: translateX(0);
+                transform: translateX(0);
+                -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                                    opacity 0.35s ease;
                 transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                             opacity 0.35s ease;
-                user-select: none;
                 -webkit-user-select: none;
+                user-select: none;
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
             }
             .deck-card.active {
+                -webkit-transform: translateX(0) scale(1);
                 transform: translateX(0) scale(1);
                 opacity: 1;
                 z-index: 3;
             }
             .deck-card.prev {
-                transform: translateX(-105%) scale(0.95);
+                -webkit-transform: translateX(-110%) scale(0.95);
+                transform: translateX(-110%) scale(0.95);
                 opacity: 0;
                 z-index: 1;
                 pointer-events: none;
             }
             .deck-card.next {
-                transform: translateX(105%) scale(0.95);
+                -webkit-transform: translateX(110%) scale(0.95);
+                transform: translateX(110%) scale(0.95);
                 opacity: 0;
                 z-index: 1;
                 pointer-events: none;
             }
             .deck-card.swiping {
+                -webkit-transition: none;
                 transition: none;
             }
 

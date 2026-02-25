@@ -10,14 +10,14 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
-├── index.html                  # Pipeline Vendeurs — Kanban 6 colonnes (table `sellers`)
+├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 4 colonnes (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth
 ├── landing.html                # Page marketing / vitrine
 ├── social.html                 # Moteur de contenu réseaux sociaux
 ├── parametres.html             # Page de paramètres utilisateur
-├── micro.html                  # Version mobile allégée (voice-first)
+├── micro.html                  # Enregistrement vocal + transcription (voice-first)
 ├── dvf.html                    # Visualiseur données DVF + DPE
 ├── reset-password.html         # Réinitialisation mot de passe
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
@@ -121,7 +121,39 @@ INSERT dans `sellers` ou `buyers` (Supabase)
 Rendu carte Kanban + Création workflow_steps associés
 ```
 
-### 3.2 Déplacement de fiche (drag-and-drop)
+### 3.2 Pipeline vendeurs mobile (card deck)
+
+```
+Chargement index.html (mobile, <= 768px)
+    │
+    ▼
+loadSellers() — Supabase query
+    │
+    ▼
+renderSellers() → renderMobileCardDeck()
+  ├── Filtre sellers par tab actif (mobileActiveTab)
+  ├── Auto-sélection du premier tab avec des leads si courant vide
+  ├── Lazy render : ±2 cartes autour de l'index courant
+  └── Indicateur de position (N/M)
+    │
+    ▼
+Navigation : swipe gauche/droite (initDeckSwipe)
+  ├── Seuil : 50px ou vélocité 0.3px/ms
+  ├── Rubber-band aux extrémités
+  └── navigateDeck(±1) → re-render
+    │
+    ▼
+Tap carte → openMobileDetail(sellerId)
+  ├── Bottom sheet slide-up (92vh max)
+  ├── Sections : bien, contact, mandat, concurrent, notes, commission
+  ├── Actions : Modifier, Déplacer, Supprimer
+  └── Fermeture : swipe-down (seuil 120px) ou tap backdrop
+
+État persisté : localStorage (tab + index)
+Couleurs colonnes : COLUMN_COLORS (8 statuts → hex)
+```
+
+### 3.3 Déplacement de fiche (drag-and-drop)
 
 ```
 Drag carte de Colonne A → Colonne B

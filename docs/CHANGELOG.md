@@ -4,6 +4,53 @@
 
 ---
 
+## Session 2026-02-25 — Refonte Pipeline Vendeurs Mobile (Card Deck)
+
+### Résumé
+Refonte complète de l'expérience mobile du pipeline vendeurs. Remplacement de la vue liste par un card deck style Tinder/Apple Cards avec swipe horizontal, vue détail bottom sheet, et header simplifié.
+
+### Modifications
+
+**Pipeline mobile — Card Deck** :
+- `index.html` : Nouveau système de cartes deck (une seule carte visible, swipe gauche/droite entre fiches)
+- `index.html` : 9 nouvelles fonctions JS : `createMobileCard`, `renderMobileCardDeck`, `navigateDeck`, `initDeckSwipe`, `openMobileDetail`, `closeMobileDetail`, `initDetailSwipeClose`, `saveDeckState`, `restoreDeckState`
+- `index.html` : ~250 lignes CSS ajoutées (card deck, animations, vue détail, indicateur de position)
+- `index.html` : Tab bar mobile corrigée : ajout du tab Off Market manquant + couleur active dynamique par colonne
+- `index.html` : Constante `COLUMN_COLORS` (8 statuts → couleur hex) pour cohérence visuelle
+
+**Vue détail mobile (bottom sheet)** :
+- `index.html` : Overlay fullscreen slide-up au tap sur une carte
+- `index.html` : Swipe-down pour fermer (seuil 120px, seulement si scrollTop ≈ 0)
+- `index.html` : Sections structurées : bien, contact, mandat, concurrent, notes, commission, actions
+
+**Header mobile simplifié** :
+- `index.html` : Boutons Briefing et Exporter cachés sur mobile (`display: none !important`)
+- `index.html` : Séparateur header caché sur mobile
+
+**Redirect mobile supprimé** :
+- `index.html` : Suppression du redirect automatique `index.html` → `micro.html` sur mobile
+- `index.html` : Nettoyage des liens `index.html?v=1` → `index.html`
+
+**Robustesse rendu mobile** :
+- `index.html` : `renderMobileCardDeck()` appelé EN PREMIER dans `renderSellers()` (avant le rendu desktop)
+- `index.html` : try-catch autour de `loadVisitCounts`/`loadNotePreviews`/`loadFileCounts`
+- `index.html` : Auto-sélection du premier tab avec des leads si le tab courant est vide
+- `index.html` : Console logs de debug `[MobileCardDeck]` et `[loadSellers]`
+
+### Fichiers créés/modifiés
+- `index.html` (+830 lignes, -73 lignes)
+
+### Points d'attention / bugs connus
+- Cache navigateur iOS (Chrome/Safari) : l'ancien HTML peut rester en cache après déploiement → vider le cache manuellement
+- Console logs de debug restent en place (à retirer quand le mobile est stabilisé)
+
+### Prochaines étapes prioritaires
+- Retirer les console.log de debug une fois le mobile stabilisé
+- Tester le swipe sur différents appareils iOS et Android
+- Envisager la même refonte pour le pipeline acquéreurs mobile
+
+---
+
 ## Session 2026-02-25 — Corrections Assistant + Header
 
 ### Résumé
