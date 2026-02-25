@@ -369,10 +369,10 @@
             text-decoration: underline;
         }
 
-        /* Mobile */
+        /* Mobile — FAB au-dessus de la bottom-bar (~80px) */
         @media (max-width: 768px) {
             .todo-fab {
-                bottom: 20px;
+                bottom: 90px;
                 right: 20px;
                 height: 44px;
                 padding: 0 14px;
