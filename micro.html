@@ -1399,7 +1399,9 @@
 
             if (hasMatches) showConfirmation(result);
             if (hasAmbiguous) showAmbiguous(result.ambiguous_contacts);
-            if (hasUnmatched && !hasMatches && !hasAmbiguous) showNoMatch(result.unmatched_contacts);
+            // Toujours afficher les contacts non-trouvés (création de lead)
+            // même s'il y a des matches existants à côté
+            if (hasUnmatched) showNoMatch(result.unmatched_contacts);
             if (!hasMatches && !hasAmbiguous && !hasUnmatched) showNoMatch(['(aucun contact identifié)']);
         }
 
