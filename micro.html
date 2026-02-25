@@ -1859,6 +1859,11 @@
             return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
+        // Exposer les fonctions appelées depuis onclick HTML (hors de la closure IIFE)
+        window.resetToIdle = resetToIdle;
+        window.selectLeadType = selectLeadType;
+        window.createNewLeadFromMicro = createNewLeadFromMicro;
+
         // ===== START =====
         init();
         startExamplesCarousel();
