@@ -1515,7 +1515,7 @@
         function showAmbiguous(ambiguousContacts) {
             let html = '';
             ambiguousContacts.forEach(amb => {
-                const matches = amb.possible_matches || [];
+                const matches = Array.isArray(amb.possible_matches) ? amb.possible_matches : [];
 
                 // Si Claude n'a pas fourni les matches, chercher dans les leads locaux
                 let resolvedMatches = matches;
