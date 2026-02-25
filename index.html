@@ -4056,9 +4056,15 @@
                                 <input type="date" class="form-input" id="mandateEndDate">
                             </div>
                         </div>
-                        <div class="form-group" id="mandatePriceGroup">
-                            <label class="form-label">Prix de mise en vente (€)</label>
-                            <input type="text" class="form-input" id="mandatePrice" placeholder="350 000 €">
+                        <div class="form-row">
+                            <div class="form-group" id="mandatePriceGroup">
+                                <label class="form-label">Prix de mise en vente (€)</label>
+                                <input type="text" class="form-input" id="mandatePrice" placeholder="350 000 €">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Estimation travaux (€)</label>
+                                <input type="text" class="form-input" id="estimatedWorks" placeholder="Ex: 100 000">
+                            </div>
                         </div>
                         <div id="mandateCountdown"></div>
                     </div>
@@ -4436,10 +4442,12 @@
             const elim = { score: 0, maxScore: 100, percent: 0, details: [], eliminated: true };
 
             // === CRITÈRES ÉLIMINATOIRES ===
-            // 1. Budget : prix > budget_max + 20% → éliminatoire
+            // Prix total = prix de vente + travaux estimés (si renseignés)
+            const sellerTotalPrice = parseFloat(seller.budget || 0) + parseFloat(seller.estimated_works || 0);
+            // 1. Budget : prix total > budget_max + 20% → éliminatoire
             if (seller.budget && buyer.budget_max) {
-                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
-                if (sb > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
+                const bm = parseFloat(buyer.budget_max);
+                if (sellerTotalPrice > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
             }
             // 2. Localisation : acquéreur a des villes/secteur → le vendeur DOIT matcher
             const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
@@ -4472,13 +4480,13 @@
             // === CALCUL DU SCORE ===
             let score = 0, maxScore = 0;
 
-            // Budget (30pts)
+            // Budget (30pts) — compare prix total (vente + travaux) vs budget acquéreur
             if (seller.budget && buyer.budget_max) {
                 maxScore += 30;
-                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
-                if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
-                else if (sb <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
-                else if (sb <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
+                const bm = parseFloat(buyer.budget_max);
+                if (sellerTotalPrice <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
+                else if (sellerTotalPrice <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
+                else if (sellerTotalPrice <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
                 else { details.push({ label: 'Budget', score: 0, max: 30 }); }
             }
 
@@ -7749,6 +7757,7 @@
             document.getElementById('mandateStartDate').value = '';
             document.getElementById('mandateEndDate').value = '';
             document.getElementById('mandatePrice').value = '';
+            document.getElementById('estimatedWorks').value = '';
             document.getElementById('mandateCountdown').innerHTML = '';
 
             // Reset co-contact
@@ -7854,6 +7863,7 @@
             document.getElementById('mandateStartDate').value = seller.mandate_start_date || '';
             document.getElementById('mandateEndDate').value = seller.mandate_end_date || '';
             document.getElementById('mandatePrice').value = seller.mandate_price || '';
+            document.getElementById('estimatedWorks').value = seller.estimated_works || '';
 
             // Commission fields
             document.getElementById('commissionRate').value = seller.commission_rate || 4;
@@ -8028,6 +8038,7 @@
                 sellerData.mandate_start_date = document.getElementById('mandateStartDate').value || null;
                 sellerData.mandate_end_date = document.getElementById('mandateEndDate').value || null;
                 sellerData.mandate_price = document.getElementById('mandatePrice').value.trim() || null;
+                sellerData.estimated_works = parseAmount(document.getElementById('estimatedWorks').value) || null;
             }
 
             // Auto-calculate commission if budget set and no manual amount

@@ -2812,9 +2812,11 @@
             const elim = { score: 0, maxScore: 100, percent: 0, details: [], eliminated: true };
 
             // === CRITÈRES ÉLIMINATOIRES ===
+            // Prix total = prix de vente + travaux estimés (si renseignés)
+            const sellerTotalPrice = parseFloat(seller.budget || 0) + parseFloat(seller.estimated_works || 0);
             if (seller.budget && buyer.budget_max) {
-                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
-                if (sb > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
+                const bm = parseFloat(buyer.budget_max);
+                if (sellerTotalPrice > bm * 1.2) return { ...elim, reason: 'Prix trop élevé' };
             }
             const buyerCities = (buyer.city || '').toLowerCase().split(',').map(c => c.trim()).filter(Boolean);
             const bs = (buyer.sector || '').toLowerCase();
@@ -2843,12 +2845,13 @@
             // === CALCUL DU SCORE ===
             let score = 0, maxScore = 0;
 
+            // Budget (30pts) — compare prix total (vente + travaux) vs budget acquéreur
             if (seller.budget && buyer.budget_max) {
                 maxScore += 30;
-                const sb = parseFloat(seller.budget), bm = parseFloat(buyer.budget_max);
-                if (sb <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
-                else if (sb <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
-                else if (sb <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
+                const bm = parseFloat(buyer.budget_max);
+                if (sellerTotalPrice <= bm) { score += 30; details.push({ label: 'Budget', score: 30, max: 30 }); }
+                else if (sellerTotalPrice <= bm * 1.1) { score += 20; details.push({ label: 'Budget', score: 20, max: 30 }); }
+                else if (sellerTotalPrice <= bm * 1.2) { score += 10; details.push({ label: 'Budget', score: 10, max: 30 }); }
                 else { details.push({ label: 'Budget', score: 0, max: 30 }); }
             }
 
