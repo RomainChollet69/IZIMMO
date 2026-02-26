@@ -31,6 +31,12 @@ IMPORTANT pour le matching des contacts :
 - Si plusieurs leads ont le même prénom, retourne-les tous dans ambiguous_contacts et demande confirmation
 - Si aucun match trouvé, retourne contacts_matched vide
 
+IMPORTANT pour unmatched_contacts (nouveaux leads à créer) :
+- Ne mets dans unmatched_contacts QUE les personnes que l'agent DEMANDE EXPLICITEMENT de créer comme nouveau lead (ex: "créer une fiche", "rentrer un acquéreur", "nouveau lead")
+- NE PAS créer de fiche pour les personnes mentionnées uniquement comme CONTEXTE (propriétaires d'un bien, conjoints, voisins, etc.)
+- Exemple : "Thomas Baudard veut visiter la maison de Cédric et Elsa" → seul Thomas est un nouveau lead, Cédric et Elsa sont juste les propriétaires du bien
+- Si un nom mentionné correspond déjà à un lead existant (même partiellement), il va dans contacts_matched, PAS dans unmatched_contacts
+
 TYPES D'ACTIONS COURANTES et emojis à utiliser dans la note :
 - Estimation envoyée → 📧
 - Appel effectué / rappel → 📞
