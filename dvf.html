@@ -841,7 +841,9 @@
 
         .sale-card.maison { border-left-color: #4CAF50; }
         .sale-card.appartement { border-left-color: #FF9800; }
+        .sale-card.parking { border-left-color: #2196F3; }
         .sale-card.terrain { border-left-color: #9C27B0; }
+        .sale-card.local { border-left-color: #795548; }
         .sale-card.autre { border-left-color: #607D8B; }
 
         .show-more-btn {
@@ -871,7 +873,9 @@
 
         .sale-type.maison { color: #4CAF50; }
         .sale-type.appartement { color: #FF9800; }
+        .sale-type.parking { color: #2196F3; }
         .sale-type.terrain { color: #9C27B0; }
+        .sale-type.local { color: #795548; }
         .sale-type.autre { color: #607D8B; }
 
         .sale-price {
@@ -997,7 +1001,9 @@
         }
         .sale-detail-type-badge.maison { background: rgba(76,175,80,0.2); color: #66BB6A; }
         .sale-detail-type-badge.appartement { background: rgba(255,152,0,0.2); color: #FFA726; }
+        .sale-detail-type-badge.parking { background: rgba(33,150,243,0.2); color: #42A5F5; }
         .sale-detail-type-badge.terrain { background: rgba(156,39,176,0.2); color: #AB47BC; }
+        .sale-detail-type-badge.local { background: rgba(121,85,72,0.2); color: #A1887F; }
         .sale-detail-type-badge.autre { background: rgba(96,125,139,0.2); color: #90A4AE; }
 
         .sale-detail-date {
@@ -1409,8 +1415,9 @@
                     <div class="fp-label">Type de bien</div>
                     <div class="fp-type-grid" id="typeGrid">
                         <button class="fp-type-btn active" data-type="all">Tout</button>
+                        <button class="fp-type-btn" data-type="appartement">Appt</button>
                         <button class="fp-type-btn" data-type="maison">Maison</button>
-                        <button class="fp-type-btn" data-type="appartement">Appartement</button>
+                        <button class="fp-type-btn" data-type="parking">Parking</button>
                         <button class="fp-type-btn" data-type="terrain">Terrain</button>
                         <button class="fp-type-btn" data-type="local">Local pro</button>
                     </div>
@@ -1590,6 +1597,8 @@
         let dvfIndex = null;
         let loadedDepts = {};
         const TYPE_LABELS = { 1: 'Appartement', 2: 'Maison', 3: 'Terrain', 4: 'Local pro', 5: 'Autre' };
+        const PARKING_MAX_PRICE = 50000;  // Seuil heuristique parking/box/cave (€)
+        const PARKING_MAX_SURFACE = 40;   // Surface bâtie max pour un parking/box (m²)
 
         // Default: Paris (fallback si géolocalisation refusée)
         const DEFAULT_LAT = 48.8566;
@@ -2014,15 +2023,9 @@
             let filtered = [...allSales];
             const f = getFilterValues();
 
-            // Type filter
-            if (currentFilter === 'maison') {
-                filtered = filtered.filter(s => getType(s) === 'maison');
-            } else if (currentFilter === 'appartement') {
-                filtered = filtered.filter(s => getType(s) === 'appartement');
-            } else if (currentFilter === 'terrain') {
-                filtered = filtered.filter(s => getType(s) === 'terrain');
-            } else if (currentFilter === 'local') {
-                filtered = filtered.filter(s => getType(s) === 'autre');
+            // Type filter (générique — fonctionne pour tous les types)
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(s => getType(s) === currentFilter);
             }
 
             // Apply all filters
@@ -2069,19 +2072,30 @@
         }
 
         function getType(sale) {
-            const t = (sale.type_local || sale.nature_mutation || '').toLowerCase();
-            if (t.includes('maison')) return 'maison';
+            const t = (sale.type_local || '').toLowerCase();
             if (t.includes('appartement') || t.includes('appart')) return 'appartement';
-            if (t.includes('terrain') || t.includes('dépendance')) return 'terrain';
+            if (t.includes('maison')) return 'maison';
+            if (t.includes('local')) return 'local';
+
+            // Heuristique parking/box/cave : prix ≤ 50k€ et petite surface bâtie
+            const price = parseFloat(sale.valeur_fonciere) || 0;
+            const surfBati = parseFloat(sale.surface_reelle_bati) || 0;
+            if (price > 0 && price <= PARKING_MAX_PRICE && surfBati > 0 && surfBati <= PARKING_MAX_SURFACE) {
+                return 'parking';
+            }
+
+            if (t.includes('terrain')) return 'terrain';
             return 'autre';
         }
 
         function getTypeIcon(type) {
             const icons = {
-                maison: '<i class="fas fa-house" style="color:#4CAF50"></i>',
                 appartement: '<i class="fas fa-building" style="color:#FF9800"></i>',
-                terrain: '<i class="fas fa-mountain-sun" style="color:#9C27B0"></i>',
-                autre: '<i class="fas fa-location-dot" style="color:#607D8B"></i>'
+                maison: '<i class="fas fa-house" style="color:#4CAF50"></i>',
+                parking: '<i class="fas fa-square-parking" style="color:#2196F3"></i>',
+                terrain: '<i class="fas fa-vector-square" style="color:#9C27B0"></i>',
+                local: '<i class="fas fa-store" style="color:#795548"></i>',
+                autre: '<i class="fas fa-circle-question" style="color:#607D8B"></i>'
             };
             return icons[type] || icons.autre;
         }
