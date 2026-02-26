@@ -353,6 +353,7 @@ scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
 | `last_activity_at` | TIMESTAMPTZ | Dernière activité enregistrée                         |
 | `position`      | INT         | Ordre dans la colonne du pipeline                        |
 | `created_at`    | TIMESTAMPTZ | Date de création                                         |
+| `estimated_works` | NUMERIC   | Estimation travaux (€) — impacte le matching budget      |
 | `updated_at`    | TIMESTAMPTZ | Dernière modification (trigger auto)                     |
 
 ### Table `buyers`

@@ -44,6 +44,37 @@ Nouvelle fonctionnalité permettant d'importer un lead acquéreur en collant une
 
 ---
 
+## Session 2026-02-26c — Rejet match acquéreur + estimation travaux matching
+
+### Résumé
+Deux ajouts au système de matching : (1) le rejet de match côté acquéreur (×, modale raison, section écartés repliable, restauration) — miroir de ce qui existait côté vendeur, et (2) un champ "Estimation travaux" dans l'onglet Gestion Mandat qui impacte le calcul de matching budget (prix + travaux vs budget acquéreur).
+
+### Modifications
+
+**Rejet match côté acquéreur (`acquereurs.html`)** :
+- Bouton × sur chaque carte vendeur dans l'onglet Matching
+- Modale "Pourquoi ce match ne colle pas ?" avec 5 raisons (budget, localisation, surface, type de bien, autre)
+- Section "écartés" repliable avec bouton Restaurer
+- Fonctions : `loadMatchRejections`, `rejectMatch`, `confirmRejectMatch`, `restoreMatch`, `renderSellerMatchCard`
+- CSS complet pour le système de rejet
+
+**Estimation travaux (`index.html` + `acquereurs.html`)** :
+- Champ "Estimation travaux (€)" dans l'onglet Gestion Mandat (uniquement biens en mandat)
+- `calculateMatchScore()` modifié des deux côtés : compare `prix + travaux` vs budget acquéreur
+- Migration SQL : colonne `estimated_works` NUMERIC sur la table `sellers`
+
+### Fichiers créés/modifiés
+- `acquereurs.html` (rejet match + matching travaux)
+- `index.html` (champ travaux dans mandat + matching travaux)
+- `sql/004_sellers_estimated_works.sql` (nouveau)
+- `docs/DECISIONS.md` (D026, D027)
+
+### Points d'attention
+- Migration `sql/004_sellers_estimated_works.sql` exécutée en production
+- Le champ travaux est optionnel — si non renseigné, le matching fonctionne comme avant
+
+---
+
 ## Session 2026-02-25d — Système de visites acquéreur ↔ vendeur
 
 ### Résumé
