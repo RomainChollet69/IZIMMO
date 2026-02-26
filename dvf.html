@@ -1584,6 +1584,7 @@
         let dvfLayerActive = true;
         let currentCenter = null;
         let currentMapType = 'roadmap';
+        let addressFromLead = null; // Label géocodé quand on vient d'une fiche lead (?adresse=)
 
         // DVF local data (Supabase Storage)
         let dvfIndex = null;
@@ -1608,10 +1609,19 @@
             });
             infoWindow = new google.maps.InfoWindow();
 
-            // Paramètre URL ?adresse= : recherche auto depuis le pipeline vendeurs
+            // Paramètres URL depuis le pipeline vendeurs : ?adresse=...&rayon=400
             const params = new URLSearchParams(window.location.search);
             const adresseParam = params.get('adresse');
+            const rayonParam = params.get('rayon');
+            if (rayonParam) {
+                const r = parseInt(rayonParam);
+                if (r >= 200 && r <= 3000) {
+                    radiusSlider.value = r;
+                    radiusValue.textContent = r >= 1000 ? (r / 1000).toFixed(1).replace('.0', '') + ' km' : r + ' m';
+                }
+            }
             if (adresseParam) {
+                addressFromLead = adresseParam;
                 searchInput.value = adresseParam;
                 searchFromAddress(adresseParam);
             } else {
@@ -1752,6 +1762,9 @@
             const lat = coords[1];
             const lng = coords[0];
             const label = feature.properties.label;
+
+            // Si on vient d'une fiche lead, stocker le label géocodé pour l'info-bulle
+            if (addressFromLead) addressFromLead = label;
 
             searchInput.value = label;
             searchDropdown.classList.remove('active');
@@ -1934,6 +1947,18 @@
                     title: 'Déplacer pour chercher ailleurs',
                     zIndex: 9999
                 });
+
+                // Si on arrive depuis une fiche lead, afficher l'info-bulle de l'adresse
+                if (addressFromLead) {
+                    infoWindow.setContent(`
+                        <div style="font-family:Inter,sans-serif;padding:4px 0;color:#2C3E50">
+                            <div style="font-weight:700;font-size:13px;color:#667eea"><i class="fas fa-map-pin"></i> Adresse du bien</div>
+                            <div style="font-size:13px;margin-top:4px">${escapeHtml(addressFromLead)}</div>
+                        </div>
+                    `);
+                    infoWindow.open(map, centerMarker);
+                    addressFromLead = null;
+                }
 
                 centerMarker.addListener('drag', (e) => {
                     radiusCircle.setCenter(e.latLng);

@@ -7901,7 +7901,7 @@
             const addrInput = document.getElementById('address');
             const address = addrInput.value.trim();
             if (!address) return;
-            const url = 'dvf.html?adresse=' + encodeURIComponent(address);
+            const url = 'dvf.html?adresse=' + encodeURIComponent(address) + '&rayon=400';
             window.open(url, '_blank');
         }
 
