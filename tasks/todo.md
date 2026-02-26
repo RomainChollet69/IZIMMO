@@ -10,6 +10,7 @@ _(rien en cours)_
 
 ## À faire
 
+- [ ] **SQL migration en attente** : `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS appointment_date DATE` (005)
 - [ ] Retirer les console.log de debug mobile une fois stabilisé
 - [ ] Tester le card deck sur différents appareils iOS et Android
 - [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
@@ -23,6 +24,7 @@ _(rien en cours)_
 
 ## Terminé
 
+- [x] Date de RDV vendeur + auto-relance J+15 (appointment_date, badge vert, constante 15j)
 - [x] Fix CSS iOS WebKit pour card deck (préfixes -webkit-, suppression propriétés problématiques)
 - [x] Ajout dropdown déconnexion dans le header mobile (auth.js)
 - [x] Diagnostic et résolution du bug login OAuth (Client Secret Google changé)
