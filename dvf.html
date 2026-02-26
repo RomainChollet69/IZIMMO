@@ -2078,15 +2078,21 @@
 
             const price = parseFloat(sale.valeur_fonciere) || 0;
             const surfBati = parseFloat(sale.surface_reelle_bati) || 0;
+            const surfTerrain = parseFloat(sale.surface_terrain) || 0;
 
             // Heuristique parking/box/cave : prix ≤ 50k€ et petite surface bâtie
             if (price > 0 && price <= PARKING_MAX_PRICE && surfBati > 0 && surfBati <= PARKING_MAX_SURFACE) {
                 return 'parking';
             }
 
-            // "Local pro" avec grande surface → probablement un appartement
-            // (fréquent dans les immeubles mixtes, données DVF imprécises)
-            if (t.includes('local') && surfBati > PARKING_MAX_SURFACE) {
+            // "Local pro" ou "Terrain" avec grande surface bâtie → probablement un appartement
+            if ((t.includes('local') || t.includes('terrain')) && surfBati > PARKING_MAX_SURFACE) {
+                return 'appartement';
+            }
+
+            // "Terrain" sans aucune surface et prix > 100k€ → données DVF incomplètes
+            // (en immeuble, c'est un appartement dont la surface n'a pas été renseignée)
+            if (t.includes('terrain') && price > 100000 && surfBati === 0 && surfTerrain === 0) {
                 return 'appartement';
             }
 
