@@ -1330,7 +1330,8 @@
         }
 
         function preFilterLeads(leads, transcription) {
-            const words = transcription.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/\s+/).filter(w => w.length > 2);
+            // Split sur espaces ET apostrophes pour gérer "d'Elsa", "l'acquéreur", etc.
+            const words = transcription.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s''\u2019`]+/).filter(w => w.length > 2);
             const matched = leads.filter(lead => {
                 const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return words.some(word => fullName.includes(word));
