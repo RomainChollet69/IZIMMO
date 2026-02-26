@@ -129,7 +129,34 @@ INSERT dans `sellers` ou `buyers` (Supabase)
 Rendu carte Kanban + Création workflow_steps associés
 ```
 
-### 3.2 Pipeline vendeurs mobile (card deck)
+### 3.2 Import lead depuis capture d'écran / texte (acquéreurs)
+
+```
+Utilisateur fait une capture d'écran (SeLoger, LBC, Jinka, Efficity...)
+    │
+    ▼
+Bouton "Import" dans header acquéreurs → Modal d'import
+  ├── Onglet Image : Cmd+V (clipboard), drag & drop, ou file picker (mobile)
+  └── Onglet Texte : collage de texte brut
+    │
+    ▼
+Compression image (compressImage, 1600px, JPEG 80%)
+    │
+    ▼
+POST /api/analyze-document { mode: 'screenshot_import', leadType: 'buyer', image?, text? }
+  └── Claude Haiku Vision : détection plateforme + extraction JSON structuré
+      (first_name, last_name, email, phone, property_type, rooms, sector,
+       surface_min, budget_max, criteria, source, source_platform, notes)
+    │
+    ▼
+Modal import se ferme → Modal création acquéreur s'ouvre pré-rempli
+  └── Animation flash sur chaque champ rempli
+    │
+    ▼
+Utilisateur vérifie/corrige → Créer l'Acquéreur → INSERT `buyers`
+```
+
+### 3.3 Pipeline vendeurs mobile (card deck)
 
 ```
 Chargement index.html (mobile, <= 768px)

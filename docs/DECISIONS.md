@@ -550,3 +550,22 @@
 - `buyer_name` reste en fallback pour les anciens enregistrements sans `buyer_id`
 - `rating` 1-5 est migré automatiquement vers `feedback_rating`
 - Les CHECK constraints garantissent l'intégrité des nouvelles données
+
+---
+
+## D028 — Import screenshot fusionné dans analyze-document (pas de nouvel endpoint)
+
+**Date** : 2026-02-26
+**Statut** : Actif
+
+**Contexte** : Nouvelle fonctionnalité d'import de lead depuis capture d'écran de plateformes immobilières. Le plan Vercel Hobby limite à 12 fonctions serverless, on était déjà à 12.
+
+**Décision** : Ajouter un paramètre `mode: 'screenshot_import'` à `/api/analyze-document` plutôt que de créer un endpoint séparé.
+
+**Pourquoi** :
+- `analyze-document` fait déjà du Claude Vision sur des images — même infra technique
+- Économise un slot de fonction serverless (critique sur Hobby plan)
+- Le routage par `mode` est propre et extensible
+- Les prompts sont spécialisés par mode (document vs screenshot) donc pas de compromis qualité
+
+**Alternative rejetée** : Endpoint séparé `/api/extract-lead-from-screenshot` — créé puis supprimé car dépassait la limite de 12 fonctions Vercel Hobby

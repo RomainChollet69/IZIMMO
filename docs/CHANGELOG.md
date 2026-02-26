@@ -4,6 +4,46 @@
 
 ---
 
+## Session 2026-02-26b — Import lead acquéreur depuis capture d'écran / texte
+
+### Résumé
+Nouvelle fonctionnalité permettant d'importer un lead acquéreur en collant une capture d'écran (Cmd+V) ou du texte depuis une plateforme immobilière (SeLoger, LeBonCoin, Jinka, Efficity, etc.). Claude Vision analyse l'image et pré-remplit automatiquement le formulaire de création.
+
+### Modifications
+
+**`api/analyze-document.js`** :
+- Ajout du mode `screenshot_import` avec prompts dédiés vendeur/acquéreur
+- Détection automatique de la plateforme source (logo, mise en page)
+- Extraction structurée : nom, email, téléphone, budget, surface, secteur, critères, etc.
+- Fusionné dans analyze-document.js (pas de nouvelle fonction) pour rester dans la limite de 12 fonctions Vercel Hobby
+
+**`acquereurs.html`** :
+- Bouton "Import" dans le header (entre Exporter et le séparateur)
+- Modal d'import dédié avec 2 onglets : Capture d'écran / Texte
+- Collage image via clipboard (Cmd+V), drag & drop, ou file picker (photothèque mobile)
+- Compression image avant envoi (compressImage existante)
+- Après analyse : fermeture modal import → ouverture formulaire pré-rempli avec animation flash
+- Positionnement CSS grid mobile du bouton import
+
+**`vercel.json`** :
+- Nettoyage de l'entrée `extract-lead-from-screenshot.js` supprimée
+
+### Fichiers créés/modifiés
+- `api/analyze-document.js` (mode screenshot_import ajouté)
+- `acquereurs.html` (bouton + modal + JS import)
+- `vercel.json` (nettoyage)
+
+### Points d'attention
+- Limite Vercel Hobby = 12 fonctions serverless — on est pile à 12
+- Coût Claude Vision : ~0.01-0.03€ par image analysée
+- Le mode texte est ~20x moins cher que l'image
+
+### Prochaines étapes prioritaires
+- Tester avec différentes plateformes (LeBonCoin, Jinka, BienIci, PAP)
+- Éventuellement ajouter l'import côté vendeurs si besoin
+
+---
+
 ## Session 2026-02-25d — Système de visites acquéreur ↔ vendeur
 
 ### Résumé

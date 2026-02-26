@@ -183,23 +183,27 @@ Mapping automatique des colonnes Excel vers les champs CRM.
 
 ### POST `/api/analyze-document`
 
-Extraction de données depuis un document (PDF, image).
+Extraction de données depuis un document (PDF, image) ou une capture d'écran de plateforme immobilière.
 
 | Champ | Valeur |
 |-------|--------|
 | **Auth** | Bearer token |
-| **Body** | `{ fileUrl?, fileContent?, fileType, leadType }` |
+| **Body (mode document)** | `{ fileUrl?, fileContent?, fileType, leadType }` |
+| **Body (mode screenshot)** | `{ mode: 'screenshot_import', leadType, image?, text?, imageType? }` |
 | **Service externe** | Anthropic Claude Haiku |
 | **Timeout** | 30s |
 
-**Types supportés** : `image/*`, `application/pdf`, `text/plain`
+**Mode document** (par défaut) : `image/*`, `application/pdf`, `text/plain`
+
+**Mode `screenshot_import`** : Extraction depuis captures d'écran ou texte collé de plateformes immobilières (SeLoger, LeBonCoin, Jinka, Efficity, BienIci, Logic-Immo, PAP). Détection automatique de la plateforme et mapping vers les sources CRM. Champs `image` (base64) ou `text` requis.
 
 **Réponse** :
 ```json
 {
   "fields": {
     "first_name": "...", "last_name": "...",
-    "address": "...", "budget": 300000, "surface": 80
+    "address": "...", "budget": 300000, "surface": 80,
+    "source": "siteimmo", "source_platform": "seloger"
   }
 }
 ```
