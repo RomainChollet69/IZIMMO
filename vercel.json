@@ -11,9 +11,6 @@
     },
     "api/google-auth.js": {
       "maxDuration": 15
-    },
-    "api/extract-lead-from-screenshot.js": {
-      "maxDuration": 30
     }
   },
   "headers": [

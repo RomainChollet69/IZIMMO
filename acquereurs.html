@@ -6049,7 +6049,7 @@
 
         // ===== IMPORT SCREENSHOT / TEXTE =====
         // Gère l'import de leads acquéreurs depuis captures d'écran (Cmd+V) ou texte collé.
-        // Ouvre un modal dédié, appelle /api/extract-lead-from-screenshot,
+        // Ouvre un modal dédié, appelle /api/analyze-document (mode: screenshot_import),
         // puis pré-remplit le formulaire de création de lead existant.
 
         const IMPORT_LEAD_TYPE = 'buyer';
@@ -6216,7 +6216,7 @@
             document.getElementById('importLoading').style.display = '';
 
             try {
-                const body = { leadType: IMPORT_LEAD_TYPE };
+                const body = { mode: 'screenshot_import', leadType: IMPORT_LEAD_TYPE };
                 if (isImageMode) {
                     body.image = importedImageBase64;
                     body.imageType = importedImageType;
@@ -6224,7 +6224,7 @@
                     body.text = document.getElementById('importTextarea').value.trim();
                 }
 
-                const resp = await fetch('/api/extract-lead-from-screenshot', {
+                const resp = await fetch('/api/analyze-document', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
                     body: JSON.stringify(body)
