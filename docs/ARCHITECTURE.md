@@ -348,6 +348,7 @@ scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
 | `referrer_name` | TEXT        | Nom du recommandant (si source = recommandation)         |
 | `notes`         | TEXT        | Notes relationnelles / commerciales                      |
 | `reminder`      | DATE        | Date de prochaine relance                                |
+| `appointment_date` | DATE     | Date du RDV physique vendeur (auto-relance J+15)         |
 | `contact_date`  | DATE        | Date du premier contact                                  |
 | `mandate_start_date` | DATE   | Date de début du mandat                                  |
 | `last_activity_at` | TIMESTAMPTZ | Dernière activité enregistrée                         |

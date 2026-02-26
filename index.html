@@ -4014,6 +4014,10 @@
                             <input type="checkbox" id="rdvDone" style="display:none">
                             <span style="display:flex;align-items:center;gap:6px"><i class="fa-solid fa-handshake" style="font-size:14px"></i> RDV physique effectué</span>
                         </label>
+                        <div id="appointmentDateGroup" style="display:none;margin-top:8px">
+                            <label class="form-label">Date du RDV</label>
+                            <input type="date" class="form-input" id="appointmentDate">
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -5210,6 +5214,8 @@
 
         function isMobile() { return window.innerWidth <= 768; }
 
+        const DAYS_AUTO_REMINDER_AFTER_RDV = 15; // Délai auto-relance après RDV vendeur (jours)
+
         // ===== MOBILE CARD DECK STATE =====
         const COLUMN_COLORS = {
             hot: '#FF6B6B',
@@ -5328,6 +5334,12 @@
                 if (diff < 0) html += `<div class="mc-followup followup-overdue">⚠️ Relance ${fmt}</div>`;
                 else if (diff === 0) html += `<div class="mc-followup followup-due">🔔 Aujourd'hui</div>`;
                 else html += `<div class="mc-followup followup-ok">📅 Relance ${fmt}</div>`;
+            }
+
+            // Date du RDV vendeur
+            if (seller.appointment_date) {
+                const rdvFmt = new Date(seller.appointment_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+                html += `<div class="mc-followup" style="background:#E8F5E9;color:#2E7D32">🤝 RDV ${rdvFmt}</div>`;
             }
 
             // Commission badge
@@ -5621,6 +5633,12 @@
             if (seller.email) html += `<div class="detail-info-row"><span class="detail-label">📧</span><a href="mailto:${escapeHtml(seller.email)}" style="color:#667eea;text-decoration:none">${escapeHtml(seller.email)}</a></div>`;
             if (seller.contact2_name) html += `<div class="detail-info-row"><span class="detail-label">👤</span>${escapeHtml(seller.contact2_name)}${seller.contact2_phone ? ' — ' + escapeHtml(seller.contact2_phone) : ''}</div>`;
             html += '</div>';
+
+            // Date du RDV vendeur
+            if (seller.appointment_date) {
+                const rdvFmt = new Date(seller.appointment_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+                html += `<div style="margin-bottom:12px"><span style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;background:#E8F5E9;color:#2E7D32;font-weight:600;font-size:13px">🤝 RDV effectué le ${rdvFmt}</span></div>`;
+            }
 
             // Commission
             const priceForComm = parseAmount(price);
@@ -6939,6 +6957,12 @@
                 ext += `<div class="card-date">📅 ${new Date(seller.date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' })}</div>`;
             }
 
+            // Date du RDV vendeur
+            if (seller.appointment_date) {
+                const rdvFmt = new Date(seller.appointment_date).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+                ext += `<div class="card-followup" style="background:#E8F5E9;color:#2E7D32">🤝 RDV ${rdvFmt}</div>`;
+            }
+
             // Relance
             ext += followupFull;
 
@@ -7769,6 +7793,8 @@
 
             // Reset RDV + commission
             document.getElementById('rdvDone').checked = false;
+            document.getElementById('appointmentDate').value = '';
+            document.getElementById('appointmentDateGroup').style.display = 'none';
             document.getElementById('commissionRate').value = 4;
             document.getElementById('commissionAmount').value = '';
 
@@ -7847,6 +7873,8 @@
             document.getElementById('date').value = seller.date || '';
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('rdvDone').checked = seller.rdv_done || false;
+            document.getElementById('appointmentDate').value = seller.appointment_date || '';
+            document.getElementById('appointmentDateGroup').style.display = seller.rdv_done ? '' : 'none';
             // Co-contact
             document.getElementById('contact2Name').value = seller.contact2_name || '';
             document.getElementById('contact2Phone').value = seller.contact2_phone || '';
@@ -8023,6 +8051,7 @@
                 reminder: document.getElementById('reminder').value || null,
                 budget: document.getElementById('budget').value.trim() || null,
                 rdv_done: document.getElementById('rdvDone').checked || false,
+                appointment_date: document.getElementById('rdvDone').checked ? (document.getElementById('appointmentDate').value || null) : null,
                 contact2_name: document.getElementById('contact2Name').value.trim() || null,
                 contact2_phone: document.getElementById('contact2Phone').value.trim() || null,
                 contact2_email: document.getElementById('contact2Email').value.trim() || null,
@@ -8030,6 +8059,14 @@
                 commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
                 links: currentLinks.length > 0 ? currentLinks : []
             };
+
+            // Auto-relance : si RDV vendeur positionné et pas de relance manuelle → relance à J+15
+            if (sellerData.appointment_date && !sellerData.reminder) {
+                const rdvDate = new Date(sellerData.appointment_date);
+                rdvDate.setDate(rdvDate.getDate() + DAYS_AUTO_REMINDER_AFTER_RDV);
+                sellerData.reminder = rdvDate.toISOString().split('T')[0];
+                document.getElementById('reminder').value = sellerData.reminder;
+            }
 
             // Inclure les champs mandat UNIQUEMENT si l'onglet est visible (status=mandate)
             if (status === 'mandate') {
@@ -9412,6 +9449,24 @@
             }
         }
 
+        // ===== DATE RDV VENDEUR (toggle avec checkbox rdvDone) =====
+        function setupAppointmentDateToggle() {
+            const checkbox = document.getElementById('rdvDone');
+            const group = document.getElementById('appointmentDateGroup');
+            const dateInput = document.getElementById('appointmentDate');
+
+            checkbox.addEventListener('change', function() {
+                if (this.checked) {
+                    group.style.display = '';
+                    if (!dateInput.value) {
+                        dateInput.value = new Date().toISOString().split('T')[0];
+                    }
+                } else {
+                    group.style.display = 'none';
+                }
+            });
+        }
+
         // ===== ONBOARDING =====
         let onboardingRecorder = null;
         let onboardingParsedFields = null;
@@ -9687,6 +9742,7 @@
             setupBuyerAutocomplete();
             setupNoteEvents();
             setupReferrerField();
+            setupAppointmentDateToggle();
             setupDocsDropZone();
             setupImportDoc();
 

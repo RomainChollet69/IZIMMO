@@ -569,3 +569,23 @@
 - Les prompts sont spécialisés par mode (document vs screenshot) donc pas de compromis qualité
 
 **Alternative rejetée** : Endpoint séparé `/api/extract-lead-from-screenshot` — créé puis supprimé car dépassait la limite de 12 fonctions Vercel Hobby
+
+---
+
+## D029 — Auto-relance basée sur appointment_date (pas de système d'alerte parallèle)
+
+**Date** : 2026-02-26
+**Statut** : Actif
+
+**Contexte** : La consultante veut être alertée si aucun suivi n'est fait dans les 15 jours suivant un RDV vendeur. Le champ `rdv_done` (boolean) existe mais ne capture pas la date.
+
+**Décision** : Ajouter une colonne `appointment_date DATE` à la table `sellers`. Quand elle est renseignée et qu'aucune relance manuelle n'existe, auto-calculer `reminder = appointment_date + 15 jours`. Le système de relances existant (followup-overdue, relance-widget.js) prend le relais automatiquement.
+
+**Pourquoi** :
+- Zéro nouvelle infrastructure (pas de cron, pas de nouveau widget, pas de nouvelle CSS)
+- Réutilise le système de relances mature et déjà testé
+- L'utilisateur peut toujours surcharger la relance manuellement
+- Un seul champ DB supplémentaire
+- Constante `DAYS_AUTO_REMINDER_AFTER_RDV = 15` facilement ajustable
+
+**Alternative rejetée** : Système d'alertes parallèle avec badge dédié et panneau séparé — complexité disproportionnée, duplication de logique existante

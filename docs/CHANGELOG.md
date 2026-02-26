@@ -4,6 +4,44 @@
 
 ---
 
+## Session 2026-02-26c — Date de RDV vendeur + auto-relance J+15
+
+### Résumé
+Ajout d'un champ "Date du RDV" sur les fiches vendeurs. Quand un RDV est enregistré sans relance manuelle, une relance automatique est programmée à J+15. Le système de relances existant (widget, badges overdue) prend le relais sans aucune modification.
+
+### Modifications
+
+**`index.html`** :
+- Formulaire : champ date conditionnel sous le checkbox "RDV physique effectué"
+- `setupAppointmentDateToggle()` : toggle show/hide + pré-remplissage date du jour
+- `handleFormSubmit()` : sauvegarde `appointment_date` + logique auto-relance (`reminder = appointment_date + 15j`)
+- `editSeller()` : peuplement du champ en édition
+- `createSellerCard()` : badge vert `🤝 RDV [date]` dans la vue étendue
+- Carte mobile (card deck) : badge RDV après le bloc relance
+- Détail mobile (`openMobileDetail`) : badge "RDV effectué le [date]"
+- Constante `DAYS_AUTO_REMINDER_AFTER_RDV = 15`
+
+**`sql/005_appointment_date.sql`** :
+- Migration : `ALTER TABLE sellers ADD COLUMN appointment_date DATE`
+
+### Fichiers créés/modifiés
+- `index.html`
+- `sql/005_appointment_date.sql`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/CHANGELOG.md`
+
+### Points d'attention
+- La migration SQL doit être exécutée manuellement dans Supabase SQL Editor
+- La relance auto ne remplace PAS une relance manuelle existante
+- Le champ `rdv_done` (boolean) est conservé pour rétro-compatibilité
+
+### Prochaines étapes prioritaires
+- Exécuter la migration SQL en production
+- Tester le flux complet : créer lead → cocher RDV → vérifier auto-relance
+
+---
+
 ## Session 2026-02-25d — iOS micro fix + Mobile card deck redesign + bugfixes mobile
 
 ### Résumé
