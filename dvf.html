@@ -2204,6 +2204,7 @@
                     const dvfUid = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
                     content = `
                         <div style="font-family:Inter,sans-serif;min-width:200px;max-width:280px;color:#2C3E50;padding:2px 0">
+                            <div id="${dvfUid}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:6px">Recherche de l'adresse…</div>
                             <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                                 <span style="font-weight:700;font-size:13px">${getTypeIcon(type)} ${capitalize(type)}</span>
                                 ${surface ? `<span style="font-size:12px;color:#777">${surface} m²</span>` : ''}
@@ -2218,7 +2219,6 @@
                                 <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i> Plus de détails
                             </div>
                             <div style="display:none;padding-top:6px;font-size:12px;color:#555;line-height:1.7">
-                                <div id="${dvfUid}_addr" style="color:#999;font-style:italic">Recherche de l'adresse…</div>
                                 ${surface ? '<div>📐 Surface : ' + surface + ' m²</div>' : ''}
                                 ${priceM2 ? '<div>💰 Prix/m² : ' + formatNumber(priceM2) + ' €/m²</div>' : ''}
                                 <div>📅 Date de vente : ${date}</div>
@@ -2235,12 +2235,13 @@
                                 if (el && json.features && json.features.length > 0) {
                                     el.style.fontStyle = 'normal';
                                     el.style.color = '#2C3E50';
-                                    el.innerHTML = '📍 ' + json.features[0].properties.label;
-                                } else if (el) { el.textContent = '📍 Adresse non trouvée'; }
+                                    el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + json.features[0].properties.label;
+                                } else if (el) { el.textContent = 'Adresse non trouvée'; }
                             }).catch(() => {});
                     });
                 } else {
                     // Multi-sale parcel: show summary + list
+                    const dvfUidMulti = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
                     const prices = parcelSales.map(s => parseFloat(s.valeur_fonciere)).filter(p => p > 0);
                     const minPrice = Math.min(...prices);
                     const maxPrice = Math.max(...prices);
@@ -2255,6 +2256,7 @@
                     }).join('');
                     content = `
                         <div style="font-family:Inter,sans-serif;min-width:220px;max-height:300px;overflow-y:auto;color:#2C3E50">
+                            <div id="${dvfUidMulti}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:6px">Recherche de l'adresse…</div>
                             <div style="font-weight:700;font-size:14px;margin-bottom:6px"><i class="fas fa-city" style="color:#667eea"></i> ${count} ventes sur cette parcelle</div>
                             <div style="font-size:13px;color:#555;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
                             ${medianPriceM2 ? `<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:8px">Médiane : ${formatNumber(medianPriceM2)} €/m²</div>` : ''}
@@ -2262,6 +2264,20 @@
                             ${count > 10 ? `<div style="font-size:11px;color:#777;padding-top:4px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
                         </div>
                     `;
+                    // Reverse geocoding pour parcelle multi-ventes
+                    const multiLat = lat, multiLng = lng, multiAddrId = dvfUidMulti + '_addr';
+                    marker.addListener('click', () => {
+                        fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + multiLat + '&lon=' + multiLng)
+                            .then(r => r.json())
+                            .then(json => {
+                                const el = document.getElementById(multiAddrId);
+                                if (el && json.features && json.features.length > 0) {
+                                    el.style.fontStyle = 'normal';
+                                    el.style.color = '#2C3E50';
+                                    el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + json.features[0].properties.label;
+                                } else if (el) { el.textContent = 'Adresse non trouvée'; }
+                            }).catch(() => {});
+                    });
                 }
 
                 marker.addListener('click', () => {
