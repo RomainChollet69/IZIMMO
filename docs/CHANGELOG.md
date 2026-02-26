@@ -4,6 +4,54 @@
 
 ---
 
+## Session 2026-02-25d — iOS micro fix + Mobile card deck redesign + bugfixes mobile
+
+### Résumé
+Trois volets : (1) correction micro iPhone/Chrome avec guide iOS pas-à-pas, (2) redesign complet des cartes mobiles vendeurs avec hiérarchie émotionnelle 3 niveaux, (3) correction de bugs mobile (todo FAB caché, boutons détail coupés).
+
+### Modifications
+
+**Micro iPhone/Chrome (`js/audio-recorder.js` + `micro.html`)** :
+- Détection iOS (`_isIOS()`) et navigateur (`_getIOSBrowser()` — CriOS/FxiOS/Safari)
+- Pre-check permission micro via `checkMicPermission()` (Permissions API)
+- Message d'erreur adapté iOS : marker `__IOS_MIC_BLOCKED__` + guide 5 étapes (Réglages > Apps > Chrome > Micro > Réessayer)
+- Screenshot `img/micro_auth.svg` affiché sous le guide (mobile only)
+- État `requesting_permission` quand le dialogue natif va apparaître
+
+**Redesign mobile card deck (`index.html`)** :
+- Carte `.deck-card` : padding 28px 24px, border-radius 20px, double ombre premium
+- Hiérarchie émotionnelle 3 niveaux :
+  - Niveau 1 (centré) : nom 24px, relance = bouton d'action, commission = badge
+  - Niveau 2 (gauche) : bien, ville, adresse, téléphone bouton tactile
+  - Niveau 3 (discret) : source + date côte à côte dans `.mc-context-row`
+- Actions : fond #F8FAFC, border-radius 12px, boutons transparents
+- Compteur `.deck-position` plus discret (13px, opacity réduite)
+- `createMobileCard()` JS réordonné pour suivre la hiérarchie
+
+**Bugfixes mobile (`index.html` + `js/todo-widget.js`)** :
+- Todo FAB : `bottom: 20px` → `90px` (au-dessus de la bottom-bar)
+- Vue détail overlay : `z-index: 2000` → `10001` (au-dessus de la bottom-bar 9999)
+- Padding bas détail : `calc(24px + env(safe-area-inset-bottom))` pour boutons visibles
+
+### Fichiers créés/modifiés
+- `js/audio-recorder.js` (détection iOS, pre-check permission, erreurs adaptées)
+- `micro.html` (guide iOS, screenshot, état requesting_permission)
+- `index.html` (CSS card deck redesign + z-index détail + padding)
+- `js/todo-widget.js` (FAB bottom 90px)
+- `img/micro_auth.svg` (nouveau — screenshot autorisation micro iOS)
+- `vercel.json` (Permissions-Policy microphone header)
+
+### Points d'attention
+- iOS WebKit ignore `Permissions-Policy: microphone=(self)` — header gardé mais sans effet
+- Pas de moyen programmatique de re-déclencher une permission refusée sur iOS
+- Le swipe, tap détail et tap téléphone fonctionnent toujours après le redesign
+
+### Prochaines étapes prioritaires
+- Tester le redesign cartes sur différents iPhones (tailles écran)
+- Vérifier le guide micro sur Safari iOS (pas seulement Chrome)
+
+---
+
 ## Session 2026-02-26b — Import lead acquéreur depuis capture d'écran / texte
 
 ### Résumé
