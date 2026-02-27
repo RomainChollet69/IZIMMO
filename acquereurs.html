@@ -2821,9 +2821,15 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label class="form-label">Date de contact</label>
+                            <input type="date" class="form-input" id="contactDate">
+                        </div>
+                        <div class="form-group">
                             <label class="form-label">Date de relance</label>
                             <input type="date" class="form-input" id="reminder">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label class="form-label">Colonne</label>
                             <select class="form-select" id="status">
@@ -5171,6 +5177,7 @@
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
             document.getElementById('timeline').value = buyer.timeline || '';
             document.getElementById('dealbreakers').value = buyer.dealbreakers || '';
+            document.getElementById('contactDate').value = buyer.contact_date || '';
             document.getElementById('reminder').value = buyer.reminder || '';
             document.getElementById('status').value = buyer.status || 'new';
 
@@ -5255,6 +5262,7 @@
                 seller_address: document.getElementById('sellerAddress').value.trim() || null,
                 seller_price: document.getElementById('sellerPrice').value.trim() || null,
                 dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
+                contact_date: document.getElementById('contactDate').value || null,
                 reminder: document.getElementById('reminder').value || null,
                 status: document.getElementById('status').value,
                 links: currentLinks
