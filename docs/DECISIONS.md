@@ -589,3 +589,47 @@
 - Constante `DAYS_AUTO_REMINDER_AFTER_RDV = 15` facilement ajustable
 
 **Alternative rejetée** : Système d'alertes parallèle avec badge dédié et panneau séparé — complexité disproportionnée, duplication de logique existante
+
+---
+
+## D030 — Création de lead directe depuis micro (pas de redirection vers le formulaire pipeline)
+
+**Date** : 2026-02-28
+**Statut** : Actif
+
+**Contexte** : Quand l'utilisateur dicte une note vocale mentionnant un contact inconnu, le système doit proposer de créer un lead. Deux options : rediriger vers le formulaire pipeline (index.html / acquereurs.html) ou insérer directement depuis micro.html.
+
+**Décision** : Création directe via `createNewLeadFromMicro()` dans micro.html. INSERT dans `buyers` ou `sellers` + ajout de la transcription comme première note (`lead_notes`). Pas de navigation vers une autre page.
+
+**Pourquoi** :
+- Le micro est utilisé sur le terrain (en voiture, entre deux visites) — changer de page casse le flux
+- Les données essentielles sont déjà extraites par le parsing vocal (nom, budget, type, secteur, critères)
+- L'utilisateur choisit juste "Acquéreur" ou "Vendeur" — un seul tap
+- La fiche peut être complétée plus tard depuis le pipeline (informations manquantes)
+- La transcription est automatiquement ajoutée comme note → contexte préservé
+
+**Alternatives rejetées** :
+- **Redirection vers le formulaire pipeline** : casse le flux mobile, perte du contexte vocal, 3+ taps supplémentaires
+- **Pré-remplissage du formulaire via URL params** : fragile (encoding, longueur URL), nécessite de gérer le retour
+
+---
+
+## D031 — Parsing vocal : distinction contact à créer vs mention contextuelle
+
+**Date** : 2026-02-28
+**Statut** : Actif
+
+**Contexte** : Le parsing de notes vocales via `/api/parse-voice-note` identifiait tous les noms propres comme des contacts potentiels. Problème : "J'ai visité le bien de Madame Dupont avec Monsieur Martin" créait un lead pour Dupont (propriétaire, simple mention) en plus de Martin (l'acquéreur, le vrai sujet).
+
+**Décision** : Ajouter des règles de prompt explicites pour ne créer des leads (`unmatched_contacts`) que pour les contacts explicitement demandés dans la dictée. Les propriétaires, notaires, agents concurrents, etc. mentionnés en contexte sont ignorés.
+
+**Pourquoi** :
+- Réduit les faux positifs (leads inutiles créés par erreur)
+- L'utilisateur n'a pas à rejeter des suggestions non pertinentes
+- La logique métier est claire : "ajouter une note pour X" = X est un lead, "le bien de Y" = Y est un contexte
+- Les objets structurés dans `unmatched_contacts` (au lieu de simples strings) permettent de pré-remplir la carte de création
+
+**Conséquences** :
+- `unmatched_contacts` retourne des objets `{ name, suggested_type, first_name, last_name, budget_max, ... }` au lieu de `["Nom"]`
+- `max_tokens` augmenté à 1200 pour accommoder les réponses plus riches
+- Le front-end (micro.html) gère les deux formats pour rétro-compatibilité

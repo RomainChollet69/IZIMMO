@@ -156,7 +156,47 @@ Modal import se ferme → Modal création acquéreur s'ouvre pré-rempli
 Utilisateur vérifie/corrige → Créer l'Acquéreur → INSERT `buyers`
 ```
 
-### 3.3 Pipeline vendeurs mobile (card deck)
+### 3.3 Création de lead depuis note vocale (micro)
+
+```
+Utilisateur dicte une note vocale (ex: "Note pour Elsa Martin, T3 Lyon budget 300k")
+    |
+    v
+AudioRecorder -> POST /api/transcribe -> transcript texte
+    |
+    v
+POST /api/parse-voice-note { transcription, leads: [...], today }
+  |-- Claude Haiku identifie les contacts mentionnés
+  |-- Match contre les leads existants (sellers + buyers)
+  |-- Classement : matched / ambiguous / unmatched
+    |
+    v
+MATCHED -> note ajoutée au lead existant (INSERT lead_notes + UPDATE reminder)
+AMBIGUOUS -> choix utilisateur parmi les suggestions
+UNMATCHED -> Carte de création avec données extraites
+    |
+    v
+Carte "Nouveau contact" (micro.html - showNoMatch)
+  |-- Affiche : nom, budget, type de bien, secteur, critères en tags
+  |-- Boutons : "Acquéreur" / "Vendeur"
+    |
+    v
+createNewLeadFromMicro(contact, leadType)
+  |-- INSERT dans `buyers` ou `sellers` (Supabase)
+  |-- contact_date = aujourd'hui
+  |-- INSERT transcription comme première note (lead_notes)
+    |
+    v
+Confirmation + lien vers la fiche créée
+```
+
+**Différence avec le flux pipeline (3.1)** :
+- Le flux micro est conçu pour le terrain (mobile, quick in/out)
+- Le parsing vocal identifie les contacts dans du texte libre (pas un formulaire structuré)
+- `unmatched_contacts` retourne des objets structurés (nom, budget, type, secteur, critères)
+- La création est directe (pas de formulaire intermédiaire)
+
+### 3.4 Pipeline vendeurs mobile (card deck)
 
 ```
 Chargement index.html (mobile, <= 768px)
@@ -188,7 +228,7 @@ Tap carte → openMobileDetail(sellerId)
 Couleurs colonnes : COLUMN_COLORS (8 statuts → hex)
 ```
 
-### 3.3 Déplacement de fiche (drag-and-drop)
+### 3.5 Déplacement de fiche (drag-and-drop)
 
 ```
 Drag carte de Colonne A → Colonne B
@@ -205,7 +245,7 @@ onLeadStatusChange() — workflows.js
 Rendu prochaine étape en attente sur la carte
 ```
 
-### 3.3 Génération de messages IA
+### 3.6 Génération de messages IA
 
 ```
 Clic "Générer message" sur une étape workflow
@@ -221,7 +261,7 @@ POST /api/generate-message { channel, scenario, leadData, leadType }
 Affichage dans modale → copie manuelle par l'utilisateur
 ```
 
-### 3.4 Système de relances
+### 3.7 Système de relances
 
 ```
 Chargement de page
@@ -238,7 +278,7 @@ Clic cloche → Panel relance-widget (slide-in droite)
   └── Clic item → navigation vers la fiche
 ```
 
-### 3.5 To-do list
+### 3.8 To-do list
 
 ```
 Saisie texte ou dictée vocale
@@ -253,7 +293,7 @@ INSERT dans `todos` (Supabase)
 Affichage dans panel flottant avec drag-reorder (ordre en localStorage)
 ```
 
-### 3.6 Contenu social
+### 3.9 Contenu social
 
 ```
 Utilisateur choisit "J'ai un truc à raconter" ou sélectionne un template
@@ -272,7 +312,7 @@ INSERT dans `social_posts` (Supabase)
 Affichage dans calendrier social avec historique
 ```
 
-### 3.7 Carte DVF + DPE
+### 3.10 Carte DVF + DPE
 
 ```
 Chargement dvf.html
@@ -379,6 +419,7 @@ scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
 | `dealbreakers`  | TEXT        | Critères éliminatoires                                   |
 | `notes`         | TEXT        | Notes                                                    |
 | `reminder`      | DATE        | Date de prochaine relance                                |
+| `contact_date`  | DATE        | Date du premier contact                                  |
 | `position`      | INT         | Ordre dans la colonne                                    |
 | `created_at`    | TIMESTAMPTZ | Date de création                                         |
 | `updated_at`    | TIMESTAMPTZ | Dernière modification                                    |

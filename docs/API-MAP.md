@@ -222,6 +222,12 @@ Analyse d'une note vocale pour identifier les contacts et les actions.
 | **Body** | `{ transcription, leads: [], today }` |
 | **Service externe** | Anthropic Claude Haiku |
 | **Timeout** | 20s |
+| **max_tokens** | 1200 |
+
+**Règles de parsing** :
+- Seuls les contacts explicitement mentionnés comme sujets d'action sont retournés dans `unmatched_contacts`
+- Les mentions contextuelles (propriétaires de biens visités, notaires, agents concurrents) sont ignorées
+- Ex: "Visite du bien de Dupont avec Martin" → Martin est un contact, Dupont est du contexte
 
 **Réponse** :
 ```json
@@ -232,9 +238,26 @@ Analyse d'une note vocale pour identifier les contacts et les actions.
       "confidence": 0.95, "note_content": "...", "reminder_date": "2026-03-01" }
   ],
   "ambiguous_contacts": [],
-  "unmatched_contacts": ["Nom inconnu"]
+  "unmatched_contacts": [
+    {
+      "name": "Martin",
+      "suggested_type": "buyer",
+      "first_name": "...",
+      "last_name": "Martin",
+      "budget_max": 300000,
+      "property_type": "appartement",
+      "rooms": 3,
+      "sector": "Lyon 3ème",
+      "criteria": "lumineux, balcon",
+      "phone": null,
+      "email": null,
+      "note_content": "Contenu de la transcription..."
+    }
+  ]
 }
 ```
+
+**Note** : `unmatched_contacts` retourne des objets structurés (depuis 2026-02-28). Le front-end gère aussi l'ancien format (simple string) pour rétro-compatibilité.
 
 **Erreurs** : `400`, `401`, `502`, `504`
 
@@ -414,8 +437,8 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 
 | Table | SELECT | INSERT | UPDATE | DELETE | Pages |
 |-------|--------|--------|--------|--------|-------|
-| `sellers` | x | x | x | x | index.html, relance-widget, workflows, social |
-| `buyers` | x | x | x | x | acquereurs.html, relance-widget, workflows |
+| `sellers` | x | x | x | x | index.html, micro.html, relance-widget, workflows, social |
+| `buyers` | x | x | x | x | acquereurs.html, micro.html, relance-widget, workflows |
 | `workflow_steps` | x | x | x | — | workflows.js (toutes pages pipeline) |
 | `todos` | x | x | x | x | todo-widget.js |
 | `contacts` | x | — | — | — | supabase-config.js (autocomplétion), assistant.html |
@@ -424,7 +447,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 | `social_profiles` | x | x | x (upsert) | — | social.js |
 | `social_posts` | x | x | x | — | social.js, api/generate-social-post |
 | `visits` | x | x | x | — | social.js (contexte CRM) |
-| `lead_notes` | x | — | — | — | social.js (contexte CRM) |
+| `lead_notes` | x | x | — | — | micro.html (note initiale), social.js (contexte CRM) |
 
 ### Supabase Storage
 

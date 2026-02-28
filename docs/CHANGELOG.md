@@ -4,6 +4,53 @@
 
 ---
 
+## Session 2026-02-28 — Création de leads depuis micro + amélioration parsing vocal + date contact acquéreur
+
+### Résumé
+Trois volets : (1) la page micro peut désormais créer des leads directement dans Supabase quand un contact dicté n'est pas reconnu, avec une carte de création affichant les données extraites, (2) amélioration du parsing vocal pour distinguer les contacts à créer des simples mentions contextuelles (propriétaires, etc.), (3) ajout du champ "Date de contact" dans le formulaire acquéreur.
+
+### Modifications
+
+**`api/parse-voice-note.js`** :
+- `unmatched_contacts` retourne désormais des objets structurés (name, suggested_type, first_name, last_name, budget_max, property_type, rooms, sector, criteria, phone, email, note_content) au lieu de simples strings
+- Règles de prompt ajoutées : ne créer des leads que pour les contacts explicitement demandés, pas pour les mentions contextuelles (ex: propriétaires de biens)
+- `max_tokens` augmenté de 800 à 1200 pour accommoder les réponses plus riches
+
+**`micro.html`** :
+- Réécriture de `showNoMatch` : affiche une carte de création avec les données extraites (budget, type de bien, secteur, critères en tags) et boutons de sélection Acquéreur/Vendeur
+- Nouvelle fonction `createNewLeadFromMicro` : insert direct dans Supabase (table `buyers` ou `sellers`) + ajout de la transcription comme première note
+- Nouvelles fonctions `selectLeadType` et `resetToIdle`, exposées sur `window` (fix fermeture IIFE)
+- Fix `showResult` : affiche toujours les contacts non matchés même quand d'autres matches existent (suppression de la condition `!hasMatches && !hasAmbiguous`)
+- Fix `preFilterLeads` : split sur les apostrophes (d'Elsa → elsa matche correctement)
+- Fix `showAmbiguous` : garde `Array.isArray` sur `possible_matches`
+- `contact_date` initialisé à la date du jour lors de la création d'un lead depuis le micro
+
+**`acquereurs.html`** :
+- Ajout du champ "Date de contact" dans le formulaire de création acquéreur (avant "Date de relance")
+- `contact_date` inclus dans la collecte de données de `handleSubmit`
+- `contact_date` pré-rempli dans la fonction `editBuyer`
+
+### Fichiers créés/modifiés
+- `api/parse-voice-note.js`
+- `micro.html`
+- `acquereurs.html`
+- `docs/CHANGELOG.md`
+- `docs/ARCHITECTURE.md`
+- `docs/DECISIONS.md`
+- `docs/API-MAP.md`
+
+### Points d'attention
+- La création de lead depuis micro insère directement en base — pas de formulaire intermédiaire (voulu pour le flux mobile rapide)
+- Le champ `contact_date` des acquéreurs existants sera `null` tant qu'il n'est pas renseigné manuellement
+- Les objets structurés de `unmatched_contacts` sont rétro-compatibles : le front gère les deux formats (string et objet)
+
+### Prochaines étapes prioritaires
+- Tester le flux complet micro → création lead → vérification en pipeline
+- Vérifier que le filtre apostrophe fonctionne sur des noms composés variés
+- Ajouter éventuellement le champ `contact_date` côté vendeurs si demandé
+
+---
+
 ## Session 2026-02-26c — Date de RDV vendeur + auto-relance J+15
 
 ### Résumé
