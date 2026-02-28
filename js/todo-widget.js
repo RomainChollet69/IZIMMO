@@ -369,6 +369,11 @@
             text-decoration: underline;
         }
 
+        /* Desktop — FAB masqué car intégré dans la bottom bar */
+        @media (min-width: 769px) {
+            .todo-fab { display: none !important; }
+        }
+
         /* Mobile — FAB au-dessus de la bottom-bar (~80px) */
         @media (max-width: 768px) {
             .todo-fab {
@@ -457,6 +462,9 @@
     });
     closeBtn.addEventListener('click', closePanel);
     overlay.addEventListener('click', closePanel);
+
+    // Exposer toggle pour la desktop bottom bar
+    window.todoToggle = () => { if (isOpen) closePanel(); else openPanel(); };
 
     // ===== SUPABASE CRUD =====
     async function getUserId() {
@@ -562,6 +570,14 @@
     }
 
     // ===== RENDU =====
+    // Synchro badge desktop bottom bar
+    function updateBottomBarBadge(count) {
+        const badge = document.getElementById('bottomTodoBadge');
+        if (!badge) return;
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
+
     function renderTodos() {
         const pending = todos.filter(t => !t.done).length;
 
@@ -572,6 +588,9 @@
         } else {
             fab.classList.remove('has-tasks');
         }
+
+        // Synchro badge bottom bar desktop
+        updateBottomBarBadge(pending);
 
         // Compteur footer
         counterEl.textContent = `${pending} tâche${pending > 1 ? 's' : ''} en cours`;
@@ -904,6 +923,7 @@
             fab.classList.add('has-tasks');
             fab.setAttribute('data-count', count > 99 ? '99+' : count);
         }
+        updateBottomBarBadge(count);
     }
 
     // Attendre que l'auth soit prête
