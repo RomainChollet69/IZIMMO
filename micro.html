@@ -907,12 +907,30 @@
             .example-text { font-size: 16px; }
             .example-emoji { font-size: 22px; }
         }
-    /* Masquer header + bottom bar quand chargé dans un iframe (popup modale) */
+    /* === Mode iframe (popup modale desktop) === */
     .in-iframe .header-desktop,
     .in-iframe .header-mobile,
     .in-iframe .mobile-bottom-bar { display: none !important; }
-    .in-iframe { padding-bottom: 0 !important; }
-    .in-iframe .mic-zone { padding-top: 40px; }
+    .in-iframe {
+        padding-bottom: 0 !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        min-height: 100vh;
+    }
+    .in-iframe .mic-zone {
+        padding-top: 0;
+    }
+    .in-iframe .mic-btn {
+        width: 110px;
+        height: 110px;
+        font-size: 42px;
+    }
+    .in-iframe .mic-help { margin-top: 18px; font-size: 15px; }
+    .in-iframe .mic-subtitle { margin-top: 4px; font-size: 12px; }
+    .in-iframe .examples-zone { margin-top: 20px; }
+    .in-iframe .examples-title { font-size: 12px; margin-bottom: 10px; }
+    .in-iframe .result-area { margin-top: 20px; padding-bottom: 20px; }
     </style>
 </head>
 <body>
