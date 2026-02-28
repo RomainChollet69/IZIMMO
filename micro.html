@@ -907,9 +907,16 @@
             .example-text { font-size: 16px; }
             .example-emoji { font-size: 22px; }
         }
+    /* Masquer header + bottom bar quand chargé dans un iframe (popup modale) */
+    .in-iframe .header-desktop,
+    .in-iframe .header-mobile,
+    .in-iframe .mobile-bottom-bar { display: none !important; }
+    .in-iframe { padding-bottom: 0 !important; }
+    .in-iframe .mic-zone { padding-top: 40px; }
     </style>
 </head>
 <body>
+    <script>if (window.self !== window.top) document.body.classList.add('in-iframe');</script>
     <!-- Desktop header (classique avec nav) -->
     <div class="header-desktop">
         <div class="header-inner">
