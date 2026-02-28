@@ -3567,6 +3567,23 @@
             gap: 4px;
         }
         .briefing-btn-header:hover { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+        /* Léon flottant — bas gauche, desktop uniquement */
+        .leon-floating {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: auto;
+            cursor: pointer;
+            z-index: 100;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+            transition: transform 0.2s ease;
+            opacity: 0.85;
+        }
+        .leon-floating:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
         @media (max-width: 480px) {
             .briefing-card { width: 95vw; border-radius: 16px; }
             .briefing-header { padding: 20px 16px 16px; gap: 12px; }
@@ -3608,9 +3625,6 @@
 
             <!-- Zone droite : Actions -->
             <div class="header-actions">
-                <!-- Briefing du matin -->
-                <button class="briefing-btn-header" id="briefingBtn" onclick="showBriefing()" title="Briefing du matin">☀️ Briefing</button>
-
                 <!-- Alerte relances -->
                 <button class="alert-bell" id="alertBell" title="Relances du jour">
                     <i class="fa-solid fa-bell"></i>
@@ -4260,6 +4274,9 @@
             <!-- Rempli dynamiquement par JS -->
         </div>
     </div>
+
+    <!-- Léon flottant — ouvre le briefing (desktop uniquement) -->
+    <img src="img/Leon.png" alt="Léon" class="leon-floating" onclick="showBriefing()" title="Briefing du jour">
 
     <div id="leonOverlay" class="leon-overlay"></div>
     <div id="leonPopup" class="leon-popup" style="display:none"></div>

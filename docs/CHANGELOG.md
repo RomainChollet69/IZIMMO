@@ -4,6 +4,38 @@
 
 ---
 
+## Session 2026-02-28d — Barre de recherche leads
+
+### Résumé
+Ajout d'une barre de recherche texte instantanée sur les deux pipelines (vendeurs + acquéreurs). Filtre en temps réel par nom, ville, téléphone, email, source.
+
+### Modifications
+
+**`index.html`** :
+- CSS : section `/* ===== SEARCH TOOLBAR ===== */` (styles barre, focus, compteur, clear button)
+- HTML : `<div class="search-toolbar">` insérée entre le header et les mobile-tabs
+- JS : `filterLeads(searchTerm)` — masque/affiche les cards en cherchant dans l'objet `sellers[]`
+- JS : `setupSearchToolbar()` — event listeners (input, clear, Escape, Cmd+K)
+- JS : `updateCounts()` modifié — compte les cards DOM visibles quand un filtre est actif
+
+**`acquereurs.html`** :
+- Mêmes modifications CSS/HTML
+- JS : `filterBuyers(searchTerm)` — équivalent pour `buyers[]` (champs : nom, téléphone, email, secteur, source)
+- JS : `setupSearchToolbar()` + `updateCounts()` modifié
+
+### Fichiers créés/modifiés
+- `index.html`
+- `acquereurs.html`
+
+### Points d'attention
+- Les cards exemple (onboarding) sont masquées pendant la recherche active
+- Le filtre est purement côté client (pas de requête Supabase)
+
+### Prochaines étapes prioritaires
+- Éventuellement : filtres par source ou par statut (boutons toggle)
+
+---
+
 ## Session 2026-02-28c — Actions relances + fix arrondissements
 
 ### Résumé

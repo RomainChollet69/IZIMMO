@@ -10,8 +10,8 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
-├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile (table `sellers`)
-├── acquereurs.html             # Pipeline Acquéreurs — Kanban 4 colonnes (table `buyers`)
+├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile + recherche (table `sellers`)
+├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5 colonnes + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth
 ├── landing.html                # Page marketing / vitrine

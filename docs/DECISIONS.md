@@ -633,3 +633,30 @@
 - `unmatched_contacts` retourne des objets `{ name, suggested_type, first_name, last_name, budget_max, ... }` au lieu de `["Nom"]`
 - `max_tokens` augmenté à 1200 pour accommoder les réponses plus riches
 - Le front-end (micro.html) gère les deux formats pour rétro-compatibilité
+
+---
+
+## D032 — Recherche leads côté client (pas de requête Supabase)
+
+**Date** : 2026-02-28
+**Statut** : Actif
+
+**Contexte** : Besoin de chercher rapidement un lead dans le pipeline (par nom, ville, téléphone…). Deux approches possibles : filtrage côté serveur via Supabase `.ilike()`, ou filtrage côté client sur les données déjà chargées.
+
+**Décision** : Filtrage côté client — on masque/affiche les cards DOM existantes en cherchant dans les arrays `sellers[]` / `buyers[]` déjà en mémoire. Pas de re-render, pas de requête réseau.
+
+**Pourquoi** :
+- Les données sont déjà entièrement chargées en mémoire (pas de pagination)
+- Volume faible (< 500 leads par agent) — itération instantanée
+- Zéro latence : résultats immédiats à chaque frappe
+- Pas de dépendance réseau pour la recherche
+- Implémentation simple : `show/hide` via `style.display`
+
+**Alternatives rejetées** :
+- Recherche serveur Supabase : latence inutile, les données sont déjà là
+- Re-render complet : plus lourd, perte d'état des cards dépliées
+
+**Conséquences** :
+- `filterLeads()` / `filterBuyers()` cherchent dans les propriétés des objets (nom, adresse, téléphone, email, source)
+- `updateCounts()` modifié pour compter les cards DOM visibles quand un filtre est actif
+- Raccourci `Cmd+K` / `Ctrl+K` pour accès rapide
