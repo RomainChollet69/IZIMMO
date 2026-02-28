@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-02-28b — Actions rapides dans le widget Relances (snooze/dismiss)
+
+### Résumé
+Ajout de 2 boutons d'action rapide sur chaque ligne du widget relances : "Repousser +7j" (⏰) et "Fait" (✅). Permet de gérer les relances directement depuis le panneau sans ouvrir chaque fiche.
+
+### Modifications
+
+**`js/relance-widget.js`** :
+- CSS : styles `.relance-actions`, `.relance-action-btn` (hover desktop, toujours visible mobile)
+- HTML : 2 boutons par ligne dans `renderRelances()` avec `event.stopPropagation()`
+- JS : `snoozeRelance(id, leadType)` — UPDATE reminder +7j en DB + mise à jour locale
+- JS : `dismissRelance(id, leadType)` — UPDATE reminder = null en DB + retrait local
+- Exposition globale : `window.relanceWidget.snooze()` et `.dismiss()`
+- Constante : `SNOOZE_DAYS = 7`
+
+### Fichiers créés/modifiés
+- `js/relance-widget.js`
+- `docs/CHANGELOG.md`
+
+### Points d'attention
+- Les boutons sont visibles au survol sur desktop, toujours visibles sur mobile
+- La mise à jour est locale (pas de re-fetch DB) pour la réactivité
+- Le compteur de la cloche se met à jour automatiquement après chaque action
+
+---
+
 ## Session 2026-02-28 — Création de leads depuis micro + amélioration parsing vocal + date contact acquéreur
 
 ### Résumé

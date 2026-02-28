@@ -202,6 +202,40 @@
             margin-top: 1px;
         }
 
+        /* Boutons d'action rapide (snooze / done) */
+        .relance-item { position: relative; }
+        .relance-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+            margin-left: 4px;
+        }
+        .relance-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            background: #f0f2f5;
+        }
+        .relance-action-btn:hover { transform: scale(1.15); }
+        .relance-action-btn:active { transform: scale(0.95); }
+        .relance-action-btn.snooze { background: #E3F2FD; }
+        .relance-action-btn.snooze:hover { box-shadow: 0 2px 8px rgba(46, 134, 222, 0.3); }
+        .relance-action-btn.done { background: #E8F5E9; }
+        .relance-action-btn.done:hover { box-shadow: 0 2px 8px rgba(102, 187, 106, 0.3); }
+        .relance-action-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+        @media (min-width: 769px) {
+            .relance-actions { opacity: 0; transition: opacity 0.2s; }
+            .relance-item:hover .relance-actions { opacity: 1; }
+        }
+
         /* Section day divider */
         .relance-divider {
             font-size: 11px;
@@ -271,6 +305,8 @@
     const subtitleEl = document.getElementById('relanceSubtitle');
     const footerEl = document.getElementById('relanceFooter');
     const filterBtns = panel.querySelectorAll('.relance-filter-btn');
+
+    const SNOOZE_DAYS = 7; // Nombre de jours pour repousser une relance
 
     let allRelances = [];
     let currentFilter = 'due';
@@ -522,6 +558,10 @@
                     <div class="relance-date-label ${dateClass}">${dateLabel}</div>
                     <div class="relance-date-sub">${formatRelanceDate(item.reminder)}</div>
                 </div>
+                <div class="relance-actions">
+                    <button class="relance-action-btn snooze" onclick="event.stopPropagation(); window.relanceWidget.snooze('${item.id}', '${item.leadType}')" title="+${SNOOZE_DAYS}j">⏰</button>
+                    <button class="relance-action-btn done" onclick="event.stopPropagation(); window.relanceWidget.dismiss('${item.id}', '${item.leadType}')" title="Fait">✅</button>
+                </div>
             </div>`;
         });
 
@@ -568,8 +608,57 @@
         }
     };
 
+    // ===== ACTIONS RAPIDES (snooze / dismiss) =====
+    async function snoozeRelance(id, leadType) {
+        const item = allRelances.find(r => r.id === id && r.leadType === leadType);
+        if (!item) return;
+
+        const newDate = new Date(item.reminder);
+        newDate.setDate(newDate.getDate() + SNOOZE_DAYS);
+        const newReminder = newDate.toISOString().split('T')[0];
+
+        const table = leadType === 'seller' ? 'sellers' : 'buyers';
+        const { error } = await supabaseClient
+            .from(table)
+            .update({ reminder: newReminder })
+            .eq('id', id);
+
+        if (error) {
+            console.error('[Relance] Erreur snooze:', error);
+            return;
+        }
+
+        // Mise à jour locale
+        item.reminder = newReminder;
+        allRelances.sort((a, b) => new Date(a.reminder) - new Date(b.reminder));
+        renderRelances();
+        updateFilterCounts();
+        window.updateRelanceCounter();
+    }
+
+    async function dismissRelance(id, leadType) {
+        const table = leadType === 'seller' ? 'sellers' : 'buyers';
+        const { error } = await supabaseClient
+            .from(table)
+            .update({ reminder: null })
+            .eq('id', id);
+
+        if (error) {
+            console.error('[Relance] Erreur dismiss:', error);
+            return;
+        }
+
+        // Retirer de la liste locale
+        allRelances = allRelances.filter(r => !(r.id === id && r.leadType === leadType));
+        renderRelances();
+        updateFilterCounts();
+        window.updateRelanceCounter();
+    }
+
     // ===== NAVIGATE TO LEAD =====
     window.relanceWidget = {
+        snooze: snoozeRelance,
+        dismiss: dismissRelance,
         goToLead: function (id, leadType) {
             const currentPage = window.location.pathname.split('/').pop() || 'index.html';
             const targetPage = leadType === 'seller' ? 'index.html' : 'acquereurs.html';
