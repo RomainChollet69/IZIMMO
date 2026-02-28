@@ -3490,12 +3490,12 @@
             let actions = '';
             if (visit.status === 'planifiee') {
                 actions = `<div class="visit-card-actions">
-                    <button class="visit-action-done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">✅ Effectuée</button>
-                    <button class="visit-action-cancel" onclick="event.stopPropagation();cancelMatchVisit('${visit.id}')">❌ Annuler</button>
+                    <button type="button" class="visit-action-done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">✅ Effectuée</button>
+                    <button type="button" class="visit-action-cancel" onclick="event.stopPropagation();cancelMatchVisit('${visit.id}')">❌ Annuler</button>
                 </div>`;
             } else if (visit.status === 'effectuee' && !visit.feedback_rating) {
                 actions = `<div class="visit-card-actions">
-                    <button class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">📝 Donner un retour</button>
+                    <button type="button" class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">📝 Donner un retour</button>
                 </div>`;
             }
 
@@ -3509,7 +3509,7 @@
                 ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
                 ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
                 ${actions}
-                <button class="visit-delete-btn-match" onclick="event.stopPropagation();confirmDeleteMatchVisit('${visit.id}')" title="Supprimer">🗑️</button>
+                <button type="button" class="visit-delete-btn-match" onclick="event.stopPropagation();confirmDeleteMatchVisit('${visit.id}')" title="Supprimer">🗑️</button>
             </div>`;
         }
 
