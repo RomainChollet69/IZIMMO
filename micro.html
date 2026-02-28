@@ -1013,30 +1013,47 @@
         </div>
 
         <!-- Exemples (visible au démarrage, masqué après 1ère dictée) -->
+        <!-- Contenu dynamique selon ?context=sellers|buyers (voir script ci-dessous) -->
         <div class="examples-zone" id="examplesZone">
             <p class="examples-title">Exemples de ce que vous pouvez dire :</p>
             <div class="examples-content">
                 <img src="img/Leon.png" alt="Léon" class="examples-leon" onerror="this.style.display='none'">
-                <div class="examples-list">
-                    <div class="example-item">
-                        <span class="example-emoji">📧</span>
-                        <span class="example-text">"J'ai envoyé l'estimation à Nicolas"</span>
-                    </div>
-                    <div class="example-item">
-                        <span class="example-emoji">📞</span>
-                        <span class="example-text">"J'ai rappelé Mme Ferreira, elle hésite"</span>
-                    </div>
-                    <div class="example-item">
-                        <span class="example-emoji">🏠</span>
-                        <span class="example-text">"Visite faite chez Dupont"</span>
-                    </div>
-                    <div class="example-item">
-                        <span class="example-emoji">✍️</span>
-                        <span class="example-text">"Coralie a signé le mandat"</span>
-                    </div>
-                </div>
+                <div class="examples-list" id="examplesList"></div>
             </div>
         </div>
+        <script>
+        (function() {
+            const EXAMPLES = {
+                sellers: [
+                    { emoji: '🏠', text: '"Nouveau lead : M. Martin, T4 Lyon 3e, 350 000€"' },
+                    { emoji: '📧', text: '"J\'ai envoyé l\'estimation à Nicolas"' },
+                    { emoji: '📞', text: '"J\'ai rappelé Mme Ferreira, elle hésite encore"' },
+                    { emoji: '✍️', text: '"Coralie a signé le mandat"' },
+                    { emoji: '📋', text: '"RDV pris chez Dupont mardi prochain"' },
+                ],
+                buyers: [
+                    { emoji: '🔑', text: '"Nouvel acquéreur : Mme Lopez, 3 pièces Lyon 6e, budget 280k"' },
+                    { emoji: '🏡', text: '"Visite faite chez Dupont avec les Lopez"' },
+                    { emoji: '📞', text: '"Les Martin hésitent, trop de travaux"' },
+                    { emoji: '💰', text: '"Offre des Durand à 310 000€ sur le bien de Nicolas"' },
+                    { emoji: '❌', text: '"M. Petit abandonne ses recherches"' },
+                ],
+                default: [
+                    { emoji: '📧', text: '"J\'ai envoyé l\'estimation à Nicolas"' },
+                    { emoji: '📞', text: '"J\'ai rappelé Mme Ferreira, elle hésite"' },
+                    { emoji: '🏠', text: '"Visite faite chez Dupont"' },
+                    { emoji: '✍️', text: '"Coralie a signé le mandat"' },
+                ]
+            };
+            const ctx = new URLSearchParams(window.location.search).get('context');
+            const items = EXAMPLES[ctx] || EXAMPLES.default;
+            const list = document.getElementById('examplesList');
+            list.innerHTML = items.map(e =>
+                '<div class="example-item"><span class="example-emoji">' + e.emoji +
+                '</span><span class="example-text">' + e.text + '</span></div>'
+            ).join('');
+        })();
+        </script>
 
         <!-- Result area -->
         <div class="result-area">
