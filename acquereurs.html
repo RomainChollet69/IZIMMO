@@ -2040,6 +2040,7 @@
         .visit-card-feedback { font-size: 12px; margin-top: 2px; }
         .visit-card-price { font-size: 12px; color: #78909C; }
         .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 2px; max-height: 40px; overflow: hidden; }
+        .visit-card-decision { font-size: 12px; font-weight: 600; margin-top: 2px; }
         .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
         .visit-action-done, .visit-action-cancel, .visit-action-feedback { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
         .visit-action-done { background: #E8F5E9; color: #2E7D32; }
@@ -3418,6 +3419,13 @@
             un_peu_eleve: '⚠️ Un peu élevé',
             trop_eleve: '🚫 Trop élevé'
         };
+        const DECISION_LABELS = {
+            en_attente:    { emoji: '⏳', label: 'En attente', color: '#78909C' },
+            interesse:     { emoji: '👍', label: 'Intéressé', color: '#2196F3' },
+            contre_visite: { emoji: '🔄', label: 'Contre-visite', color: '#FF9800' },
+            offre:         { emoji: '🎉', label: 'Offre', color: '#4CAF50' },
+            refus:         { emoji: '👎', label: 'Refus', color: '#F44336' }
+        };
 
         async function loadMatchingVisits(buyerId) {
             const container = document.getElementById('visitMatchList');
@@ -3487,15 +3495,19 @@
             const fb = visit.feedback_rating ? FEEDBACK_LABELS[visit.feedback_rating] : null;
             const pp = visit.price_perception ? PRICE_LABELS[visit.price_perception] : null;
 
+            const dec = visit.buyer_decision && visit.buyer_decision !== 'en_attente'
+                ? DECISION_LABELS[visit.buyer_decision] : null;
+
             let actions = '';
             if (visit.status === 'planifiee') {
                 actions = `<div class="visit-card-actions">
                     <button type="button" class="visit-action-done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">✅ Effectuée</button>
                     <button type="button" class="visit-action-cancel" onclick="event.stopPropagation();cancelMatchVisit('${visit.id}')">❌ Annuler</button>
                 </div>`;
-            } else if (visit.status === 'effectuee' && !visit.feedback_rating) {
+            } else if (visit.status === 'effectuee') {
+                const btnLabel = visit.feedback_rating ? '✏️ Modifier le retour' : '📝 Donner un retour';
                 actions = `<div class="visit-card-actions">
-                    <button type="button" class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">📝 Donner un retour</button>
+                    <button type="button" class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
                 </div>`;
             }
 
@@ -3507,6 +3519,7 @@
                 <div class="visit-card-person">${escapeHtml(sellerInfo)}</div>
                 ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
                 ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
+                ${dec ? `<div class="visit-card-decision" style="color:${dec.color}">${dec.emoji} ${dec.label}</div>` : ''}
                 ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
                 ${actions}
                 <button type="button" class="visit-delete-btn-match" onclick="event.stopPropagation();confirmDeleteMatchVisit('${visit.id}')" title="Supprimer">🗑️</button>
@@ -3691,6 +3704,13 @@
             const old = document.getElementById('feedbackModal');
             if (old) old.remove();
 
+            // Pré-remplissage si feedback existant
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            const er = visit?.feedback_rating || '';
+            const ep = visit?.price_perception || '';
+            const ed = visit?.buyer_decision || '';
+            const en = visit?.notes || '';
+
             const modal = document.createElement('div');
             modal.id = 'feedbackModal';
             modal.className = 'reject-modal-overlay';
@@ -3700,23 +3720,33 @@
                     <div class="feedback-section">
                         <div class="feedback-label">Ressenti global</div>
                         <div class="feedback-chips" id="feedbackRatingChips">
-                            <span class="feedback-chip" data-value="coup_de_coeur">😍 Coup de coeur</span>
-                            <span class="feedback-chip" data-value="interessant">😊 Intéressant</span>
-                            <span class="feedback-chip" data-value="pas_convaincu">😕 Pas convaincu</span>
-                            <span class="feedback-chip" data-value="pas_du_tout">😞 Pas du tout</span>
+                            <span class="feedback-chip${er === 'coup_de_coeur' ? ' active' : ''}" data-value="coup_de_coeur">😍 Coup de coeur</span>
+                            <span class="feedback-chip${er === 'interessant' ? ' active' : ''}" data-value="interessant">😊 Intéressant</span>
+                            <span class="feedback-chip${er === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
+                            <span class="feedback-chip${er === 'pas_du_tout' ? ' active' : ''}" data-value="pas_du_tout">😞 Pas du tout</span>
                         </div>
                     </div>
                     <div class="feedback-section">
                         <div class="feedback-label">Perception du prix</div>
                         <div class="feedback-chips" id="feedbackPriceChips">
-                            <span class="feedback-chip" data-value="adapte">✅ Adapté</span>
-                            <span class="feedback-chip" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
-                            <span class="feedback-chip" data-value="trop_eleve">🚫 Trop élevé</span>
+                            <span class="feedback-chip${ep === 'adapte' ? ' active' : ''}" data-value="adapte">✅ Adapté</span>
+                            <span class="feedback-chip${ep === 'un_peu_eleve' ? ' active' : ''}" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
+                            <span class="feedback-chip${ep === 'trop_eleve' ? ' active' : ''}" data-value="trop_eleve">🚫 Trop élevé</span>
+                        </div>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Décision acquéreur</div>
+                        <div class="feedback-chips" id="feedbackDecisionChips">
+                            <span class="feedback-chip${ed === 'en_attente' ? ' active' : ''}" data-value="en_attente">⏳ En attente</span>
+                            <span class="feedback-chip${ed === 'interesse' ? ' active' : ''}" data-value="interesse">👍 Intéressé</span>
+                            <span class="feedback-chip${ed === 'contre_visite' ? ' active' : ''}" data-value="contre_visite">🔄 Contre-visite</span>
+                            <span class="feedback-chip${ed === 'offre' ? ' active' : ''}" data-value="offre">🎉 Offre</span>
+                            <span class="feedback-chip${ed === 'refus' ? ' active' : ''}" data-value="refus">👎 Refus</span>
                         </div>
                     </div>
                     <div class="feedback-section">
                         <div class="feedback-label">Notes</div>
-                        <textarea class="feedback-notes" id="feedbackNotes" rows="2" placeholder="Observations de l'acquéreur..."></textarea>
+                        <textarea class="feedback-notes" id="feedbackNotes" rows="2" placeholder="Observations de l'acquéreur...">${escapeHtml(en)}</textarea>
                     </div>
                     <div class="feedback-actions">
                         <button class="feedback-save-btn" onclick="saveFeedback('${visitId}')">Enregistrer</button>
@@ -3745,6 +3775,7 @@
         async function saveFeedback(visitId) {
             const ratingChip = document.querySelector('#feedbackRatingChips .feedback-chip.active');
             const priceChip = document.querySelector('#feedbackPriceChips .feedback-chip.active');
+            const decisionChip = document.querySelector('#feedbackDecisionChips .feedback-chip.active');
             const notes = document.getElementById('feedbackNotes').value.trim();
 
             if (!ratingChip) { alert('Sélectionnez un ressenti.'); return; }
@@ -3752,9 +3783,10 @@
             const updates = {
                 feedback_rating: ratingChip.dataset.value,
                 price_perception: priceChip ? priceChip.dataset.value : null,
+                buyer_decision: decisionChip ? decisionChip.dataset.value : null,
+                notes: notes || null,
                 updated_at: new Date().toISOString()
             };
-            if (notes) updates.notes = notes;
 
             const userId = await getCurrentUserId();
             const { error } = await supabaseClient.from('visits')
