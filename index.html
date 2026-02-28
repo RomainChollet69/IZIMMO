@@ -3222,7 +3222,7 @@
         /* FAB Léon */
         .leon-fab {
             position: fixed;
-            bottom: 24px;
+            bottom: 80px;
             left: 24px;
             width: 44px;
             height: 44px;
@@ -3567,10 +3567,160 @@
             gap: 4px;
         }
         .briefing-btn-header:hover { background: #f8fafc; color: #334155; border-color: #cbd5e1; }
+        /* === Desktop Bottom Bar === */
+        .desktop-bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: #FFFFFF;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9985;
+            padding: 0 32px;
+        }
+        .desktop-bottom-bar-inner {
+            max-width: 1400px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+        }
+        .bottom-search {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #F9FAFB;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 10px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .bottom-search:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+        .bottom-search .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            background: transparent;
+            color: #1F2937;
+            font-family: 'Inter', sans-serif;
+        }
+        .bottom-search .search-input::placeholder { color: #9CA3AF; }
+        .bottom-micro-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: -16px;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .bottom-micro-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 6px 24px rgba(108, 76, 200, 0.5);
+        }
+        .bottom-todo-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: 12px;
+            background: #F9FAFB;
+            border: 1.5px solid #E5E7EB;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            position: relative;
+            transition: border-color 0.2s;
+            flex-shrink: 0;
+        }
+        .bottom-todo-btn:hover { border-color: #667eea; }
+        .bottom-todo-badge {
+            background: #FF4757;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+        }
+        /* Modale Micro (iframe) */
+        .micro-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .micro-modal-overlay.visible { display: flex; }
+        .micro-modal {
+            width: 90vw;
+            max-width: 600px;
+            height: 85vh;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .micro-modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 10001;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.06);
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .micro-modal-close:hover { background: rgba(0,0,0,0.12); }
+        .micro-modal iframe { width: 100%; height: 100%; border: none; }
+        @media (max-width: 768px) {
+            .desktop-bottom-bar { display: none; }
+            .micro-modal-overlay { display: none !important; }
+        }
+        @media (min-width: 769px) {
+            body { padding-bottom: 80px; }
+        }
         /* Léon flottant — bas gauche, desktop uniquement */
         .leon-floating {
             position: fixed;
-            bottom: 20px;
+            bottom: 80px;
             left: 20px;
             width: 60px;
             height: auto;
@@ -3619,9 +3769,6 @@
                 <a href="social.html" class="nav-tab">
                     <i class="fa-solid fa-share-nodes"></i> Social
                 </a>
-                <a href="micro.html" class="nav-tab">
-                    <i class="fa-solid fa-microphone"></i> Micro
-                </a>
             </nav>
 
             <!-- Zone droite : Actions -->
@@ -3666,15 +3813,6 @@
         </div>
     </div>
 
-    <!-- Barre de recherche -->
-    <div class="search-toolbar">
-        <div class="search-toolbar-inner">
-            <i class="fa-solid fa-magnifying-glass search-icon"></i>
-            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un lead (nom, ville, téléphone…)">
-            <span class="search-result-count" id="searchResultCount" style="display:none;"></span>
-            <button class="search-clear" id="searchClear" style="display:none;">✕</button>
-        </div>
-    </div>
 
     <!-- Mobile Tab Bar (card deck) -->
     <div class="mobile-tabs" id="mobileTabs">
@@ -4710,6 +4848,10 @@
             const seller = sellers.find(s => s.id === editId);
             if (!seller) { container.innerHTML = '<div class="match-empty">Vendeur introuvable</div>'; return; }
 
+            // Visites uniquement si le bien est sous mandat ou off-market
+            const canPlanVisits = seller.status === 'mandate' || seller.status === 'off_market';
+            document.getElementById('visitsMatchSection').style.display = canPlanVisits ? '' : 'none';
+
             const allMatches = buyers
                 .map(b => ({ buyer: b, ...calculateMatchScore(seller, b) }))
                 .filter(m => !m.eliminated && m.percent >= 50)
@@ -4727,7 +4869,7 @@
             let html = '';
             if (matches.length > 0) {
                 html += `<div data-match-count style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>`;
-                html += `<div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer', { sellerId: seller.id })).join('')}</div>`;
+                html += `<div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer', { sellerId: seller.id, canPlanVisits })).join('')}</div>`;
             } else {
                 html += '<div class="match-empty">Tous les acquéreurs ont été écartés</div>';
             }
@@ -4774,7 +4916,9 @@
                 actionBtn = `<button class="match-restore-btn" onclick="event.stopPropagation();restoreMatch('${rejId}')">Restaurer</button>`;
             } else if (sellerId && type === 'buyer') {
                 actionBtn = `<button class="match-card-reject-btn" onclick="event.stopPropagation();event.preventDefault();rejectMatch('${sellerId}','${person.id}',this)" title="Écarter ce match">&times;</button>`;
-                visitBtn = `<button class="match-visit-btn" onclick="event.stopPropagation();planVisitFromMatch('${sellerId}','${person.id}','${escapeHtml(name)}')" title="Planifier une visite">📅</button>`;
+                if (opts.canPlanVisits) {
+                    visitBtn = `<button class="match-visit-btn" onclick="event.stopPropagation();planVisitFromMatch('${sellerId}','${person.id}','${escapeHtml(name)}')" title="Planifier une visite">📅</button>`;
+                }
             }
 
             const cardClass = 'match-card' + (opts.rejected ? ' rejected' : '');
@@ -7193,7 +7337,7 @@
             });
 
             // Afficher le compteur de résultats
-            const resultCount = document.getElementById('searchResultCount');
+            const resultCount = document.getElementById('bottomSearchCount');
             if (resultCount) {
                 if (term) {
                     resultCount.textContent = matchCount + ' / ' + totalCount;
@@ -7207,8 +7351,8 @@
         }
 
         function setupSearchToolbar() {
-            const searchInput = document.getElementById('searchInput');
-            const searchClear = document.getElementById('searchClear');
+            const searchInput = document.getElementById('bottomSearchInput');
+            const searchClear = document.getElementById('bottomSearchClear');
             if (!searchInput || !searchClear) return;
 
             searchInput.addEventListener('input', () => {
@@ -7245,7 +7389,7 @@
         }
 
         function updateCounts() {
-            const searchActive = document.getElementById('searchInput') && document.getElementById('searchInput').value.trim() !== '';
+            const searchActive = document.getElementById('bottomSearchInput') && document.getElementById('bottomSearchInput').value.trim() !== '';
             const statuses = ['hot', 'warm', 'cold', 'off_market', 'mandate', 'competitor', 'sold', 'lost'];
             statuses.forEach(status => {
                 let count;
@@ -10309,6 +10453,61 @@
     <script src="js/relance-widget.js"></script>
     <script src="js/todo-widget.js"></script>
     <script src="js/onboarding.js"></script>
+
+    <!-- Desktop Bottom Bar -->
+    <div class="desktop-bottom-bar">
+        <div class="desktop-bottom-bar-inner">
+            <!-- Recherche à gauche -->
+            <div class="bottom-search">
+                <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
+                <input type="text" id="bottomSearchInput" class="search-input"
+                       placeholder="Rechercher un lead (nom, ville, téléphone…)">
+                <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
+                <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
+            </div>
+            <!-- Micro central — hero -->
+            <button type="button" class="bottom-micro-btn" onclick="openMicroModal()" title="Dicter un lead">
+                <i class="fa-solid fa-microphone"></i>
+            </button>
+            <!-- Todo à droite -->
+            <button type="button" class="bottom-todo-btn" id="bottomTodoBtn"
+                    onclick="window.todoToggle && window.todoToggle()" title="Ma Todo List">
+                <span>✅</span>
+                <span>To Do</span>
+                <span class="bottom-todo-badge" id="bottomTodoBadge" style="display:none;">0</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Modale Micro (iframe) -->
+    <div class="micro-modal-overlay" id="microModalOverlay">
+        <div class="micro-modal">
+            <button type="button" class="micro-modal-close" onclick="closeMicroModal()">✕</button>
+            <iframe id="microModalIframe" src="" allow="microphone"></iframe>
+        </div>
+    </div>
+
+    <script>
+        function openMicroModal() {
+            const overlay = document.getElementById('microModalOverlay');
+            const iframe = document.getElementById('microModalIframe');
+            if (!iframe.src || iframe.src === window.location.href) {
+                iframe.src = 'micro.html';
+            }
+            overlay.classList.add('visible');
+        }
+        function closeMicroModal() {
+            document.getElementById('microModalOverlay').classList.remove('visible');
+        }
+        document.getElementById('microModalOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closeMicroModal();
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.getElementById('microModalOverlay').classList.contains('visible')) {
+                closeMicroModal();
+            }
+        });
+    </script>
 
     <!-- Bottom Mobile Tab Bar -->
     <nav class="mobile-bottom-bar">
