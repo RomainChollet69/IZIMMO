@@ -2688,6 +2688,7 @@
                                 <option value="">Sélectionnez</option>
                                 <option value="appartement">Appartement</option>
                                 <option value="maison">Maison</option>
+                                <option value="appartement_ou_maison">Appart. ou Maison</option>
                                 <option value="terrain">Terrain</option>
                                 <option value="immeuble">Immeuble</option>
                             </select>
@@ -2779,12 +2780,19 @@
                     </div>
                 </div>
 
-                <!-- Section Notes -->
+                <!-- Section Éléments rédhibitoires + Notes -->
                 <div class="form-section">
-                    <div class="form-section-title">📝 Notes</div>
+                    <div class="form-section-title">🚫 Éléments rédhibitoires</div>
                     <div class="form-group">
-                        <label class="form-label">Éléments rédhibitoires</label>
-                        <textarea class="form-textarea" id="dealbreakers" placeholder="Pas de rez-de-chaussée, pas proche voie ferrée..."></textarea>
+                        <div class="criteria-toggles" id="dealbreakersChips">
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="rdc"><span>🏢 RDC</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="mitoyen"><span>🏘️ Mitoyen</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="bruit"><span>🔊 Bruit</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="etage_eleve"><span>🪜 Étage élevé</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="vis_a_vis"><span>👀 Vis-à-vis</span></label>
+                            <label class="criteria-toggle"><input type="checkbox" name="dealbreaker" value="nord"><span>🧭 Expo Nord</span></label>
+                        </div>
+                        <input type="text" class="form-input" id="dealbreakersOther" placeholder="Autre : précisez..." style="margin-top:6px;font-size:13px">
                     </div>
                     <!-- Notes horodatées -->
                     <div class="notes-section">
@@ -3112,7 +3120,9 @@
                 const st = seller.property_type.toLowerCase(), bt = buyer.property_type.toLowerCase();
                 const isHouse = t => ['maison'].includes(t);
                 const isApt = t => ['appartement'].includes(t);
-                if ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st))) {
+                const isBoth = t => t === 'appartement_ou_maison';
+                // Pas d'élimination si l'acquéreur cherche les deux types
+                if (!isBoth(bt) && ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st)))) {
                     return { ...elim, reason: 'Type de bien incompatible' };
                 }
             }
@@ -3143,7 +3153,9 @@
 
             if (seller.property_type && buyer.property_type) {
                 maxScore += 15;
-                if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                const btl = buyer.property_type.toLowerCase(), stl = seller.property_type.toLowerCase();
+                if (btl === stl) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                else if (btl === 'appartement_ou_maison' && (stl === 'appartement' || stl === 'maison')) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
                 else { score += 8; details.push({ label: 'Type', score: 8, max: 15 }); }
             }
 
@@ -3251,6 +3263,7 @@
                         <span class="match-reject-chip" data-reason="localisation">📍 Localisation</span>
                         <span class="match-reject-chip" data-reason="surface">📐 Surface</span>
                         <span class="match-reject-chip" data-reason="type_bien">🏠 Type de bien</span>
+                        <span class="match-reject-chip" data-reason="travaux">🔨 Travaux</span>
                         <span class="match-reject-chip" data-reason="autre">❓ Autre</span>
                     </div>
                 </div>
@@ -3332,7 +3345,12 @@
 
             // Charger les visites pour cet acquéreur
             const editId = document.getElementById('submitBtn').dataset.editId;
-            loadMatchingVisits(editId);
+            await loadMatchingVisits(editId);
+
+            // Biens déjà visités (hors annulées) → exclus du matching
+            const visitedSellerIds = new Set(
+                currentMatchVisits.filter(v => v.status !== 'annulee').map(v => v.seller_id)
+            );
 
             matchSellers = null; // Force refresh
             const allSellers = await loadSellersForMatching();
@@ -3341,7 +3359,7 @@
             if (!buyer) { container.innerHTML = '<div class="match-empty">Acquéreur introuvable</div>'; return; }
 
             const allMatches = allSellers
-                .filter(s => s.status !== 'sold' && s.status !== 'lost')
+                .filter(s => s.status !== 'sold' && s.status !== 'lost' && !visitedSellerIds.has(s.id))
                 .map(s => ({ seller: s, ...calculateMatchScore(s, buyer) }))
                 .filter(m => !m.eliminated && m.percent >= 50)
                 .sort((a, b) => b.percent - a.percent);
@@ -4452,7 +4470,10 @@
                     });
                 }
 
-                if (fields.dealbreakers) document.getElementById('dealbreakers').value = fields.dealbreakers;
+                if (fields.dealbreakers) {
+                    // L'IA retourne du texte libre — le mettre dans "autre"
+                    document.getElementById('dealbreakersOther').value = fields.dealbreakers;
+                }
 
 
                 // Bank approval select
@@ -5208,7 +5229,20 @@
             document.getElementById('budgetMax').value = buyer.budget_max || '';
             document.getElementById('bankApproval').value = buyer.bank_approval || '';
             document.getElementById('timeline').value = buyer.timeline || '';
-            document.getElementById('dealbreakers').value = buyer.dealbreakers || '';
+            // Parser dealbreakers : "rdc,bruit,autre:texte libre" → cocher chips + remplir autre
+            document.querySelectorAll('input[name="dealbreaker"]').forEach(cb => cb.checked = false);
+            document.getElementById('dealbreakersOther').value = '';
+            if (buyer.dealbreakers) {
+                const parts = buyer.dealbreakers.split(',').map(s => s.trim());
+                parts.forEach(p => {
+                    if (p.startsWith('autre:')) {
+                        document.getElementById('dealbreakersOther').value = p.slice(6).trim();
+                    } else {
+                        const cb = document.querySelector(`input[name="dealbreaker"][value="${p}"]`);
+                        if (cb) cb.checked = true;
+                    }
+                });
+            }
             document.getElementById('contactDate').value = buyer.contact_date || '';
             document.getElementById('reminder').value = buyer.reminder || '';
             document.getElementById('status').value = buyer.status || 'new';
@@ -5293,7 +5327,12 @@
                 is_seller: document.getElementById('isSeller').checked,
                 seller_address: document.getElementById('sellerAddress').value.trim() || null,
                 seller_price: document.getElementById('sellerPrice').value.trim() || null,
-                dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
+                dealbreakers: (() => {
+                    const tags = Array.from(document.querySelectorAll('input[name="dealbreaker"]:checked')).map(cb => cb.value);
+                    const other = document.getElementById('dealbreakersOther').value.trim();
+                    if (other) tags.push('autre:' + other);
+                    return tags.length > 0 ? tags.join(',') : null;
+                })(),
                 contact_date: document.getElementById('contactDate').value || null,
                 reminder: document.getElementById('reminder').value || null,
                 status: document.getElementById('status').value,
@@ -6353,8 +6392,8 @@
                     });
                 }
 
-                // Dealbreakers
-                if (fields.dealbreakers) { setFieldValue('dealbreakers', fields.dealbreakers); }
+                // Dealbreakers — texte IA → champ "autre"
+                if (fields.dealbreakers) { document.getElementById('dealbreakersOther').value = fields.dealbreakers; }
 
                 // Notes : plateforme + infos complémentaires
                 const noteParts = [];
