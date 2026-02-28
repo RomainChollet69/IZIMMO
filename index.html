@@ -331,6 +331,54 @@
             transform: translateY(-1px);
         }
 
+        /* ===== SEARCH TOOLBAR ===== */
+        .search-toolbar {
+            padding: 0 20px 16px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .search-toolbar-inner {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 10px 16px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .search-toolbar-inner:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .search-icon { color: #9CA3AF; margin-right: 10px; font-size: 14px; }
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            font-family: 'Inter', sans-serif;
+            background: transparent;
+            color: #1F2937;
+        }
+        .search-input::placeholder { color: #9CA3AF; }
+        .search-clear {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            color: #9CA3AF;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+        .search-clear:hover { color: #374151; }
+        .search-result-count {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-right: 8px;
+            white-space: nowrap;
+        }
+
         /* ===== PIPELINE ===== */
         .pipeline {
             display: flex;
@@ -2774,6 +2822,8 @@
         .visit-card-price { font-size: 12px; color: #78909C; }
         .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 2px; max-height: 40px; overflow: hidden; }
         .visit-card-decision { font-size: 12px; font-weight: 600; margin-top: 2px; }
+        .visit-card-points { font-size: 11px; margin-top: 2px; line-height: 1.4; }
+        .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
         .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
         .visit-action-done, .visit-action-cancel, .visit-action-feedback { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
         .visit-action-done { background: #E8F5E9; color: #2E7D32; }
@@ -3598,6 +3648,16 @@
                 <!-- Bouton + Lead -->
                 <button class="add-btn" id="addLeadBtn">+ Lead</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Barre de recherche -->
+    <div class="search-toolbar">
+        <div class="search-toolbar-inner">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un lead (nom, ville, téléphone…)">
+            <span class="search-result-count" id="searchResultCount" style="display:none;"></span>
+            <button class="search-clear" id="searchClear" style="display:none;">✕</button>
         </div>
     </div>
 
@@ -4973,6 +5033,20 @@
                 <div class="visit-card-person">${escapeHtml(buyerName)}</div>
                 ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
                 ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
+                ${(() => {
+                    const pos = Array.isArray(visit.positive_points) && visit.positive_points.length > 0
+                        ? visit.positive_points.map(v => { const p = POSITIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+                        : '';
+                    const neg = Array.isArray(visit.negative_points) && visit.negative_points.length > 0
+                        ? visit.negative_points.map(v => { const p = NEGATIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+                        : '';
+                    const nh = visit.neighborhood_feel ? (NEIGHBORHOOD_LABELS[visit.neighborhood_feel] || '') : '';
+                    let html = '';
+                    if (pos) html += '<div class="visit-card-points" style="color:#2E7D32">' + pos + '</div>';
+                    if (neg) html += '<div class="visit-card-points" style="color:#C62828">' + neg + '</div>';
+                    if (nh) html += '<div class="visit-card-points" style="color:#546E7A">' + nh + '</div>';
+                    return html;
+                })()}
                 ${dec ? `<div class="visit-card-decision" style="color:${dec.color}">${dec.emoji} ${dec.label}</div>` : ''}
                 ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
                 ${actions}
@@ -5142,12 +5216,22 @@
             const ep = visit?.price_perception || '';
             const ed = visit?.buyer_decision || '';
             const en = visit?.notes || '';
+            const ePosArr = visit?.positive_points || [];
+            const eNegArr = visit?.negative_points || [];
+            const eNh = visit?.neighborhood_feel || '';
+
+            const posChips = POSITIVE_POINTS.map(p =>
+                `<span class="feedback-chip feedback-chip-multi${ePosArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
+            ).join('');
+            const negChips = NEGATIVE_POINTS.map(p =>
+                `<span class="feedback-chip feedback-chip-multi${eNegArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
+            ).join('');
 
             const modal = document.createElement('div');
             modal.id = 'feedbackModal';
             modal.className = 'reject-modal-overlay';
             modal.innerHTML = `
-                <div class="feedback-modal-card">
+                <div class="feedback-modal-card" style="max-width:440px;max-height:90vh;overflow-y:auto">
                     <div class="feedback-title">Retour de visite</div>
                     <div class="feedback-section">
                         <div class="feedback-label">Ressenti global</div>
@@ -5159,11 +5243,27 @@
                         </div>
                     </div>
                     <div class="feedback-section">
+                        <div class="feedback-label">Points positifs</div>
+                        <div class="feedback-chips feedback-multi" id="feedbackPosChips">${posChips}</div>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Points négatifs</div>
+                        <div class="feedback-chips feedback-multi" id="feedbackNegChips">${negChips}</div>
+                    </div>
+                    <div class="feedback-section">
                         <div class="feedback-label">Perception du prix</div>
                         <div class="feedback-chips" id="feedbackPriceChips">
                             <span class="feedback-chip${ep === 'adapte' ? ' active' : ''}" data-value="adapte">✅ Adapté</span>
                             <span class="feedback-chip${ep === 'un_peu_eleve' ? ' active' : ''}" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
                             <span class="feedback-chip${ep === 'trop_eleve' ? ' active' : ''}" data-value="trop_eleve">🚫 Trop élevé</span>
+                        </div>
+                    </div>
+                    <div class="feedback-section">
+                        <div class="feedback-label">Quartier</div>
+                        <div class="feedback-chips" id="feedbackNeighborhoodChips">
+                            <span class="feedback-chip${eNh === 'connait_bien' ? ' active' : ''}" data-value="connait_bien">🏘️ Connaît bien</span>
+                            <span class="feedback-chip${eNh === 'decouvre' ? ' active' : ''}" data-value="decouvre">🗺️ Découvre</span>
+                            <span class="feedback-chip${eNh === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
                         </div>
                     </div>
                     <div class="feedback-section">
@@ -5191,10 +5291,17 @@
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) closeFeedbackModal();
             });
-            modal.querySelectorAll('.feedback-chip').forEach(chip => {
+            // Chips mono-sélection (ressenti, prix, quartier, décision)
+            modal.querySelectorAll('.feedback-chip:not(.feedback-chip-multi)').forEach(chip => {
                 chip.addEventListener('click', function() {
                     this.parentElement.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
                     this.classList.add('active');
+                });
+            });
+            // Chips multi-sélection (points +/-)
+            modal.querySelectorAll('.feedback-chip-multi').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    this.classList.toggle('active');
                 });
             });
         }
@@ -5208,6 +5315,9 @@
             const ratingChip = document.querySelector('#feedbackRatingChips .feedback-chip.active');
             const priceChip = document.querySelector('#feedbackPriceChips .feedback-chip.active');
             const decisionChip = document.querySelector('#feedbackDecisionChips .feedback-chip.active');
+            const neighborhoodChip = document.querySelector('#feedbackNeighborhoodChips .feedback-chip.active');
+            const posPoints = Array.from(document.querySelectorAll('#feedbackPosChips .feedback-chip.active')).map(c => c.dataset.value);
+            const negPoints = Array.from(document.querySelectorAll('#feedbackNegChips .feedback-chip.active')).map(c => c.dataset.value);
             const notes = document.getElementById('feedbackNotes').value.trim();
 
             if (!ratingChip) { alert('Sélectionnez un ressenti.'); return; }
@@ -5216,6 +5326,9 @@
                 feedback_rating: ratingChip.dataset.value,
                 price_perception: priceChip ? priceChip.dataset.value : null,
                 buyer_decision: decisionChip ? decisionChip.dataset.value : null,
+                positive_points: posPoints.length > 0 ? posPoints : null,
+                negative_points: negPoints.length > 0 ? negPoints : null,
+                neighborhood_feel: neighborhoodChip ? neighborhoodChip.dataset.value : null,
                 notes: notes || null,
                 updated_at: new Date().toISOString()
             };
@@ -7030,10 +7143,101 @@
             return card;
         }
 
+        // ===== RECHERCHE / FILTRE =====
+        function filterLeads(searchTerm) {
+            const term = searchTerm.toLowerCase().trim();
+            const cards = document.querySelectorAll('.pipeline .lead-card');
+            let matchCount = 0;
+            const totalCount = sellers.length;
+
+            cards.forEach(card => {
+                if (!term) {
+                    card.style.display = '';
+                    return;
+                }
+                const id = card.getAttribute('data-id');
+                const seller = sellers.find(s => s.id === id);
+                if (!seller) {
+                    // Card exemple (onboarding) — masquer pendant la recherche
+                    card.style.display = 'none';
+                    return;
+                }
+
+                const searchable = [
+                    seller.first_name, seller.last_name,
+                    seller.address, seller.phone, seller.email,
+                    seller.source, seller.referrer_name
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                const match = searchable.includes(term);
+                card.style.display = match ? '' : 'none';
+                if (match) matchCount++;
+            });
+
+            // Afficher le compteur de résultats
+            const resultCount = document.getElementById('searchResultCount');
+            if (resultCount) {
+                if (term) {
+                    resultCount.textContent = matchCount + ' / ' + totalCount;
+                    resultCount.style.display = '';
+                } else {
+                    resultCount.style.display = 'none';
+                }
+            }
+
+            updateCounts();
+        }
+
+        function setupSearchToolbar() {
+            const searchInput = document.getElementById('searchInput');
+            const searchClear = document.getElementById('searchClear');
+            if (!searchInput || !searchClear) return;
+
+            searchInput.addEventListener('input', () => {
+                const val = searchInput.value;
+                searchClear.style.display = val ? '' : 'none';
+                filterLeads(val);
+            });
+
+            searchClear.addEventListener('click', () => {
+                searchInput.value = '';
+                searchClear.style.display = 'none';
+                filterLeads('');
+                searchInput.focus();
+            });
+
+            // Escape pour vider la recherche
+            searchInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchInput.value = '';
+                    searchClear.style.display = 'none';
+                    filterLeads('');
+                    searchInput.blur();
+                }
+            });
+
+            // Cmd+K / Ctrl+K pour focus la recherche
+            document.addEventListener('keydown', (e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                    searchInput.select();
+                }
+            });
+        }
+
         function updateCounts() {
+            const searchActive = document.getElementById('searchInput') && document.getElementById('searchInput').value.trim() !== '';
             const statuses = ['hot', 'warm', 'cold', 'off_market', 'mandate', 'competitor', 'sold', 'lost'];
             statuses.forEach(status => {
-                const count = sellers.filter(s => s.status === status).length;
+                let count;
+                if (searchActive) {
+                    // Compter uniquement les cards visibles dans le DOM
+                    const container = document.getElementById(status + '-container');
+                    count = container ? container.querySelectorAll('.lead-card:not([style*="display: none"])').length : 0;
+                } else {
+                    count = sellers.filter(s => s.status === status).length;
+                }
                 const col = document.querySelector(`.column[data-status="${status}"] .count`);
                 if (col) col.textContent = count;
             });
@@ -9771,6 +9975,7 @@
                 console.error('[Pipeline] Erreur chargement sellers:', err);
             });
             setupDragAndDrop();
+            setupSearchToolbar();
             initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupFullNameAutocomplete('fullName', 'phone', 'email');
