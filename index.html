@@ -3722,19 +3722,31 @@
         /* Léon flottant — bas gauche, desktop uniquement */
         .leon-floating {
             position: fixed;
-            bottom: 36px;
+            bottom: 24px;
             left: 16px;
-            width: 48px;
-            height: auto;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #E5E7EB;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
             cursor: pointer;
             z-index: 9986;
-            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
-            transition: transform 0.2s ease;
-            opacity: 0.85;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .leon-floating img {
+            width: 44px;
+            height: 44px;
+            object-fit: cover;
+            pointer-events: none;
         }
         .leon-floating:hover {
             transform: scale(1.1);
-            opacity: 1;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.18);
         }
         @media (max-width: 480px) {
             .leon-floating { display: none; }
@@ -4417,7 +4429,9 @@
     </div>
 
     <!-- Léon flottant — ouvre le briefing (desktop uniquement) -->
-    <img src="img/Leon.png" alt="Léon" class="leon-floating" onclick="showBriefing()" title="Briefing du jour">
+    <div class="leon-floating" onclick="showBriefing()" title="Briefing du jour">
+        <img src="img/Leon.png" alt="Léon">
+    </div>
 
     <div id="leonOverlay" class="leon-overlay"></div>
     <div id="leonPopup" class="leon-popup" style="display:none"></div>
