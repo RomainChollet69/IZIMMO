@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-02-28c — Actions relances + fix arrondissements
+
+### Résumé
+Deux améliorations : (1) boutons d'action rapide dans le widget relances (repousser +7j / supprimer), (2) correction de l'ordinal français des arrondissements (1er au lieu de 1ème).
+
+### Modifications
+
+**`js/relance-widget.js`** :
+- CSS : `.relance-actions`, `.relance-action-btn` (hover desktop, toujours visible mobile)
+- HTML : boutons ⏰ (+7j) et ✅ (fait) sur chaque ligne
+- JS : `snoozeRelance()` et `dismissRelance()` — UPDATE DB + mise à jour locale
+- Constante `SNOOZE_DAYS = 7`
+
+**`index.html`** :
+- Fix `addArrondissement()` : helper `ordinal()` — 1er, 2e, 3e… (au lieu de 1ème, 2ème)
+
+### Fichiers modifiés
+- `js/relance-widget.js`
+- `index.html`
+- `docs/CHANGELOG.md`
+
+### Points d'attention
+- Les boutons relance mettent à jour la DB directement (pas de re-fetch, update local)
+
+---
+
 ## Session 2026-02-28b — Actions rapides dans le widget Relances (snooze/dismiss)
 
 ### Résumé

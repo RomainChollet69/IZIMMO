@@ -24,6 +24,7 @@ _(rien en cours)_
 
 ## Terminé
 
+- [x] Actions rapides widget relances (snooze +7j / dismiss) + fix arrondissements 1er/2e
 - [x] Date de RDV vendeur + auto-relance J+15 (appointment_date, badge vert, constante 15j)
 - [x] Fix CSS iOS WebKit pour card deck (préfixes -webkit-, suppression propriétés problématiques)
 - [x] Ajout dropdown déconnexion dans le header mobile (auth.js)
