@@ -3949,7 +3949,7 @@
             if (!userId) return null;
             updates.updated_at = new Date().toISOString();
             const { data, error } = await supabaseClient.from('buyers').update(updates).eq('id', id).eq('user_id', userId).select();
-            if (error) { console.error('Erreur mise à jour:', error); alert('Erreur lors de la mise à jour.'); return null; }
+            if (error) { console.error('Erreur mise à jour:', error, 'Data:', updates); alert('Erreur lors de la mise à jour : ' + (error.message || JSON.stringify(error))); return null; }
             return data[0];
         }
 
