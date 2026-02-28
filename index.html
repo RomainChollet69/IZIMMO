@@ -4477,7 +4477,8 @@
                 const st = seller.property_type.toLowerCase(), bt = buyer.property_type.toLowerCase();
                 const isHouse = t => ['maison'].includes(t);
                 const isApt = t => ['appartement'].includes(t);
-                if ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st))) {
+                const isBoth = t => t === 'appartement_ou_maison';
+                if (!isBoth(bt) && ((isHouse(bt) && isApt(st)) || (isApt(bt) && isHouse(st)))) {
                     return { ...elim, reason: 'Type de bien incompatible' };
                 }
             }
@@ -4510,7 +4511,9 @@
             // Type de bien (15pts)
             if (seller.property_type && buyer.property_type) {
                 maxScore += 15;
-                if (seller.property_type === buyer.property_type) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                const btl = buyer.property_type.toLowerCase(), stl = seller.property_type.toLowerCase();
+                if (btl === stl) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
+                else if (btl === 'appartement_ou_maison' && (stl === 'appartement' || stl === 'maison')) { score += 15; details.push({ label: 'Type', score: 15, max: 15 }); }
                 else { score += 8; details.push({ label: 'Type', score: 8, max: 15 }); }
             }
 
@@ -6861,17 +6864,18 @@
             if (!postalCode || !city) return city;
             const cityLower = city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const cp = postalCode.trim();
+            const ordinal = (n) => n === 1 ? '1er' : `${n}e`; // 1er, 2e, 3e...
             if (cityLower === 'paris' && cp.startsWith('75') && cp !== '75000') {
                 const arr = parseInt(cp.slice(3), 10); // 75008 → 8
-                if (arr >= 1 && arr <= 20) return `Paris ${arr}ème`;
+                if (arr >= 1 && arr <= 20) return `Paris ${ordinal(arr)}`;
             }
             if (cityLower === 'lyon' && cp.startsWith('690') && cp !== '69000') {
                 const arr = parseInt(cp.slice(4), 10); // 69003 → 3
-                if (arr >= 1 && arr <= 9) return `Lyon ${arr}ème`;
+                if (arr >= 1 && arr <= 9) return `Lyon ${ordinal(arr)}`;
             }
             if (cityLower === 'marseille' && cp.startsWith('130') && cp !== '13000') {
                 const arr = parseInt(cp.slice(3), 10); // 13006 → 6
-                if (arr >= 1 && arr <= 16) return `Marseille ${arr}ème`;
+                if (arr >= 1 && arr <= 16) return `Marseille ${ordinal(arr)}`;
             }
             return city;
         }
