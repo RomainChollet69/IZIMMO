@@ -5234,6 +5234,7 @@
                 .eq('user_id', userId)
                 .order('visit_date', { ascending: false });
 
+            console.log('[Visits] Seller-side query:', { sellerId, userId, results: data?.length, error });
             if (error) { console.error('[Visits] Load error:', error); container.innerHTML = ''; return; }
             currentMatchVisits = data || [];
             renderMatchingVisits();

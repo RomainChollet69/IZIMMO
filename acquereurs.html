@@ -3768,6 +3768,8 @@
                 .eq('user_id', userId)
                 .order('visit_date', { ascending: false });
 
+            console.log('[Visits] Buyer-side query:', { buyerId, userId, results: data?.length, error });
+            if (data?.length > 0) console.log('[Visits] First visit seller_id:', data[0].seller_id);
             if (error) { console.error('[Visits] Load error:', error); container.innerHTML = ''; return; }
             currentMatchVisits = data || [];
             renderMatchingVisits();
