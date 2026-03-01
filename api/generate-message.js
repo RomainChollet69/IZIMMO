@@ -144,8 +144,15 @@ Rédige le message en français.`;
 
         if (!response.ok) {
             const errBody = await response.text();
-            console.error('Anthropic error:', response.status, errBody);
-            return res.status(502).json({ error: 'Generation failed' });
+            console.error('[GenerateMessage] Anthropic error:', response.status, errBody);
+            let detail = `Anthropic ${response.status}`;
+            try {
+                const errJson = JSON.parse(errBody);
+                detail = errJson.error?.message || detail;
+            } catch (_) {
+                detail = errBody.substring(0, 200) || detail;
+            }
+            return res.status(502).json({ error: 'Generation failed', detail });
         }
 
         const result = await response.json();

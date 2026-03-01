@@ -7090,13 +7090,15 @@
             const customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
 
             try {
+                console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'buyer' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
                     body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'buyer' })
                 });
-                const data = await resp.json();
-                if (!resp.ok) throw new Error(data.error || 'Erreur');
+                const data = await resp.json().catch(() => ({}));
+                console.log('[MsgIA] Response:', resp.status, data);
+                if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur');
 
                 output.value = data.message;
                 output.style.display = 'block';
