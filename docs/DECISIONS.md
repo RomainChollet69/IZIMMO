@@ -739,3 +739,26 @@
 - Pattern identique à `todo-widget.js` et `relance-widget.js` (cohérence)
 - Le compteur s'insère avant `.header-separator` — position cohérente sur toutes les pages
 - Les styles CSS sont encapsulés dans le module (pas de pollution du CSS global)
+
+---
+
+## D037 — Page d'accueil HOME comme cockpit (pas de landing directe sur le pipeline)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : L'utilisateur arrivait directement sur le pipeline vendeurs (index.html) sans vision globale des modules disponibles.
+
+**Décision** : Créer `home.html` comme point d'entrée principal avec 7 tuiles métiers. Tous les logos et redirections login pointent vers `home.html`.
+
+**Pourquoi** :
+- Donne une vision globale de l'écosystème Léon en 1 seconde
+- Réduit le temps de découverte des modules (social, assistant, paramètres…)
+- Sert de tableau de bord quotidien — le conseiller sait où aller dès l'ouverture
+- Prépare le terrain pour un contexte personnalisé futur (relances du jour, leads urgents)
+
+**Alternatives rejetées** :
+- **Dashboard chiffré** : Trop complexe pour la V1, les métriques ne sont pas encore consolidées
+- **Rester sur index.html** : L'app reste une "collection de pages" sans cohérence
+
+**Navigation** : Le logo sur toutes les pages ramène à `home.html`. Pas d'onglet "Accueil" dans la nav des autres pages (le logo suffit).

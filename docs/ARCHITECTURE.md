@@ -10,16 +10,17 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
+├── home.html                   # Page d'accueil / Cockpit — 7 tuiles métiers, recherche globale, bienvenue personnalisée
 ├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5 colonnes + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
-├── login.html                  # Page de connexion Google OAuth
+├── login.html                  # Page de connexion Google OAuth (redirige vers home.html)
 ├── landing.html                # Page marketing / vitrine
 ├── social.html                 # Moteur de contenu réseaux sociaux
 ├── parametres.html             # Page de paramètres utilisateur
 ├── micro.html                  # Enregistrement vocal + transcription (voice-first)
 ├── dvf.html                    # Visualiseur données DVF + DPE
-├── reset-password.html         # Réinitialisation mot de passe
+├── reset-password.html         # Réinitialisation mot de passe (redirige vers home.html)
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
 │
 ├── js/
@@ -55,7 +56,8 @@ IZIMMO/
 │   ├── 001_workflow_steps.sql  # Migration table workflow_steps + RLS + indexes
 │   ├── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
 │   ├── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
-│   └── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
+│   ├── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
+│   └── 011_sellers_rooms.sql   # ALTER TABLE : ajout champ rooms sur sellers (T1-T5+)
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
