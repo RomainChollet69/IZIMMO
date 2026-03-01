@@ -70,10 +70,13 @@
             position: sticky;
             top: 64px; /* Sous le header */
             z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
         .search-bar-section-inner {
             max-width: 600px;
-            margin: 0 auto;
+            flex: 1;
             position: relative;
             display: flex;
             align-items: center;
@@ -361,10 +364,10 @@
             background: white;
             color: #374151;
             border: 1.5px solid #E5E7EB;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 10px 20px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
             cursor: pointer;
             transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
@@ -3897,14 +3900,13 @@
                     <!-- Chargé dynamiquement par auth.js -->
                 </div>
 
-                <!-- Bouton + Lead -->
-                <button class="add-btn" id="addLeadBtn">+ Lead</button>
             </div>
         </div>
     </div>
 
     <!-- Search bar desktop (sous le header) -->
     <div class="search-bar-section">
+        <button class="add-btn" id="addLeadBtn">+ Lead</button>
         <div class="search-bar-section-inner">
             <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
             <input type="text" id="bottomSearchInput" class="search-input"
