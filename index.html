@@ -7328,6 +7328,7 @@
             const typeIcon = seller.property_type ? (typeEmojis[seller.property_type] || '') : '';
             const compactParts = [];
             if (typeIcon) compactParts.push(typeIcon);
+            if (seller.rooms) compactParts.push(seller.rooms);
             if (seller.surface) compactParts.push(formatSurface(seller.surface));
             const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
             if (price) compactParts.push(formatEuro(price));

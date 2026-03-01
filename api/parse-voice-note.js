@@ -88,7 +88,7 @@ Retourne UNIQUEMENT un JSON valide :
       "address": "adresse complète du bien si mentionnée, sinon null",
       "criteria": ["jardin", "parking", "cave", "balcon", "garage", "piscine", "ascenseur — uniquement ceux mentionnés"],
       "reminder_date": "YYYY-MM-DD — date de relance si mentionnée (utiliser la date du jour pour convertir 'demain', 'lundi', etc.), sinon null",
-      "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note (NE PAS inclure le numéro de téléphone ni les infos déjà dans les champs structurés)"
+      "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note. EXCLUSIONS STRICTES : NE JAMAIS inclure le numéro de téléphone, ni le type de bien, ni la surface, ni le budget, ni le nombre de pièces, ni la source, ni l'adresse — ces infos sont déjà dans les champs structurés ci-dessus"
     }
   ]
 }`;
