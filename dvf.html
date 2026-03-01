@@ -2815,6 +2815,11 @@
             }
 
             const sel = isSelected(sale);
+            const surface = surfaceBati || surfaceTerrain;
+            const surfaceLabel = surfaceBati && surfaceTerrain
+                ? `${surfaceBati} m² bâti · ${surfaceTerrain} m² terrain`
+                : surface ? `${surface} m²` : '';
+
             salesSection.innerHTML = `
                 <div class="sale-detail">
                     <button class="sale-detail-back" onclick="hideSaleDetail()">← Retour à la liste</button>
@@ -2823,13 +2828,23 @@
                         ${matchedDpe ? getDpeBadgeHtml(matchedDpe) : ''}
                     </div>
                     <div class="sale-detail-price">${formatPrice(price)}</div>
-                    ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
-                    ${gridItems ? `<div class="sale-detail-grid">${gridItems}</div>` : ''}
-                    <div class="sale-detail-info">${infoRows}</div>
+                    <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:6px;line-height:1.6">
+                        ${surfaceLabel ? surfaceLabel + ' — ' : ''}${date}
+                        ${sale.distance ? '<br>📍 à ' + sale.distance + ' m' : ''}
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+                        ${priceM2 ? `<span class="sale-detail-pricem2 ${getPriceClass(priceM2)}" style="margin-bottom:0">${formatNumber(priceM2)} €/m²</span>` : ''}
+                        <button class="select-btn ${sel ? 'active' : ''}" onclick="toggleSelection(${index}); showSaleDetail(${index}, true)" style="padding:5px 12px;font-size:12px">
+                            <i class="fas fa-${sel ? 'check' : 'bookmark'}"></i> ${sel ? 'Sélectionné' : 'Sélectionner'}
+                        </button>
+                    </div>
+                    ${surfaceBati && surfaceTerrain ? `
+                        <div class="sale-detail-grid">
+                            <div class="sale-detail-item"><div class="sale-detail-item-label">Surface bâtie</div><div class="sale-detail-item-value">${surfaceBati} m²</div></div>
+                            <div class="sale-detail-item"><div class="sale-detail-item-label">Surface terrain</div><div class="sale-detail-item-value">${surfaceTerrain} m²</div></div>
+                        </div>
+                    ` : ''}
                     ${dpeHtml}
-                    <button class="select-btn ${sel ? 'active' : ''}" onclick="toggleSelection(${index}); showSaleDetail(${index}, true)" style="margin-top:12px;padding:6px 14px;font-size:13px">
-                        <i class="fas fa-${sel ? 'check' : 'bookmark'}"></i> ${sel ? 'Retirer de la sélection' : 'Ajouter à ma sélection'}
-                    </button>
                 </div>
             `;
 
