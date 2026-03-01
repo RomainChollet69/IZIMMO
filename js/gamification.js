@@ -65,6 +65,42 @@
         }
         .gamif-counter:hover { transform: scale(1.05); }
         .gamif-counter-icon { font-size: 16px; line-height: 1; }
+
+        /* ===== Tooltips ===== */
+        .gamif-counter .gamif-tooltip,
+        .gamif-streak .gamif-tooltip {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%) scale(0.9);
+            background: #333;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 8px 12px;
+            border-radius: 8px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: all 0.2s ease;
+            z-index: 10000;
+        }
+        .gamif-counter .gamif-tooltip::before,
+        .gamif-streak .gamif-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-bottom-color: #333;
+        }
+        .gamif-counter:hover .gamif-tooltip,
+        .gamif-streak:hover .gamif-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) scale(1);
+        }
         .gamif-counter-value {
             min-width: 24px;
             text-align: center;
@@ -78,6 +114,7 @@
             align-items: center;
             gap: 4px;
             padding: 4px 10px;
+            position: relative;
             background: #F5F5F5;
             border-radius: 12px;
             font-family: 'Inter', sans-serif;
@@ -338,18 +375,24 @@
         const counter = document.createElement('div');
         counter.className = 'gamif-counter';
         counter.id = 'gamifCounter';
+        const levelName = ['Débutant','Actif','Confirmé','Expert','Légende'][profile.level - 1] || '';
         counter.innerHTML = `
             <span class="gamif-counter-icon">\u2B50</span>
             <span class="gamif-counter-value">${formatNumber(profile.total_points)}</span>
+            <span class="gamif-tooltip">Tes points Léon — Niveau ${profile.level} ${levelName}</span>
         `;
 
         // Créer le badge streak
         const streak = document.createElement('div');
         streak.className = 'gamif-streak' + (profile.current_streak > 0 ? ' active' : '');
         streak.id = 'gamifStreak';
+        const streakTip = profile.current_streak > 0
+            ? `${profile.current_streak} jour${profile.current_streak > 1 ? 's' : ''} d'affilée ! Continue !`
+            : 'Fais 3 actions aujourd\'hui pour lancer ta streak';
         streak.innerHTML = `
             <span class="gamif-streak-icon">\uD83D\uDD25</span>
             <span class="gamif-streak-value">${profile.current_streak}j</span>
+            <span class="gamif-tooltip">${streakTip}</span>
         `;
 
         // Insérer avant le séparateur
