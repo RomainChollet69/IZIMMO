@@ -641,9 +641,13 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 16px;
+            padding: 12px 14px;
             border-radius: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
+            position: sticky;
+            top: 64px;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
 
         /* Dégradés doux par statut */
@@ -654,9 +658,12 @@
         .column-header.header-abandon { background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%); }
 
         .column-header-icon {
-            font-size: 20px;
-            opacity: 0.85;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
             flex-shrink: 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
         }
 
         .column-header-text {
@@ -2506,12 +2513,14 @@
             background: #FFFFFF;
             border-top: 1px solid #E5E7EB;
             z-index: 9985;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .desktop-bottom-bar-inner {
             max-width: 1400px;
             width: 100%;
             height: 100%;
-            margin: 0 auto;
             padding: 0 32px;
             position: relative;
             display: flex;
@@ -2765,7 +2774,7 @@
         <!-- Colonne Nouveaux Acquéreurs -->
         <div class="column" data-status="nouveau">
             <div class="column-header header-nouveau">
-                <span class="column-header-icon">🆕</span>
+                <img class="column-header-icon" src="img/nouveaux.png" alt="">
                 <div class="column-header-text">
                     <div class="column-label">Nouveaux</div>
                     <div class="column-subtitle"><span class="count">0</span> acquéreurs · premier contact</div>
@@ -2777,7 +2786,7 @@
         <!-- Colonne En Recherche Active -->
         <div class="column" data-status="actif">
             <div class="column-header header-actif">
-                <span class="column-header-icon">🔍</span>
+                <img class="column-header-icon" src="img/actifs.png" alt="">
                 <div class="column-header-text">
                     <div class="column-label">Recherche active</div>
                     <div class="column-subtitle"><span class="count">0</span> acquéreurs · critères définis</div>
@@ -2789,7 +2798,7 @@
         <!-- Colonne Achetés avec moi -->
         <div class="column" data-status="achete_avec_moi">
             <div class="column-header header-achete_avec_moi">
-                <span class="column-header-icon">🎉</span>
+                <img class="column-header-icon" src="img/achetes.png" alt="">
                 <div class="column-header-text">
                     <div class="column-label">Achetés avec moi</div>
                     <div class="column-subtitle"><span class="count">0</span> transactions</div>
@@ -2801,7 +2810,7 @@
         <!-- Colonne Achetés ailleurs -->
         <div class="column" data-status="achete_ailleurs">
             <div class="column-header header-achete_ailleurs">
-                <span class="column-header-icon">🔄</span>
+                <img class="column-header-icon" src="img/ailleurs.png" alt="">
                 <div class="column-header-text">
                     <div class="column-label">Achetés ailleurs</div>
                     <div class="column-subtitle"><span class="count">0</span> acquéreurs</div>
@@ -2813,7 +2822,7 @@
         <!-- Colonne Plus en recherche -->
         <div class="column" data-status="abandon">
             <div class="column-header header-abandon">
-                <span class="column-header-icon">❌</span>
+                <img class="column-header-icon" src="img/plusenrecherche.png" alt="">
                 <div class="column-header-text">
                     <div class="column-label">Plus en recherche</div>
                     <div class="column-subtitle"><span class="count">0</span> acquéreurs</div>
