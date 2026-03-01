@@ -650,6 +650,7 @@
 
         // Retirer de la liste locale
         allRelances = allRelances.filter(r => !(r.id === id && r.leadType === leadType));
+        if (window.awardPoints) window.awardPoints('dismiss_reminder', { lead_id: id, lead_type: leadType });
         renderRelances();
         updateFilterCounts();
         window.updateRelanceCounter();

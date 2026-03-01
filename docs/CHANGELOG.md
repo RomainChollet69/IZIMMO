@@ -4,6 +4,69 @@
 
 ---
 
+## Session 2026-03-01d — Système de gamification dopaminergique
+
+### Résumé
+Ajout d'un système de gamification complet pour encourager l'utilisation quotidienne du CRM. Chaque action (créer un lead, ajouter une note, compléter un workflow, etc.) rapporte des points avec feedback visuel immédiat (toast doré, compteur dans le header). Mécaniques dopaminiques : bonus x2 aléatoire (10%), streak journalier, célébrations milestone avec confettis.
+
+### Modifications
+
+**`sql/009_gamification.sql`** (NOUVEAU) :
+- Table `gamification_log` : historique des événements points (action_type, points, multiplier, context JSONB)
+- Table `gamification_profiles` : profil agrégé (total_points, streak, level, actions_today)
+- RLS + index sur les deux tables
+
+**`js/gamification.js`** (NOUVEAU) :
+- Module IIFE auto-contenu (~350 lignes) avec styles CSS injectés
+- 18 types d'actions gamifiées avec barème de points (3 à 100 pts)
+- Compteur doré dans le header + badge streak orange
+- Toast points après chaque action (2s, dégradé or)
+- Bonus x2 aléatoire (10% de chance, toast spécial rouge/rose)
+- Streak journalier (≥3 actions/jour → +15 pts bonus)
+- Célébrations milestone à 100, 500, 1000, 5000 pts (overlay + confettis)
+- Gestion iframe (micro.html) via postMessage
+- API publique : `window.awardPoints(actionType, context)`
+
+**8 pages HTML** (script tag ajouté) :
+- index.html, acquereurs.html, social.html, parametres.html, home.html, dvf.html, assistant.html, micro.html
+
+**index.html** (+14 appels awardPoints) :
+- create_lead (formulaire + onboarding)
+- add_note, voice_note, upload_document
+- plan_visit, visit_feedback
+- move_stage, lead_to_mandate, lead_to_sold
+- complete_workflow_step (clic + voix), complete_workflow (clic + voix)
+
+**acquereurs.html** (+10 appels awardPoints) :
+- create_lead, add_note, voice_note, upload_document
+- plan_visit, visit_feedback, move_stage
+- complete_workflow_step (clic + voix), complete_workflow (clic + voix)
+
+**js/social.js** (+3 appels) : create_social_post (libre + suggestion), publish_social_post
+**js/todo-widget.js** (+1 appel) : complete_todo
+**js/relance-widget.js** (+1 appel) : dismiss_reminder
+**micro.html** (+1 appel) : create_lead
+
+### Fichiers créés/modifiés
+- sql/009_gamification.sql (nouveau)
+- js/gamification.js (nouveau)
+- index.html, acquereurs.html, social.html, parametres.html, home.html, dvf.html, assistant.html, micro.html (script tag)
+- js/social.js, js/todo-widget.js, js/relance-widget.js (1-3 lignes chacun)
+- docs/ARCHITECTURE.md, docs/DECISIONS.md, docs/CHANGELOG.md
+
+### Points d'attention / bugs connus
+- La migration SQL `009_gamification.sql` doit être exécutée manuellement dans Supabase SQL Editor avant que le système fonctionne
+- Les points existants des utilisateurs commenceront à 0 (pas de migration rétroactive)
+- En cas de double-onglet, le compteur actions_today peut être légèrement désynchronisé (acceptable pour V1)
+
+### Prochaines étapes prioritaires
+- Exécuter la migration SQL dans Supabase
+- Tester le cycle complet : créer lead → ajouter note → 3e action → streak
+- Dashboard gamification (V2) : historique, classement, badges
+- Confettis améliorés (lib canvas-confetti pour un meilleur rendu)
+
+---
+
 ## Session 2026-03-01c — Création de la page d'accueil HOME (cockpit Léon)
 
 ### Résumé

@@ -701,3 +701,41 @@
 
 **Alternatives rejetées** :
 - Comparaison côte à côte (implémentée puis supprimée) : peu naturelle, limite à 3, UX lourde
+
+---
+
+## D035 — Gamification client-side (pas de server-side validation)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Ajout d'un système de points pour motiver les agents immobiliers à utiliser le CRM.
+
+**Décision** : Les points sont calculés côté client et écrits directement en DB via Supabase. Pas de validation serveur.
+
+**Pourquoi** :
+- C'est un outil de motivation, pas une monnaie — la triche n'a aucun impact business
+- Chaque `awardPoints()` est appelé après un succès DB réel (l'action a bien eu lieu)
+- Simplicit maximale : pas de serverless function supplémentaire
+- Pattern cohérent avec le reste du projet (tout est client-side)
+
+**Alternatives rejetées** :
+- **Edge Function** pour valider les points : overhead inutile, latence ajoutée, complexité sans bénéfice
+- **Trigger PostgreSQL** sur les tables : couplage fort, difficile à maintenir, pas de feedback UI immédiat
+
+---
+
+## D036 — Module IIFE autonome pour la gamification (pas de modification du header HTML)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Le compteur de points et le badge streak doivent apparaître dans le header de toutes les pages.
+
+**Décision** : Le module `js/gamification.js` injecte dynamiquement ses éléments DOM et ses styles CSS, sans modifier le HTML statique des 8 pages.
+
+**Pourquoi** :
+- Un seul fichier à maintenir au lieu de 8 HTML
+- Pattern identique à `todo-widget.js` et `relance-widget.js` (cohérence)
+- Le compteur s'insère avant `.header-separator` — position cohérente sur toutes les pages
+- Les styles CSS sont encapsulés dans le module (pas de pollution du CSS global)

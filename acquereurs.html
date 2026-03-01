@@ -20,6 +20,7 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/workflows.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/gamification.js"></script>
     <script src="js/audio-recorder.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -3985,6 +3986,7 @@
 
             const created = await createVisit(visit);
             if (created) {
+                awardPoints('plan_visit', { visit_id: created.id, lead_type: 'buyer' });
                 const editId = document.getElementById('submitBtn').dataset.editId;
                 await loadMatchingVisits(editId);
                 cancelMatchVisitForm();
@@ -4177,6 +4179,7 @@
 
             const visit = currentMatchVisits.find(v => v.id === visitId);
             if (visit) Object.assign(visit, updates);
+            awardPoints('visit_feedback', { visit_id: visitId });
 
             closeFeedbackModal();
             renderMatchingVisits();
@@ -5088,6 +5091,7 @@
             }
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
+            awardPoints('add_note', { lead_id: buyerId, lead_type: 'buyer' });
             input.value = '';
             clearNoteImagePreview();
             renderBuyerNotes();
@@ -5449,6 +5453,7 @@
                     document.getElementById(`${progressId}-bar`).style.width = '100%';
                     document.getElementById(`${progressId}-status`).textContent = '✓';
                     currentFiles.unshift(fileRecord);
+                    awardPoints('upload_document', { lead_id: leadId, lead_type: leadType });
                     renderFiles();
                     setTimeout(() => { const el = document.getElementById(progressId); if (el) el.remove(); }, 1500);
                 } catch (err) {
@@ -5841,6 +5846,7 @@
                 if (created) {
                     buyers.unshift(created);
                     savedId = created.id;
+                    awardPoints('create_lead', { lead_id: created.id, lead_type: 'buyer' });
                 }
             }
 
@@ -6032,6 +6038,7 @@
                 this.disabled = true;
                 this.textContent = '...';
                 await completeStep(supabaseClient, stepId);
+                awardPoints('complete_workflow_step', { step_id: stepId });
 
                 // Refresh steps from DB
                 const userId = await getCurrentUserId();
@@ -6050,6 +6057,7 @@
                     }, 260);
                 } else {
                     // Plus aucune étape pending — congrats puis fermeture
+                    awardPoints('complete_workflow', { lead_id: leonCurrentLeadId });
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
                         popup.innerHTML = `
@@ -6241,6 +6249,7 @@
                         } else {
                             dismissLeonPopup();
                             showWorkflowCelebration('workflow_complete');
+                            awardPoints('complete_workflow', { lead_id: leonCurrentLeadId });
                         }
                     } else {
                         voiceArea.style.display = 'none';
@@ -6262,6 +6271,7 @@
             // 1. Marquer l'étape comme done si nécessaire
             if (result.step_completed) {
                 await completeStep(supabaseClient, stepId);
+                awardPoints('complete_workflow_step', { step_id: stepId });
             }
 
             // 2. Créer une note si résumé disponible
@@ -6274,6 +6284,7 @@
                     .single();
                 if (data && typeof currentNotes !== 'undefined') {
                     currentNotes.unshift(data);
+                    awardPoints('voice_note', { lead_id: leadId, lead_type: leadType });
                     if (typeof renderBuyerNotes === 'function') renderBuyerNotes();
                 }
             }
@@ -6394,6 +6405,7 @@
                         // Déplacement entre colonnes
                         buyer.status = newStatus;
                         await updateBuyer(buyerId, { status: newStatus });
+                        awardPoints('move_stage', { lead_id: buyerId, lead_type: 'buyer', from: oldStatus, to: newStatus });
                         renderBuyers();
                         // Insérer à la bonne position
                         const newCard = container.querySelector(`.lead-card[data-id="${buyerId}"]`);

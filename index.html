@@ -24,6 +24,7 @@
     <script src="js/supabase-config.js?v=250225"></script>
     <script src="js/workflows.js?v=250225"></script>
     <script src="js/auth.js?v=250225"></script>
+    <script src="js/gamification.js"></script>
     <script src="js/audio-recorder.js?v=250225"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <style>
@@ -5432,6 +5433,7 @@
 
             const created = await createVisit(visit);
             if (created) {
+                awardPoints('plan_visit', { visit_id: created.id, lead_type: 'seller' });
                 // Recharger avec le JOIN pour avoir le nom acquéreur
                 const editId = document.getElementById('submitBtn').dataset.editId;
                 await loadMatchingVisits(editId);
@@ -5619,6 +5621,7 @@
 
             const visit = currentMatchVisits.find(v => v.id === visitId);
             if (visit) Object.assign(visit, updates);
+            awardPoints('visit_feedback', { visit_id: visitId });
 
             closeFeedbackModal();
             renderMatchingVisits();
@@ -6619,6 +6622,7 @@
                     document.getElementById(`${progressId}-bar`).style.width = '100%';
                     document.getElementById(`${progressId}-status`).textContent = '✓';
                     currentFiles.unshift(fileRecord);
+                    awardPoints('upload_document', { lead_id: leadId, lead_type: leadType });
                     renderFiles();
                     setTimeout(() => { const el = document.getElementById(progressId); if (el) el.remove(); }, 1500);
                 } catch (err) {
@@ -7757,6 +7761,7 @@
             }
             if (error) { console.error('Note insert error:', error); return; }
             currentNotes.unshift(data);
+            awardPoints('add_note', { lead_id: sellerId, lead_type: 'seller' });
             input.value = '';
             clearNoteImagePreview();
             renderNotes();
@@ -8669,6 +8674,7 @@
                 if (created) {
                     sellers.unshift(created);
                     savedId = created.id;
+                    awardPoints('create_lead', { lead_id: created.id, lead_type: 'seller' });
                     if (pendingFile) {
                         await uploadFiles([pendingFile], created.id, 'seller');
                         pendingFile = null;
@@ -9056,6 +9062,7 @@
                 this.disabled = true;
                 this.textContent = '...';
                 await completeStep(supabaseClient, stepId);
+                awardPoints('complete_workflow_step', { step_id: stepId });
 
                 // Refresh steps from DB
                 const userId = await getCurrentUserId();
@@ -9074,6 +9081,7 @@
                         setTimeout(() => popup.classList.remove('entering-right'), 310);
                     }, 260);
                 } else {
+                    awardPoints('complete_workflow', { lead_id: leonCurrentLeadId });
                     popup.className = 'leon-popup exiting-left';
                     setTimeout(() => {
                         popup.innerHTML = `
@@ -9292,6 +9300,7 @@
                         } else {
                             dismissLeonPopup();
                             showWorkflowCelebration('workflow_complete');
+                            awardPoints('complete_workflow', { lead_id: leonCurrentLeadId });
                         }
                     } else {
                         voiceArea.style.display = 'none';
@@ -9325,6 +9334,7 @@
                     .single();
                 if (data && typeof currentNotes !== 'undefined') {
                     currentNotes.unshift(data);
+                    awardPoints('voice_note', { lead_id: leadId, lead_type: leadType });
                     if (typeof renderNotes === 'function') renderNotes();
                 }
             }
@@ -9688,6 +9698,7 @@
                         if (updated) {
                             const idx = sellers.findIndex(s => s.id === sellerId);
                             if (idx !== -1) sellers[idx] = updated;
+                            awardPoints('move_stage', { lead_id: sellerId, lead_type: 'seller', from: oldStatus, to: newStatus });
                         } else {
                             seller.status = newStatus;
                         }
@@ -9725,10 +9736,12 @@
                                 // Célébration au passage en mandat
                                 if (newStatus === 'mandate' && triggeredWorkflow) {
                                     showWorkflowCelebration('mandate_signed');
+                                    awardPoints('lead_to_mandate', { lead_id: sellerId });
                                 }
                                 // Célébration au passage en vendu
                                 if (newStatus === 'sold') {
                                     showWorkflowCelebration('sold');
+                                    awardPoints('lead_to_sold', { lead_id: sellerId });
                                 }
                             }
                         } catch (err) {
@@ -10229,6 +10242,7 @@
                     .single();
 
                 if (error) throw error;
+                awardPoints('create_lead', { lead_id: data.id, lead_type: 'seller' });
 
                 // Insert note if present
                 if (notesVal && data) {

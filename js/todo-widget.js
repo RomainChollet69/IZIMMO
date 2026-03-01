@@ -517,6 +517,7 @@
 
         const todo = todos.find(t => t.id === id);
         if (todo) todo.done = done;
+        if (done && window.awardPoints) window.awardPoints('complete_todo', {});
         // Re-sort: pending first (newest first), done last (newest first)
         todos.sort((a, b) => {
             if (a.done !== b.done) return a.done ? 1 : -1;

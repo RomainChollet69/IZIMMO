@@ -28,6 +28,7 @@ IZIMMO/
 │   ├── workflows.js            # Définitions workflows + gestion des étapes
 │   ├── relance-widget.js       # Widget flottant des relances (cloche)
 │   ├── todo-widget.js          # Widget to-do avec dictée vocale
+│   ├── gamification.js         # Système de points, streaks, toasts, milestones
 │   ├── audio-recorder.js       # Enregistrement micro + détection silence
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
@@ -52,7 +53,8 @@ IZIMMO/
 │
 ├── sql/
 │   ├── 001_workflow_steps.sql  # Migration table workflow_steps + RLS + indexes
-│   └── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
+│   ├── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
+│   └── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
@@ -546,6 +548,32 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `content`    | TEXT        | Contenu de la note                       |
 | `created_at` | TIMESTAMPTZ | Date de création                         |
 
+### Table `gamification_log`
+
+| Colonne       | Type        | Description                                     |
+|---------------|-------------|-------------------------------------------------|
+| `id`          | UUID (PK)   | Identifiant unique                              |
+| `user_id`     | UUID (FK)   | Référence `auth.users(id)`                      |
+| `action_type` | TEXT        | Type d'action (`create_lead`, `add_note`, etc.) |
+| `points`      | INT         | Points attribués (après multiplicateur)         |
+| `multiplier`  | REAL        | 1.0 normal, 2.0 si bonus aléatoire             |
+| `context`     | JSONB       | Métadonnées (lead_id, lead_type, etc.)          |
+| `created_at`  | TIMESTAMPTZ | Date de l'événement                             |
+
+### Table `gamification_profiles`
+
+| Colonne           | Type        | Description                                  |
+|-------------------|-------------|----------------------------------------------|
+| `id`              | UUID (PK)   | Identifiant unique                           |
+| `user_id`         | UUID (FK)   | Référence `auth.users(id)` (UNIQUE)          |
+| `total_points`    | INT         | Score total cumulé                           |
+| `current_streak`  | INT         | Jours consécutifs avec ≥3 actions            |
+| `longest_streak`  | INT         | Record personnel de streak                   |
+| `last_active_date`| DATE        | Dernière date avec ≥3 actions                |
+| `level`           | INT         | Niveau (1-5)                                 |
+| `actions_today`   | INT         | Compteur d'actions du jour                   |
+| `today_date`      | DATE        | Date courante (reset quotidien)              |
+
 ### Sécurité (RLS)
 
 Toutes les tables ont **Row Level Security activé**. Politique commune :
@@ -677,6 +705,17 @@ Liste de tâches personnelle avec dictée vocale + drag-reorder.
 - Drag-and-drop pour réordonner (ordre persisté en localStorage)
 - CRUD sur table `todos`
 
+### `gamification.js`
+Système de gamification dopaminergique — points, streaks, toasts, milestones.
+- IIFE auto-exécutant (même pattern que todo-widget.js)
+- Injecte ses propres styles CSS + éléments DOM (compteur header, toasts)
+- Expose `window.awardPoints(actionType, context)` comme API globale
+- 18 types d'actions gamifiées avec barème de points
+- Bonus aléatoire x2 (10% de chance)
+- Streak journalier (≥3 actions/jour) avec badge visuel
+- Célébrations à 100, 500, 1000, 5000 points (overlay + confettis)
+- Tables DB : `gamification_log` (audit) + `gamification_profiles` (agrégé)
+
 ### `audio-recorder.js`
 Classe `AudioRecorder` — enregistrement micro + transcription.
 - MediaRecorder API (WebM Opus / MP4)
@@ -703,14 +742,16 @@ Moteur de contenu réseaux sociaux.
 
 | Page                 | Scripts JS                                                                   |
 |----------------------|------------------------------------------------------------------------------|
-| `index.html`         | supabase-config, auth, workflows, audio-recorder, relance-widget, todo-widget, onboarding |
-| `acquereurs.html`    | supabase-config, auth, workflows, audio-recorder, relance-widget, todo-widget |
+| `index.html`         | supabase-config, auth, gamification, workflows, audio-recorder, relance-widget, todo-widget, onboarding |
+| `acquereurs.html`    | supabase-config, auth, gamification, workflows, audio-recorder, relance-widget, todo-widget |
 | `formulaire.html`    | supabase-config (pas d'auth — page publique)                                |
 | `login.html`         | supabase-config                                                              |
-| `social.html`        | supabase-config, auth, social, audio-recorder                                |
-| `parametres.html`    | supabase-config, auth                                                        |
-| `micro.html`         | supabase-config, auth, audio-recorder                                        |
-| `dvf.html`           | supabase-config, auth, maps-config                                           |
+| `social.html`        | supabase-config, auth, gamification, social, audio-recorder                  |
+| `parametres.html`    | supabase-config, auth, gamification                                          |
+| `micro.html`         | supabase-config, auth, gamification, audio-recorder                          |
+| `dvf.html`           | supabase-config, auth, gamification, maps-config                             |
+| `assistant.html`     | supabase-config, auth, gamification, audio-recorder                          |
+| `home.html`          | supabase-config, auth, gamification                                          |
 | `landing.html`       | (aucun — page statique marketing)                                            |
 
 ---

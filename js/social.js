@@ -877,6 +877,7 @@
             currentResults.push({ platform, ...result });
 
             displayResults();
+            if (window.awardPoints) window.awardPoints('create_social_post', { platform });
             await loadHistory();
 
         } catch (err) {
@@ -1678,6 +1679,7 @@
 
             // Display results
             displayResults();
+            if (window.awardPoints) window.awardPoints('create_social_post', { count: currentResults.length });
 
             // Reload history
             await loadHistory();
@@ -1935,6 +1937,7 @@
                 .eq('id', result.post_id);
 
             if (error) throw error;
+            if (window.awardPoints) window.awardPoints('publish_social_post', { platform });
 
             // Visual feedback
             if (btn) {
