@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         relance_fin_mandat_concurrent: "Contacter un vendeur dont le mandat chez un agent concurrent arrive probablement à échéance, avec tact et professionnalisme",
         redaction_annonce: "Rédiger une annonce immobilière complète et attractive pour ce bien. Structure : titre accrocheur, description engageante, points forts, informations pratiques (surface, pièces, DPE si dispo). Ne PAS formater comme un message de communication mais comme une vraie annonce immobilière",
         repositionnement_prix: "Préparer un argumentaire de repositionnement prix pour le vendeur. S'appuyer sur les principes de Shift de Gary Keller : la fenêtre d'opportunité (première impression cruciale), le coût de la surévaluation (plus on attend, plus on perd), le concept des deux marchés (biens positionnés pour se vendre vs ceux qui stagnent). Être empathique mais factuel, utiliser les données fournies dans les instructions supplémentaires",
-        retour_visite: "Rédiger un message professionnel et diplomate au vendeur pour lui faire un retour sur une visite effectuée par un acquéreur. Le message doit résumer le ressenti de l'acquéreur de manière constructive, rester positif et encourageant même si le retour est mitigé, et montrer que l'agent travaille activement sur la vente. Utiliser les données de la visite fournies dans les instructions supplémentaires (ressenti, perception prix, points positifs/négatifs, décision acquéreur). Ne jamais mentionner le nom complet de l'acquéreur au vendeur, utiliser seulement le prénom",
+        retour_visite: "Faire un retour de visite au vendeur, basé sur les données fournies dans les instructions supplémentaires",
         libre: "Message libre selon les instructions de l'utilisateur"
     };
 
@@ -83,9 +83,34 @@ export default async function handler(req, res) {
 
     const isAnnonce = scenario === 'redaction_annonce';
     const isArgPrix = scenario === 'repositionnement_prix';
+    const isRetourVisite = scenario === 'retour_visite';
 
     let systemPrompt;
-    if (isAnnonce) {
+    if (isRetourVisite) {
+        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
+        systemPrompt = `Tu es un agent immobilier qui écrit un message à son vendeur pour lui faire un retour de visite. Tu écris comme un VRAI agent, pas comme une IA.
+
+Ton et style — CRITIQUE, respecte ça à la lettre :
+- Style conversationnel et narratif. Tu RACONTES ce qui s'est passé, comme si tu parlais au vendeur
+- Phrases naturelles, parfois courtes, parfois plus longues. Comme un vrai message texte
+- Mentionne les points positifs ET négatifs naturellement dans le récit, PAS en liste à puces
+- Sois honnête et direct. Si le retour est mitigé, dis-le franchement mais avec tact
+- INTERDIT : "suite à la visite de votre bien", "retour constructif", "demeurons optimistes", "a été séduit par", "points à noter", "je reste à votre disposition", "n'hésitez pas"
+- INTERDIT : listes à puces, structure "points positifs / points négatifs"
+- Utilise le prénom de l'acquéreur (jamais le nom complet) quand tu parles de lui au vendeur
+- ${channelInstructions[channel] || channelInstructions.sms}
+${agentFirstName ? `- Signe : ${agentFirstName}` : ''}
+
+Voici des VRAIS exemples de messages d'agent immobilier — imite ce style :
+
+Exemple 1 : "Je viens d'avoir M. Lescuyer au téléphone. Il ne pourra pas faire de contre-visite cette semaine. Ils ont besoin de visiter d'autres biens pour se faire une idée plus globale du marché. Ils ont beaucoup apprécié la maison, la trouvant « clé en main », ça coche beaucoup de cases pour eux. Le seul point de réserve concerne la chambre de la suite parentale, qu'ils trouvent « un tout petit peu petite ». Étant primo-accédant, ils ont besoin d'être rassurés et de comparer. Mais ils ne ferment absolument pas la porte et reviendront vers nous la semaine prochaine."
+
+Exemple 2 : "Elle revient ce soir. Le bien lui plaît, je la sens encore hésitante du fait de la surface qu'elle juge plus petite que ce qu'elle souhaitait. Mais si elle revient c'est positif."
+
+Exemple 3 : "La visite est terminée. Elle s'est bien passée, c'est un couple avec une fille d'une dizaine d'années. Ils vivent actuellement à Limonest dans une maison plus petite. Ils ont encore un peu de réflexion pour se projeter intégralement notamment par rapport au jardin qu'ils auraient souhaité moins en pente. Pour le reste, ils sont séduits. Je dois faire un point avec eux demain matin, notamment concernant leur financement. Je vous tiens informé dans tous les cas au plus tard demain."
+
+Retourne UNIQUEMENT le message, sans explication.`;
+    } else if (isAnnonce) {
         systemPrompt = `Tu es un expert en rédaction d'annonces immobilières. Tu rédiges des annonces attractives et complètes pour un agent immobilier professionnel.
 
 Règles:
