@@ -9235,10 +9235,8 @@
             leonPopupDismissed = true;
             if (overlay) overlay.classList.remove('visible');
             if (popup) { popup.style.display = 'none'; popup.className = 'leon-popup'; }
-            // Show FAB if lead has workflow steps
-            const activeSteps = leonAllSteps.filter(s => s.status !== 'skipped');
-            const hasPending = activeSteps.some(s => s.status === 'pending');
-            if (fab) fab.style.display = hasPending ? 'flex' : 'none';
+            // Ne pas afficher le FAB — le Léon flottant principal suffit
+            if (fab) fab.style.display = 'none';
         }
 
         function reopenLeonPopup() {
