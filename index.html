@@ -10634,12 +10634,15 @@
                 customPrompt = document.getElementById('msgCustomPrompt').value;
             }
 
+            // Nom de l'agent pour la signature
+            const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+
             try {
                 console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'seller' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller' })
+                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName })
                 });
                 const data = await resp.json().catch(() => ({}));
                 console.log('[MsgIA] Response:', resp.status, data);

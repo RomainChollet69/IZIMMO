@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { channel, scenario, leadData, notes, customPrompt, leadType } = req.body || {};
+    const { channel, scenario, leadData, notes, customPrompt, leadType, agentName } = req.body || {};
     if (!channel || !scenario || !leadData) return res.status(400).json({ error: 'Missing required fields' });
 
     const channelInstructions = {
@@ -105,18 +105,23 @@ Règles:
 - Ne mets JAMAIS de placeholder entre crochets [xxx]
 - Retourne UNIQUEMENT l'argumentaire, sans explication`;
     } else {
-        systemPrompt = `Tu es un assistant de rédaction pour un agent immobilier professionnel. Tu rédiges des messages personnalisés pour ses clients.
+        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
+        systemPrompt = `Tu rédiges des messages pour un agent immobilier. Écris EXACTEMENT comme un vrai professionnel de l'immobilier écrirait — pas comme une IA.
 
-Règles:
+Style obligatoire :
+- Phrases courtes et directes. Pas de formules creuses ("je me permets de", "n'hésitez pas à", "je reste à votre disposition")
+- Ton naturel, humain, comme un message qu'on enverrait vraiment. Pas de style corporate ou "assistant IA"
+- Pas de mots vides : "exceptionnel", "constructif", "demeurons optimistes", "séduit". Sois concret et factuel
+- Vouvoiement obligatoire
 - ${channelInstructions[channel] || channelInstructions.sms}
-- Utilise les informations du contact pour personnaliser le message (prénom, adresse, prix, etc.)
-- Sois professionnel mais chaleureux
-- Ne mets JAMAIS de placeholder entre crochets [xxx] — utilise les vraies informations ou omets le détail
-- Si une info n'est pas disponible, formule autrement sans placeholder
-- Retourne UNIQUEMENT le message, sans explication ni commentaire`;
+- Utilise les informations du contact pour personnaliser (prénom, adresse, prix, etc.)
+- Ne mets JAMAIS de placeholder entre crochets [xxx]
+- Si une info manque, reformule sans placeholder${agentFirstName ? `\n- Signe avec le prénom de l'agent : ${agentFirstName}` : ''}
+- Retourne UNIQUEMENT le message, sans explication`;
     }
 
-    const userPrompt = `Contexte du ${leadType === 'buyer' ? 'acquéreur' : 'vendeur'}:\n${leadContext}${notesContext}
+    const agentLine = agentName ? `\nAgent immobilier : ${agentName}` : '';
+    const userPrompt = `Contexte du ${leadType === 'buyer' ? 'acquéreur' : 'vendeur'}:\n${leadContext}${agentLine}${notesContext}
 
 Scénario: ${scenarioDesc}${customPrompt ? `\nInstructions supplémentaires: ${customPrompt}` : ''}
 
