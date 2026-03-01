@@ -7252,8 +7252,9 @@
         });
         // Rafraîchir le pipeline quand le micro crée un lead
         window.addEventListener('message', function(e) {
-            if (e.data && e.data.type === 'lead-created' && e.data.leadType === 'buyer') {
-                if (typeof loadBuyers === 'function') loadBuyers();
+            if (e.data && e.data.type === 'lead-created') {
+                closeMicroModal();
+                if (e.data.leadType === 'buyer' && typeof loadBuyers === 'function') loadBuyers();
             }
         });
     </script>
