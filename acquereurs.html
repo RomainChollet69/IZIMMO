@@ -611,8 +611,8 @@
             grid-template-columns: repeat(5, minmax(240px, 1fr));
             gap: 28px;
             overflow-x: auto;
-            overflow-y: visible;
             padding: 0 28px 28px 28px;
+            height: calc(100vh - 180px);
             cursor: grab;
         }
         .pipeline.grabbing { cursor: grabbing; }
@@ -628,7 +628,6 @@
             background: rgba(255, 255, 255, 0.75);
             border-radius: 16px;
             padding: 24px;
-            max-height: calc(100vh - 200px);
             overflow-y: auto;
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
@@ -639,16 +638,26 @@
         .column::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); border-radius: 4px; }
         .column::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
+        /* Zone figée en haut de chaque colonne */
+        .column-top {
+            position: sticky;
+            top: -24px;
+            z-index: 10;
+            margin: -24px -24px 0 -24px;
+            padding: 24px 24px 8px 24px;
+            background: rgba(255, 255, 255, 0.97);
+            backdrop-filter: blur(10px);
+            border-radius: 16px 16px 0 0;
+        }
+
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .column-header {
-            position: sticky;
-            top: -24px; /* Compense le padding de .column */
-            z-index: 10;
-            margin-bottom: 16px;
+            position: relative;
+            margin-bottom: 12px;
             overflow: hidden;
             border-radius: 16px;
             height: 90px;
@@ -2775,51 +2784,61 @@
     <div class="pipeline">
         <!-- Colonne Nouveaux Acquéreurs -->
         <div class="column" data-status="nouveau">
-            <div class="column-header header-nouveau">
-                <div class="column-label">NOUVEAUX</div>
+            <div class="column-top">
+                <div class="column-header header-nouveau">
+                    <div class="column-label">NOUVEAUX</div>
+                </div>
+                <div class="column-title">Premier contact</div>
+                <div class="column-count"><span>📋</span><span class="count">0</span></div>
             </div>
-            <div class="column-title">Premier contact</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="nouveau-container"></div>
         </div>
 
         <!-- Colonne En Recherche Active -->
         <div class="column" data-status="actif">
-            <div class="column-header header-actif">
-                <div class="column-label">RECHERCHE ACTIVE</div>
+            <div class="column-top">
+                <div class="column-header header-actif">
+                    <div class="column-label">RECHERCHE ACTIVE</div>
+                </div>
+                <div class="column-title">Critères définis, envoi de biens</div>
+                <div class="column-count"><span>📋</span><span class="count">0</span></div>
             </div>
-            <div class="column-title">Critères définis, envoi de biens</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="actif-container"></div>
         </div>
 
         <!-- Colonne Achetés avec moi -->
         <div class="column" data-status="achete_avec_moi">
-            <div class="column-header header-achete_avec_moi">
-                <div class="column-label">ACHETÉS AVEC MOI 🎉</div>
+            <div class="column-top">
+                <div class="column-header header-achete_avec_moi">
+                    <div class="column-label">ACHETÉS AVEC MOI 🎉</div>
+                </div>
+                <div class="column-title">Mes transactions</div>
+                <div class="column-count"><span>📋</span><span class="count">0</span></div>
             </div>
-            <div class="column-title">Mes transactions</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="achete_avec_moi-container"></div>
         </div>
 
         <!-- Colonne Achetés ailleurs -->
         <div class="column" data-status="achete_ailleurs">
-            <div class="column-header header-achete_ailleurs">
-                <div class="column-label">ACHETÉS AILLEURS 🔄</div>
+            <div class="column-top">
+                <div class="column-header header-achete_ailleurs">
+                    <div class="column-label">ACHETÉS AILLEURS 🔄</div>
+                </div>
+                <div class="column-title">Ont trouvé sans moi</div>
+                <div class="column-count"><span>📋</span><span class="count">0</span></div>
             </div>
-            <div class="column-title">Ont trouvé sans moi</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="achete_ailleurs-container"></div>
         </div>
 
         <!-- Colonne Plus en recherche -->
         <div class="column" data-status="abandon">
-            <div class="column-header header-abandon">
-                <div class="column-label">PLUS EN RECHERCHE ❌</div>
+            <div class="column-top">
+                <div class="column-header header-abandon">
+                    <div class="column-label">PLUS EN RECHERCHE ❌</div>
+                </div>
+                <div class="column-title">Abandon</div>
+                <div class="column-count"><span>📋</span><span class="count">0</span></div>
             </div>
-            <div class="column-title">Abandon</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="abandon-container"></div>
         </div>
     </div>
