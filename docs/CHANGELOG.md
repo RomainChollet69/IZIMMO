@@ -4,6 +4,55 @@
 
 ---
 
+## Session 2026-03-01c — Création de la page d'accueil HOME (cockpit Léon)
+
+### Résumé
+Création d'une nouvelle page d'accueil (`home.html`) qui devient le point d'entrée principal de Léon. La page affiche un message d'accueil personnalisé, une barre de recherche globale avec bouton micro, et une grille de 7 tuiles métiers (Pipeline vendeurs, Pipeline acquéreurs, Marché/DVF, Community management, Assistant agenda, Paramètres, Tutoriels). Tous les logos et redirections de login pointent désormais vers `home.html` au lieu de `index.html`.
+
+### Modifications
+
+**`home.html`** (NOUVEAU) :
+- Page complète avec header, bienvenue personnalisée ("Bonjour [Prénom]" + date), barre de recherche globale + micro
+- Grille de 7 tuiles métiers avec layout horizontal (icône/illustration + label)
+- Tuiles avec illustrations 3D existantes (Leon.png, lea_social.png) ou icônes FontAwesome sur fond pastel
+- Tuile Tutoriels avec toast "Bientôt disponible" (page pas encore créée)
+- Recherche V1 : Enter redirige vers `index.html?search=<query>`
+- Bouton micro redirige vers `micro.html`
+- Responsive : 3 colonnes desktop, 2 colonnes tablette/mobile, bottom bar mobile
+- Auth guard via js/auth.js (même pattern que toutes les pages protégées)
+
+**`index.html`** : logo href → `home.html`
+**`acquereurs.html`** : logo href → `home.html`
+**`dvf.html`** : logo href → `home.html`
+**`social.html`** : logo href → `home.html`
+**`micro.html`** : logo desktop + logo mobile href → `home.html`
+**`parametres.html`** : logo href → `home.html`
+**`assistant.html`** : logo href → `home.html`
+**`js/auth.js`** : mobile header logo href → `home.html`
+**`login.html`** : 3 redirections post-login → `home.html` (session existante, Google OAuth, login email)
+**`reset-password.html`** : redirection post-reset → `home.html`
+
+### Fichiers créés/modifiés
+- home.html (NOUVEAU)
+- index.html, acquereurs.html, dvf.html, social.html, micro.html, parametres.html, assistant.html
+- js/auth.js
+- login.html, reset-password.html
+
+### Points d'attention / bugs connus
+- `tutoriels.html` n'existe pas encore — la tuile affiche un toast placeholder
+- La recherche globale V1 redirige simplement vers le pipeline vendeurs — une vraie recherche cross-tables viendra en V2
+- Vérifier que `home.html` est ajouté aux Redirect URLs dans Supabase Auth dashboard (pour le Google OAuth)
+- `index.html` ne lit pas encore le paramètre `?search=` au chargement — à ajouter si la recherche globale doit pré-remplir le champ
+
+### Prochaines étapes prioritaires
+- Ajouter la lecture du paramètre `?search=` sur `index.html` au chargement
+- Créer `tutoriels.html` avec contenu onboarding
+- Ajouter des illustrations 3D dédiées pour les tuiles sans image (acquéreurs, marché, assistant, paramètres)
+- V2 : contexte personnalisé sur la home (nombre de relances du jour, leads urgents)
+- V2 : recherche globale cross-tables (sellers + buyers + villes)
+
+---
+
 ## Session 2026-03-01b — DVF : corrections UX InfoWindow + système de sélection + détail dépliable
 
 ### Résumé

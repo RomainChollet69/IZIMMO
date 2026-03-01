@@ -1,0 +1,761 @@
+<!--
+  Léon — Page d'accueil / Cockpit (home.html)
+  Point d'entrée principal du CRM. Affiche une grille de 7 tuiles-modules,
+  une barre de recherche globale, et un message d'accueil personnalisé.
+  Auth requise (js/auth.js) | Supabase pour le prénom utilisateur.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Léon. — Accueil</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — CRM Immobilier">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-right: 48px;
+            cursor: pointer;
+        }
+
+        .logo img {
+            height: 36px;
+            width: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .nav-tab {
+            color: #6B7280;
+            text-decoration: none;
+            padding: 20px 24px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab i {
+            font-size: 16px;
+        }
+
+        .nav-tab:hover {
+            color: #243B53;
+        }
+
+        .nav-tab.active {
+            color: #243B53;
+            font-weight: 600;
+            border-bottom-color: #243B53;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        /* Alert bell */
+        .alert-bell {
+            position: relative;
+            background: none;
+            border: none;
+            color: #6B7280;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            transition: color 0.2s;
+        }
+
+        .alert-bell:hover {
+            color: #243B53;
+        }
+
+        .alert-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        /* Separator */
+        .header-separator {
+            width: 1px;
+            height: 32px;
+            background: #E5E7EB;
+        }
+
+        /* User profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #E5E7EB;
+            object-fit: cover;
+        }
+
+        .user-initials {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #243B53;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid #E5E7EB;
+        }
+
+        .user-dropdown.active { display: block; }
+
+        .user-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+        }
+
+        .user-dropdown-item:hover { background: #F3F4F6; }
+
+        /* ===== HOME CONTAINER ===== */
+        .home-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 32px 100px;
+        }
+
+        /* ===== WELCOME ===== */
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .welcome-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 36px;
+            color: #243B53;
+            letter-spacing: 0.5px;
+        }
+
+        .welcome-date {
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            color: #6B7280;
+            margin-top: 6px;
+            text-transform: capitalize;
+        }
+
+        /* ===== SEARCH BAR GLOBALE ===== */
+        .search-section {
+            max-width: 620px;
+            margin: 0 auto 40px;
+        }
+
+        .search-bar-global {
+            display: flex;
+            align-items: center;
+            background: #FFFFFF;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 16px;
+            padding: 14px 20px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .search-bar-global:focus-within {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
+        }
+
+        .search-icon {
+            color: #9CA3AF;
+            margin-right: 12px;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background: transparent;
+            color: #1F2937;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .search-input::placeholder {
+            color: #9CA3AF;
+        }
+
+        .search-micro-btn {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            font-size: 17px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+
+        .search-micro-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ===== GRILLE DE TUILES ===== */
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .tile {
+            background: #FFFFFF;
+            border-radius: 16px;
+            padding: 24px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .tile:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+        }
+
+        .tile:active {
+            transform: translateY(-2px);
+        }
+
+        .tile-icon-area {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .tile-illustration {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .tile-fa-icon {
+            font-size: 36px;
+        }
+
+        .tile-label {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #243B53;
+            line-height: 1.3;
+        }
+
+        /* === Couleurs par tuile === */
+        .tile-vendeurs .tile-icon-area { background: #FFF3E0; }
+        .tile-vendeurs .tile-fa-icon { color: #F57C00; }
+
+        .tile-acquereurs .tile-icon-area { background: #E0F7FA; }
+        .tile-acquereurs .tile-fa-icon { color: #00897B; }
+
+        .tile-marche .tile-icon-area { background: #E8F5E9; }
+        .tile-marche .tile-fa-icon { color: #2E7D32; }
+
+        .tile-social .tile-icon-area { background: #EDE7F6; }
+        .tile-social .tile-fa-icon { color: #5E35B1; }
+
+        .tile-assistant .tile-icon-area { background: #E3F2FD; }
+        .tile-assistant .tile-fa-icon { color: #1565C0; }
+
+        .tile-parametres .tile-icon-area { background: #F5F5F5; }
+        .tile-parametres .tile-fa-icon { color: #616161; }
+
+        .tile-tutoriels .tile-icon-area { background: #FFF8E1; }
+        .tile-tutoriels .tile-fa-icon { color: #F9A825; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #243B53;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== MOBILE BOTTOM BAR ===== */
+        .mobile-bottom-bar { display: none; }
+
+        /* ===== RESPONSIVE ===== */
+
+        /* Tablette : 2 colonnes */
+        @media (max-width: 900px) {
+            .tiles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            /* 7e tuile (impaire) centrée */
+            .tile:last-child {
+                grid-column: 1 / -1;
+                max-width: calc(50% - 10px);
+                justify-self: center;
+            }
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+            .header { display: none !important; }
+            .nav-tabs { display: none !important; }
+            body { padding-bottom: 80px !important; }
+
+            .home-container {
+                padding: 24px 16px 100px;
+            }
+
+            .welcome-title { font-size: 26px; }
+            .welcome-date { font-size: 13px; }
+            .welcome-section { margin-bottom: 24px; }
+
+            .search-section { margin-bottom: 28px; }
+            .search-bar-global { padding: 12px 16px; border-radius: 14px; }
+            .search-input { font-size: 15px; }
+            .search-micro-btn { width: 38px; height: 38px; font-size: 15px; }
+
+            .tiles-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+
+            .tile {
+                padding: 16px 14px;
+                border-radius: 14px;
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            .tile-icon-area {
+                width: 64px;
+                height: 64px;
+                border-radius: 16px;
+            }
+
+            .tile-fa-icon { font-size: 28px; }
+            .tile-label { font-size: 13px; }
+
+            .tile:last-child {
+                grid-column: 1 / -1;
+                max-width: calc(50% - 6px);
+                justify-self: center;
+            }
+
+            /* Mobile bottom bar */
+            .mobile-bottom-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0; left: 0; right: 0;
+                background: #FFFFFF;
+                border-top: 1px solid #E5E7EB;
+                padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+                z-index: 9999;
+                justify-content: space-around;
+                align-items: flex-end;
+            }
+            .bottom-tab {
+                display: flex; flex-direction: column; align-items: center;
+                text-decoration: none; color: #94A3B8;
+                font-family: 'Inter', sans-serif;
+                font-size: 10px; font-weight: 500;
+                gap: 2px; padding: 4px 0; min-width: 56px;
+            }
+            .bottom-tab i { font-size: 22px; }
+            .bottom-tab.active { color: #243B53; font-weight: 600; }
+            .bottom-tab-micro {
+                display: flex; align-items: center; justify-content: center;
+                width: 56px; height: 56px; border-radius: 50%;
+                background: #6C4CC8; color: white;
+                text-decoration: none; font-size: 24px;
+                margin-top: -20px;
+                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
+                transition: transform 0.2s;
+            }
+            .bottom-tab-micro:active { transform: scale(0.93); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <!-- Zone gauche : Logo -->
+            <a href="home.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+
+            <!-- Zone centre : Navigation -->
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+                <a href="micro.html" class="nav-tab">
+                    <i class="fa-solid fa-microphone"></i> Micro
+                </a>
+            </nav>
+
+            <!-- Zone droite : Actions -->
+            <div class="header-actions">
+                <button class="alert-bell" id="alertBell" title="Relances du jour">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+                </button>
+
+                <div class="header-separator"></div>
+
+                <div class="user-profile" id="userProfile">
+                    <!-- Chargé dynamiquement par auth.js -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="home-container">
+
+        <!-- Message de bienvenue -->
+        <div class="welcome-section">
+            <h1 class="welcome-title" id="welcomeTitle">Bonjour</h1>
+            <p class="welcome-date" id="welcomeDate"></p>
+        </div>
+
+        <!-- Barre de recherche globale + micro -->
+        <div class="search-section">
+            <div class="search-bar-global">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="globalSearch" class="search-input"
+                       placeholder="Rechercher un lead, une ville, un outil...">
+                <button type="button" class="search-micro-btn" id="searchMicroBtn"
+                        title="Recherche vocale">
+                    <i class="fa-solid fa-microphone"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Grille de tuiles (7 modules) -->
+        <div class="tiles-grid">
+
+            <!-- 1. Pipeline vendeurs -->
+            <a href="index.html" class="tile tile-vendeurs">
+                <div class="tile-icon-area">
+                    <img src="img/Leon.png" alt="" class="tile-illustration">
+                </div>
+                <div class="tile-label">Pipeline<br>vendeurs</div>
+            </a>
+
+            <!-- 2. Pipeline acquéreurs -->
+            <a href="acquereurs.html" class="tile tile-acquereurs">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-key tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Pipeline<br>acquéreurs</div>
+            </a>
+
+            <!-- 3. Marché / DVF -->
+            <a href="dvf.html" class="tile tile-marche">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-map-location-dot tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Marché /<br>DVF</div>
+            </a>
+
+            <!-- 4. Community management -->
+            <a href="social.html" class="tile tile-social">
+                <div class="tile-icon-area">
+                    <img src="img/lea_social.png" alt="" class="tile-illustration">
+                </div>
+                <div class="tile-label">Community<br>management</div>
+            </a>
+
+            <!-- 5. Assistant agenda -->
+            <a href="assistant.html" class="tile tile-assistant">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-calendar-check tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Assistant<br>agenda</div>
+            </a>
+
+            <!-- 6. Paramètres -->
+            <a href="parametres.html" class="tile tile-parametres">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-gear tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Paramètres</div>
+            </a>
+
+            <!-- 7. Tutoriels (placeholder — page pas encore créée) -->
+            <a href="#" class="tile tile-tutoriels" id="tileTutoriels">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-graduation-cap tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Tutoriels</div>
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <!-- Bottom Mobile Tab Bar -->
+    <nav class="mobile-bottom-bar">
+        <a href="index.html" class="bottom-tab">
+            <i class="fa-solid fa-house"></i>
+            <span>Vendeurs</span>
+        </a>
+        <a href="acquereurs.html" class="bottom-tab">
+            <i class="fa-solid fa-key"></i>
+            <span>Acquéreurs</span>
+        </a>
+        <a href="micro.html" class="bottom-tab-micro">
+            <i class="fa-solid fa-microphone"></i>
+        </a>
+        <a href="dvf.html" class="bottom-tab">
+            <i class="fa-solid fa-chart-simple"></i>
+            <span>Marché</span>
+        </a>
+        <a href="social.html" class="bottom-tab">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>Social</span>
+        </a>
+    </nav>
+
+    <script>
+    /**
+     * home.js (inline)
+     * Logique de la page d'accueil : bienvenue personnalisée,
+     * recherche globale V1, bouton micro, et toast tutoriels.
+     */
+
+    /* === Bienvenue personnalisée === */
+    (async function initWelcome() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return;
+
+        const meta = session.user.user_metadata || {};
+        const fullName = meta.full_name || meta.name || session.user.email.split('@')[0];
+        const firstName = fullName.split(' ')[0];
+
+        const titleEl = document.getElementById('welcomeTitle');
+        if (titleEl) titleEl.textContent = 'Bonjour ' + firstName;
+
+        /* Date du jour formatée en français */
+        const dateEl = document.getElementById('welcomeDate');
+        if (dateEl) {
+            const now = new Date();
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            dateEl.textContent = now.toLocaleDateString('fr-FR', options);
+        }
+    })();
+
+    /* === Recherche globale (V1 : redirect vers pipeline vendeurs) === */
+    (function initGlobalSearch() {
+        const input = document.getElementById('globalSearch');
+        if (!input) return;
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && this.value.trim()) {
+                const query = encodeURIComponent(this.value.trim());
+                window.location.href = 'index.html?search=' + query;
+            }
+        });
+    })();
+
+    /* === Bouton micro → redirige vers micro.html === */
+    (function initMicroBtn() {
+        const btn = document.getElementById('searchMicroBtn');
+        if (!btn) return;
+
+        btn.addEventListener('click', function() {
+            window.location.href = 'micro.html';
+        });
+    })();
+
+    /* === Tuile Tutoriels → toast "Bientôt disponible" === */
+    (function initTutoriels() {
+        const tile = document.getElementById('tileTutoriels');
+        if (!tile) return;
+
+        tile.addEventListener('click', function(e) {
+            e.preventDefault();
+            showToast('Tutoriels bientôt disponibles !');
+        });
+    })();
+
+    /* === Toast utilitaire === */
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+
+        toast.textContent = message;
+        toast.classList.add('visible');
+
+        setTimeout(function() {
+            toast.classList.remove('visible');
+        }, 2500);
+    }
+    </script>
+
+</body>
+</html>

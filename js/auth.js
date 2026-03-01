@@ -94,7 +94,7 @@ function renderMobileHeader(user) {
     const mobileHeader = document.createElement('div');
     mobileHeader.className = 'header-mobile';
     mobileHeader.innerHTML = `
-        <a href="index.html" class="logo-mobile">
+        <a href="home.html" class="logo-mobile">
             <img src="img/Logo_leon.svg" alt="Léon">
         </a>
         <div class="mobile-hdr-user" id="mobileHdrUser">
