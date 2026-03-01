@@ -10655,6 +10655,12 @@
                 closeMicroModal();
             }
         });
+        // Rafraîchir le pipeline quand le micro crée un lead
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'lead-created' && e.data.leadType === 'seller') {
+                if (typeof loadSellers === 'function') loadSellers();
+            }
+        });
     </script>
 
     <!-- Bottom Mobile Tab Bar -->

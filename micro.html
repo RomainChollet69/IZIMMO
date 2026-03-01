@@ -1793,6 +1793,11 @@
                     });
                 }
 
+                // Notifier le parent (pipeline) pour rafraîchir
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'lead-created', leadType: selectedType }, '*');
+                }
+
                 // Succès
                 successText.textContent = `${firstName} ${lastName} créé(e) !`;
                 successOverlay.classList.add('visible');
