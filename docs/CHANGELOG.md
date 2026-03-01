@@ -4,6 +4,31 @@
 
 ---
 
+## Session 2026-03-01g — Fix message onboarding
+
+### Résumé
+Correction du message du bandeau d'accueil affiché aux nouveaux utilisateurs. L'ancien texte référençait le pipeline alors qu'il n'est pas visible à ce stade (seul l'écran micro est affiché).
+
+### Modifications
+
+**`index.html`** (modifié) :
+- Bandeau `#welcomeBanner` : "Voici à quoi ressemblera ton pipeline…" → "Bienvenue ! Crée ton premier lead pour démarrer ton pipeline."
+
+**`acquereurs.html`** (modifié) :
+- Bandeau `#welcomeBanner` : même correction, adapté acquéreurs → "Bienvenue ! Crée ton premier acquéreur pour démarrer ton pipeline."
+
+### Fichiers créés/modifiés
+- `index.html`
+- `acquereurs.html`
+
+### Points d'attention / bugs connus
+- Aucun
+
+### Prochaines étapes prioritaires
+- Aucune liée à cette modification
+
+---
+
 ## Session 2026-03-01f — Retour visite IA + correctifs micro/pipeline
 
 ### Résumé
