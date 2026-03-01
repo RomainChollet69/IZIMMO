@@ -73,8 +73,8 @@
         }
         .search-bar-section .add-btn {
             position: absolute;
-            /* Centré = 50% + demi-largeur search (300px) + gap (16px) */
-            left: calc(50% + 316px);
+            /* Centré = 50% + demi-largeur search (300px) + gap (24px) */
+            left: calc(50% + 324px);
             top: 50%;
             transform: translateY(-50%);
         }
@@ -380,7 +380,9 @@
 
         .add-btn:hover {
             background: #F3F4F6;
-            transform: translateY(-1px);
+        }
+        .search-bar-section .add-btn:hover {
+            transform: translateY(-50%); /* Maintenir le centrage vertical au hover */
         }
 
         /* ===== SEARCH TOOLBAR ===== */
