@@ -2536,6 +2536,7 @@
                     const priceM2 = getPricePerM2(sale);
                     const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
                     const dvfUid = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+                    const singleIdx = currentFilteredSales.indexOf(sale);
                     content = `
                         <div style="font-family:Inter,sans-serif;min-width:220px;max-width:300px;color:#2C3E50;padding:4px 2px">
                             <div id="${dvfUid}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
@@ -2545,11 +2546,11 @@
                                 ${sale.distance ? `<span style="font-size:11px;color:#999">à ${sale.distance} m</span>` : ''}
                             </div>
                             <div style="font-size:20px;font-weight:800;color:#667eea;margin-bottom:4px">${formatPrice(price)}</div>
-                            <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:8px">
+                            <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:6px">
                                 ${priceM2 ? `<span style="font-size:13px;font-weight:600;color:#555">${formatNumber(priceM2)} €/m²</span>` : ''}
                                 <span style="font-size:12px;color:#999">📅 ${date}</span>
                             </div>
-                            <div style="font-size:12px;color:#667eea;cursor:pointer;padding:8px 0 2px;border-top:1px solid #eee" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
+                            <div style="font-size:12px;color:#667eea;cursor:pointer;padding:6px 0 2px;border-top:1px solid #eee" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
                                 <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i> Plus de détails
                             </div>
                             <div style="display:none;padding-top:6px;font-size:12px;color:#555;line-height:1.8">
@@ -2557,6 +2558,7 @@
                                 ${priceM2 ? '<div>💰 Prix/m² : ' + formatNumber(priceM2) + ' €/m²</div>' : ''}
                                 <div>📅 Date de vente : ${date}</div>
                             </div>
+                            <button onclick="toggleSelection(${singleIdx}); var sel=isSelected(currentFilteredSales[${singleIdx}]); this.innerHTML=(sel?'<i class=\\'fas fa-check\\'></i> Sélectionné':'<i class=\\'fas fa-bookmark\\'></i> Sélectionner'); this.style.background=sel?'#667eea':'#f0f4ff'; this.style.color=sel?'#fff':'#667eea'; this.style.borderColor=sel?'#667eea':'#667eea'" style="margin-top:8px;padding:5px 12px;border-radius:6px;border:1px solid #667eea;background:#f0f4ff;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s"><i class="fas fa-bookmark"></i> Sélectionner</button>
                         </div>
                     `;
                     // Reverse geocoding avec cache à l'ouverture
@@ -2583,26 +2585,29 @@
                         const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
                         const priceM2Sale = getPricePerM2(sale);
                         const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                        return `<div style="padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;transition:background 0.15s" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='transparent'" onclick="showSaleDetail(${saleIdx}, true); infoWindow.close()">
-                            <div style="display:flex;justify-content:space-between;align-items:center">
-                                <span style="font-size:13px">${getTypeIcon(type)} <strong>${capitalize(type)}</strong>${surface ? ` · ${surface} m²` : ''}</span>
-                                <strong style="font-size:14px;color:#667eea">${formatPrice(price)}</strong>
-                            </div>
-                            <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-top:2px">
-                                <span>${date}</span>
-                                ${priceM2Sale ? `<span>${formatNumber(priceM2Sale)} €/m²</span>` : ''}
+                        return `<div style="display:flex;align-items:center;gap:6px;padding:6px 4px;border-bottom:1px solid #eee">
+                            <button onclick="event.stopPropagation(); toggleSelection(${saleIdx}); this.innerHTML=isSelected(currentFilteredSales[${saleIdx}])?'<i class=\\'fas fa-check\\'></i>':'<i class=\\'fas fa-plus\\'></i>'; this.style.background=isSelected(currentFilteredSales[${saleIdx}])?'#667eea':'#f0f0f0'; this.style.color=isSelected(currentFilteredSales[${saleIdx}])?'#fff':'#667eea'" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;border:none;background:#f0f0f0;color:#667eea;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Ajouter à ma sélection"><i class="fas fa-plus"></i></button>
+                            <div style="flex:1;cursor:pointer;min-width:0;padding:2px 4px;border-radius:4px;transition:background 0.15s" onclick="showSaleDetail(${saleIdx}, true)" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='transparent'">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-size:12px">${getTypeIcon(type)} <strong>${capitalize(type)}</strong>${surface ? ` · ${surface} m²` : ''}</span>
+                                    <strong style="font-size:13px;color:#667eea">${formatPrice(price)}</strong>
+                                </div>
+                                <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-top:1px">
+                                    <span>${date}</span>
+                                    ${priceM2Sale ? `<span>${formatNumber(priceM2Sale)} €/m²</span>` : ''}
+                                </div>
                             </div>
                         </div>`;
                     }).join('');
                     content = `
-                        <div style="font-family:Inter,sans-serif;min-width:240px;max-width:320px;color:#2C3E50;padding:4px 2px">
+                        <div style="font-family:Inter,sans-serif;min-width:260px;max-width:340px;color:#2C3E50;padding:4px 2px">
                             <div id="${dvfUidMulti}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
                             <div style="font-size:14px;font-weight:700;margin-bottom:4px"><i class="fas fa-city" style="color:#667eea;margin-right:4px"></i> ${count} ventes sur cette parcelle</div>
                             <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:8px">
                                 <span style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</span>
                                 ${medianPriceM2 ? `<span style="font-size:12px;color:#555">méd. ${formatNumber(medianPriceM2)} €/m²</span>` : ''}
                             </div>
-                            <div style="font-size:11px;color:#667eea;margin-bottom:4px;font-weight:600">Cliquez sur une vente pour voir les détails :</div>
+                            <div style="font-size:11px;color:#999;margin-bottom:4px"><i class="fas fa-plus" style="color:#667eea;margin-right:3px"></i>sélectionner &nbsp;|&nbsp; cliquer = voir détails</div>
                             ${salesListHtml}
                             ${count > 10 ? `<div style="font-size:12px;color:#999;padding-top:6px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
                         </div>
