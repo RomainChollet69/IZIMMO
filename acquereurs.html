@@ -638,7 +638,9 @@
         }
 
         .column-header {
-            position: relative;
+            position: sticky;
+            top: 64px; /* Hauteur du header page */
+            z-index: 10;
             margin-bottom: 16px;
             overflow: hidden;
             border-radius: 16px;
