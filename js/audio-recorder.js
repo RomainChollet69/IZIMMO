@@ -275,7 +275,9 @@ window.AudioRecorder = class AudioRecorder {
 
             if (!response.ok) {
                 const err = await response.json().catch(() => ({}));
-                throw new Error(err.error || 'La transcription a échoué');
+                console.error('[AudioRecorder] Transcription error:', response.status, err);
+                const msg = err.detail || err.error || 'La transcription a échoué';
+                throw new Error(msg);
             }
 
             const data = await response.json();
