@@ -1396,18 +1396,22 @@
         }
         .selection-card-remove {
             position: absolute;
-            top: 4px;
-            right: 4px;
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.3);
+            top: 6px;
+            right: 6px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            color: rgba(255,255,255,0.6);
             cursor: pointer;
-            font-size: 12px;
-            padding: 2px 5px;
-            border-radius: 4px;
+            font-size: 13px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
             transition: all 0.15s;
         }
-        .selection-card-remove:hover { color: #F44336; background: rgba(244,67,54,0.1); }
+        .selection-card-remove:hover { color: #fff; background: #F44336; border-color: #F44336; }
 
         .selection-empty {
             text-align: center;
