@@ -9,6 +9,18 @@
     "api/assistant.js": {
       "maxDuration": 30
     },
+    "api/transcribe.js": {
+      "maxDuration": 25
+    },
+    "api/parse-voice-note.js": {
+      "maxDuration": 30
+    },
+    "api/parse-lead.js": {
+      "maxDuration": 30
+    },
+    "api/generate-message.js": {
+      "maxDuration": 30
+    },
     "api/google-auth.js": {
       "maxDuration": 15
     }
