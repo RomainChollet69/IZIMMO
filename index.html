@@ -436,9 +436,8 @@
         }
         .pipeline.grabbing { cursor: grabbing; }
 
-        .pipeline::-webkit-scrollbar { height: 8px; }
-        .pipeline::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); border-radius: 10px; }
-        .pipeline::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); border-radius: 10px; }
+        .pipeline::-webkit-scrollbar { display: none; }
+        .pipeline { scrollbar-width: none; }
         .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
         .column {
