@@ -734,3 +734,58 @@ Implémentation complète de l'assistant organisationnel IA (spec v2.1). L'agent
 - Ajouter les blocs commentaires de 2-5 lignes en tête de chaque fichier JS/HTML (convention CLAUDE.md)
 - Mettre en place le logging structuré par module (`[DVF]`, `[Pipeline]`, etc.)
 - Nettoyer `pipeline-acquereurs.html`
+
+---
+
+## Session 2026-02-28e — Feedback visite enrichi + 5 améliorations acquéreur
+
+### Modifications
+- **Feedback visite modifiable + décision acquéreur** : le bouton "Donner un retour" devient "Modifier le retour" si feedback déjà rempli ; ajout champ `buyer_decision` (en_attente, interesse, contre_visite, offre, refus) séparé du feedback agent
+- **Feedback enrichi** : ajout points positifs (7 chips multi-select), points négatifs (7 chips), perception quartier (3 options mono-select) — affichés en couleur sur les cartes visite
+- **5 améliorations fiche acquéreur** :
+  1. Titre "Notes" dédoublé → renommé "Éléments rédhibitoires"
+  2. Dealbreakers en chips cliquables (RDC, Mitoyen, Bruit, Étage élevé, Vis-à-vis, Nord) + champ Autre — stocké en CSV
+  3. Type de bien "Appart. ou Maison" ajouté + matching adapté (pas d'élimination, score complet)
+  4. Biens visités masqués du matching (`await loadMatchingVisits` + filtre `visitedSellerIds`)
+  5. Raison de refus "Travaux" ajoutée
+
+### Fichiers créés
+- `sql/006_buyers_contact_date.sql`
+- `sql/007_visits_buyer_decision.sql`
+- `sql/008_visits_feedback_enriched.sql`
+
+### Fichiers modifiés
+- `index.html` — feedback enrichi, calculateMatchScore (appartement_ou_maison)
+- `acquereurs.html` — feedback enrichi, 5 améliorations, calculateMatchScore, loadMatchingSellers
+
+---
+
+## Session 2026-02-28f — Desktop Bottom Bar + Popup Micro
+
+### Modifications
+- **Desktop bottom bar** : barre fixe en bas (fond blanc, 64px) avec recherche à gauche, bouton micro central hero (surélevé, gradient violet), bouton Todo à droite
+  - Layout CSS Grid `1fr auto 1fr` pour centrage parfait du micro
+  - Masquée sur mobile (< 768px), la mobile bottom bar reste inchangée
+- **Popup micro (iframe)** : le bouton micro ouvre une modale contenant micro.html en iframe (`allow="microphone"`)
+  - micro.html détecte l'iframe (`window.self !== window.top`) et masque son header + bottom bar
+  - Contenu centré verticalement, titre "Appuyez et parlez à Léon" au-dessus du micro (réordonné via CSS `order`)
+  - Exemples contextuels : vendeurs (`?context=sellers`) vs acquéreurs (`?context=buyers`)
+  - Exemples avec "..." pour montrer qu'on peut en dire plus
+- **Header allégé** : tab "Micro" retirée, search-toolbar supprimée (migrée dans bottom bar)
+- **Todo widget** : FAB masqué sur desktop (`@media min-width: 769px`), `window.todoToggle` exposé, badge synchronisé avec la bottom bar
+- **Léon flottant** : suppression du briefing du header, Léon en vignette ronde (64px) positionnée sur la bottom bar
+  - Position et taille à affiner (retour utilisateur : trop petit en bas à gauche)
+
+### Fichiers modifiés
+- `index.html` — CSS/HTML bottom bar, modale micro, suppression search-toolbar, suppression nav Micro, Léon vignette, JS search IDs migrés, openMicroModal/closeMicroModal
+- `acquereurs.html` — mêmes modifications (sauf Léon)
+- `micro.html` — détection iframe, CSS `.in-iframe`, exemples dynamiques par contexte
+- `js/todo-widget.js` — masquer FAB desktop, exposer todoToggle, synchro badge bottom bar
+
+### Points d'attention
+- Position de Léon flottant à revoir : le bas à gauche gêne la lisibilité. Envisager de le mettre dans le header ou la bottom bar.
+- Modale micro : hauteur fixe à 75vh (iframe ne supporte pas height:auto)
+
+### Prochaines étapes prioritaires
+- Repositionner Léon (header ? bottom bar ? clic sur logo ?)
+- Tester la dictée vocale depuis la popup iframe (permissions micro navigateur)
