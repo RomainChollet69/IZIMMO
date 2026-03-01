@@ -1106,9 +1106,15 @@
         }
         .msg-ia-channel-btn:hover { border-color: #667eea; }
         .msg-ia-channel-btn.active { border-color: #667eea; background: #f0f0ff; color: #667eea; }
-        .msg-ia-tone-separator { width: 1px; height: 20px; background: #E5E7EB; margin: 0 4px; }
-        .msg-ia-tone-btn { padding: 6px 12px; border-radius: 8px; border: 1.5px solid #E5E7EB; background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: #6B7280; font-family: 'Inter', sans-serif; transition: all 0.15s; }
-        .msg-ia-tone-btn.active { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+
+        /* Popup choix tu/vous */
+        .tone-popup-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .tone-popup { background: white; border-radius: 14px; padding: 24px 28px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; max-width: 300px; width: 90%; }
+        .tone-popup-title { font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700; font-size: 16px; color: #2C3E50; margin-bottom: 16px; }
+        .tone-popup-buttons { display: flex; gap: 12px; justify-content: center; }
+        .tone-popup-btn { flex: 1; padding: 12px 0; border-radius: 10px; border: 1.5px solid #E5E7EB; background: white; font-size: 15px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .tone-popup-btn:hover { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+
         .msg-ia-scenario-row {
             display: flex;
             gap: 10px;
@@ -4451,9 +4457,6 @@
                             <button type="button" class="msg-ia-channel-btn active" data-channel="sms" onclick="selectChannel('sms')">📱 SMS</button>
                             <button type="button" class="msg-ia-channel-btn" data-channel="whatsapp" onclick="selectChannel('whatsapp')">💬 WhatsApp</button>
                             <button type="button" class="msg-ia-channel-btn" data-channel="email" onclick="selectChannel('email')">📧 Email</button>
-                            <span class="msg-ia-tone-separator"></span>
-                            <button type="button" class="msg-ia-tone-btn active" data-tone="vous" onclick="selectTone('vous')">Vous</button>
-                            <button type="button" class="msg-ia-tone-btn" data-tone="tu" onclick="selectTone('tu')">Tu</button>
                         </div>
                         <div class="msg-ia-scenario-row">
                             <div class="form-group">
@@ -10513,16 +10516,32 @@
 
         // ===== MESSAGES IA =====
         let currentChannel = 'sms';
-        let currentTone = 'vous';
 
         function selectChannel(channel) {
             currentChannel = channel;
             document.querySelectorAll('.msg-ia-channel-btn').forEach(b => b.classList.toggle('active', b.dataset.channel === channel));
         }
 
-        function selectTone(tone) {
-            currentTone = tone;
-            document.querySelectorAll('.msg-ia-tone-btn').forEach(b => b.classList.toggle('active', b.dataset.tone === tone));
+        /** Popup tu/vous — retourne une Promise qui résout 'tu' ou 'vous', ou null si annulé */
+        function askTone() {
+            return new Promise(resolve => {
+                const overlay = document.createElement('div');
+                overlay.className = 'tone-popup-overlay';
+                overlay.innerHTML = `
+                    <div class="tone-popup">
+                        <div class="tone-popup-title">Tu ou vous ?</div>
+                        <div class="tone-popup-buttons">
+                            <button class="tone-popup-btn" data-tone="tu">Tutoyer</button>
+                            <button class="tone-popup-btn" data-tone="vous">Vouvoyer</button>
+                        </div>
+                    </div>`;
+                overlay.addEventListener('click', e => {
+                    const btn = e.target.closest('.tone-popup-btn');
+                    if (btn) { overlay.remove(); resolve(btn.dataset.tone); }
+                    else if (e.target === overlay) { overlay.remove(); resolve(null); }
+                });
+                document.body.appendChild(overlay);
+            });
         }
 
         function onScenarioChange() {
@@ -10625,6 +10644,10 @@
             const scenario = document.getElementById('msgScenario').value;
             if (!scenario) { alert('Choisissez un scénario'); return; }
 
+            // Demander tu/vous avant de générer
+            const tone = await askTone();
+            if (!tone) return; // Annulé
+
             const btn = document.getElementById('msgGenerateBtn');
             const loading = document.getElementById('msgLoading');
             const output = document.getElementById('msgOutput');
@@ -10645,7 +10668,6 @@
                 customPrompt = document.getElementById('msgCustomPrompt').value;
             }
 
-            // Nom de l'agent pour la signature
             const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
 
             try {
@@ -10653,7 +10675,7 @@
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName, tone: currentTone })
+                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName, tone })
                 });
                 const data = await resp.json().catch(() => ({}));
                 console.log('[MsgIA] Response:', resp.status, data);
