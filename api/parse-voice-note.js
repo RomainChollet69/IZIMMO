@@ -75,14 +75,20 @@ Retourne UNIQUEMENT un JSON valide :
       "suggested_type": "seller ou buyer (devine d'après le contexte, défaut: seller)",
       "first_name": "prénom",
       "last_name": "nom de famille",
-      "budget_max": "nombre en euros si mentionné, sinon null",
-      "property_type": "appartement|maison|terrain|immeuble si mentionné, sinon null",
-      "rooms": "T1|T2|T3|T4|T5+ si mentionné, sinon null",
-      "sector": "zone géographique si mentionnée, sinon null",
-      "criteria": ["jardin", "parking", "cave", "balcon", "garage", "piscine", "ascenseur — uniquement ceux mentionnés"],
-      "phone": "numéro si mentionné, sinon null",
+      "phone": "numéro au format 06 12 34 56 78 (convertir les points et tirets en espaces), sinon null",
       "email": "email si mentionné, sinon null",
-      "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note"
+      "source": "pige|recommandation|boitage|siteimmo|efficity|ancien_client|autre — si mentionné, sinon null",
+      "referrer_name": "nom de l'apporteur si source=recommandation, sinon null",
+      "property_type": "appartement|maison|terrain|immeuble si mentionné, sinon null",
+      "surface": "surface en m² (nombre pur) si mentionnée, sinon null",
+      "budget": "prix en euros (nombre pur) si mentionné, sinon null",
+      "budget_max": "budget max en euros (nombre pur) pour acquéreurs, sinon null",
+      "rooms": "T1|T2|T3|T4|T5+ si mentionné, sinon null",
+      "sector": "ville ou quartier si mentionné, sinon null",
+      "address": "adresse complète du bien si mentionnée, sinon null",
+      "criteria": ["jardin", "parking", "cave", "balcon", "garage", "piscine", "ascenseur — uniquement ceux mentionnés"],
+      "reminder_date": "YYYY-MM-DD — date de relance si mentionnée (utiliser la date du jour pour convertir 'demain', 'lundi', etc.), sinon null",
+      "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note (NE PAS inclure le numéro de téléphone ni les infos déjà dans les champs structurés)"
     }
   ]
 }`;

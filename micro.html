@@ -1768,17 +1768,34 @@
                     status: defaultStatus
                 };
 
+                // Téléphone : nettoyage (points/tirets → espaces)
+                if (contact.phone) {
+                    leadData.phone = contact.phone.replace(/[\.\-]/g, ' ').replace(/\s+/g, ' ').trim();
+                }
+                if (contact.email) leadData.email = contact.email;
+
+                // Champs communs vendeurs & acquéreurs
+                if (contact.property_type) leadData.property_type = contact.property_type;
+
                 // Champs spécifiques aux acquéreurs
                 if (selectedType === 'buyer') {
                     leadData.contact_date = new Date().toISOString().split('T')[0];
                     if (contact.budget_max) leadData.budget_max = contact.budget_max;
-                    if (contact.property_type) leadData.property_type = contact.property_type;
                     if (contact.rooms) leadData.rooms = contact.rooms;
                     if (contact.sector) leadData.city = contact.sector;
                     if (contact.criteria && contact.criteria.length > 0) leadData.criteria = contact.criteria;
                 }
-                if (contact.phone) leadData.phone = contact.phone;
-                if (contact.email) leadData.email = contact.email;
+
+                // Champs spécifiques aux vendeurs
+                if (selectedType === 'seller') {
+                    if (contact.source) leadData.source = contact.source;
+                    if (contact.referrer_name) leadData.referrer_name = contact.referrer_name;
+                    if (contact.budget) leadData.budget = contact.budget;
+                    if (contact.address) leadData.address = contact.address;
+                }
+
+                // Date de relance
+                if (contact.reminder_date) leadData.reminder = contact.reminder_date;
 
                 // Insérer le lead
                 const { data, error } = await supabaseClient.from(table).insert([leadData]).select();
