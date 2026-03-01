@@ -4,6 +4,47 @@
 
 ---
 
+## Session 2026-03-01e — Double compteur mensuel + page barème Paramètres
+
+### Résumé
+Ajout d'un compteur mensuel (reset au 1er du mois) en complément du score total carrière. Le header continue d'afficher uniquement le score total. Nouvelle section "Mes performances" dans la page Paramètres avec 3 cartes stats (total, mois, streak) et le barème complet des 18 actions gamifiées.
+
+### Modifications
+
+**`sql/010_gamification_monthly.sql`** (NOUVEAU) :
+- ALTER TABLE `gamification_profiles` : ajout `monthly_points` (INT) + `month_year` (TEXT)
+- Le reset se fait côté client au chargement, même pattern que le reset quotidien
+
+**`js/gamification.js`** (modifié) :
+- Ajout `monthStr()` helper + champs `monthly_points`/`month_year` dans `createProfile()` et `saveProfile()`
+- Reset mensuel dans `initGamification()` quand `month_year` change
+- Incrémentation `monthly_points` dans `awardPoints()` et `awardDailyStreak()`
+
+**`parametres.html`** (modifié) :
+- Nouvelle section "Mes performances" en première position (avant "Mon Profil")
+- 3 cartes stats : score total (doré), mois en cours (violet), streak (orange si actif)
+- Barème des 18 actions trié par points décroissants
+- Tips bonus x2 et streak
+- Responsive mobile : grille 3→1 colonne
+- Fonction `loadGamificationStats()` appelée au chargement
+
+### Fichiers créés/modifiés
+- sql/010_gamification_monthly.sql (nouveau)
+- js/gamification.js (4 modifications)
+- parametres.html (CSS + HTML section + JS loader)
+- docs/ARCHITECTURE.md, docs/CHANGELOG.md
+
+### Points d'attention
+- La migration SQL `010_gamification_monthly.sql` doit être exécutée APRÈS `009_gamification.sql` dans Supabase
+- Le premier mois démarre à 0 pour tous les utilisateurs existants
+
+### Prochaines étapes prioritaires
+- Exécuter les deux migrations SQL dans Supabase
+- Tester le cycle complet : action → vérifier monthly_points sur parametres.html
+- V2 : historique mensuel, meilleur mois, classement entre agents
+
+---
+
 ## Session 2026-03-01d — Système de gamification dopaminergique
 
 ### Résumé

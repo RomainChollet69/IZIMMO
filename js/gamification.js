@@ -229,6 +229,10 @@
         return data;
     }
 
+    function monthStr() {
+        return todayStr().slice(0, 7); // "2026-03"
+    }
+
     async function createProfile() {
         const today = todayStr();
         const { data, error } = await supabaseClient
@@ -240,7 +244,9 @@
                 longest_streak: 0,
                 level: 1,
                 actions_today: 0,
-                today_date: today
+                today_date: today,
+                monthly_points: 0,
+                month_year: monthStr()
             })
             .select()
             .single();
@@ -262,7 +268,9 @@
                 last_active_date: profile.last_active_date,
                 level: profile.level,
                 actions_today: profile.actions_today,
-                today_date: profile.today_date
+                today_date: profile.today_date,
+                monthly_points: profile.monthly_points,
+                month_year: profile.month_year
             })
             .eq('id', profile.id);
         if (error) console.error('[Gamification] Erreur sauvegarde profil:', error);
@@ -297,6 +305,7 @@
         });
 
         profile.total_points += config.points;
+        profile.monthly_points += config.points;
         profile.current_streak += 1;
         profile.last_active_date = profile.today_date;
         profile.longest_streak = Math.max(profile.longest_streak, profile.current_streak);
@@ -533,6 +542,7 @@
         // 2. Mise à jour du profil local
         const prevTotal = profile.total_points;
         profile.total_points += finalPoints;
+        profile.monthly_points += finalPoints;
         profile.actions_today += 1;
         profile.level = calculateLevel(profile.total_points);
 
@@ -574,8 +584,16 @@
                 checkAndUpdateStreak(today);
                 profile.actions_today = 0;
                 profile.today_date = today;
-                await saveProfile();
             }
+
+            // Vérifier si le mois a changé
+            const currentMonth = monthStr();
+            if (profile.month_year !== currentMonth) {
+                profile.monthly_points = 0;
+                profile.month_year = currentMonth;
+            }
+
+            await saveProfile();
 
             // Injecter le compteur dans le header
             injectHeaderCounter();

@@ -322,6 +322,111 @@
             transform: translateY(-1px);
         }
 
+        /* ===== SECTION GAMIFICATION (MES PERFORMANCES) ===== */
+        .perf-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .perf-stat-card {
+            border-radius: 14px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .perf-stat-card.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #5D4037;
+        }
+        .perf-stat-card.purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .perf-stat-card.grey {
+            background: linear-gradient(135deg, #F5F5F5 0%, #E0E0E0 100%);
+            color: #424242;
+        }
+        .perf-stat-card.grey.active {
+            background: linear-gradient(135deg, #FF6D00 0%, #FF9100 100%);
+            color: white;
+        }
+        .perf-stat-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.85;
+            margin-bottom: 6px;
+        }
+        .perf-stat-value {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            line-height: 1.2;
+        }
+        .perf-stat-sub {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-top: 4px;
+        }
+        .perf-bareme-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+        }
+        .perf-bareme-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .perf-bareme-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: background 0.2s;
+        }
+        .perf-bareme-row:hover { background: #f0f2f5; }
+        .perf-bareme-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .perf-bareme-pts {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: #FF8F00;
+            white-space: nowrap;
+        }
+        .perf-tips {
+            margin-top: 20px;
+            padding: 14px 18px;
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 100%);
+            border-radius: 10px;
+            font-size: 13px;
+            color: #5D4037;
+            line-height: 1.6;
+        }
+        .perf-empty {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-light);
+            font-size: 15px;
+        }
+
         /* ===== SETTINGS LAYOUT ===== */
         .settings-container {
             max-width: 800px;
@@ -1246,6 +1351,9 @@
 
             .settings-section { padding: 20px; border-radius: 12px; }
             .section-title { font-size: 18px; margin-bottom: 16px; }
+            .perf-stats { grid-template-columns: 1fr; gap: 10px; }
+            .perf-stat-value { font-size: 26px; }
+            .perf-bareme-label { font-size: 13px; }
 
             .profile-header { flex-direction: column; text-align: center; gap: 12px; }
             .profile-photo { width: 64px; height: 64px; }
@@ -1493,6 +1601,62 @@
     </div>
 
     <div class="settings-container">
+        <!-- Section Mes Performances (Gamification) -->
+        <div class="settings-section" id="performanceSection">
+            <h2 class="section-title">Mes Performances</h2>
+
+            <div id="perfContent">
+                <div class="perf-stats">
+                    <div class="perf-stat-card gold">
+                        <div class="perf-stat-label">Score total</div>
+                        <div class="perf-stat-value" id="perfTotalPoints">—</div>
+                        <div class="perf-stat-sub" id="perfLevel">—</div>
+                    </div>
+                    <div class="perf-stat-card purple">
+                        <div class="perf-stat-label" id="perfMonthLabel">Ce mois-ci</div>
+                        <div class="perf-stat-value" id="perfMonthlyPoints">—</div>
+                        <div class="perf-stat-sub" id="perfActionsToday">—</div>
+                    </div>
+                    <div class="perf-stat-card grey" id="perfStreakCard">
+                        <div class="perf-stat-label">Streak</div>
+                        <div class="perf-stat-value" id="perfStreak">—</div>
+                        <div class="perf-stat-sub" id="perfStreakRecord">—</div>
+                    </div>
+                </div>
+
+                <div class="perf-bareme-title">Barème des points</div>
+                <div class="perf-bareme-list">
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">🏆 Vente réalisée</span><span class="perf-bareme-pts">+100 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📝 Mandat signé</span><span class="perf-bareme-pts">+50 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">🏠 Workflow terminé</span><span class="perf-bareme-pts">+30 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">👀 Retour de visite</span><span class="perf-bareme-pts">+20 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📅 Visite planifiée</span><span class="perf-bareme-pts">+15 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">👤 Lead créé</span><span class="perf-bareme-pts">+15 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">🔥 Streak du jour</span><span class="perf-bareme-pts">+15 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📱 Post créé</span><span class="perf-bareme-pts">+12 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">✅ Fiche complète</span><span class="perf-bareme-pts">+10 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📞 Relance traitée</span><span class="perf-bareme-pts">+10 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">🎤 Note vocale</span><span class="perf-bareme-pts">+8 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">⚡ Étape workflow</span><span class="perf-bareme-pts">+8 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📤 Post partagé</span><span class="perf-bareme-pts">+8 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📝 Note ajoutée</span><span class="perf-bareme-pts">+5 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">📎 Document ajouté</span><span class="perf-bareme-pts">+5 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">⏰ Relance planifiée</span><span class="perf-bareme-pts">+5 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">↔️ Lead déplacé</span><span class="perf-bareme-pts">+3 pts</span></div>
+                    <div class="perf-bareme-row"><span class="perf-bareme-label">☑️ Todo terminée</span><span class="perf-bareme-pts">+3 pts</span></div>
+                </div>
+
+                <div class="perf-tips">
+                    💡 <strong>10% de chance de BONUS x2</strong> à chaque action !<br>
+                    🔥 <strong>3 actions par jour</strong> = streak activée + 15 pts bonus
+                </div>
+            </div>
+
+            <div id="perfEmpty" class="perf-empty" style="display:none;">
+                Commence à utiliser Léon pour gagner des points !
+            </div>
+        </div>
+
         <!-- Section Mon Profil -->
         <div class="settings-section">
             <h2 class="section-title">Mon Profil</h2>
@@ -1834,6 +1998,47 @@
             return session.user.id;
         }
 
+        // ===== GAMIFICATION STATS =====
+        const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+        const LEVEL_NAMES = ['Débutant', 'Actif', 'Confirmé', 'Expert', 'Légende'];
+
+        async function loadGamificationStats(uid) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('gamification_profiles')
+                    .select('*')
+                    .eq('user_id', uid)
+                    .single();
+
+                if (error || !data) {
+                    document.getElementById('perfContent').style.display = 'none';
+                    document.getElementById('perfEmpty').style.display = 'block';
+                    return;
+                }
+
+                // Score total
+                document.getElementById('perfTotalPoints').textContent = data.total_points.toLocaleString('fr-FR') + ' pts';
+                const level = data.level || 1;
+                document.getElementById('perfLevel').textContent = 'Niveau ' + level + ' — ' + (LEVEL_NAMES[level - 1] || '');
+
+                // Score mensuel
+                const monthlyPts = data.monthly_points || 0;
+                document.getElementById('perfMonthlyPoints').textContent = monthlyPts.toLocaleString('fr-FR') + ' pts';
+                const now = new Date();
+                document.getElementById('perfMonthLabel').textContent = MONTH_NAMES[now.getMonth()] + ' ' + now.getFullYear();
+                document.getElementById('perfActionsToday').textContent = (data.actions_today || 0) + ' actions aujourd\'hui';
+
+                // Streak
+                const streak = data.current_streak || 0;
+                document.getElementById('perfStreak').textContent = streak > 0 ? ('🔥 ' + streak + 'j') : '0j';
+                document.getElementById('perfStreakRecord').textContent = 'Record : ' + (data.longest_streak || 0) + 'j';
+                if (streak > 0) document.getElementById('perfStreakCard').classList.add('active');
+
+            } catch (err) {
+                console.error('[Paramètres] Erreur chargement gamification:', err);
+            }
+        }
+
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1859,6 +2064,7 @@
             await loadProfile();
             await loadContacts();
             await loadCalendarIntegration();
+            await loadGamificationStats(currentUserId);
 
             if ('contacts' in navigator && 'ContactsManager' in window) {
                 document.getElementById('importNativeBtn').style.display = 'inline-flex';

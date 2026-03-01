@@ -54,7 +54,8 @@ IZIMMO/
 ├── sql/
 │   ├── 001_workflow_steps.sql  # Migration table workflow_steps + RLS + indexes
 │   ├── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
-│   └── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
+│   ├── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
+│   └── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
@@ -573,6 +574,8 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `level`           | INT         | Niveau (1-5)                                 |
 | `actions_today`   | INT         | Compteur d'actions du jour                   |
 | `today_date`      | DATE        | Date courante (reset quotidien)              |
+| `monthly_points`  | INT         | Score du mois en cours (reset au 1er)        |
+| `month_year`      | TEXT        | Mois courant "YYYY-MM" (détection reset)     |
 
 ### Sécurité (RLS)
 
