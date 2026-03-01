@@ -73,8 +73,7 @@
         }
         .search-bar-section .add-btn {
             position: absolute;
-            /* Centré = 50% + demi-largeur search (300px) + gap (24px) */
-            left: calc(50% + 324px);
+            left: calc(50% + 370px);
             top: 50%;
             transform: translateY(-50%);
         }
@@ -2897,10 +2896,11 @@
         .visit-card-points { font-size: 11px; margin-top: 2px; line-height: 1.4; }
         .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
         .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
-        .visit-action-done, .visit-action-cancel, .visit-action-feedback { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .visit-action-done, .visit-action-cancel, .visit-action-feedback, .visit-action-msg { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
         .visit-action-done { background: #E8F5E9; color: #2E7D32; }
         .visit-action-cancel { background: #FFF3E0; color: #E65100; }
         .visit-action-feedback { background: #E8EAF6; color: #3F51B5; }
+        .visit-action-msg { background: #FFF3E0; color: #E65100; }
         .visit-delete-btn-match { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
         .visit-match-card:hover .visit-delete-btn-match { opacity: 1; }
         .visits-match-separator { height: 1px; background: #E0E0E0; margin: 12px 0; }
@@ -4470,6 +4470,7 @@
                                     <option value="relance_estimation">📨 Relance post-estimation</option>
                                     <option value="redaction_annonce">📝 Rédaction d'annonce</option>
                                     <option value="repositionnement_prix">📊 Argumentaire repositionnement prix</option>
+                                    <option value="retour_visite">👁️ Retour de visite acquéreur</option>
                                     <option value="libre">✏️ Message libre</option>
                                 </select>
                             </div>
@@ -5224,6 +5225,7 @@
 
         // ===== VISITES DANS MATCHING TAB =====
         let currentMatchVisits = [];
+        let pendingVisitFeedback = null; // Données visite pour génération message retour
 
         const POSITIVE_POINTS = [
             { value: 'luminosite', label: '☀️ Luminosité' },
@@ -5346,8 +5348,12 @@
                 </div>`;
             } else if (visit.status === 'effectuee') {
                 const btnLabel = visit.feedback_rating ? '✏️ Modifier le retour' : '📝 Donner un retour';
+                const msgBtn = visit.feedback_rating
+                    ? `<button type="button" class="visit-action-msg" onclick="event.stopPropagation();generateVisitRetourMessage('${visit.id}')">💬 Message retour</button>`
+                    : '';
                 actions = `<div class="visit-card-actions">
                     <button type="button" class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
+                    ${msgBtn}
                 </div>`;
             }
 
@@ -10532,6 +10538,81 @@
                 mandate_type: document.getElementById('mandateType').value,
                 mandate_price: document.getElementById('mandatePrice').value
             };
+        }
+
+        /**
+         * generateVisitRetourMessage(visitId)
+         * Depuis la carte visite (onglet Matching), bascule vers Messages IA
+         * avec les données de la visite pré-injectées pour générer un retour vendeur.
+         */
+        function generateVisitRetourMessage(visitId) {
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            if (!visit) { alert('Visite introuvable'); return; }
+
+            // Formater les données visite en texte lisible pour le prompt
+            const fb = visit.feedback_rating ? FEEDBACK_LABELS[visit.feedback_rating] : null;
+            const pp = visit.price_perception ? PRICE_LABELS[visit.price_perception] : null;
+            const dec = visit.buyer_decision ? DECISION_LABELS[visit.buyer_decision] : null;
+
+            let buyerName = '';
+            if (visit.buyers) {
+                buyerName = [(visit.buyers.first_name || ''), (visit.buyers.last_name || '')].filter(Boolean).join(' ');
+            }
+            if (!buyerName) buyerName = visit.buyer_name || 'un acquéreur';
+
+            const dateStr = visit.visit_date
+                ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' })
+                : '';
+
+            let summary = `Données de la visite :\n`;
+            summary += `- Acquéreur : ${buyerName}\n`;
+            if (dateStr) summary += `- Date : ${dateStr}\n`;
+            if (fb) summary += `- Ressenti global : ${fb.label}\n`;
+            if (pp) summary += `- Perception du prix : ${pp.replace(/[✅⚠️🚫]/g, '').trim()}\n`;
+
+            if (Array.isArray(visit.positive_points) && visit.positive_points.length > 0) {
+                const labels = visit.positive_points.map(v => {
+                    const p = POSITIVE_POINTS.find(x => x.value === v);
+                    return p ? p.label.replace(/^[^\s]+\s/, '') : v; // Retire l'emoji
+                });
+                summary += `- Points positifs : ${labels.join(', ')}\n`;
+            }
+
+            if (Array.isArray(visit.negative_points) && visit.negative_points.length > 0) {
+                const labels = visit.negative_points.map(v => {
+                    const p = NEGATIVE_POINTS.find(x => x.value === v);
+                    return p ? p.label.replace(/^[^\s]+\s/, '') : v;
+                });
+                summary += `- Points négatifs : ${labels.join(', ')}\n`;
+            }
+
+            if (visit.neighborhood_feel) {
+                const nh = NEIGHBORHOOD_LABELS[visit.neighborhood_feel] || visit.neighborhood_feel;
+                summary += `- Ressenti quartier : ${nh.replace(/^[^\s]+\s/, '')}\n`;
+            }
+
+            if (dec && visit.buyer_decision !== 'en_attente') {
+                summary += `- Décision acquéreur : ${dec.label}\n`;
+            }
+
+            if (visit.notes) summary += `- Notes : ${visit.notes}\n`;
+
+            // Stocker pour generateMessage
+            pendingVisitFeedback = summary;
+
+            // Basculer vers Messages IA
+            switchTab('messages');
+
+            // Pré-sélectionner le scénario
+            const select = document.getElementById('msgScenario');
+            select.value = 'retour_visite';
+            // Afficher le champ custom prompt avec les données
+            const promptEl = document.getElementById('msgCustomPrompt');
+            promptEl.style.display = 'block';
+            promptEl.value = summary;
+
+            // Lancer la génération automatiquement
+            generateMessage();
         }
 
         async function generateMessage() {
