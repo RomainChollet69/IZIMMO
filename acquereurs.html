@@ -67,6 +67,15 @@
             top: 64px;
             z-index: 999;
         }
+        .search-bar-section .add-btn {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .search-bar-section .add-btn:hover {
+            transform: translateY(-50%);
+        }
         .search-bar-section-inner {
             max-width: 600px;
             margin: 0 auto;
@@ -2746,8 +2755,6 @@
                     <!-- Chargé dynamiquement par auth.js -->
                 </div>
 
-                <!-- Bouton + Lead -->
-                <button class="add-btn" id="addBuyerBtn">+ Lead</button>
             </div>
         </div>
     </div>
@@ -2761,6 +2768,7 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
+        <button class="add-btn" id="addBuyerBtn">+ Lead</button>
     </div>
 
     <div class="mobile-tabs" id="mobileTabs">
