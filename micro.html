@@ -1762,12 +1762,12 @@
                     user_id: userId,
                     first_name: firstName,
                     last_name: lastName,
-                    status: 'nouveau',
-                    contact_date: new Date().toISOString().split('T')[0]
+                    status: 'nouveau'
                 };
 
                 // Champs spécifiques aux acquéreurs
                 if (selectedType === 'buyer') {
+                    leadData.contact_date = new Date().toISOString().split('T')[0];
                     if (contact.budget_max) leadData.budget_max = contact.budget_max;
                     if (contact.property_type) leadData.property_type = contact.property_type;
                     if (contact.rooms) leadData.rooms = contact.rooms;
