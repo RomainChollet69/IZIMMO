@@ -2818,20 +2818,20 @@
         }
 
         /* Matching */
-        .match-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .match-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8f9fa; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
-        .match-card:hover { background: #e8eaf6; }
-        .match-score-circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
+        .match-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .match-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: white; border-radius: 12px; border: 1px solid #F3F4F6; box-shadow: 0 1px 4px rgba(0,0,0,0.04); cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+        .match-card:hover { border-color: #667eea; box-shadow: 0 2px 8px rgba(102,126,234,0.1); }
+        .match-score-circle { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: white; flex-shrink: 0; opacity: 0.9; }
         .match-score-high { background: linear-gradient(135deg, #43A047, #66BB6A); }
         .match-score-medium { background: linear-gradient(135deg, #FB8C00, #FFA726); }
         .match-score-low { background: linear-gradient(135deg, #E53935, #EF5350); }
         .match-info { flex: 1; min-width: 0; }
         .match-info .match-name { font-weight: 600; font-size: 14px; color: #2C3E50; }
-        .match-info .match-detail { font-size: 12px; color: #78909C; margin-top: 2px; }
-        .match-detail-bars { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
-        .match-detail-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .match-detail-bar .bar-label { min-width: 80px; color: #78909C; }
-        .match-detail-bar .bar-track { flex: 1; height: 6px; background: #E0E0E0; border-radius: 3px; overflow: hidden; }
+        .match-info .match-detail { font-size: 12px; color: #78909C; margin-top: 3px; }
+        .match-detail-bars { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+        .match-detail-bar { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+        .match-detail-bar .bar-label { min-width: 70px; color: #9CA3AF; }
+        .match-detail-bar .bar-track { flex: 1; height: 4px; background: #F3F4F6; border-radius: 2px; overflow: hidden; }
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
         .match-indicator { position: absolute; top: 8px; right: 8px; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid #A7F3D0; cursor: pointer; z-index: 2; transition: background 0.2s; }
@@ -2883,10 +2883,10 @@
         .visit-search-option { padding: 9px 12px; cursor: pointer; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
         .visit-search-option:hover { background: #f8f9fa; }
         .visit-search-option:last-child { border-bottom: none; }
-        .visit-match-list { display: flex; flex-direction: column; gap: 6px; }
+        .visit-match-list { display: flex; flex-direction: column; gap: 10px; }
         .visit-match-empty { text-align: center; padding: 16px; color: #bbb; font-size: 13px; }
         .visit-group-label { font-size: 11px; font-weight: 700; color: #78909C; text-transform: uppercase; letter-spacing: 0.5px; margin: 6px 0 2px; }
-        .visit-match-card { position: relative; padding: 10px 14px; background: white; border-radius: 10px; border: 1px solid #E0E0E0; transition: border-color 0.2s; }
+        .visit-match-card { position: relative; padding: 14px 16px; background: white; border-radius: 12px; border: 1px solid #F3F4F6; box-shadow: 0 1px 4px rgba(0,0,0,0.04); transition: border-color 0.2s; }
         .visit-match-card:hover { border-color: #667eea; }
         .visit-match-card.planifiee { border-left: 3px solid #667eea; }
         .visit-match-card.effectuee { border-left: 3px solid #66BB6A; }
@@ -2896,23 +2896,21 @@
         .visit-status-badge.planned { background: #E8EAF6; color: #3F51B5; }
         .visit-status-badge.done { background: #E8F5E9; color: #2E7D32; }
         .visit-status-badge.cancelled { background: #F5F5F5; color: #9E9E9E; }
-        .visit-card-date { font-size: 12px; color: #78909C; }
+        .visit-card-date { font-size: 11px; color: #6B7280; background: #F3F4F6; padding: 3px 8px; border-radius: 6px; }
         .visit-card-person { font-weight: 600; font-size: 13px; color: #2C3E50; }
-        .visit-card-feedback { font-size: 12px; margin-top: 2px; }
-        .visit-card-price { font-size: 12px; color: #78909C; }
-        .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 2px; max-height: 40px; overflow: hidden; }
-        .visit-card-decision { font-size: 12px; font-weight: 600; margin-top: 2px; }
-        .visit-card-points { font-size: 11px; margin-top: 2px; line-height: 1.4; }
+        .visit-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .visit-card-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+        .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 6px; max-height: 40px; overflow: hidden; }
         .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
-        .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
-        .visit-action-done, .visit-action-cancel, .visit-action-feedback, .visit-action-msg { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
-        .visit-action-done { background: #E8F5E9; color: #2E7D32; }
-        .visit-action-cancel { background: #FFF3E0; color: #E65100; }
-        .visit-action-feedback { background: #E8EAF6; color: #3F51B5; }
-        .visit-action-msg { background: #FFF3E0; color: #E65100; }
+        .visit-card-actions { display: flex; gap: 6px; margin-top: 8px; }
+        .visit-action-done, .visit-action-cancel, .visit-action-feedback, .visit-action-msg { padding: 4px 10px; border: 1px solid #E5E7EB; border-radius: 6px; font-size: 11px; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; background: transparent; color: #6B7280; transition: background 0.15s; }
+        .visit-action-done:hover { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
+        .visit-action-cancel:hover { background: #FEF2F2; color: #DC2626; border-color: #FECACA; }
+        .visit-action-feedback:hover { background: #EFF6FF; color: #3B82F6; border-color: #BFDBFE; }
+        .visit-action-msg:hover { background: #FFF7ED; color: #EA580C; border-color: #FED7AA; }
         .visit-delete-btn-match { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
         .visit-match-card:hover .visit-delete-btn-match { opacity: 1; }
-        .visits-match-separator { height: 1px; background: #E0E0E0; margin: 12px 0; }
+        .visits-match-separator { height: 1px; background: #E0E0E0; margin: 20px 0; }
         .match-visit-btn { position: absolute; bottom: 6px; right: 6px; background: #E8EAF6; border: none; font-size: 13px; cursor: pointer; padding: 3px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.2s; z-index: 2; }
         .match-card:hover .match-visit-btn { opacity: 1; }
         .match-visit-btn:hover { background: #C5CAE9; }
@@ -5372,23 +5370,16 @@
                     <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
                 </div>
                 <div class="visit-card-person">${escapeHtml(buyerName)}</div>
-                ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
-                ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
                 ${(() => {
-                    const pos = Array.isArray(visit.positive_points) && visit.positive_points.length > 0
-                        ? visit.positive_points.map(v => { const p = POSITIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
-                        : '';
-                    const neg = Array.isArray(visit.negative_points) && visit.negative_points.length > 0
-                        ? visit.negative_points.map(v => { const p = NEGATIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
-                        : '';
-                    const nh = visit.neighborhood_feel ? (NEIGHBORHOOD_LABELS[visit.neighborhood_feel] || '') : '';
-                    let html = '';
-                    if (pos) html += '<div class="visit-card-points" style="color:#2E7D32">' + pos + '</div>';
-                    if (neg) html += '<div class="visit-card-points" style="color:#C62828">' + neg + '</div>';
-                    if (nh) html += '<div class="visit-card-points" style="color:#546E7A">' + nh + '</div>';
-                    return html;
+                    let chips = '';
+                    if (fb) chips += `<span class="visit-card-chip" style="background:#EFF6FF;color:#3B82F6">${fb.emoji} ${fb.label}</span>`;
+                    if (pp) chips += `<span class="visit-card-chip" style="background:${visit.price_perception === 'adapte' ? '#F0FDF4;color:#16A34A' : visit.price_perception === 'un_peu_eleve' ? '#FFF7ED;color:#EA580C' : '#FEF2F2;color:#DC2626'}">${pp}</span>`;
+                    if (Array.isArray(visit.positive_points)) visit.positive_points.forEach(v => { const p = POSITIVE_POINTS.find(x => x.value === v); if (p) chips += `<span class="visit-card-chip" style="background:#F0FDF4;color:#16A34A">${p.label}</span>`; });
+                    if (Array.isArray(visit.negative_points)) visit.negative_points.forEach(v => { const p = NEGATIVE_POINTS.find(x => x.value === v); if (p) chips += `<span class="visit-card-chip" style="background:#FEF2F2;color:#DC2626">${p.label}</span>`; });
+                    if (visit.neighborhood_feel && NEIGHBORHOOD_LABELS[visit.neighborhood_feel]) chips += `<span class="visit-card-chip" style="background:#F5F3FF;color:#7C3AED">${NEIGHBORHOOD_LABELS[visit.neighborhood_feel]}</span>`;
+                    if (dec) chips += `<span class="visit-card-chip" style="background:${dec.color}18;color:${dec.color}">${dec.emoji} ${dec.label}</span>`;
+                    return chips ? `<div class="visit-card-chips">${chips}</div>` : '';
                 })()}
-                ${dec ? `<div class="visit-card-decision" style="color:${dec.color}">${dec.emoji} ${dec.label}</div>` : ''}
                 ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
                 ${actions}
                 <button type="button" class="visit-delete-btn-match" onclick="event.stopPropagation();confirmDeleteMatchVisit('${visit.id}')" title="Supprimer">🗑️</button>
