@@ -4343,7 +4343,7 @@
                 .from('buyers')
                 .select('*')
                 .eq('user_id', userId)
-                .order('position', { ascending: true })
+                .order('position', { ascending: true, nullsFirst: false })
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];

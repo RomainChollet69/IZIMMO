@@ -6255,7 +6255,7 @@
                 .from('sellers')
                 .select('*')
                 .eq('user_id', userId)
-                .order('position', { ascending: true })
+                .order('position', { ascending: true, nullsFirst: false })
                 .order('created_at', { ascending: false });
             if (error) { console.error('[loadSellers] Erreur chargement:', error); return; }
             sellers = data || [];
@@ -7194,12 +7194,11 @@
                 });
             }
 
-            // Toujours afficher les vraies fiches si elles existent
-            // Utiliser prepend() pour que les nouvelles cartes apparaissent en haut
+            // Afficher les vraies fiches dans l'ordre de position (position ASC, created_at DESC)
             sellers.forEach(seller => {
                 const card = createSellerCard(seller);
                 if (containers[seller.status]) {
-                    containers[seller.status].prepend(card);
+                    containers[seller.status].appendChild(card);
                 }
             });
 
