@@ -2897,7 +2897,8 @@
         .visit-status-badge.done { background: #E8F5E9; color: #2E7D32; }
         .visit-status-badge.cancelled { background: #F5F5F5; color: #9E9E9E; }
         .visit-card-date { font-size: 11px; color: #6B7280; background: #F3F4F6; padding: 3px 8px; border-radius: 6px; }
-        .visit-card-person { font-weight: 600; font-size: 13px; color: #2C3E50; }
+        .visit-card-person { font-weight: 600; font-size: 13px; color: #2C3E50; display: inline-block; }
+        a.visit-card-person:hover { color: #667eea; text-decoration: underline; }
         .visit-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .visit-card-chip { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
         .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 6px; max-height: 40px; overflow: hidden; }
@@ -5070,7 +5071,7 @@
 
             const cardClass = 'match-card' + (opts.rejected ? ' rejected' : '');
             const openPage = type === 'buyer' ? 'acquereurs' : 'index';
-            return `<div class="${cardClass}" data-buyer-id="${person.id}" onclick="window.open('${openPage}.html','_blank')">
+            return `<div class="${cardClass}" data-buyer-id="${person.id}" onclick="window.open('${openPage}.html?openLead=${person.id}','_blank')">
                 ${actionBtn}
                 ${visitBtn}
                 <div class="match-score-circle ${getScoreClass(m.percent)}">${m.percent}%</div>
@@ -5369,7 +5370,7 @@
                     ${STATUS_BADGES[visit.status] || ''}
                     <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
                 </div>
-                <div class="visit-card-person">${escapeHtml(buyerName)}</div>
+                <a class="visit-card-person" href="acquereurs.html?openLead=${visit.buyer_id}" target="_blank" onclick="event.stopPropagation()" style="text-decoration:none;color:#2C3E50;cursor:pointer">${escapeHtml(buyerName)}</a>
                 ${(() => {
                     let chips = '';
                     if (fb) chips += `<span class="visit-card-chip" style="background:#EFF6FF;color:#3B82F6">${fb.emoji} ${fb.label}</span>`;
