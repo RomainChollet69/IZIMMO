@@ -21,6 +21,7 @@
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/maps-config.js"></script>
+    <script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -30,6 +31,25 @@
             --border-color: #E1E8ED;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+            /* Couleurs DPE — source unique de vérité */
+            --dpe-a: #319834;
+            --dpe-b: #33cc33;
+            --dpe-c: #cbfc33;
+            --dpe-d: #fbeb09;
+            --dpe-e: #fccc04;
+            --dpe-f: #fc9a07;
+            --dpe-g: #fc1c03;
+
+            /* Z-index scale — échelle normalisée pour éviter les conflits */
+            --z-dpe-markers: 100;
+            --z-map-controls: 200;
+            --z-header: 500;
+            --z-dropdown: 600;
+            --z-panel-toggle: 700;
+            --z-loading: 750;
+            --z-bottom-bar: 800;
+            --z-search-dropdown: 900;
         }
 
         body {
@@ -49,7 +69,7 @@
             border-bottom: 1px solid #E5E7EB;
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: var(--z-header);
             flex-shrink: 0;
         }
 
@@ -187,7 +207,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             min-width: 200px;
-            z-index: 1000;
+            z-index: var(--z-dropdown);
             overflow: hidden;
             border: 1px solid #E5E7EB;
         }
@@ -278,7 +298,7 @@
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             min-width: 180px;
-            z-index: 1000;
+            z-index: var(--z-dropdown);
             overflow: hidden;
             border: 1px solid #E5E7EB;
         }
@@ -393,7 +413,7 @@
             border-radius: 0 0 12px 12px;
             max-height: 240px;
             overflow-y: auto;
-            z-index: 10001;
+            z-index: var(--z-search-dropdown);
             display: none;
         }
 
@@ -802,6 +822,13 @@
             opacity: 1;
             border-color: #fff;
         }
+        .dpe-class-btn[data-class="1"] { background: var(--dpe-a); }
+        .dpe-class-btn[data-class="2"] { background: var(--dpe-b); }
+        .dpe-class-btn[data-class="3"] { background: var(--dpe-c); color: #333; }
+        .dpe-class-btn[data-class="4"] { background: var(--dpe-d); color: #333; }
+        .dpe-class-btn[data-class="5"] { background: var(--dpe-e); color: #333; }
+        .dpe-class-btn[data-class="6"] { background: var(--dpe-f); }
+        .dpe-class-btn[data-class="7"] { background: var(--dpe-g); }
 
         /* Sales list */
         .sales-section {
@@ -1077,7 +1104,7 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            z-index: 1001;
+            z-index: var(--z-map-controls);
             background: rgba(255,255,255,0.95);
             border: none;
             border-radius: 8px;
@@ -1096,7 +1123,7 @@
         .dvf-toggle, .dpe-toggle {
             position: absolute;
             top: 10px;
-            z-index: 1001;
+            z-index: var(--z-map-controls);
             background: rgba(255,255,255,0.95);
             border: none;
             border-radius: 8px;
@@ -1150,7 +1177,7 @@
             border: 1px solid rgba(0,0,0,0.1);
             border-radius: 10px;
             padding: 12px 16px;
-            z-index: 1000;
+            z-index: var(--z-map-controls);
             font-size: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.12);
         }
@@ -1187,7 +1214,7 @@
             background: rgba(255,255,255,0.97);
             border-radius: 40px;
             padding: 10px 22px 10px 16px;
-            z-index: 1000;
+            z-index: var(--z-loading);
             display: none;
             align-items: center;
             gap: 12px;
@@ -1258,81 +1285,213 @@
         .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
         .empty-state-text { font-size: 14px; line-height: 1.6; }
 
-        /* Toggle panel button (mobile) */
+        /* ===== COMPARAISON DE BIENS ===== */
+        .compare-btn {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(102,126,234,0.5);
+            background: rgba(102,126,234,0.15);
+            color: rgba(255,255,255,0.8);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .compare-btn:hover { background: rgba(102,126,234,0.35); color: #fff; border-color: #667eea; }
+        .compare-btn.active { background: #667eea; color: #fff; border-color: #667eea; }
+        .sale-card { position: relative; }
+
+        .compare-bar {
+            position: sticky;
+            top: 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 10px 16px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+        .compare-action-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.15s;
+        }
+        .compare-action-btn:hover { background: rgba(255,255,255,0.3); }
+        .compare-clear-btn {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.7);
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+        }
+        .compare-clear-btn:hover { color: #fff; }
+
+        .compare-view {
+            padding: 16px;
+        }
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            color: #e0e0e0;
+        }
+        .compare-table th {
+            text-align: left;
+            padding: 8px 6px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.4);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .compare-table td {
+            padding: 8px 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .compare-table td:first-child {
+            color: rgba(255,255,255,0.5);
+            font-size: 11px;
+        }
+        .compare-back-btn {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.15);
+            color: #e0e0e0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            margin-bottom: 12px;
+            transition: all 0.15s;
+        }
+        .compare-back-btn:hover { background: rgba(255,255,255,0.08); }
+
+        /* ===== GOOGLE MAPS INFOWINDOW OVERRIDE ===== */
+        /* Le conteneur interne de GMaps clip le contenu par défaut */
+        .gm-style-iw-d { overflow: auto !important; max-height: 400px !important; }
+        .gm-style .gm-style-iw-c { max-width: 320px !important; }
+
+        /* ===== GRAPHIQUE ÉVOLUTION PRIX ===== */
+        .chart-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            flex-shrink: 0;
+        }
+        .chart-title {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.4);
+            margin-bottom: 10px;
+        }
+        .price-chart { width: 100%; height: 120px; }
+
+        /* Toggle panel button (mobile) — FAB flottant */
         .toggle-panel-btn {
             display: none;
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 1001;
-            background: rgba(22,33,62,0.95);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 10px;
-            padding: 10px 14px;
+            position: fixed;
+            z-index: var(--z-panel-toggle);
+            background: #667eea;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
             color: #fff;
-            font-size: 16px;
+            font-size: 20px;
             cursor: pointer;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+            transition: transform 0.2s, background 0.2s;
+            align-items: center;
+            justify-content: center;
         }
+        .toggle-panel-btn:active { transform: scale(0.93); }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            body { overflow: auto; height: auto; }
+            body { overflow: hidden; height: 100vh; }
 
-            .header {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto;
-                gap: 8px;
-                padding: 10px 14px;
+            /* Header simplifié — logo + profil (nav dans la bottom bar) */
+            .header-inner {
+                padding: 0 14px;
+                height: 52px;
             }
-
-            .logo { grid-column: 1; grid-row: 1; align-self: center; }
-            .logo img { width: 60px; }
-
-            .header-actions { display: contents; }
-            .user-profile { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
-            .user-avatar { width: 32px; height: 32px; }
+            .nav-tabs { display: none !important; }
+            .header-actions .export-wrapper,
+            .header-actions .alert-bell,
+            .header-actions .header-separator { display: none; }
             .user-name { display: none; }
+            .user-avatar { width: 32px; height: 32px; }
+            .logo img { height: 28px; }
 
-            .nav-tabs {
-                grid-column: 1 / -1;
-                grid-row: 2;
-                justify-content: center;
-                gap: 6px;
-            }
-
-            .nav-text { display: none; }
-            .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
-
+            /* Carte plein écran entre header et bottom bar */
             .main-container {
                 flex-direction: column;
-                height: auto;
-                min-height: calc(100vh - 100px);
+                height: calc(100vh - 52px);
             }
 
+            .map-container {
+                flex: 1;
+                height: 100%;
+                min-height: 0;
+            }
+
+            /* Side panel en overlay fixe (slide up/down) */
             .side-panel {
+                position: fixed;
+                top: 52px;
+                left: 0;
+                right: 0;
+                bottom: 80px;
                 width: 100%;
                 min-width: 100%;
                 max-height: none;
                 border-right: none;
-                border-bottom: 1px solid rgba(255,255,255,0.08);
+                z-index: var(--z-dropdown);
+                transform: translateY(0);
+                transition: transform 0.3s ease, opacity 0.3s ease;
+                opacity: 1;
+                overflow-y: auto;
+            }
+            .side-panel.collapsed {
+                transform: translateY(100%);
+                opacity: 0;
+                pointer-events: none;
             }
 
-            .side-panel.collapsed .search-section,
-            .side-panel.collapsed .radius-section,
-            .side-panel.collapsed .filter-toggle-bar,
-            .side-panel.collapsed .filter-panel,
-            .side-panel.collapsed .dpe-filters-container,
-            .side-panel.collapsed .stats-section { display: flex; }
-            .side-panel.collapsed .sales-section { display: none; }
-
-            .map-container {
-                height: 60vh;
-                min-height: 400px;
+            /* FAB toggle panel — positionné au-dessus de la bottom bar */
+            .toggle-panel-btn {
+                display: flex;
+                bottom: calc(90px + env(safe-area-inset-bottom, 0px));
+                left: 14px;
             }
 
-            .toggle-panel-btn { display: block; }
             .map-legend { bottom: 10px; left: 10px; font-size: 11px; padding: 8px 12px; }
+        }
+
+        /* Petits écrans (< 480px) */
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .fp-minmax-row { grid-template-columns: 1fr; gap: 4px; }
+            .fp-minmax-sep { display: none; }
+            .search-input { font-size: 14px; }
         }
     </style>
 </head>
@@ -1365,6 +1524,13 @@
 
             <!-- Zone droite : Actions -->
             <div class="header-actions">
+                <!-- Export CSV -->
+                <div class="export-wrapper">
+                    <button class="export-btn" id="exportCsvBtn" title="Exporter les ventes en CSV">
+                        <i class="fas fa-download"></i>
+                    </button>
+                </div>
+
                 <!-- Alerte relances -->
                 <button class="alert-bell" id="alertBell" title="Relances du jour">
                     <i class="fa-solid fa-bell"></i>
@@ -1474,13 +1640,13 @@
                 <div class="fp-section" style="margin-bottom:10px">
                     <div class="fp-label">Classe DPE</div>
                     <div class="dpe-class-grid" id="dpeClassGrid">
-                        <button class="dpe-class-btn active" data-class="1" style="background:#319834">A</button>
-                        <button class="dpe-class-btn active" data-class="2" style="background:#33cc33">B</button>
-                        <button class="dpe-class-btn active" data-class="3" style="background:#cbfc33;color:#333">C</button>
-                        <button class="dpe-class-btn active" data-class="4" style="background:#fbeb09;color:#333">D</button>
-                        <button class="dpe-class-btn active" data-class="5" style="background:#fccc04;color:#333">E</button>
-                        <button class="dpe-class-btn active" data-class="6" style="background:#fc9a07">F</button>
-                        <button class="dpe-class-btn active" data-class="7" style="background:#fc1c03">G</button>
+                        <button class="dpe-class-btn active" data-class="1">A</button>
+                        <button class="dpe-class-btn active" data-class="2">B</button>
+                        <button class="dpe-class-btn active" data-class="3">C</button>
+                        <button class="dpe-class-btn active" data-class="4">D</button>
+                        <button class="dpe-class-btn active" data-class="5">E</button>
+                        <button class="dpe-class-btn active" data-class="6">F</button>
+                        <button class="dpe-class-btn active" data-class="7">G</button>
                     </div>
                 </div>
                 <div class="fp-section" style="margin-bottom:0">
@@ -1519,6 +1685,12 @@
                 </div>
             </div>
 
+            <!-- Graphique évolution prix/m² -->
+            <div class="chart-section" id="chartSection" style="display:none;">
+                <div class="chart-title">Évolution du prix médian /m²</div>
+                <svg id="priceChart" class="price-chart" viewBox="0 0 340 120" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+
             <!-- DPE Stats (visible when DPE layer active) -->
             <div class="dpe-stats-section" id="dpeStatsSection">
                 <div class="dpe-stats-title">🏠 DPE du secteur</div>
@@ -1544,7 +1716,7 @@
 
         <!-- Map -->
         <div class="map-container">
-            <button class="toggle-panel-btn" id="togglePanelBtn">☰</button>
+            <button class="toggle-panel-btn" id="togglePanelBtn"><i class="fas fa-sliders"></i></button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
@@ -1566,13 +1738,13 @@
             </div>
             <div class="map-legend" id="legendDPE" style="display:none;bottom:30px;left:220px;">
                 <div class="legend-title">Classe DPE</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#319834"></div> A</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#33cc33"></div> B</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#cbfc33"></div> C</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#fbeb09"></div> D</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#fccc04"></div> E</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#fc9a07"></div> F</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#fc1c03"></div> G</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-a)"></div> A</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-b)"></div> B</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-c)"></div> C</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-d)"></div> D</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-e)"></div> E</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-f)"></div> F</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-g)"></div> G</div>
             </div>
         </div>
     </div>
@@ -1581,7 +1753,31 @@
         // ===== MAP INITIALIZATION =====
         let map;
         let markers = [];
+        let markerCluster = null;
         let infoWindow = null;
+        // Constantes z-index pour marqueurs Google Maps (cohérent avec CSS vars)
+        const Z_DPE_MARKER = 100;
+        const Z_USER_MARKER = 300;
+        const Z_CENTER_MARKER = 400;
+
+        // Cache reverse geocoding pour éviter les appels API redondants
+        const GEOCODE_CACHE_MAX = 500;
+        const geocodeCache = new Map();
+        async function cachedReverseGeocode(lat, lng) {
+            const key = `${lat.toFixed(4)}_${lng.toFixed(4)}`;
+            if (geocodeCache.has(key)) return geocodeCache.get(key);
+            try {
+                const resp = await fetch(`https://api-adresse.data.gouv.fr/reverse/?lat=${lat}&lon=${lng}&limit=1`);
+                const json = await resp.json();
+                const label = json.features?.[0]?.properties?.label || null;
+                if (geocodeCache.size >= GEOCODE_CACHE_MAX) {
+                    geocodeCache.delete(geocodeCache.keys().next().value);
+                }
+                geocodeCache.set(key, label);
+                return label;
+            } catch { return null; }
+        }
+
         let radiusCircle = null;
         let centerMarker = null;
         let userMarker = null;
@@ -1675,7 +1871,7 @@
                         scale: 10
                     },
                     title: 'Ma position',
-                    zIndex: 1000
+                    zIndex: Z_USER_MARKER
                 });
 
                 // Reverse geocode pour adresse
@@ -1802,14 +1998,14 @@
             }
         });
 
-        // ===== TYPE FILTER BUTTONS =====
-        document.querySelectorAll('.fp-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.fp-type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                currentFilter = btn.dataset.type;
-                renderFilteredSales();
-            });
+        // ===== TYPE FILTER BUTTONS (event delegation) =====
+        document.getElementById('typeGrid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.fp-type-btn');
+            if (!btn) return;
+            document.querySelectorAll('#typeGrid .fp-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.type;
+            renderFilteredSales();
         });
 
         // ===== DVF LOCAL DATA (Supabase Storage) =====
@@ -1875,13 +2071,11 @@
                     return;
                 }
 
-                // Load needed departments
-                for (const dept of depts) {
-                    if (!loadedDepts[dept]) {
-                        const size = dvfIndex[dept]?.size;
-                        loadingText.textContent = `Chargement dept ${dept}...`;
-                    }
-                    await loadDeptData(dept);
+                // Load needed departments in parallel
+                const deptsToLoad = depts.filter(d => !loadedDepts[d]);
+                if (deptsToLoad.length > 0) {
+                    loadingText.textContent = `Chargement de ${deptsToLoad.length} département(s)...`;
+                    await Promise.all(deptsToLoad.map(d => loadDeptData(d)));
                 }
 
                 // Filter by distance and convert to sale objects
@@ -1954,7 +2148,7 @@
                         scale: 12
                     },
                     title: 'Déplacer pour chercher ailleurs',
-                    zIndex: 9999
+                    zIndex: Z_CENTER_MARKER
                 });
 
                 // Si on arrive depuis une fiche lead, afficher l'info-bulle de l'adresse
@@ -2162,9 +2356,70 @@
             document.getElementById('statLatestDate').textContent = latestDate
                 ? new Date(latestDate).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                 : '—';
+
+            // Graphique évolution prix/m²
+            renderPriceChart(sales);
         }
 
-        const MAX_PARCELS = 500;
+        // ===== GRAPHIQUE ÉVOLUTION PRIX/M² =====
+        function renderPriceChart(sales) {
+            const section = document.getElementById('chartSection');
+            const svg = document.getElementById('priceChart');
+            if (!sales || sales.length < 2) { section.style.display = 'none'; return; }
+
+            // Grouper par année, calculer la médiane prix/m²
+            const byYear = {};
+            sales.forEach(s => {
+                if (!s.date_mutation) return;
+                const year = parseInt(s.date_mutation.slice(0, 4));
+                const pm2 = getPricePerM2(s);
+                if (pm2 && pm2 > 0 && year >= 2014) {
+                    if (!byYear[year]) byYear[year] = [];
+                    byYear[year].push(pm2);
+                }
+            });
+
+            const years = Object.keys(byYear).map(Number).sort();
+            if (years.length < 2) { section.style.display = 'none'; return; }
+
+            const medians = years.map(y => {
+                const arr = byYear[y].sort((a, b) => a - b);
+                return arr[Math.floor(arr.length / 2)];
+            });
+
+            // Dimensions SVG
+            const W = 340, H = 110, PAD_TOP = 22, PAD_BOTTOM = 18, PAD_X = 25;
+            const minV = Math.min(...medians) * 0.9;
+            const maxV = Math.max(...medians) * 1.1;
+            const xScale = (i) => PAD_X + (i / (years.length - 1)) * (W - PAD_X * 2);
+            const yScale = (v) => PAD_TOP + (1 - (v - minV) / (maxV - minV)) * (H - PAD_TOP - PAD_BOTTOM);
+
+            const points = medians.map((v, i) => `${xScale(i)},${yScale(v)}`);
+
+            // Aire sous la courbe pour le gradient
+            const areaPoints = `${xScale(0)},${H - PAD_BOTTOM} ${points.join(' ')} ${xScale(years.length - 1)},${H - PAD_BOTTOM}`;
+
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#667eea" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#667eea" stop-opacity="0.02"/>
+                    </linearGradient>
+                </defs>
+                <polygon points="${areaPoints}" fill="url(#chartGrad)"/>
+                <polyline points="${points.join(' ')}" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                ${medians.map((v, i) => `
+                    <circle cx="${xScale(i)}" cy="${yScale(v)}" r="3.5" fill="#667eea" stroke="#1a1a2e" stroke-width="2"/>
+                    <text x="${xScale(i)}" y="${H - 3}" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="9" font-family="Inter">${years[i]}</text>
+                    ${i === 0 || i === years.length - 1 || years.length <= 5
+                        ? `<text x="${xScale(i)}" y="${yScale(v) - 8}" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" font-family="Barlow Semi Condensed">${formatNumber(Math.round(v))}</text>`
+                        : ''}
+                `).join('')}
+            `;
+            section.style.display = 'block';
+        }
+
+        const MAX_PARCELS = 2000; // Augmenté grâce au clustering
 
         function renderMarkers(sales) {
             clearMarkers();
@@ -2202,7 +2457,6 @@
 
                 const marker = new google.maps.Marker({
                     position: { lat, lng },
-                    map: map,
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
                         fillColor: color,
@@ -2230,41 +2484,38 @@
                     const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
                     const dvfUid = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
                     content = `
-                        <div style="font-family:Inter,sans-serif;min-width:200px;max-width:280px;color:#2C3E50;padding:2px 0">
-                            <div id="${dvfUid}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:6px">Recherche de l'adresse…</div>
-                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-                                <span style="font-weight:700;font-size:13px">${getTypeIcon(type)} ${capitalize(type)}</span>
+                        <div style="font-family:Inter,sans-serif;min-width:220px;max-width:300px;color:#2C3E50;padding:4px 2px">
+                            <div id="${dvfUid}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                                <span style="font-weight:700;font-size:14px">${getTypeIcon(type)} ${capitalize(type)}</span>
                                 ${surface ? `<span style="font-size:12px;color:#777">${surface} m²</span>` : ''}
                                 ${sale.distance ? `<span style="font-size:11px;color:#999">à ${sale.distance} m</span>` : ''}
                             </div>
-                            <div style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(price)}</div>
-                            <div style="display:flex;gap:10px;align-items:baseline;margin-top:2px">
+                            <div style="font-size:20px;font-weight:800;color:#667eea;margin-bottom:4px">${formatPrice(price)}</div>
+                            <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:8px">
                                 ${priceM2 ? `<span style="font-size:13px;font-weight:600;color:#555">${formatNumber(priceM2)} €/m²</span>` : ''}
                                 <span style="font-size:12px;color:#999">📅 ${date}</span>
                             </div>
-                            <div style="font-size:12px;color:#667eea;cursor:pointer;padding-top:6px;margin-top:6px;border-top:1px solid #f0f0f0" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
+                            <div style="font-size:12px;color:#667eea;cursor:pointer;padding:8px 0 2px;border-top:1px solid #eee" onclick="var d=this.nextElementSibling;d.style.display=d.style.display==='none'?'block':'none';this.querySelector('i').classList.toggle('fa-chevron-down');this.querySelector('i').classList.toggle('fa-chevron-up')">
                                 <i class="fas fa-chevron-down" style="font-size:10px;margin-right:4px"></i> Plus de détails
                             </div>
-                            <div style="display:none;padding-top:6px;font-size:12px;color:#555;line-height:1.7">
+                            <div style="display:none;padding-top:6px;font-size:12px;color:#555;line-height:1.8">
                                 ${surface ? '<div>📐 Surface : ' + surface + ' m²</div>' : ''}
                                 ${priceM2 ? '<div>💰 Prix/m² : ' + formatNumber(priceM2) + ' €/m²</div>' : ''}
                                 <div>📅 Date de vente : ${date}</div>
                             </div>
                         </div>
                     `;
-                    // Reverse geocoding à l'ouverture
+                    // Reverse geocoding avec cache à l'ouverture
                     const dvfLat = lat, dvfLng = lng, dvfAddrId = dvfUid + '_addr';
-                    marker.addListener('click', () => {
-                        fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + dvfLat + '&lon=' + dvfLng)
-                            .then(r => r.json())
-                            .then(json => {
-                                const el = document.getElementById(dvfAddrId);
-                                if (el && json.features && json.features.length > 0) {
-                                    el.style.fontStyle = 'normal';
-                                    el.style.color = '#2C3E50';
-                                    el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + json.features[0].properties.label;
-                                } else if (el) { el.textContent = 'Adresse non trouvée'; }
-                            }).catch(() => {});
+                    marker.addListener('click', async () => {
+                        const label = await cachedReverseGeocode(dvfLat, dvfLng);
+                        const el = document.getElementById(dvfAddrId);
+                        if (el && label) {
+                            el.style.fontStyle = 'normal';
+                            el.style.color = '#2C3E50';
+                            el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + label;
+                        } else if (el) { el.textContent = 'Adresse non trouvée'; }
                     });
                 } else {
                     // Multi-sale parcel: show summary + list
@@ -2277,33 +2528,30 @@
                         const price = parseFloat(sale.valeur_fonciere);
                         const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
                         const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                        return `<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:12px;color:#2C3E50">
+                        return `<div style="padding:4px 0;border-bottom:1px solid #eee;font-size:13px">
                             ${getTypeIcon(type)} <strong>${formatPrice(price)}</strong>${surface ? ` — ${surface} m²` : ''} <span style="color:#777">${date}</span>
                         </div>`;
                     }).join('');
                     content = `
-                        <div style="font-family:Inter,sans-serif;min-width:220px;max-height:300px;overflow-y:auto;color:#2C3E50">
-                            <div id="${dvfUidMulti}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:6px">Recherche de l'adresse…</div>
-                            <div style="font-weight:700;font-size:14px;margin-bottom:6px"><i class="fas fa-city" style="color:#667eea"></i> ${count} ventes sur cette parcelle</div>
-                            <div style="font-size:13px;color:#555;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
-                            ${medianPriceM2 ? `<div style="font-size:12px;color:#667eea;font-weight:600;margin-bottom:8px">Médiane : ${formatNumber(medianPriceM2)} €/m²</div>` : ''}
+                        <div style="font-family:Inter,sans-serif;min-width:220px;max-width:320px;color:#2C3E50;padding:4px 2px">
+                            <div id="${dvfUidMulti}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
+                            <div style="font-size:14px;font-weight:700;margin-bottom:4px"><i class="fas fa-city" style="color:#667eea;margin-right:4px"></i>${count} ventes sur cette parcelle</div>
+                            <div style="font-size:18px;font-weight:800;color:#667eea;margin-bottom:4px">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</div>
+                            ${medianPriceM2 ? `<div style="font-size:13px;color:#555;margin-bottom:8px">Médiane : ${formatNumber(medianPriceM2)} €/m²</div>` : ''}
                             ${salesListHtml}
-                            ${count > 10 ? `<div style="font-size:11px;color:#777;padding-top:4px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
+                            ${count > 10 ? `<div style="font-size:12px;color:#999;padding-top:6px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
                         </div>
                     `;
-                    // Reverse geocoding pour parcelle multi-ventes
+                    // Reverse geocoding avec cache pour parcelle multi-ventes
                     const multiLat = lat, multiLng = lng, multiAddrId = dvfUidMulti + '_addr';
-                    marker.addListener('click', () => {
-                        fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + multiLat + '&lon=' + multiLng)
-                            .then(r => r.json())
-                            .then(json => {
-                                const el = document.getElementById(multiAddrId);
-                                if (el && json.features && json.features.length > 0) {
-                                    el.style.fontStyle = 'normal';
-                                    el.style.color = '#2C3E50';
-                                    el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + json.features[0].properties.label;
-                                } else if (el) { el.textContent = 'Adresse non trouvée'; }
-                            }).catch(() => {});
+                    marker.addListener('click', async () => {
+                        const label = await cachedReverseGeocode(multiLat, multiLng);
+                        const el = document.getElementById(multiAddrId);
+                        if (el && label) {
+                            el.style.fontStyle = 'normal';
+                            el.style.color = '#2C3E50';
+                            el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + label;
+                        } else if (el) { el.textContent = 'Adresse non trouvée'; }
                     });
                 }
 
@@ -2318,6 +2566,38 @@
                 marker._parcelSales = parcelSales;
                 markers.push(marker);
             });
+
+            // Clustering des marqueurs pour une vue claire à tout zoom
+            if (typeof markerClusterer !== 'undefined' && markers.length > 0) {
+                markerCluster = new markerClusterer.MarkerClusterer({
+                    map,
+                    markers,
+                    renderer: {
+                        render({ count, position }) {
+                            const clusterScale = Math.min(12 + Math.log2(count) * 4, 32);
+                            return new google.maps.Marker({
+                                position,
+                                label: {
+                                    text: String(count),
+                                    color: '#fff',
+                                    fontSize: '11px',
+                                    fontWeight: '700',
+                                    fontFamily: 'Barlow Semi Condensed'
+                                },
+                                icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    fillColor: '#667eea',
+                                    fillOpacity: 0.9,
+                                    strokeColor: '#fff',
+                                    strokeWeight: 2,
+                                    scale: clusterScale
+                                },
+                                zIndex: 50
+                            });
+                        }
+                    }
+                });
+            }
         }
 
         function renderSalesList(sales) {
@@ -2342,49 +2622,76 @@
                 return;
             }
 
-            const SALES_PREVIEW = 3;
-            salesListExpanded = false;
-            const displayCount = Math.min(SALES_PREVIEW, sales.length);
-            const hasMore = sales.length > SALES_PREVIEW;
+            const SALES_BATCH_SIZE = 20; // Chargement progressif par batch
 
-            function renderSaleCard(sale, i) {
-                const type = getType(sale);
-                const price = parseFloat(sale.valeur_fonciere);
-                const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
-                const priceM2 = getPricePerM2(sale);
-                const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                const distText = sale.distance ? `à ${sale.distance} m` : '';
-
-                return `<div class="sale-card ${type}" data-index="${i}" onclick="showSaleDetail(${i})">
-                    <div class="sale-type ${type}">${capitalize(type)}</div>
-                    <div class="sale-price">${formatPrice(price)}</div>
-                    <div class="sale-details">
-                        ${surface ? surface + ' m²' : ''}${surface && date ? ' — ' : ''}${date}
-                        ${distText ? '<br>📍 ' + distText : ''}
-                    </div>
-                    ${priceM2 ? `<span class="sale-price-m2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
-                </div>`;
-            }
-
-            let html = sales.slice(0, displayCount).map((s, i) => renderSaleCard(s, i)).join('');
-            if (hasMore) {
-                html += `<button class="show-more-btn" id="showMoreSalesBtn" onclick="expandSalesList()">
-                    <i class="fas fa-chevron-down"></i> Voir les ${sales.length - SALES_PREVIEW} autres ventes
-                </button>`;
-            }
-            salesList.innerHTML = html;
-
-            // Stocker les ventes pour l'expansion
+            salesList.innerHTML = '';
             salesList._allSales = sales;
-            salesList._renderCard = renderSaleCard;
+            salesList._loaded = 0;
+            loadMoreSales();
         }
 
-        function expandSalesList() {
+        function renderSaleCard(sale, i) {
+            const type = getType(sale);
+            const price = parseFloat(sale.valeur_fonciere);
+            const surface = parseFloat(sale.surface_reelle_bati || sale.surface_terrain || 0);
+            const priceM2 = getPricePerM2(sale);
+            const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
+            const distText = sale.distance ? `à ${sale.distance} m` : '';
+            const isCompared = compareList.includes(i);
+
+            return `<div class="sale-card ${type}" data-index="${i}" onclick="showSaleDetail(${i})">
+                <button class="compare-btn ${isCompared ? 'active' : ''}" onclick="event.stopPropagation(); toggleCompare(${i})" title="Comparer">
+                    <i class="fas fa-scale-balanced"></i>
+                </button>
+                <div class="sale-type ${type}">${capitalize(type)}</div>
+                <div class="sale-price">${formatPrice(price)}</div>
+                <div class="sale-details">
+                    ${surface ? surface + ' m²' : ''}${surface && date ? ' — ' : ''}${date}
+                    ${distText ? '<br>📍 ' + distText : ''}
+                </div>
+                ${priceM2 ? `<span class="sale-price-m2 ${getPriceClass(priceM2)}">${formatNumber(priceM2)} €/m²</span>` : ''}
+            </div>`;
+        }
+
+        function loadMoreSales() {
             const salesList = document.getElementById('salesList');
             const sales = salesList._allSales;
-            const renderCard = salesList._renderCard;
             if (!sales) return;
-            salesList.innerHTML = sales.slice(0, 100).map((s, i) => renderCard(s, i)).join('');
+
+            const start = salesList._loaded;
+            const end = Math.min(start + 20, sales.length);
+            if (start >= sales.length) return;
+
+            // Retirer le sentinel précédent
+            const oldSentinel = salesList.querySelector('.scroll-sentinel');
+            if (oldSentinel) oldSentinel.remove();
+
+            // Ajouter les nouvelles cartes via DocumentFragment
+            const fragment = document.createDocumentFragment();
+            for (let i = start; i < end; i++) {
+                const div = document.createElement('div');
+                div.innerHTML = renderSaleCard(sales[i], i);
+                fragment.appendChild(div.firstElementChild);
+            }
+            salesList.appendChild(fragment);
+            salesList._loaded = end;
+
+            // Sentinel pour infinite scroll si encore des ventes
+            if (end < sales.length) {
+                const sentinel = document.createElement('div');
+                sentinel.className = 'scroll-sentinel';
+                sentinel.style.height = '1px';
+                salesList.appendChild(sentinel);
+
+                const scrollRoot = salesList.closest('.sales-section');
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        observer.disconnect();
+                        loadMoreSales();
+                    }
+                }, { root: scrollRoot, threshold: 0 });
+                observer.observe(sentinel);
+            }
         }
 
         function showSaleDetail(index, skipMapCenter) {
@@ -2484,6 +2791,10 @@
         }
 
         function clearMarkers() {
+            if (markerCluster) {
+                markerCluster.clearMarkers();
+                markerCluster = null;
+            }
             markers.forEach(m => m.setMap(null));
             markers = [];
             if (infoWindow) infoWindow.close();
@@ -2524,6 +2835,147 @@
             return div.innerHTML;
         }
 
+        // ===== COMPARAISON DE BIENS =====
+        const compareList = [];
+        const MAX_COMPARE = 3;
+
+        function toggleCompare(index) {
+            const idx = compareList.indexOf(index);
+            if (idx >= 0) {
+                compareList.splice(idx, 1);
+            } else if (compareList.length < MAX_COMPARE) {
+                compareList.push(index);
+            } else {
+                return; // Max atteint
+            }
+            updateCompareUI();
+        }
+
+        function updateCompareUI() {
+            // Mettre à jour les boutons compare
+            document.querySelectorAll('.compare-btn').forEach(btn => {
+                const card = btn.closest('.sale-card');
+                if (!card) return;
+                const index = parseInt(card.dataset.index);
+                btn.classList.toggle('active', compareList.includes(index));
+            });
+
+            // Afficher/masquer la barre de comparaison
+            const salesList = document.getElementById('salesList');
+            let bar = document.getElementById('compareBar');
+
+            if (compareList.length >= 2) {
+                if (!bar) {
+                    bar = document.createElement('div');
+                    bar.id = 'compareBar';
+                    bar.className = 'compare-bar';
+                    salesList.parentElement.insertBefore(bar, salesList);
+                }
+                bar.innerHTML = `
+                    <button class="compare-action-btn" onclick="showComparison()">
+                        <i class="fas fa-scale-balanced"></i> Comparer ${compareList.length} biens
+                    </button>
+                    <button class="compare-clear-btn" onclick="clearComparison()">Annuler</button>
+                `;
+                bar.style.display = 'flex';
+            } else if (bar) {
+                bar.style.display = compareList.length === 1 ? 'flex' : 'none';
+                if (compareList.length === 1) {
+                    bar.innerHTML = `
+                        <span style="color:rgba(255,255,255,0.7);font-size:13px">1 bien sélectionné — sélectionnez-en 1 ou 2 de plus</span>
+                        <button class="compare-clear-btn" onclick="clearComparison()">Annuler</button>
+                    `;
+                }
+            }
+        }
+
+        function clearComparison() {
+            compareList.length = 0;
+            updateCompareUI();
+            const bar = document.getElementById('compareBar');
+            if (bar) bar.style.display = 'none';
+        }
+
+        function showComparison() {
+            const salesSection = document.getElementById('salesSection');
+            const sales = compareList.map(i => currentFilteredSales[i]).filter(Boolean);
+            if (sales.length < 2) return;
+
+            const rows = [
+                ['Type', s => capitalize(getType(s))],
+                ['Prix', s => formatPrice(parseFloat(s.valeur_fonciere))],
+                ['Surface bâtie', s => s.surface_reelle_bati ? s.surface_reelle_bati + ' m²' : '—'],
+                ['Surface terrain', s => s.surface_terrain ? s.surface_terrain + ' m²' : '—'],
+                ['Prix/m²', s => { const pm2 = getPricePerM2(s); return pm2 ? formatNumber(pm2) + ' €/m²' : '—'; }],
+                ['Date vente', s => s.date_mutation ? new Date(s.date_mutation).toLocaleDateString('fr-FR') : '—'],
+                ['Distance', s => s.distance ? s.distance + ' m' : '—']
+            ];
+
+            salesSection.innerHTML = `
+                <div class="compare-view">
+                    <button class="compare-back-btn" onclick="hideComparison()">
+                        <i class="fas fa-arrow-left"></i> Retour à la liste
+                    </button>
+                    <table class="compare-table">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                ${sales.map((s, i) => `<th>Bien ${i + 1}</th>`).join('')}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows.map(([label, fn]) => `
+                                <tr>
+                                    <td>${label}</td>
+                                    ${sales.map(s => `<td>${fn(s)}</td>`).join('')}
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function hideComparison() {
+            clearComparison();
+            renderFilteredSales();
+        }
+
+        // ===== EXPORT CSV =====
+        function exportCSV() {
+            if (!currentFilteredSales || currentFilteredSales.length === 0) {
+                alert('Aucune vente à exporter. Effectuez d\'abord une recherche.');
+                return;
+            }
+
+            const headers = ['Date', 'Type', 'Prix (€)', 'Surface bâtie (m²)', 'Surface terrain (m²)', 'Prix/m² (€)', 'Distance (m)', 'Latitude', 'Longitude'];
+            const rows = currentFilteredSales.map(s => {
+                const pm2 = getPricePerM2(s);
+                return [
+                    s.date_mutation || '',
+                    getType(s),
+                    s.valeur_fonciere || '',
+                    s.surface_reelle_bati || '',
+                    s.surface_terrain || '',
+                    pm2 ? Math.round(pm2) : '',
+                    s.distance || '',
+                    s.lat,
+                    s.lng
+                ].join(';');
+            });
+
+            const csv = [headers.join(';'), ...rows].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dvf_export_${currentFilteredSales.length}_ventes_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        document.getElementById('exportCsvBtn').addEventListener('click', exportCSV);
+
         // ===== FILTER PANEL INIT =====
         function initDualRange(containerId, valuesId, formatter, onRelease) {
             const container = document.getElementById(containerId);
@@ -2531,6 +2983,8 @@
             const minInput = container.querySelector('.range-min');
             const maxInput = container.querySelector('.range-max');
             const fill = container.querySelector('.dual-range-fill');
+            let rangeDebounce = null;
+            const RANGE_DEBOUNCE_MS = 150; // Évite le re-rendu massif pendant le drag
 
             function update() {
                 let minVal = parseInt(minInput.value);
@@ -2559,7 +3013,9 @@
                     minInput.style.zIndex = 3;
                 }
 
-                renderFilteredSales();
+                // Debounce le re-rendu lourd (filtrage + marqueurs)
+                clearTimeout(rangeDebounce);
+                rangeDebounce = setTimeout(() => renderFilteredSales(), RANGE_DEBOUNCE_MS);
             }
 
             minInput.addEventListener('input', () => {
@@ -2625,14 +3081,27 @@
 
         // ===== TOGGLE PANEL (MOBILE) =====
         document.getElementById('togglePanelBtn').addEventListener('click', () => {
-            document.getElementById('sidePanel').classList.toggle('collapsed');
+            const panel = document.getElementById('sidePanel');
+            const btn = document.getElementById('togglePanelBtn');
+            panel.classList.toggle('collapsed');
+            const isCollapsed = panel.classList.contains('collapsed');
+            btn.innerHTML = isCollapsed
+                ? '<i class="fas fa-sliders"></i>'
+                : '<i class="fas fa-times"></i>';
         });
 
+        // Sur mobile, démarrer avec le panel fermé pour montrer la carte
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidePanel').classList.add('collapsed');
+        }
+
         // ===== DPE LAYER =====
-        const DPE_COLORS = {
-            1: '#319834', 2: '#33cc33', 3: '#cbfc33',
-            4: '#fbeb09', 5: '#fccc04', 6: '#fc9a07', 7: '#fc1c03'
-        };
+        // Couleurs DPE lues depuis les CSS variables (source unique de vérité)
+        const rootStyle = getComputedStyle(document.documentElement);
+        const DPE_COLORS = {};
+        'abcdefg'.split('').forEach((letter, i) => {
+            DPE_COLORS[i + 1] = rootStyle.getPropertyValue(`--dpe-${letter}`).trim();
+        });
         const DPE_LABELS = { 1: 'A', 2: 'B', 3: 'C', 4: 'D', 5: 'E', 6: 'F', 7: 'G' };
         const DPE_TYPE_LABELS = { 1: 'Appartement', 2: 'Maison', 3: 'Immeuble' };
 
@@ -2686,30 +3155,29 @@
             }
         });
 
-        // DPE class filter buttons
-        document.querySelectorAll('.dpe-class-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const cls = parseInt(btn.dataset.class);
-                btn.classList.toggle('active');
-                if (btn.classList.contains('active')) {
-                    dpeClassFilters.add(cls);
-                } else {
-                    dpeClassFilters.delete(cls);
-                }
-                renderFilteredDpe();
-            });
+        // DPE class filter buttons (event delegation)
+        document.getElementById('dpeClassGrid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.dpe-class-btn');
+            if (!btn) return;
+            const cls = parseInt(btn.dataset.class);
+            btn.classList.toggle('active');
+            if (btn.classList.contains('active')) {
+                dpeClassFilters.add(cls);
+            } else {
+                dpeClassFilters.delete(cls);
+            }
+            renderFilteredDpe();
         });
 
-        // DPE date filter buttons
-        document.querySelectorAll('#dpeDateGrid .fp-type-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('#dpeDateGrid .fp-type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                dpeMonthsFilter = parseInt(btn.dataset.months);
-                const label = btn.textContent;
-                document.getElementById('dpeDateValue').textContent = label;
-                renderFilteredDpe();
-            });
+        // DPE date filter buttons (event delegation)
+        document.getElementById('dpeDateGrid').addEventListener('click', (e) => {
+            const btn = e.target.closest('.fp-type-btn');
+            if (!btn) return;
+            document.querySelectorAll('#dpeDateGrid .fp-type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            dpeMonthsFilter = parseInt(btn.dataset.months);
+            document.getElementById('dpeDateValue').textContent = btn.textContent;
+            renderFilteredDpe();
         });
 
         // dpeSplits : départements dont le JSON est trop gros (>50 Mo)
@@ -2784,8 +3252,10 @@
                     return;
                 }
 
-                for (const dept of depts) {
-                    await loadDpeDeptData(dept);
+                // Load needed DPE departments in parallel
+                const dpeToLoad = depts.filter(d => !loadedDpeDepts[d]);
+                if (dpeToLoad.length > 0) {
+                    await Promise.all(dpeToLoad.map(d => loadDpeDeptData(d)));
                 }
 
                 // Filter by distance
@@ -2860,7 +3330,7 @@
                         strokeWeight: 1,
                         scale: 5
                     },
-                    zIndex: 100
+                    zIndex: Z_DPE_MARKER
                 });
 
                 marker.addListener('click', () => {
@@ -2926,20 +3396,18 @@
                     `);
                     infoWindow.open(map, marker);
 
-                    // Reverse geocoding si pas d'adresse dans les données
+                    // Reverse geocoding avec cache si pas d'adresse dans les données
                     if (!hasAddr) {
-                        fetch('https://api-adresse.data.gouv.fr/reverse/?lat=' + dpe.lat + '&lon=' + dpe.lng)
-                            .then(r => r.json())
-                            .then(json => {
-                                const addrEl = document.getElementById(uid + '_addr');
-                                if (addrEl && json.features && json.features.length > 0) {
-                                    addrEl.style.fontStyle = 'normal';
-                                    addrEl.style.color = '#2C3E50';
-                                    addrEl.innerHTML = '📍 ' + json.features[0].properties.label;
-                                } else if (addrEl) {
-                                    addrEl.textContent = '📍 Adresse non trouvée';
-                                }
-                            }).catch(() => {});
+                        cachedReverseGeocode(dpe.lat, dpe.lng).then(label => {
+                            const addrEl = document.getElementById(uid + '_addr');
+                            if (addrEl && label) {
+                                addrEl.style.fontStyle = 'normal';
+                                addrEl.style.color = '#2C3E50';
+                                addrEl.innerHTML = '📍 ' + label;
+                            } else if (addrEl) {
+                                addrEl.textContent = '📍 Adresse non trouvée';
+                            }
+                        });
                     }
                 });
 
@@ -3089,7 +3557,7 @@
                 background: #FFFFFF;
                 border-top: 1px solid #E5E7EB;
                 padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-                z-index: 9999;
+                z-index: var(--z-bottom-bar);
                 justify-content: space-around;
                 align-items: flex-end;
             }
