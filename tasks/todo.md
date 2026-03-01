@@ -10,6 +10,17 @@ _(rien en cours)_
 
 ## À faire
 
+### Messages IA
+- [ ] Tester le retour visite avec différents feedback_rating (coup de coeur vs pas convaincu)
+- [ ] Tester les 3 canaux (SMS, WhatsApp, Email) avec tu et vous
+- [ ] Vérifier que la signature agent fonctionne sur les deux pages
+
+### Acquéreurs
+- [ ] Vérifier que l'import CSV acquéreurs fonctionne (jamais confirmé)
+
+### Debug cleanup
+- [ ] Retirer les console.log de debug visites (index.html + acquereurs.html)
+
 ### DVF
 - [ ] Tester la page DVF sur mobile (responsive 375px) — responsive revu mais pas testé en conditions réelles
 - [ ] Envisager d'augmenter `MAX_PARCELS` progressivement (actuellement 500, clustering supporte plus)

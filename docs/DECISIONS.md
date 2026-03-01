@@ -762,3 +762,42 @@
 - **Rester sur index.html** : L'app reste une "collection de pages" sans cohérence
 
 **Navigation** : Le logo sur toutes les pages ramène à `home.html`. Pas d'onglet "Accueil" dans la nav des autres pages (le logo suffit).
+
+---
+
+## D038 — System prompt retour visite avec exemples réels (few-shot)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Le premier essai de génération de message retour de visite produisait un texte très "IA" — formules creuses, listes à puces, ton corporate. L'utilisateur a fourni 3 exemples de ses vrais messages aux vendeurs.
+
+**Décision** : Créer un system prompt dédié pour le scénario `retour_visite` (comme `redaction_annonce` et `repositionnement_prix`), avec les vrais messages de l'agent comme exemples de ton à imiter. Interdiction explicite des formules IA.
+
+**Pourquoi** :
+- Le few-shot avec de vrais exemples est le moyen le plus efficace de calibrer le ton
+- Les interdictions explicites ("INTERDIT : suite à la visite de votre bien") sont plus fiables que les instructions vagues
+- Le style narratif ("tu RACONTES") produit des messages naturels vs les listes structurées
+
+**Alternatives rejetées** :
+- **Prompt générique** : Produisait du texte corporate malgré les instructions "sois naturel"
+- **Post-processing** : Trop fragile, mieux de bien cadrer en amont
+
+---
+
+## D039 — Popup tu/vous avant génération (pas de toggle inline)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Le choix tutoiement/vouvoiement est nécessaire car l'agent tutoie certains clients. D'abord implémenté en boutons inline dans la barre de canal, jugés trop discrets et encombrants.
+
+**Décision** : Popup modale "Tu ou vous ?" qui apparaît à chaque clic "Générer". Deux gros boutons. Clic hors popup = annulation.
+
+**Pourquoi** :
+- Ne surcharge pas l'UI (pas de boutons permanents)
+- Force le choix conscient à chaque génération
+- Pas de risque d'oubli (vs un toggle qu'on oublie en position "tu")
+
+**Alternatives rejetées** :
+- **Boutons inline** : Quasi-invisibles, surchargent la barre canal, testés et rejetés par l'utilisateur

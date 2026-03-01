@@ -58,3 +58,11 @@
 ### L011 — Séparer visuellement les données de nature différente dans les UI compactes (2026-03-01)
 **Erreur** : "Maison 138 m² à 113 m" — l'utilisateur confondait la surface (138 m²) et la distance (113 m) car les deux étaient sur la même ligne avec des formats similaires.
 **Règle** : Ne jamais mettre côte à côte des informations numériques de même unité (m² et m) sans séparation visuelle forte. Mettre les données de nature différente sur des lignes séparées, avec des icônes distinctes et des labels explicites (ex: "📍 à 113 m du centre").
+
+### L012 — Les messages générés par IA sonnent faux sans exemples réels (2026-03-01)
+**Erreur** : Le premier retour visite généré utilisait "retour constructif", "demeurons optimistes", "a été séduit par" — formules typiquement IA que personne n'écrirait. Le message était aussi signé du nom du vendeur au lieu de l'agent.
+**Règle** : Pour les messages qui doivent sonner humain : (1) fournir des vrais exemples en few-shot dans le system prompt, (2) interdire explicitement les formules IA ("INTERDIT : suite à la visite de votre bien"), (3) toujours passer le nom de l'agent pour la signature, (4) un toggle inline est trop discret — préférer une popup modale pour les choix ponctuels comme tu/vous.
+
+### L013 — `const` hoisting et temporal dead zone (2026-03-01)
+**Erreur** : Utilisation de `matchCount` avant sa déclaration `const` dans `createSellerCard()`. ReferenceError silencieuse qui crashait le rendu de TOUTES les cartes avec relance, faisant "disparaître" les leads du pipeline.
+**Règle** : Ne jamais référencer une variable `const`/`let` avant sa déclaration dans le même scope. En cas de doute, utiliser la source de données directement (`sellerMatchCounts[seller.id] || 0`) plutôt qu'une variable intermédiaire. Une erreur dans une fonction de rendu de carte crash TOUTES les cartes, pas juste une.

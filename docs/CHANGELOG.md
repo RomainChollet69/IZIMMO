@@ -4,6 +4,65 @@
 
 ---
 
+## Session 2026-03-01f — Retour visite IA + correctifs micro/pipeline
+
+### Résumé
+Correction de multiples bugs (transcription 502, création lead depuis micro, visites non affichées côté vendeur, messages IA acquéreurs), puis implémentation de la génération de message retour de visite pour les vendeurs avec popup tu/vous.
+
+### Modifications
+
+**`api/transcribe.js`** (modifié) :
+- Fix 502 : nettoyage MIME type (strip `;codecs=opus` → `audio/webm`)
+- Ajout du détail d'erreur OpenAI dans la réponse
+
+**`api/generate-message.js`** (modifié) :
+- Nouveau scénario `retour_visite` dans `sellerScenarios`
+- System prompt dédié avec 3 exemples réels de messages d'agent immobilier
+- Accepte `agentName` et `tone` (tu/vous) depuis le frontend
+- `toneRule` dynamique remplace le vouvoiement en dur
+- Signature automatique avec le prénom de l'agent
+
+**`micro.html`** (modifié) :
+- Fix `contact_date` : déplacé dans le bloc buyer-only (n'existe pas dans sellers)
+- Fix statut par défaut : `hot` pour vendeurs, `nouveau` pour acquéreurs
+- Ajout `postMessage` vers le parent après création de lead
+
+**`index.html`** (modifié) :
+- Listener `message` pour rafraîchir le pipeline après création micro
+- Fix badge-alert / match-indicator overlap
+- Fix ReferenceError `matchCount` (utilisé avant déclaration `const`)
+- Fix doublon téléphone sur les cartes
+- Ajout constantes manquantes (POSITIVE_POINTS, NEGATIVE_POINTS, NEIGHBORHOOD_LABELS)
+- Bouton "💬 Message retour" sur les visites effectuées avec feedback
+- Fonction `generateVisitRetourMessage(visitId)` : bascule vers Messages IA avec données pré-injectées
+- Option `retour_visite` dans le select scénario
+- Popup tu/vous (`askTone()`) avant chaque génération de message
+- Bouton + Lead repositionné (`right: 32px`)
+
+**`acquereurs.html`** (modifié) :
+- Listener `message` pour rafraîchir après création micro
+- Fix `getBuyerLeadData` null-safe (optional chaining)
+- Passage `agentName` et `tone` à l'API
+- Popup tu/vous avant génération
+
+### Fichiers créés/modifiés
+- `api/transcribe.js`
+- `api/generate-message.js`
+- `micro.html`
+- `index.html`
+- `acquereurs.html`
+
+### Points d'attention / bugs connus
+- Les console.log de debug visites sont toujours présents (diagnostic)
+- Le CSV import acquéreurs n'a pas été vérifié par l'utilisateur
+
+### Prochaines étapes prioritaires
+- Tester le retour visite avec différents profils (coup de coeur vs pas convaincu)
+- Nettoyer les console.log de debug
+- Vérifier l'import CSV acquéreurs
+
+---
+
 ## Session 2026-03-01e — Double compteur mensuel + page barème Paramètres
 
 ### Résumé

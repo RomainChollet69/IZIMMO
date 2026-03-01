@@ -82,22 +82,28 @@ Génération de messages contextuels (SMS, WhatsApp, Email).
 | Champ | Valeur |
 |-------|--------|
 | **Auth** | Bearer token |
-| **Body** | `{ channel, scenario, leadData, notes, customPrompt, leadType }` |
+| **Body** | `{ channel, scenario, leadData, notes, customPrompt, leadType, agentName, tone }` |
 | **Service externe** | Anthropic Claude Haiku |
 | **Timeout** | 20s |
 
 **Canaux** : `sms` (max 300 chars) / `whatsapp` (2-4 phrases, emojis ok) / `email` (avec sujet)
 
-**Scénarios vendeurs** (24) : `confirmation_rdv`, `relance_estimation`, `mandat_signe`, `demande_avis`, `relance_recommandation`…
+**Tone** : `vous` (défaut) ou `tu` — détermine vouvoiement/tutoiement dans le message généré
 
-**Scénarios acquéreurs** (10) : `confirmation_visite`, `envoi_bien`, `retour_visite`…
+**agentName** : Nom complet de l'agent (récupéré du profil header), utilisé pour la signature
+
+**Scénarios vendeurs** (18) : `confirmation_rdv`, `compte_rendu_estimation`, `relance`, `relance_estimation`, `proposition_baisse`, `point_visites`, `anniversaire_mandat`, `bonne_nouvelle`, `remerciement`, `mandat_signe`, `demande_avis`, `relance_recommandation`, `suivi_acquereur_pret`, `relance_fin_mandat_concurrent`, `redaction_annonce`, `repositionnement_prix`, `retour_visite`, `libre`
+
+**Scénarios acquéreurs** (11) : `confirmation_visite`, `envoi_bien`, `retour_visite`, `relance`, `point_recherche`, `bonne_nouvelle`, `felicitations_achat`, `selection_biens`, `demande_avis`, `relance_recommandation`, `libre`
+
+**System prompts dédiés** : `redaction_annonce`, `repositionnement_prix`, `retour_visite` (avec exemples réels de ton agent)
 
 **Réponse** :
 ```json
-{ "message": "Bonjour Jean, suite à notre échange..." }
+{ "message": "Bonjour Jean, la visite s'est bien passée..." }
 ```
 
-**Erreurs** : `400`, `401`, `500` (clé manquante), `502`, `504`
+**Erreurs** : `400`, `401`, `500` (clé manquante), `502` (Anthropic échoue, détail inclus), `504` (timeout)
 
 ---
 
