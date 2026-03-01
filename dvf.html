@@ -2583,7 +2583,7 @@
                     const prices = parcelSales.map(s => parseFloat(s.valeur_fonciere)).filter(p => p > 0);
                     const minPrice = Math.min(...prices);
                     const maxPrice = Math.max(...prices);
-                    const salesListHtml = parcelSales.slice(0, 10).map(sale => {
+                    const salesListHtml = parcelSales.slice(0, 10).map((sale, i) => {
                         const saleIdx = currentFilteredSales.indexOf(sale);
                         const type = getType(sale);
                         const price = parseFloat(sale.valeur_fonciere);
@@ -2592,26 +2592,40 @@
                         const sType = getType(sale);
                         const priceM2Sale = getPricePerM2(sale);
                         const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                        // Affichage surface compact : "130 m² + 252 m² terrain" pour maisons
+                        const detailId = dvfUidMulti + '_detail_' + i;
+                        // Surface compact pour la ligne résumé
                         let surfText = '';
+                        if (sBati) surfText = ` · ${sBati} m²`;
+                        else if (sTerrain) surfText = ` · ${sTerrain} m² terr.`;
+                        // Détail complet pour le panneau déplié
+                        let detailSurfHtml = '';
                         if (sBati && sTerrain && sType === 'maison') {
-                            surfText = ` · ${sBati} m² + ${sTerrain} m² terr.`;
+                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🏠 ${sBati} m² bâtis · 🌳 ${sTerrain} m² terrain</div>`;
                         } else if (sBati) {
-                            surfText = ` · ${sBati} m²`;
+                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">📐 ${sBati} m²</div>`;
                         } else if (sTerrain) {
-                            surfText = ` · ${sTerrain} m² terr.`;
+                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🌳 ${sTerrain} m² terrain</div>`;
                         }
-                        return `<div style="display:flex;align-items:center;gap:6px;padding:6px 4px;border-bottom:1px solid #eee">
-                            <button onclick="event.stopPropagation(); toggleSelection(${saleIdx}); this.innerHTML=isSelected(currentFilteredSales[${saleIdx}])?'<i class=\\'fas fa-check\\'></i>':'<i class=\\'fas fa-plus\\'></i>'; this.style.background=isSelected(currentFilteredSales[${saleIdx}])?'#667eea':'#f0f0f0'; this.style.color=isSelected(currentFilteredSales[${saleIdx}])?'#fff':'#667eea'" style="flex-shrink:0;width:26px;height:26px;border-radius:50%;border:none;background:#f0f0f0;color:#667eea;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center" title="Ajouter à ma sélection"><i class="fas fa-plus"></i></button>
-                            <div style="flex:1;cursor:pointer;min-width:0;padding:2px 4px;border-radius:4px;transition:background 0.15s" onclick="showSaleDetail(${saleIdx}, true)" onmouseover="this.style.background='#f0f4ff'" onmouseout="this.style.background='transparent'">
-                                <div style="display:flex;justify-content:space-between;align-items:center">
-                                    <span style="font-size:12px">${getTypeIcon(type)} <strong>${capitalize(type)}</strong>${surfText}</span>
-                                    <strong style="font-size:13px;color:#667eea">${formatPrice(price)}</strong>
+                        return `<div style="border-bottom:1px solid #eee">
+                            <div style="display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer" onclick="var d=document.getElementById('${detailId}');var open=d.style.display!=='none';d.style.display=open?'none':'block';this.querySelector('.iw-chevron').classList.toggle('fa-chevron-down',open);this.querySelector('.iw-chevron').classList.toggle('fa-chevron-up',!open)">
+                                <i class="fas fa-chevron-down iw-chevron" style="font-size:9px;color:#bbb;flex-shrink:0;width:12px;text-align:center"></i>
+                                <div style="flex:1;min-width:0">
+                                    <div style="display:flex;justify-content:space-between;align-items:center">
+                                        <span style="font-size:12px">${getTypeIcon(type)} <strong>${capitalize(type)}</strong>${surfText}</span>
+                                        <strong style="font-size:13px;color:#667eea">${formatPrice(price)}</strong>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-top:1px">
+                                        <span>${date}</span>
+                                        ${priceM2Sale ? `<span>${formatNumber(priceM2Sale)} €/m²</span>` : ''}
+                                    </div>
                                 </div>
-                                <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-top:1px">
-                                    <span>${date}</span>
-                                    ${priceM2Sale ? `<span>${formatNumber(priceM2Sale)} €/m²</span>` : ''}
-                                </div>
+                            </div>
+                            <div id="${detailId}" style="display:none;padding:6px 8px 10px 24px;background:#f8f9ff;border-radius:0 0 6px 6px">
+                                ${detailSurfHtml}
+                                ${priceM2Sale ? `<div style="font-size:12px;color:#555;margin-bottom:3px">💰 ${formatNumber(priceM2Sale)} €/m²</div>` : ''}
+                                <div style="font-size:12px;color:#555;margin-bottom:3px">📅 ${date}</div>
+                                ${sale.distance ? `<div style="font-size:12px;color:#555;margin-bottom:6px">📍 à ${sale.distance} m du centre</div>` : ''}
+                                <button onclick="event.stopPropagation(); toggleSelection(${saleIdx}); var sel=isSelected(currentFilteredSales[${saleIdx}]); this.innerHTML=(sel?'<i class=\\'fas fa-check\\'></i> Sélectionné':'<i class=\\'fas fa-bookmark\\'></i> Sélectionner'); this.style.background=sel?'#667eea':'#f0f4ff'; this.style.color=sel?'#fff':'#667eea'" style="padding:4px 10px;border-radius:5px;border:1px solid #667eea;background:#f0f4ff;color:#667eea;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-bookmark"></i> Sélectionner</button>
                             </div>
                         </div>`;
                     }).join('');
@@ -2623,7 +2637,7 @@
                                 <span style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</span>
                                 ${medianPriceM2 ? `<span style="font-size:12px;color:#555">méd. ${formatNumber(medianPriceM2)} €/m²</span>` : ''}
                             </div>
-                            <div style="font-size:11px;color:#999;margin-bottom:4px"><i class="fas fa-plus" style="color:#667eea;margin-right:3px"></i>sélectionner &nbsp;|&nbsp; cliquer = voir détails</div>
+                            <div style="font-size:11px;color:#999;margin-bottom:4px">Cliquer une vente pour voir le détail</div>
                             ${salesListHtml}
                             ${count > 10 ? `<div style="font-size:12px;color:#999;padding-top:6px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
                         </div>
