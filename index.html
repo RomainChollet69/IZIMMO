@@ -7360,8 +7360,7 @@
             card.draggable = true;
             card.dataset.id = seller.id;
 
-            // Relance
-            let followupCompact = '';
+            // Relance (toujours en vue étendue, jamais en compact)
             let followupFull = '';
             let showAlert = false;
             if (seller.reminder) {
@@ -7369,8 +7368,8 @@
                 const rd = new Date(seller.reminder); rd.setHours(0,0,0,0);
                 const diff = Math.ceil((rd - today) / 86400000);
                 const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
-                if (diff < 0) { followupCompact = `<div class="card-followup followup-overdue">⚠️ Relance ${fmt}</div>`; showAlert = true; }
-                else if (diff === 0) { followupCompact = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; showAlert = true; }
+                if (diff < 0) { followupFull = `<div class="card-followup followup-overdue">⚠️ Relance ${fmt}</div>`; showAlert = true; }
+                else if (diff === 0) { followupFull = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; showAlert = true; }
                 else if (diff <= 3) { followupFull = `<div class="card-followup followup-due">📅 Relance ${fmt}</div>`; }
                 else { followupFull = `<div class="card-followup followup-ok">📅 Relance ${fmt}</div>`; }
             }
@@ -7398,7 +7397,6 @@
             } else if (seller.phone) {
                 compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
-            if (followupCompact) compact += followupCompact;
             if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
             compact += '</div>';
 
