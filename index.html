@@ -4251,6 +4251,19 @@
                             </select>
                         </div>
                         <div class="form-group">
+                            <label class="form-label">Pièces</label>
+                            <select class="form-select" id="rooms">
+                                <option value="">—</option>
+                                <option value="T1">T1</option>
+                                <option value="T2">T2</option>
+                                <option value="T3">T3</option>
+                                <option value="T4">T4</option>
+                                <option value="T5+">T5+</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
                             <label class="form-label">Surface</label>
                             <input type="text" class="form-input" id="surface" placeholder="90m²">
                         </div>
@@ -6422,7 +6435,7 @@
                 // Fill fields directly (no confirmation popup for pre-creation import)
                 const fieldToInput = {
                     first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
-                    address: 'address', property_type: 'propertyType', surface: 'surface',
+                    address: 'address', property_type: 'propertyType', rooms: 'rooms', surface: 'surface',
                     budget: 'budget', description: 'description', contact_date: 'date'
                 };
                 Object.entries(fields).forEach(([key, value]) => {
@@ -6785,7 +6798,7 @@
             if (!overlay) return;
             const fieldToInput = {
                 first_name: 'firstName', last_name: 'lastName', phone: 'phone', email: 'email',
-                address: 'address', property_type: 'propertyType', surface: 'surface',
+                address: 'address', property_type: 'propertyType', rooms: 'rooms', surface: 'surface',
                 budget: 'budget', description: 'description', mandate_price: 'mandatePrice',
                 contact_date: 'date'
             };
@@ -8338,6 +8351,7 @@
 
             // Reset property fields
             document.getElementById('propertyType').value = '';
+            document.getElementById('rooms').value = '';
             document.getElementById('surface').value = '';
             document.getElementById('annexePiscine').style.display = 'none';
             document.querySelectorAll('input[name="annexes"]').forEach(cb => { cb.checked = false; });
@@ -8431,6 +8445,7 @@
             document.getElementById('dvfBtn').style.display = seller.address ? '' : 'none';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('propertyType').value = seller.property_type || '';
+            document.getElementById('rooms').value = seller.rooms || '';
             document.getElementById('annexePiscine').style.display = seller.property_type === 'maison' ? '' : 'none';
             document.getElementById('surface').value = seller.surface || '';
             // Annexes checkboxes
@@ -8612,6 +8627,7 @@
                 postal_code: addressInput.dataset.postalCode || null,
                 description: document.getElementById('description').value.trim() || null,
                 property_type: document.getElementById('propertyType').value || null,
+                rooms: document.getElementById('rooms').value || null,
                 surface: normalizeSurface(document.getElementById('surface').value),
                 annexes: [...document.querySelectorAll('input[name="annexes"]:checked')].map(cb => cb.value),
                 date,
