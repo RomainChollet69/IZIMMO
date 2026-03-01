@@ -458,7 +458,7 @@
             padding: 24px;
             min-height: 0; /* Indispensable pour que overflow-y fonctionne en flex */
             overflow-y: auto;
-            overscroll-behavior: none; /* Empêche le rebond élastique et la propagation au parent */
+            overscroll-behavior-y: none; /* Bloque le rebond vertical sans empêcher le scroll horizontal trackpad */
             backdrop-filter: blur(10px);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             animation: slideUp 0.5s ease;
