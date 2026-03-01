@@ -457,64 +457,57 @@
         }
 
         .column-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border-radius: 12px;
-            margin-bottom: 14px;
-            position: sticky;
-            top: 64px; /* Hauteur du header page */
-            z-index: 10;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            position: relative;
+            margin-bottom: 16px;
+            overflow: hidden;
+            border-radius: 16px;
+            height: 90px;
+            background-size: cover;
+            background-position: top;
         }
 
-        /* Dégradés doux par statut — saturation réduite, luminosité augmentée */
-        .column-header.header-hot { background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%); }
-        .column-header.header-warm { background: linear-gradient(135deg, #fb923c 0%, #fdba74 100%); }
-        .column-header.header-cold { background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%); }
-        .column-header.header-off_market { background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%); }
-        .column-header.header-mandate { background: linear-gradient(135deg, #4ade80 0%, #86efac 100%); }
-        .column-header.header-competitor { background: linear-gradient(135deg, #94a3b8 0%, #cbd5e1 100%); }
-        .column-header.header-sold { background: linear-gradient(135deg, #c084fc 0%, #d8b4fe 100%); }
-        .column-header.header-lost { background: linear-gradient(135deg, #9ca3af 0%, #d1d5db 100%); }
-
-        .column-header-icon {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            object-fit: cover;
-            flex-shrink: 0;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
-        }
-
-        .column-header-text {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 0;
-        }
+        .column-header.header-hot { background-image: url('img/chaud_fond_carte_pipe_vente.png'); }
+        .column-header.header-warm { background-image: url('img/tiede_fond_carte_pipe_vente.png'); }
+        .column-header.header-cold { background-image: url('img/froid_fond_carte_pipe_vente.png'); }
+        .column-header.header-off_market { background-image: url('img/offmarket.png'); }
+        .column-header.header-mandate { background-image: url('img/mandat_fond_carte_pipe_vente.png'); }
+        .column-header.header-competitor { background-image: url('img/concurrence.png'); }
+        .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
+        .column-header.header-lost { background-image: url('img/perdu_fond_carte_pipe_vente.png'); }
 
         .column-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 10px 14px;
             font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 15px;
-            font-weight: 600;
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             color: white;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
+            font-style: italic;
         }
 
-        .column-subtitle {
-            font-family: 'Inter', sans-serif;
-            font-size: 11px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.75);
+        .column-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            color: var(--text-dark);
         }
 
         .column-count {
-            display: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 12px;
         }
 
         .cards-container {
@@ -3959,96 +3952,80 @@
         <!-- Colonne Hot -->
         <div class="column" data-status="hot">
             <div class="column-header header-hot">
-                <img class="column-header-icon" src="img/chaud_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Leads chaudes</div>
-                    <div class="column-subtitle"><span class="count">0</span> prospects · &lt; 30 jours</div>
-                </div>
+                <div class="column-label">LEADS CHAUDES</div>
             </div>
+            <div class="column-title">Prospects prêts à - 30 Jours</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="hot-container"></div>
         </div>
 
         <!-- Colonne Warm -->
         <div class="column" data-status="warm">
             <div class="column-header header-warm">
-                <img class="column-header-icon" src="img/tiede_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Leads tièdes</div>
-                    <div class="column-subtitle"><span class="count">0</span> prospects · 30-60 jours</div>
-                </div>
+                <div class="column-label">LEADS TIÈDES</div>
             </div>
+            <div class="column-title">Prospects prêts entre 30 et 60 jours</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="warm-container"></div>
         </div>
 
         <!-- Colonne Cold -->
         <div class="column" data-status="cold">
             <div class="column-header header-cold">
-                <img class="column-header-icon" src="img/froid_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Leads froides</div>
-                    <div class="column-subtitle"><span class="count">0</span> prospects · 60+ jours</div>
-                </div>
+                <div class="column-label">LEADS FROIDES</div>
             </div>
+            <div class="column-title">Prospects à 60 Jours et +</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="cold-container"></div>
         </div>
 
         <!-- Colonne Off Market -->
         <div class="column" data-status="off_market">
             <div class="column-header header-off_market">
-                <img class="column-header-icon" src="img/offmarket.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Off market</div>
-                    <div class="column-subtitle"><span class="count">0</span> biens · hors mandats</div>
-                </div>
+                <div class="column-label">🔒 OFF MARKET</div>
             </div>
+            <div class="column-title">Biens visitables hors mandats</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="off_market-container"></div>
         </div>
 
         <!-- Colonne Sous Mandats -->
         <div class="column" data-status="mandate">
             <div class="column-header header-mandate">
-                <img class="column-header-icon" src="img/mandat_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Sous mandats</div>
-                    <div class="column-subtitle"><span class="count">0</span> mandats signés</div>
-                </div>
+                <div class="column-label">SOUS MANDATS</div>
             </div>
+            <div class="column-title">Mandats signés</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="mandate-container"></div>
         </div>
 
         <!-- Colonne Concurrents / PAP -->
         <div class="column" data-status="competitor">
             <div class="column-header header-competitor">
-                <img class="column-header-icon" src="img/concurrence.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Concurrents / PAP</div>
-                    <div class="column-subtitle"><span class="count">0</span> biens</div>
-                </div>
+                <div class="column-label">🏢 CONCURRENTS / PAP</div>
             </div>
+            <div class="column-title">Biens chez la concurrence</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="competitor-container"></div>
         </div>
 
         <!-- Colonne Vendus -->
         <div class="column" data-status="sold">
             <div class="column-header header-sold">
-                <img class="column-header-icon" src="img/vendu_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Vendus</div>
-                    <div class="column-subtitle"><span class="count">0</span> biens vendus</div>
-                </div>
+                <div class="column-label">VENDUS</div>
             </div>
+            <div class="column-title">Biens vendus 🎉</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="sold-container"></div>
         </div>
 
         <!-- Colonne Perdus -->
         <div class="column" data-status="lost">
             <div class="column-header header-lost">
-                <img class="column-header-icon" src="img/perdu_fond_carte_pipe_vente.png" alt="">
-                <div class="column-header-text">
-                    <div class="column-label">Perdus</div>
-                    <div class="column-subtitle"><span class="count">0</span> leads</div>
-                </div>
+                <div class="column-label">PERDUS</div>
             </div>
+            <div class="column-title">Leads perdus / Abandonnés</div>
+            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="lost-container"></div>
         </div>
     </div>
