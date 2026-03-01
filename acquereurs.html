@@ -638,54 +638,54 @@
         }
 
         .column-header {
-            position: relative;
-            margin-bottom: 20px;
-            overflow: hidden;
-            border-radius: 16px;
-            height: 160px;
-            background-size: cover;
-            background-position: top;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
         }
 
-        .column-header.header-nouveau { background-image: url('img/nouveaux.png'); }
-        .column-header.header-actif { background-image: url('img/actifs.png'); }
-        .column-header.header-achete_avec_moi { background-image: url('img/achetes.png'); }
-        .column-header.header-achete_ailleurs { background-image: url('img/ailleurs.png'); }
-        .column-header.header-abandon { background-image: url('img/plusenrecherche.png'); }
+        /* Dégradés doux par statut */
+        .column-header.header-nouveau { background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%); }
+        .column-header.header-actif { background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%); }
+        .column-header.header-achete_avec_moi { background: linear-gradient(135deg, #4ade80 0%, #86efac 100%); }
+        .column-header.header-achete_ailleurs { background: linear-gradient(135deg, #fbbf24 0%, #fcd34d 100%); }
+        .column-header.header-abandon { background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%); }
+
+        .column-header-icon {
+            font-size: 20px;
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+
+        .column-header-text {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
 
         .column-label {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 12px 16px;
             font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 22px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 15px;
+            font-weight: 600;
             color: white;
-            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
-            font-style: italic;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .column-title {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            text-transform: uppercase;
-            margin-top: 15px;
-            margin-bottom: 10px;
-            color: var(--text-dark);
+        .column-subtitle {
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.75);
         }
 
         .column-count {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-light);
-            font-size: 14px;
-            margin-bottom: 20px;
+            display: none;
         }
 
         .cards-container {
@@ -2505,19 +2505,19 @@
             height: 64px;
             background: #FFFFFF;
             border-top: 1px solid #E5E7EB;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             z-index: 9985;
-            padding: 0 32px;
         }
         .desktop-bottom-bar-inner {
             max-width: 1400px;
             width: 100%;
+            height: 100%;
+            margin: 0 auto;
+            padding: 0 32px;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
+            box-sizing: border-box;
         }
         .bottom-search {
             flex: 1;
@@ -2765,50 +2765,60 @@
         <!-- Colonne Nouveaux Acquéreurs -->
         <div class="column" data-status="nouveau">
             <div class="column-header header-nouveau">
-                <div class="column-label">NOUVEAUX</div>
+                <span class="column-header-icon">🆕</span>
+                <div class="column-header-text">
+                    <div class="column-label">Nouveaux</div>
+                    <div class="column-subtitle"><span class="count">0</span> acquéreurs · premier contact</div>
+                </div>
             </div>
-            <div class="column-title">Premier contact</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="nouveau-container"></div>
         </div>
 
         <!-- Colonne En Recherche Active -->
         <div class="column" data-status="actif">
             <div class="column-header header-actif">
-                <div class="column-label">RECHERCHE ACTIVE</div>
+                <span class="column-header-icon">🔍</span>
+                <div class="column-header-text">
+                    <div class="column-label">Recherche active</div>
+                    <div class="column-subtitle"><span class="count">0</span> acquéreurs · critères définis</div>
+                </div>
             </div>
-            <div class="column-title">Critères définis, envoi de biens</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="actif-container"></div>
         </div>
 
         <!-- Colonne Achetés avec moi -->
         <div class="column" data-status="achete_avec_moi">
             <div class="column-header header-achete_avec_moi">
-                <div class="column-label">ACHETÉS AVEC MOI 🎉</div>
+                <span class="column-header-icon">🎉</span>
+                <div class="column-header-text">
+                    <div class="column-label">Achetés avec moi</div>
+                    <div class="column-subtitle"><span class="count">0</span> transactions</div>
+                </div>
             </div>
-            <div class="column-title">Mes transactions</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="achete_avec_moi-container"></div>
         </div>
 
         <!-- Colonne Achetés ailleurs -->
         <div class="column" data-status="achete_ailleurs">
             <div class="column-header header-achete_ailleurs">
-                <div class="column-label">ACHETÉS AILLEURS 🔄</div>
+                <span class="column-header-icon">🔄</span>
+                <div class="column-header-text">
+                    <div class="column-label">Achetés ailleurs</div>
+                    <div class="column-subtitle"><span class="count">0</span> acquéreurs</div>
+                </div>
             </div>
-            <div class="column-title">Ont trouvé sans moi</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="achete_ailleurs-container"></div>
         </div>
 
         <!-- Colonne Plus en recherche -->
         <div class="column" data-status="abandon">
             <div class="column-header header-abandon">
-                <div class="column-label">PLUS EN RECHERCHE ❌</div>
+                <span class="column-header-icon">❌</span>
+                <div class="column-header-text">
+                    <div class="column-label">Plus en recherche</div>
+                    <div class="column-subtitle"><span class="count">0</span> acquéreurs</div>
+                </div>
             </div>
-            <div class="column-title">Abandon</div>
-            <div class="column-count"><span>📋</span><span class="count">0</span></div>
             <div class="cards-container" id="abandon-container"></div>
         </div>
     </div>
