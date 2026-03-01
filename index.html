@@ -7348,7 +7348,10 @@
             // === EXTENDED VIEW (extra info only, no duplicates) ===
             let ext = '<div class="card-extended">';
 
-            if (showAlert) ext += '<div class="badge-alert">À RELANCER</div>';
+            if (showAlert) {
+                const alertTop = matchCount > 0 ? 'top:36px' : '';
+                ext += `<div class="badge-alert" style="${alertTop}">À RELANCER</div>`;
+            }
 
             // Address (rue seule, la ville est déjà en compact)
             const street = extractStreet(seller.address);
