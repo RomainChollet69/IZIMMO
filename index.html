@@ -8346,6 +8346,9 @@
             originalFormValues = {};
             document.getElementById('modal').classList.remove('active');
             document.body.style.overflow = 'auto';
+            // Cacher le FAB Léon workflow quand on ferme la modale
+            const leonFab = document.getElementById('leonFab');
+            if (leonFab) leonFab.style.display = 'none';
 
             document.getElementById('leadForm').reset();
             const submitBtn = document.getElementById('submitBtn');
