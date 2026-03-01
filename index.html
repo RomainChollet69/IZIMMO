@@ -3627,10 +3627,10 @@
         .desktop-bottom-bar-inner {
             max-width: 1400px;
             width: 100%;
-            display: grid;
-            grid-template-columns: 1fr auto auto;
+            position: relative;
+            display: flex;
             align-items: center;
-            gap: 16px;
+            justify-content: center;
         }
         .bottom-search {
             flex: 1;
@@ -3687,8 +3687,8 @@
             box-shadow: 0 4px 14px rgba(108, 76, 200, 0.35);
         }
         .bottom-todo-btn {
-            justify-self: end;
-            margin-right: 8px;
+            position: absolute;
+            right: 0;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -10577,8 +10577,6 @@
     <!-- Desktop Bottom Bar -->
     <div class="desktop-bottom-bar">
         <div class="desktop-bottom-bar-inner">
-            <!-- Spacer gauche -->
-            <div></div>
             <!-- Micro central — hero -->
             <button type="button" class="bottom-micro-btn" onclick="openMicroModal()" title="Dicter un lead">
                 <i class="fa-solid fa-microphone"></i>
