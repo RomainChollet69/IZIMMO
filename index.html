@@ -10522,7 +10522,8 @@
 
         function onScenarioChange() {
             const scenario = document.getElementById('msgScenario').value;
-            document.getElementById('msgCustomPrompt').style.display = scenario === 'libre' ? 'block' : 'none';
+            const showPrompt = scenario === 'libre' || scenario === 'retour_visite';
+            document.getElementById('msgCustomPrompt').style.display = showPrompt ? 'block' : 'none';
         }
 
         function getSellerLeadData() {
@@ -10631,7 +10632,13 @@
 
             const leadData = getSellerLeadData();
             const notes = currentNotes.slice(0, 5).map(n => n.content);
-            const customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
+            let customPrompt = '';
+            if (scenario === 'retour_visite' && pendingVisitFeedback) {
+                customPrompt = pendingVisitFeedback;
+                pendingVisitFeedback = null;
+            } else if (scenario === 'libre' || scenario === 'retour_visite') {
+                customPrompt = document.getElementById('msgCustomPrompt').value;
+            }
 
             try {
                 console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'seller' });
