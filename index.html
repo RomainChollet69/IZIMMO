@@ -70,13 +70,17 @@
             position: sticky;
             top: 64px; /* Sous le header */
             z-index: 999;
-            display: flex;
-            align-items: center;
-            gap: 16px;
+            position: relative;
+        }
+        .search-bar-section .add-btn {
+            position: absolute;
+            right: 32px;
+            top: 50%;
+            transform: translateY(-50%);
         }
         .search-bar-section-inner {
             max-width: 600px;
-            flex: 1;
+            margin: 0 auto;
             position: relative;
             display: flex;
             align-items: center;
