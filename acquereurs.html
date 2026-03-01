@@ -7057,17 +7057,18 @@
         }
 
         function getBuyerLeadData() {
+            const val = (id) => document.getElementById(id)?.value || '';
             return {
-                first_name: document.getElementById('firstName').value,
-                last_name: document.getElementById('lastName').value,
-                phone: document.getElementById('phone').value,
-                email: document.getElementById('email').value,
-                property_type: document.getElementById('propertyType').value,
-                rooms: document.getElementById('rooms').value,
-                sector: document.getElementById('sector').value,
-                surface_min: document.getElementById('surfaceMin').value,
-                budget_min: document.getElementById('budgetMin').value,
-                budget_max: document.getElementById('budgetMax').value
+                first_name: val('firstName'),
+                last_name: val('lastName'),
+                phone: val('phone'),
+                email: val('email'),
+                property_type: val('propertyType'),
+                rooms: val('rooms'),
+                sector: val('sector'),
+                surface_min: val('surfaceMin'),
+                budget_min: val('budgetMin'),
+                budget_max: val('budgetMax')
             };
         }
 
