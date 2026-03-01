@@ -48,6 +48,7 @@ function renderUserProfile(user) {
         <span class="user-name">${name}</span>
         <div class="user-dropdown" id="userDropdown">
             <a href="parametres.html" class="user-dropdown-item">Paramètres</a>
+            <div id="exportInsertPoint"></div>
             <div class="export-dropdown-separator"></div>
             <button class="user-dropdown-item" onclick="logout()">Déconnexion</button>
         </div>
