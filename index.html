@@ -551,7 +551,7 @@
         .lead-card {
             background: white;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 14px 14px;
             box-shadow: var(--shadow);
             transition: max-height 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease;
             cursor: pointer;
@@ -579,8 +579,8 @@
 
         .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
 
-        .card-compact .card-name { font-size: 15px; margin-bottom: 4px; }
-        .card-compact .card-info { font-size: 13px; margin-bottom: 2px; }
+        .card-compact .card-name { font-size: 15px; margin-bottom: 6px; }
+        .card-compact .card-info { font-size: 13px; margin-bottom: 4px; }
         .card-compact .card-tag { padding: 2px 8px; font-size: 10px; margin-bottom: 4px; }
 
         .card-extended { display: none; }
@@ -7405,12 +7405,6 @@
             // === EXTENDED VIEW (extra info only, no duplicates) ===
             let ext = '<div class="card-extended">';
 
-            if (showAlert) {
-                const hasMatches = (sellerMatchCounts[seller.id] || 0) > 0;
-                const alertTop = hasMatches ? 'top:36px' : '';
-                ext += `<div class="badge-alert" style="${alertTop}">À RELANCER</div>`;
-            }
-
             // Address (rue seule, la ville est déjà en compact)
             const street = extractStreet(seller.address);
             if (street) ext += `<div class="card-info">📍 ${escapeHtml(street)}</div>`;
@@ -7465,7 +7459,7 @@
             // Match indicator badge (absolute positioned)
             const matchCount = sellerMatchCounts[seller.id] || 0;
             const matchIndicator = matchCount > 0
-                ? `<div class="match-indicator" data-match-seller="${seller.id}">🎯 ${matchCount} match${matchCount > 1 ? 's' : ''}</div>`
+                ? `<div class="match-indicator" data-match-seller="${seller.id}">🎯 ${matchCount}</div>`
                 : '';
 
             card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
