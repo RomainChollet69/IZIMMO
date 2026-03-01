@@ -12,13 +12,15 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { channel, scenario, leadData, notes, customPrompt, leadType, agentName } = req.body || {};
+    const { channel, scenario, leadData, notes, customPrompt, leadType, agentName, tone } = req.body || {};
     if (!channel || !scenario || !leadData) return res.status(400).json({ error: 'Missing required fields' });
 
+    const toneRule = tone === 'tu' ? 'Tutoiement obligatoire.' : 'Vouvoiement obligatoire.';
+
     const channelInstructions = {
-        sms: "Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. Vouvoiement obligatoire.",
-        whatsapp: "Message WhatsApp conversationnel mais professionnel. Peut inclure des emojis (modérément). 2-4 phrases max. Vouvoiement obligatoire.",
-        email: "Email professionnel avec objet. Format:\nObjet : [objet]\n\n[corps du message]\n\nCordialement,\n[prénom de l'agent si disponible]. Vouvoiement obligatoire."
+        sms: `Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. ${toneRule}`,
+        whatsapp: `Message WhatsApp conversationnel mais professionnel. Peut inclure des emojis (modérément). 2-4 phrases max. ${toneRule}`,
+        email: `Email professionnel avec objet. Format:\nObjet : [objet]\n\n[corps du message]\n\nCordialement,\n[prénom de l'agent si disponible]. ${toneRule}`
     };
 
     const sellerScenarios = {
@@ -137,7 +139,7 @@ Style obligatoire :
 - Phrases courtes et directes. Pas de formules creuses ("je me permets de", "n'hésitez pas à", "je reste à votre disposition")
 - Ton naturel, humain, comme un message qu'on enverrait vraiment. Pas de style corporate ou "assistant IA"
 - Pas de mots vides : "exceptionnel", "constructif", "demeurons optimistes", "séduit". Sois concret et factuel
-- Vouvoiement obligatoire
+- ${toneRule}
 - ${channelInstructions[channel] || channelInstructions.sms}
 - Utilise les informations du contact pour personnaliser (prénom, adresse, prix, etc.)
 - Ne mets JAMAIS de placeholder entre crochets [xxx]
