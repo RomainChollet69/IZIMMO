@@ -4,6 +4,109 @@
 
 ---
 
+## Session 2026-03-01b — DVF : corrections UX InfoWindow + système de sélection + détail dépliable
+
+### Résumé
+Session d'itérations UX sur la page DVF basée sur les retours utilisateur. Correction des InfoWindows (styles inline obligatoires pour Google Maps), remplacement du système de comparaison par un système de sélection (panier pour étude de marché), affichage surfaces maisons, et détail dépliable dans les InfoWindows multi-parcelle.
+
+### Modifications
+
+**`dvf.html`** :
+
+**InfoWindows — Corrections critiques** :
+- Revert CSS classes → inline styles (Google Maps ignore les `<style>` dans les InfoWindows)
+- Consolidation des overrides CSS `.gm-style-iw-*` (suppression doublons)
+- Fix double attribut `style` sur les lignes multi-sale
+- InfoWindow `maxWidth: 340` défini sur l'objet JS (plus fiable que CSS)
+
+**InfoWindows — UX maisons** :
+- Séparation surface bâtie / surface terrain pour les maisons : `🏠 138 m² bâtis · 🌳 252 m² terrain`
+- Distance mise sur ligne séparée : `📍 à 113 m du centre` (au lieu de "Maison 138 m² à 113 m")
+- Suppression section "Plus de détails" redondante (répétait les infos déjà visibles)
+- Multi-sale : affiche `130 m² + 252 m² terr.` pour les maisons
+
+**InfoWindows — Détail dépliable (multi-parcelle)** :
+- Chaque vente a un chevron ▾ cliquable qui déplie un panneau de détail inline
+- Détail : surfaces (bâtie + terrain), prix/m², date, distance, bouton "Sélectionner"
+- Plus besoin d'aller dans le side panel pour voir le détail complet
+
+**Système de sélection (remplace la comparaison)** :
+- Suppression complète du système de comparaison (CSS, HTML, JS)
+- Nouveau système : sélection de ventes pour étude de marché (max 20)
+- Panel flottant à droite de la carte avec liste des ventes sélectionnées
+- Bouton × visible par ligne pour supprimer une sélection individuelle
+- Bouton "Sélectionner" dans les InfoWindows (single + multi-sale)
+- Export CSV de la sélection (séparateur `;`, BOM UTF-8)
+- Fonction `clearSelection()` pour tout vider
+
+**Side panel — Réorganisation** :
+- Section ventes/détail remontée au-dessus du graphique d'évolution des prix
+- Vue détail compacte : surface+date sur une ligne, distance en dessous, prix/m² + sélection côte à côte
+- Auto-ouverture du panel + scrollIntoView au clic sur une vente
+
+**Performance** :
+- `MAX_PARCELS` revert de 2000 à 500 (chargement trop lent avec clustering)
+
+### Fichiers modifiés
+- `dvf.html`
+
+### Points d'attention
+- Les InfoWindows Google Maps **nécessitent** des styles inline — les classes CSS définies dans `<style>` ne fonctionnent pas de manière fiable
+- Le clustering MarkerClusterer est conservé mais avec MAX_PARCELS=500 pour garder de bonnes performances
+
+### Prochaines étapes prioritaires
+- Tester sur mobile (responsive 375px)
+- Envisager d'augmenter MAX_PARCELS progressivement si les perfs le permettent
+
+---
+
+## Session 2026-03-01 — Refonte page DVF (Performance + UX + Fonctionnalités)
+
+### Résumé
+Amélioration globale de la page DVF (dvf.html) en 3 phases : quick wins performance/UX, fonctionnalités clés, et polish. 13 améliorations implémentées.
+
+### Modifications
+
+**`dvf.html`** :
+
+**Phase 1 — Performance & UX** :
+- CSS : Variables `--dpe-a` à `--dpe-g` et `--z-*` dans `:root` — source unique de vérité pour couleurs DPE et z-index
+- CSS : Bloc responsive 768px entièrement refait — header simplifié, side panel en overlay fixe, FAB toggle, carte plein écran, breakpoint 480px ajouté
+- JS : `Promise.all()` pour chargement départements DVF + DPE (au lieu de boucle séquentielle)
+- JS : Fonction `cachedReverseGeocode()` — cache Map pour éviter les appels API redondants
+- JS : Debounce 150ms dans `initDualRange()` pour les sliders (évite freeze mobile)
+- HTML : Styles inline DPE supprimés des boutons, remplacés par classes CSS `[data-class]`
+- HTML : Toggle panel : icône `fa-sliders` / `fa-times` avec FAB rond violet
+
+**Phase 2 — Fonctionnalités clés** :
+- JS : Intégration `@googlemaps/markerclusterer` via CDN — clustering automatique, `MAX_PARCELS` augmenté de 500 → 2000
+- JS : Fonction `renderPriceChart()` — sparkline SVG évolution prix médian/m² par année, avec gradient sous courbe
+- HTML : Section `#chartSection` ajoutée après les stats
+- JS : Infinite scroll via `IntersectionObserver` + `DocumentFragment` (remplace bouton "Voir plus" hardcodé à 100)
+- CSS : Classes `.iw-*` pour InfoWindows (remplace 50+ lignes de CSS inline par popup)
+
+**Phase 3 — Polish** :
+- JS : Event delegation sur `#typeGrid`, `#dpeClassGrid`, `#dpeDateGrid` (remplace forEach + addEventListener)
+- JS : Fonction `exportCSV()` — export CSV séparé `;` avec BOM UTF-8
+- HTML : Bouton export ajouté dans le header
+- JS : Système de comparaison de biens — `toggleCompare()`, `showComparison()`, tableau côte à côte (max 3 biens)
+- CSS : Styles `.compare-*` pour boutons, barre flottante, et tableau comparatif
+
+### Fichiers créés/modifiés
+- `dvf.html` (3118 → 3602 lignes)
+
+### Points d'attention / bugs connus
+- Le clustering MarkerClusterer charge via CDN (unpkg) — dépendance externe
+- L'infinite scroll utilise `IntersectionObserver` — IE non supporté (mais déjà le cas pour le reste de l'app)
+- Le CSS `.show-more-btn` est orphelin (remplacé par infinite scroll) mais ne gêne pas
+
+### Prochaines étapes prioritaires
+- Tester en conditions réelles sur mobile (iPhone, Android)
+- Vérifier le clustering avec des zones à haute densité (Paris, Lyon)
+- Envisager un mode heatmap optionnel (overlay chaleur prix/m²)
+
+---
+
 ## Session 2026-02-28d — Barre de recherche leads
 
 ### Résumé

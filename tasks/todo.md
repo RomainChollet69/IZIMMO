@@ -10,14 +10,22 @@ _(rien en cours)_
 
 ## À faire
 
-- [ ] **SQL migration en attente** : `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS appointment_date DATE` (005)
+### DVF
+- [ ] Tester la page DVF sur mobile (responsive 375px) — responsive revu mais pas testé en conditions réelles
+- [ ] Envisager d'augmenter `MAX_PARCELS` progressivement (actuellement 500, clustering supporte plus)
+- [ ] Tester le clustering avec des zones à haute densité (Paris, Lyon centre)
+
+### Pipeline
 - [ ] Retirer les console.log de debug mobile une fois stabilisé
 - [ ] Tester le card deck sur différents appareils iOS et Android
 - [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
-- [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN rdv_done BOOLEAN DEFAULT false`
-- [ ] SQL migrations en attente : `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
-- [ ] Tester filtres DPE en production (classe A-G + DPE récents)
-- [ ] Vérifier chargement des départements splittés (59 Nord, 75 Paris)
+
+### Migrations SQL en attente
+- [ ] `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS appointment_date DATE` (005)
+- [ ] `ALTER TABLE sellers ADD COLUMN rdv_done BOOLEAN DEFAULT false`
+- [ ] `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
+
+### Nettoyage
 - [ ] Nettoyer `pipeline-acquereurs.html` (fichier deprecated)
 - [ ] Supprimer `reset-password.html` (inutilisé — auth Google uniquement)
 - [ ] Mettre en place le logging structuré par module (`[DVF]`, `[Pipeline]`, `[Auth]`, `[Workflow]`)

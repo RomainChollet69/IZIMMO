@@ -50,3 +50,11 @@
 ### L009 — Utiliser alert() pour debug mobile, pas console.log (2026-02-25)
 **Erreur** : Les console.log de debug étaient inaccessibles sur iPhone (pas de DevTools intégré). Les logs disparaissaient aussi lors des redirections rapides.
 **Règle** : Pour le debug mobile, utiliser `alert()` — ça bloque toute exécution JavaScript et affiche le message à l'écran. Penser aussi au flag `window._debugShown` pour n'afficher qu'une seule fois. Pour les redirections rapides, `alert()` est la seule méthode fiable car elle bloque le thread.
+
+### L010 — Google Maps InfoWindows : styles inline obligatoires (2026-03-01)
+**Erreur** : Refactoring des InfoWindows avec des classes CSS `.iw-*` au lieu de styles inline. Résultat : tout le contenu apparaissait sans style (texte brut).
+**Règle** : Les InfoWindows Google Maps injectent le contenu dans un conteneur isolé. Les classes CSS de la page `<style>` ne sont **pas héritées**. Toujours utiliser des styles inline. Seules les overrides sur `.gm-style-iw-*` (conteneur Google) fonctionnent car elles ciblent le DOM externe.
+
+### L011 — Séparer visuellement les données de nature différente dans les UI compactes (2026-03-01)
+**Erreur** : "Maison 138 m² à 113 m" — l'utilisateur confondait la surface (138 m²) et la distance (113 m) car les deux étaient sur la même ligne avec des formats similaires.
+**Règle** : Ne jamais mettre côte à côte des informations numériques de même unité (m² et m) sans séparation visuelle forte. Mettre les données de nature différente sur des lignes séparées, avec des icônes distinctes et des labels explicites (ex: "📍 à 113 m du centre").

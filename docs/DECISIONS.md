@@ -660,3 +660,44 @@
 - `filterLeads()` / `filterBuyers()` cherchent dans les propriétés des objets (nom, adresse, téléphone, email, source)
 - `updateCounts()` modifié pour compter les cards DOM visibles quand un filtre est actif
 - Raccourci `Cmd+K` / `Ctrl+K` pour accès rapide
+
+---
+
+## D033 — InfoWindows Google Maps : styles inline obligatoires (pas de classes CSS)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Les InfoWindows de la carte DVF avaient été refactorées pour utiliser des classes CSS (`.iw-*`) au lieu de styles inline. Résultat : le contenu apparaissait sans aucun style.
+
+**Décision** : Utiliser exclusivement des styles inline dans le HTML des InfoWindows. Les classes CSS définies dans `<style>` ne fonctionnent pas de manière fiable dans les InfoWindows Google Maps.
+
+**Pourquoi** :
+- Google Maps injecte le contenu des InfoWindows dans un Shadow DOM ou un conteneur isolé
+- Les règles CSS de la page parente ne sont pas héritées de façon fiable
+- Les styles inline sont la seule méthode garantie pour styler le contenu d'une InfoWindow
+- Seules les overrides `.gm-style-iw-*` (sur le conteneur externe) fonctionnent en CSS car elles ciblent le DOM créé par Google Maps lui-même
+
+**Alternatives rejetées** :
+- Classes CSS `.iw-*` : Ne fonctionnent pas (testées et échouées)
+- Injection de `<style>` dans l'InfoWindow : Hacky et non garanti
+
+---
+
+## D034 — Sélection de ventes (pas de comparaison côte à côte)
+
+**Date** : 2026-03-01
+**Statut** : Actif
+
+**Contexte** : Le système de comparaison (max 3 biens côte à côte en tableau) a été implémenté mais jugé peu utile par l'utilisateur. Le vrai besoin : mettre de côté des ventes pendant l'exploration pour constituer une étude de marché.
+
+**Décision** : Remplacer le système de comparaison par un système de sélection (panier). Panel flottant à droite avec les ventes bookmarkées, export CSV, suppression individuelle ou globale.
+
+**Pourquoi** :
+- L'agent explore la carte et repère des ventes intéressantes — il veut les "sauvegarder" sans perdre le contexte
+- La comparaison tableau était rigide (max 3, même colonnes) et peu naturelle
+- Le panier est extensible (max 20) et exportable vers Excel pour un rapport client
+- Le bouton "Sélectionner" est intégré aux InfoWindows : zéro friction
+
+**Alternatives rejetées** :
+- Comparaison côte à côte (implémentée puis supprimée) : peu naturelle, limite à 3, UX lourde

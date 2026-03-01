@@ -330,7 +330,16 @@ Google Maps initialisé (maps-config.js)
     │         ▼
     │     Fetch {dept}.json → filtrage local (année, type, prix, surface)
     │       → Clustering par parcelle (même coordonnées)
+    │       → MarkerClusterer (@googlemaps/markerclusterer CDN)
     │       → Markers couleur par prix/m² + InfoWindow détaillée
+    │           ├── Single-sale : type, surfaces (bâtie + terrain pour maisons),
+    │           │   prix, prix/m², date, distance, bouton Sélectionner
+    │           └── Multi-sale : liste dépliable par vente (chevron → détail inline)
+    │
+    │     Sélection de ventes (étude de marché) :
+    │       → Panel flottant droite (max 20 ventes)
+    │       → Suppression individuelle ou globale
+    │       → Export CSV (séparateur ;, BOM UTF-8)
     │
     └── DPE (inactif par défaut) ────────────────────────────────────
           Activation toggle → Fetch index.json (bucket dpe-data)
