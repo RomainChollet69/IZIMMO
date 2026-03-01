@@ -7349,7 +7349,8 @@
             let ext = '<div class="card-extended">';
 
             if (showAlert) {
-                const alertTop = matchCount > 0 ? 'top:36px' : '';
+                const hasMatches = (sellerMatchCounts[seller.id] || 0) > 0;
+                const alertTop = hasMatches ? 'top:36px' : '';
                 ext += `<div class="badge-alert" style="${alertTop}">À RELANCER</div>`;
             }
 
