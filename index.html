@@ -454,10 +454,8 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             animation: slideUp 0.5s ease;
         }
-        .column::-webkit-scrollbar { width: 4px; }
-        .column::-webkit-scrollbar-track { background: transparent; }
-        .column::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.12); border-radius: 4px; }
-        .column::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
+        .column::-webkit-scrollbar { display: none; }
+        .column { scrollbar-width: none; /* Firefox */ }
 
         /* Zone figée en haut de chaque colonne */
         .column-top {
