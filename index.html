@@ -5219,6 +5219,30 @@
         // ===== VISITES DANS MATCHING TAB =====
         let currentMatchVisits = [];
 
+        const POSITIVE_POINTS = [
+            { value: 'luminosite', label: '☀️ Luminosité' },
+            { value: 'agencement', label: '📐 Agencement' },
+            { value: 'exterieur', label: '🌳 Extérieur' },
+            { value: 'emplacement', label: '📍 Emplacement' },
+            { value: 'calme', label: '🤫 Calme' },
+            { value: 'vue', label: '🏔️ Vue' },
+            { value: 'etat_general', label: '✨ État général' }
+        ];
+        const NEGATIVE_POINTS = [
+            { value: 'travaux', label: '🔨 Travaux' },
+            { value: 'bruit', label: '🔊 Bruit' },
+            { value: 'petit', label: '📏 Petit' },
+            { value: 'sombre', label: '🌑 Sombre' },
+            { value: 'agencement_neg', label: '📐 Agencement' },
+            { value: 'vis_a_vis', label: '👀 Vis-à-vis' },
+            { value: 'stationnement', label: '🅿️ Stationnement' }
+        ];
+        const NEIGHBORHOOD_LABELS = {
+            connait_bien: '🏘️ Connaît bien',
+            decouvre: '🗺️ Découvre',
+            pas_convaincu: '😕 Pas convaincu'
+        };
+
         const FEEDBACK_LABELS = {
             coup_de_coeur: { emoji: '😍', label: 'Coup de coeur' },
             interessant: { emoji: '😊', label: 'Intéressant' },
