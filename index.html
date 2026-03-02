@@ -2371,9 +2371,11 @@
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scroll-snap-type: x mandatory;
+                overscroll-behavior-x: contain;
                 padding: 0;
                 margin: 0;
                 height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
+                touch-action: pan-x pan-y;
             }
             .pipeline::-webkit-scrollbar { display: none; }
             .pipeline { scrollbar-width: none; }
