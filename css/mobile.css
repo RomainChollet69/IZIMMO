@@ -749,18 +749,18 @@ body {
 /* Bouton Todo flottant (image todo.svg) */
 .m-todo-fab {
     position: fixed;
-    bottom: calc(var(--m-bottom-bar-h) + 16px + env(safe-area-inset-bottom, 0px));
-    right: var(--m-page-x);
-    width: 52px;
-    height: 52px;
+    bottom: calc(var(--m-bottom-bar-h) + 12px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    width: 40px;
+    height: 40px;
     padding: 0;
     border: none;
     background: none;
     cursor: pointer;
-    z-index: 100;
+    z-index: 9000;
     -webkit-tap-highlight-color: transparent;
     transition: transform var(--m-duration-instant) var(--m-ease-spring);
-    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+    filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
 }
 .m-todo-fab img {
     width: 100%;

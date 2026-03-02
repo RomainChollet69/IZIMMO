@@ -2367,27 +2367,28 @@
             .pipeline {
                 display: flex !important;
                 flex-direction: row;
-                gap: 12px;
+                gap: 0;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
                 scroll-snap-type: x mandatory;
-                padding: 0 var(--m-page-x, 16px) 20px;
+                padding: 0;
                 margin: 0;
+                height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
             }
             .pipeline::-webkit-scrollbar { display: none; }
             .pipeline { scrollbar-width: none; }
 
-            /* Chaque colonne = quasi pleine largeur, snap au centre */
+            /* Chaque colonne = pleine largeur, pleine hauteur */
             .column {
-                flex: 0 0 85vw;
-                max-width: 85vw;
-                min-width: 85vw;
-                scroll-snap-align: center;
+                flex: 0 0 100vw;
+                max-width: 100vw;
+                min-width: 100vw;
+                scroll-snap-align: start;
                 background: var(--m-surface-1, #F8F9FB);
-                border-radius: 16px;
-                padding: 8px;
+                border-radius: 0;
+                padding: 8px 12px;
                 overflow-y: auto;
-                max-height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - 20px - env(safe-area-inset-bottom, 0px));
+                height: 100%;
                 /* Reset héritages desktop */
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
@@ -2397,20 +2398,20 @@
             /* Header colonne : image de fond pleine largeur + titre */
             .column-top {
                 position: sticky;
-                top: -8px;
+                top: 0;
                 z-index: 10;
-                margin: -8px -8px 8px -8px;
-                padding: 8px 8px 0 8px;
+                margin: -8px -12px 8px -12px;
+                padding: 8px 12px 0 12px;
                 background: var(--m-surface-1, #F8F9FB);
-                border-radius: 16px 16px 0 0;
+                border-radius: 0;
                 flex-shrink: 0;
                 /* Reset héritages desktop */
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
             .column-header {
-                height: 64px;
-                border-radius: 12px;
+                height: 56px;
+                border-radius: 10px;
                 margin-bottom: 6px;
                 background-size: cover;
                 background-position: center;
@@ -2422,9 +2423,9 @@
             }
             .column-label {
                 position: relative;
-                padding: 8px 12px;
+                padding: 6px 12px;
                 font-family: 'Barlow Semi Condensed', sans-serif;
-                font-size: 15px;
+                font-size: 14px;
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
