@@ -16,6 +16,7 @@
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
@@ -578,35 +579,20 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .header {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                grid-template-rows: auto auto;
-                gap: 8px;
-                padding: 10px 14px;
+            .header { display: none !important; }
+
+            body {
+                padding: 0 !important;
+                margin: 0 !important;
             }
 
-            .logo { grid-column: 1; grid-row: 1; align-self: center; }
-            .logo img { width: 60px; }
-
-            .header-actions { display: contents; }
-            .alert-bell { display: none; }
-            .header-separator { display: none; }
-            .user-profile { grid-column: 2; grid-row: 1; justify-self: end; align-self: center; }
-            .user-avatar { width: 32px; height: 32px; }
-            .user-name { display: none; }
-
-            .nav-tabs {
-                grid-column: 1 / -1;
-                grid-row: 2;
-                justify-content: center;
-                gap: 6px;
+            .conversation-container {
+                padding: 12px 12px 200px;
+                margin-top: var(--m-header-h, 56px);
             }
-
-            .nav-tab { padding: 8px 14px; font-size: 20px; line-height: 1; }
-
-            .conversation-container { padding: 12px 12px 200px; }
-            .input-zone { bottom: 0; }
+            .input-zone {
+                bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
+            }
             .msg-bubble { max-width: 90%; font-size: 14px; }
             .leon-avatar { width: 28px; height: 28px; font-size: 14px; }
         }
@@ -1538,5 +1524,6 @@
         setTimeout(() => toast.remove(), 2500);
     }
     </script>
+    <script src="js/mobile-nav.js"></script>
 </body>
 </html>
