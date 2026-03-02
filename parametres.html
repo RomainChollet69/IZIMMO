@@ -3175,10 +3175,10 @@
             });
 
             try {
-                const resp = await fetch('/api/map-columns', {
+                const resp = await fetch('/api/parse-import-batch', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ headers: excelHeaders, sampleRows })
+                    body: JSON.stringify({ action: 'map-columns', headers: excelHeaders, sampleRows })
                 });
 
                 if (resp.ok) {
