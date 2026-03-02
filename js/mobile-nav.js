@@ -9,8 +9,9 @@
     // Toujours injecter la nav dans le DOM — le CSS gère la visibilité
     // (@media min-width: 769px → display: none, max-width: 768px → display: flex)
 
-    // Détection de la page active via le pathname
-    const path = window.location.pathname.split('/').pop() || 'home.html';
+    function init() {
+        // Détection de la page active via le pathname
+        const path = window.location.pathname.split('/').pop() || 'home.html';
 
     const NAV_ITEMS = [
         { href: 'index.html',      icon: 'fa-solid fa-house',         label: 'Vendeurs',    id: 'index.html' },
@@ -123,5 +124,14 @@
     // Masquer l'ancienne bottom bar si elle existe encore (transition progressive)
     const oldNav = document.querySelector('.mobile-bottom-bar');
     if (oldNav) oldNav.style.display = 'none';
+
+    } // fin init()
+
+    // Attendre que le body existe avant d'injecter (le script peut être dans le <head>)
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
 
 })();
