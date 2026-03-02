@@ -1308,6 +1308,17 @@ async function generateStudy() {
             description: document.getElementById('studyDescription').value.trim()
         };
 
+        // Limiter les données envoyées à l'API (Vercel body ~4.5MB max)
+        // Trier par distance croissante et prendre les plus proches
+        const MAX_DVF_SEND = 50;
+        const MAX_DPE_SEND = 100;
+        const dvfToSend = dvfSales
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, MAX_DVF_SEND);
+        const dpeToSend = dpeData
+            .sort((a, b) => a.distance - b.distance)
+            .slice(0, MAX_DPE_SEND);
+
         const response = await fetch('/api/generate-study', {
             method: 'POST',
             headers: {
@@ -1316,8 +1327,8 @@ async function generateStudy() {
             },
             body: JSON.stringify({
                 property,
-                dvfSales,
-                dpeData,
+                dvfSales: dvfToSend,
+                dpeData: dpeToSend,
                 agentName,
                 agencyName,
                 customInstructions: document.getElementById('studyInstructions').value.trim()
@@ -1325,8 +1336,15 @@ async function generateStudy() {
         });
 
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || err.detail || `Erreur ${response.status}`);
+            let errMsg = `Erreur ${response.status}`;
+            try {
+                const err = await response.json();
+                errMsg = err.error || err.detail || errMsg;
+            } catch (_) {
+                const text = await response.text();
+                errMsg = text.substring(0, 200) || errMsg;
+            }
+            throw new Error(errMsg);
         }
 
         const { analysis, narrative } = await response.json();
