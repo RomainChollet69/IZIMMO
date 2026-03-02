@@ -2378,16 +2378,14 @@
                 overflow-y: hidden;
                 scroll-snap-type: x mandatory;
                 overscroll-behavior-x: contain;
-                padding: 0;
+                /* Fixé entre header et bottom bar — immunisé contre la barre d'adresse Safari */
+                position: fixed;
+                top: var(--m-header-h, 56px);
+                left: 0;
+                right: 0;
+                bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
                 margin: 0;
-                /* Hauteur : tout l'espace entre header et bottom bar */
-                height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
-                height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
-            }
-            @supports (height: 100dvh) {
-                .pipeline {
-                    height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
-                }
+                padding: 0;
             }
             .pipeline::-webkit-scrollbar { display: none; }
             .pipeline { scrollbar-width: none; }
@@ -2438,9 +2436,9 @@
             }
             .column-label {
                 position: relative;
-                padding: 6px 14px;
+                padding: 8px 20px;
                 font-family: 'Barlow Semi Condensed', sans-serif;
-                font-size: 14px;
+                font-size: 18px;
                 font-weight: 800;
                 text-transform: uppercase;
                 letter-spacing: 0.5px;
