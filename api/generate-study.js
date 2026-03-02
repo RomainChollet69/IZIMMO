@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { property, dvfSales, dpeData, agentName, agencyName, customInstructions } = req.body || {};
+    const { property, dvfSales, agentName, agencyName, customInstructions } = req.body || {};
 
     if (!property || !property.address) {
         return res.status(400).json({ error: 'Adresse du bien requise' });
@@ -32,9 +32,7 @@ export default async function handler(req, res) {
 
     // Limiter les données envoyées à Claude pour rester dans les limites
     const MAX_DVF = 50;
-    const MAX_DPE = 100;
     const limitedDvf = dvfSales.slice(0, MAX_DVF);
-    const limitedDpe = (dpeData || []).slice(0, MAX_DPE);
 
     const agentSignature = agentName
         ? (agencyName ? `${agentName}, ${agencyName}` : agentName)
@@ -43,7 +41,7 @@ export default async function handler(req, res) {
     try {
         // ========== PASSE 1 : Analyse structurée ==========
         const analysisSystemPrompt = buildAnalysisPrompt();
-        const analysisUserPrompt = buildAnalysisUserPrompt(property, limitedDvf, limitedDpe);
+        const analysisUserPrompt = buildAnalysisUserPrompt(property, limitedDvf);
 
         const analysisRaw = await callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, ABORT_TIMEOUT_MS);
 
@@ -135,7 +133,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
 
 function buildAnalysisPrompt() {
     return `Tu es un analyste immobilier expert spécialisé dans l'estimation de biens en France.
-Tu reçois des données DVF (valeurs foncières) et DPE (diagnostics énergétiques) pour un secteur géographique.
+Tu reçois des données DVF (valeurs foncières) pour un secteur géographique.
 
 RÈGLES STRICTES :
 - Utilise UNIQUEMENT les données fournies. Ne jamais inventer de ventes ou de prix.
@@ -158,39 +156,29 @@ Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) avec c
     { "year": 2023, "median_m2": 4100, "count": 10 },
     { "year": 2024, "median_m2": 4200, "count": 8 }
   ],
-  "dpe_distribution": { "A": 2, "B": 5, "C": 12, "D": 18, "E": 8, "F": 3, "G": 1 },
   "estimation": { "low": 252000, "mid": 280000, "high": 308000 },
   "estimation_reasoning": "Explication courte en 2-3 phrases."
 }`;
 }
 
-function buildAnalysisUserPrompt(property, dvfSales, dpeData) {
+function buildAnalysisUserPrompt(property, dvfSales) {
     const dvfText = dvfSales.map(s =>
         `${s.date_mutation} | ${s.type_local} | ${s.surface_reelle_bati}m² | ${s.valeur_fonciere}€ | ${Math.round(s.valeur_fonciere / (s.surface_reelle_bati || 1))}€/m² | ${s.distance}m`
     ).join('\n');
-
-    const dpeText = dpeData.length > 0
-        ? dpeData.map(d => {
-            const classes = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G'];
-            return `DPE ${classes[d.dpeClass] || '?'} | ${d.surface}m² | ${d.conso}kWh/m²/an | ${d.distance}m`;
-        }).join('\n')
-        : 'Aucune donnée DPE disponible.';
 
     return `BIEN À ESTIMER :
 Adresse : ${property.address}
 Type : ${property.propertyType || 'Non précisé'}
 Surface : ${property.surface || 'Non précisée'}m²
 Pièces : ${property.rooms || 'Non précisé'}
+DPE : ${property.dpe || 'Non précisé'}
 Description : ${property.description || 'Aucune'}
 Budget vendeur : ${property.budget ? property.budget + '€' : 'Non communiqué'}
 Annexes : ${(property.annexes || []).join(', ') || 'Aucune'}
 
 VENTES DVF DU SECTEUR (${dvfSales.length} ventes) :
 Date | Type | Surface | Prix | Prix/m² | Distance
-${dvfText}
-
-DPE DU SECTEUR (${dpeData.length} diagnostics) :
-${dpeText}`;
+${dvfText}`;
 }
 
 function buildWritingPrompt(agentSignature, agentName) {

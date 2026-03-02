@@ -1272,20 +1272,17 @@ async function generateStudy() {
         loadingSubstep.textContent = 'Chargement des ventes DVF et diagnostics DPE du secteur';
 
         const radius = propertyType === 'maison' ? DVF_SEARCH_RADIUS_HOUSE : DVF_SEARCH_RADIUS_APT;
-        const [dvfSales, dpeData] = await Promise.all([
-            collectDVFData(lat, lng, radius),
-            collectDPEData(lat, lng, radius)
-        ]);
+        const dvfSales = await collectDVFData(lat, lng, radius);
 
         if (dvfSales.length === 0) {
             throw new Error('Aucune vente DVF trouvée dans un rayon de ' + radius + 'm. Essayez une autre adresse.');
         }
 
-        console.log(`[EtudeMarche] ${dvfSales.length} ventes DVF, ${dpeData.length} DPE collectés`);
+        console.log(`[EtudeMarche] ${dvfSales.length} ventes DVF collectées`);
 
         // Étape 2 : Génération IA
         loadingStep.textContent = 'Léon analyse le marché...';
-        loadingSubstep.textContent = `${dvfSales.length} ventes et ${dpeData.length} diagnostics DPE en cours d'analyse`;
+        loadingSubstep.textContent = `${dvfSales.length} ventes en cours d'analyse`;
 
         // Récupérer les infos agent
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1311,13 +1308,9 @@ async function generateStudy() {
         // Limiter les données envoyées à l'API (Vercel body ~4.5MB max)
         // Trier par distance croissante et prendre les plus proches
         const MAX_DVF_SEND = 50;
-        const MAX_DPE_SEND = 100;
         const dvfToSend = dvfSales
             .sort((a, b) => a.distance - b.distance)
             .slice(0, MAX_DVF_SEND);
-        const dpeToSend = dpeData
-            .sort((a, b) => a.distance - b.distance)
-            .slice(0, MAX_DPE_SEND);
 
         const response = await fetch('/api/generate-study', {
             method: 'POST',
@@ -1328,7 +1321,6 @@ async function generateStudy() {
             body: JSON.stringify({
                 property,
                 dvfSales: dvfToSend,
-                dpeData: dpeToSend,
                 agentName,
                 agencyName,
                 customInstructions: document.getElementById('studyInstructions').value.trim()
@@ -1353,7 +1345,7 @@ async function generateStudy() {
         loadingStep.textContent = 'Mise en page de l\'étude...';
         loadingSubstep.textContent = 'Quelques instants...';
 
-        renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length, dpeData.length);
+        renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length);
 
         loading.classList.remove('active');
         output.classList.add('active');
@@ -1372,7 +1364,7 @@ async function generateStudy() {
 }
 
 // ===== RENDU DE L'ÉTUDE =====
-function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCount, dpeCount) {
+function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCount) {
     const output = document.getElementById('studyOutput');
     const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     const agentSignature = agentName ? (agencyName ? `${agentName}, ${agencyName}` : agentName) : '';
@@ -1428,16 +1420,6 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             </div>
         </div>
 
-        <!-- ANALYSE DPE -->
-        ${analysis.dpe_distribution ? `
-        <div class="study-page">
-            <div class="study-section">
-                <div class="study-section-title"><i class="fas fa-leaf"></i> Diagnostics énergétiques du secteur</div>
-                <p>${dpeCount} diagnostics DPE analysés dans le secteur.</p>
-                ${renderDPEBars(analysis.dpe_distribution, property.dpe)}
-            </div>
-        </div>` : ''}
-
         <!-- ESTIMATION -->
         <div class="study-page">
             <div class="study-section">
@@ -1462,7 +1444,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
         <div class="study-page">
             <div class="study-section" style="padding: 24px 48px; font-size: 11px; color: var(--text-light); line-height: 1.6;">
                 <p><em>Cette étude de marché a été générée par Léon, assistant IA pour professionnels de l'immobilier.
-                Les estimations sont basées sur ${dvfCount} ventes DVF et ${dpeCount} diagnostics DPE du secteur.
+                Les estimations sont basées sur ${dvfCount} ventes DVF du secteur.
                 Ce document ne constitue pas une expertise immobilière au sens légal du terme.
                 Les données DVF proviennent de la Direction Générale des Finances Publiques.
                 Généré le ${today}.</em></p>
