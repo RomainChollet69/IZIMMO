@@ -1,14 +1,15 @@
 /**
  * generate-study.js
- * Génère une étude de marché immobilière via 2 passes Claude Sonnet.
- * Passe 1 : Analyse structurée (JSON) des données DVF/DPE fournies — en parallèle avec POI + commune.
- * Passe 2 : Rédaction narrative (HTML) + Vision photos + données environnement.
+ * Génère une étude de marché immobilière via 2 passes Claude.
+ * Passe 1 (Haiku) : Analyse structurée JSON des données DVF — en parallèle avec POI + commune.
+ * Passe 2 (Sonnet + Vision) : Rédaction narrative HTML + photos + données environnement.
  * APIs externes : Overpass (OSM), API Géo (geo.api.gouv.fr), Anthropic Claude.
  * Dépendances : lib/auth.js (verifyAuth, withCORS)
  */
 import { verifyAuth, withCORS } from '../lib/auth.js';
 
-const MODEL = 'claude-sonnet-4-20250514';
+const MODEL_WRITING = 'claude-sonnet-4-20250514'; // Passe 2 : rédaction narrative + Vision
+const MODEL_ANALYSIS = 'claude-haiku-4-5-20251001'; // Passe 1 : analyse JSON (rapide, ~3-5s)
 const ABORT_TIMEOUT_MS = 55000; // 55s (vercel max = 60s)
 
 export default async function handler(req, res) {
@@ -31,8 +32,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Aucune donnée DVF fournie' });
     }
 
-    // Limiter les données envoyées à Claude pour rester dans les limites
-    const MAX_DVF = 50;
+    // Limiter les données envoyées à Claude (30 = bon compromis précision/vitesse)
+    const MAX_DVF = 30;
     const limitedDvf = dvfSales.slice(0, MAX_DVF);
 
     const agentSignature = agentName
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
         const hasCoords = property.latitude && property.longitude;
 
         const [analysisRaw, poiData, communeData] = await Promise.all([
-            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now()),
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now(), [], MODEL_ANALYSIS),
             hasCoords
                 ? fetchPOIData(property.latitude, property.longitude).catch(err => {
                     console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
@@ -89,8 +90,8 @@ export default async function handler(req, res) {
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData);
 
-        // Envoyer les photos en mode Vision pour enrichir la description du bien
-        const photoImages = (photos || []).slice(0, 5);
+        // Envoyer les photos en mode Vision pour enrichir la description du bien (3 max pour rester sous 60s)
+        const photoImages = (photos || []).slice(0, 3);
         const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6500, remaining, photoImages);
 
         let narrative;
@@ -121,7 +122,7 @@ export default async function handler(req, res) {
 
 // ========== Appel Claude générique ==========
 
-async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = []) {
+async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = [], model = MODEL_WRITING) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -147,7 +148,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
             'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-            model: MODEL,
+            model: model,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: [{ role: 'user', content: userContent }]

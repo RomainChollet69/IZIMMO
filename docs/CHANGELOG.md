@@ -4,6 +4,33 @@
 
 ---
 
+## Session 2026-03-02m — Fix timeout 504 étude de marché
+
+### Résumé
+Correction du timeout 504 systématique lors de la génération d'études de marché. L'ajout de la Phase 3 (environnement) combiné avec Vision (5 photos) dépassait les 60s Vercel. 3 optimisations : Passe 1 migrée vers Haiku (3-5s au lieu de 10-20s), photos limitées à 3 (au lieu de 5), et DVF limité à 30 (au lieu de 50).
+
+### Modifications
+
+**`api/generate-study.js`** :
+- Passe 1 : `claude-sonnet-4` → `claude-haiku-4-5` (analyse JSON, pas besoin de Sonnet)
+- `callClaude()` : nouveau paramètre `model` pour différencier les passes
+- Photos Vision : `slice(0, 5)` → `slice(0, 3)` (moins d'images = réponse plus rapide)
+- MAX_DVF : 50 → 30 (moins de données dans le prompt = traitement plus rapide)
+- max_tokens passe 2 : 7000 → 6500
+
+### Budget temps estimé (après fix)
+```
+Avant :  Passe 1 Sonnet (15-25s) + Passe 2 Sonnet+Vision 5 photos (25-40s) = 40-65s → TIMEOUT
+Après :  Passe 1 Haiku (3-5s) + Passe 2 Sonnet+Vision 3 photos (20-30s) = 23-35s → OK
+```
+
+### Fichiers modifiés
+- `api/generate-study.js`
+- `docs/CHANGELOG.md`
+- `docs/DECISIONS.md` (D050)
+
+---
+
 ## Session 2026-03-02l — Phase 3 : Données environnement (POI + Commune)
 
 ### Résumé
@@ -23,7 +50,7 @@ Intégration de données environnement réelles dans l'étude de marché : comme
 - Handler : `Promise.all([callClaude(passe1), fetchPOIData, fetchCommuneData])`
 - `buildWritingPrompt()` : nouvelle clé JSON `"environment"` dans la réponse attendue
 - `buildWritingUserPrompt()` : paramètres `poiData`, `communeData` + bloc environnement
-- max_tokens passe 2 : 6000 → 7000
+- max_tokens passe 2 : 6000 → 6500
 - Réponse API enrichie : `{ analysis, narrative, poiData, communeData }`
 
 **`etude-marche.html`** :

@@ -1001,6 +1001,33 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 
 ---
 
+## D050 — Passe 1 Haiku + photos limitées à 3 (fix timeout 504)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Après l'ajout de la Phase 3 (environnement), l'étude de marché dépassait systématiquement les 60s Vercel. 2 appels Claude Sonnet séquentiels + Vision (5 photos) + prompt environnement enrichi = 40-65s.
+
+**Décision** :
+1. Passe 1 (analyse JSON) migrée de Sonnet → Haiku (`claude-haiku-4-5`)
+2. Photos Vision limitées à 3 au lieu de 5
+3. DVF limité à 30 ventes au lieu de 50
+
+**Pourquoi** :
+- Haiku est 5-10× plus rapide pour du JSON structuré (3-5s vs 15-25s)
+- La qualité d'analyse JSON de Haiku est suffisante (nombres, statistiques, catégorisation)
+- 3 photos donnent assez de contexte visuel à Sonnet pour la rédaction
+- 30 DVF suffisent pour une estimation fiable (médiane stabilisée à ~20 comparables)
+
+**Alternatives envisagées** :
+- Augmenter `maxDuration` Vercel → nécessite plan Pro, ne résout pas le fond
+- Passer Passe 2 en streaming → complexité frontend importante pour gain marginal
+- Tout en Haiku → perte de qualité rédactionnelle inacceptable
+
+**Impact** : Budget temps estimé passe de 40-65s → 23-35s, marge confortable sous les 60s.
+
+---
+
 ## D049 — Données environnement via Overpass + API Géo côté serveur (pas côté client)
 
 **Date** : 2026-03-02
