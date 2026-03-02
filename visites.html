@@ -241,6 +241,15 @@
             gap: 16px;
         }
         .property-accordion-header:hover { background: #FAFBFC; }
+        .accordion-photo {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #f0f2f5;
+        }
+        .accordion-photo img { width: 100%; height: 100%; object-fit: cover; }
         .accordion-property-info { flex: 1; min-width: 0; }
         .accordion-address {
             font-weight: 700;
@@ -862,7 +871,7 @@
             .from('visits')
             .select(`
                 *,
-                sellers(id, first_name, last_name, address, budget, property_type, status),
+                sellers(id, first_name, last_name, address, budget, property_type, status, links, link_previews),
                 buyers(id, first_name, last_name, phone, email)
             `)
             .eq('user_id', userId)
@@ -881,7 +890,7 @@
 
         const { data, error } = await supabaseClient
             .from('sellers')
-            .select('id, first_name, last_name, address, budget, property_type, status')
+            .select('id, first_name, last_name, address, budget, property_type, status, links, link_previews')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 
@@ -1045,6 +1054,12 @@
             propertyInfo = [type, price].filter(Boolean).join(' — ');
         }
 
+        // Photo du bien depuis les link previews
+        const photo = seller ? getSellerPhoto(seller) : null;
+        const photoHtml = photo
+            ? `<div class="accordion-photo"><img src="${escapeHtml(photo)}" onerror="this.parentElement.style.display='none'" alt=""></div>`
+            : '';
+
         const totalVisits = group.visits.length;
         const isOpen = openAccordions.has(sellerId);
 
@@ -1079,6 +1094,7 @@
 
         return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
             <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
+                ${photoHtml}
                 <div class="accordion-property-info">
                     <div class="accordion-address">${escapeHtml(address)}</div>
                     <div class="accordion-seller">${escapeHtml(sellerName)}${propertyInfo ? ' — ' + escapeHtml(propertyInfo) : ''}</div>

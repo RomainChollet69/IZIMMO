@@ -1652,6 +1652,64 @@
             margin-top: 4px;
             display: inline-block;
         }
+        /* Link preview enrichi */
+        .link-item--preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            animation: slideUp 0.3s ease;
+        }
+        .link-preview-thumb {
+            width: 56px;
+            height: 56px;
+            border-radius: 6px;
+            overflow: hidden;
+            flex-shrink: 0;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .link-preview-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .link-preview-thumb.no-image::after {
+            content: '\f015';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            font-size: 20px;
+            color: #CFD8DC;
+        }
+        .link-preview-thumb.no-image img { display: none; }
+        .link-preview-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .link-preview-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .link-item--loading .link-preview-thumb {
+            animation: shimmer 1.5s infinite;
+            background: linear-gradient(90deg, #f0f2f5 25%, #e8eaed 50%, #f0f2f5 75%);
+            background-size: 200% 100%;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
 
         /* ===== BOUTONS D'ACTION MODALE ===== */
         .modal-actions {
@@ -8128,6 +8186,7 @@
 
         // ===== LIENS D'ANNONCES =====
         let currentLinks = [];
+        let linkPreviews = {}; // { url: { image_url, title, domain, loading?, error? } }
 
         const PLATFORM_CONFIG = {
             'seloger.com':    { label: '🏠 SeLoger',    bg: '#0055FF', color: '#fff' },
@@ -8167,10 +8226,46 @@
             }
             list.innerHTML = currentLinks.map((link, i) => {
                 const p = detectPlatform(link);
+                const preview = linkPreviews[link];
+                const badge = `<span class="link-platform-badge" style="background:${p.bg};color:${p.color}">${p.label}</span>`;
+                const deleteBtn = `<button type="button" class="link-delete-btn" onclick="removeLink(${i})" title="Supprimer">🗑️</button>`;
+
+                // État loading
+                if (preview && preview.loading) {
+                    return `<div class="link-item link-item--preview link-item--loading">
+                        <div class="link-preview-thumb"></div>
+                        <div class="link-preview-info">
+                            ${badge}
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="link-url" title="${escapeHtml(link)}">${escapeHtml(truncateUrl(link, 40))}</a>
+                        </div>
+                        ${deleteBtn}
+                    </div>`;
+                }
+
+                // Preview avec image ou titre
+                if (preview && (preview.image_url || preview.title)) {
+                    const thumbHtml = preview.image_url
+                        ? `<div class="link-preview-thumb"><img src="${escapeHtml(preview.image_url)}" onerror="this.parentElement.classList.add('no-image')" alt=""></div>`
+                        : `<div class="link-preview-thumb no-image"></div>`;
+                    const titleHtml = preview.title
+                        ? `<div class="link-preview-title">${escapeHtml(preview.title)}</div>`
+                        : '';
+                    return `<div class="link-item link-item--preview">
+                        ${thumbHtml}
+                        <div class="link-preview-info">
+                            ${badge}
+                            ${titleHtml}
+                            <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="link-url" title="${escapeHtml(link)}">${escapeHtml(truncateUrl(link, 40))}</a>
+                        </div>
+                        ${deleteBtn}
+                    </div>`;
+                }
+
+                // Fallback : affichage simple (pas de preview)
                 return `<div class="link-item">
-                    <span class="link-platform-badge" style="background:${p.bg};color:${p.color}">${p.label}</span>
+                    ${badge}
                     <a href="${escapeHtml(link)}" target="_blank" rel="noopener" class="link-url" title="${escapeHtml(link)}">${escapeHtml(truncateUrl(link, 40))}</a>
-                    <button type="button" class="link-delete-btn" onclick="removeLink(${i})" title="Supprimer">🗑️</button>
+                    ${deleteBtn}
                 </div>`;
             }).join('');
         }
@@ -8198,10 +8293,38 @@
             currentLinks.push(url);
             renderLinks();
             cancelAddLink();
+            // Fetch link preview en background
+            fetchLinkPreview(url);
+        }
+
+        async function fetchLinkPreview(url) {
+            if (linkPreviews[url] && !linkPreviews[url].loading) return;
+            linkPreviews[url] = { loading: true };
+            renderLinks();
+            try {
+                const resp = await fetch('/api/link-preview', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(),
+                    body: JSON.stringify({ url })
+                });
+                const data = await resp.json();
+                linkPreviews[url] = {
+                    image_url: data.image_url || null,
+                    title: data.title || null,
+                    domain: data.domain || null,
+                    scraped_at: new Date().toISOString()
+                };
+            } catch (e) {
+                console.error('[LinkPreview] Erreur:', e);
+                linkPreviews[url] = { error: e.message };
+            }
+            renderLinks();
         }
 
         function removeLink(index) {
+            const removedUrl = currentLinks[index];
             currentLinks.splice(index, 1);
+            if (removedUrl && linkPreviews[removedUrl]) delete linkPreviews[removedUrl];
             renderLinks();
         }
 
@@ -8310,8 +8433,9 @@
             const priceChangeForm = document.getElementById('priceChangeForm');
             if (priceChangeForm) priceChangeForm.classList.remove('active');
 
-            // Reset links
+            // Reset links + previews
             currentLinks = [];
+            linkPreviews = {};
             renderLinks();
             cancelAddLink();
 
@@ -8397,8 +8521,9 @@
             const budgetForComm = parseAmount(seller.budget);
             document.getElementById('commissionAmount').value = seller.commission_amount || (budgetForComm > 0 ? calcCommission(budgetForComm, seller.commission_rate || 4) : '');
 
-            // Links
+            // Links + previews
             currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
+            linkPreviews = (seller.link_previews && typeof seller.link_previews === 'object') ? { ...seller.link_previews } : {};
             renderLinks();
 
             const displayName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
@@ -8557,7 +8682,8 @@
                 contact2_email: document.getElementById('contact2Email').value.trim() || null,
                 commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
                 commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
-                links: currentLinks.length > 0 ? currentLinks : []
+                links: currentLinks.length > 0 ? currentLinks : [],
+                link_previews: Object.keys(linkPreviews).length > 0 ? linkPreviews : {}
             };
 
             // Auto-relance : si RDV vendeur positionné et pas de relance manuelle → relance à J+15

@@ -2117,6 +2117,8 @@
         .match-list { max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
         .match-card { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #f8f9fa; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
         .match-card:hover { background: #e8eaf6; }
+        .match-card-photo { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+        .match-card-photo img { width: 100%; height: 100%; object-fit: cover; }
         .match-score-circle { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: white; flex-shrink: 0; }
         .match-score-high { background: linear-gradient(135deg, #43A047, #66BB6A); }
         .match-score-medium { background: linear-gradient(135deg, #FB8C00, #FFA726); }
@@ -3801,6 +3803,12 @@
             }).join('');
             const offBadge = s.status === 'off_market' ? ' <span class="off-market-badge">🔒 Off Market</span>' : '';
 
+            // Photo du bien depuis les link previews
+            const photo = getSellerPhoto(s);
+            const photoHtml = photo
+                ? '<div class="match-card-photo"><img src="' + escapeHtml(photo) + '" onerror="this.parentElement.style.display=\'none\'" alt=""></div>'
+                : '';
+
             let actionBtn = '';
             let visitBtn = '';
             if (isRejected) {
@@ -3811,7 +3819,7 @@
             }
 
             const cardClass = 'match-card' + (isRejected ? ' rejected' : '');
-            return '<div class="' + cardClass + '" data-seller-id="' + s.id + '" onclick="window.open(\'index.html\',\'_blank\')">' + actionBtn + visitBtn + '<div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
+            return '<div class="' + cardClass + '" data-seller-id="' + s.id + '" onclick="window.open(\'index.html\',\'_blank\')">' + actionBtn + visitBtn + photoHtml + '<div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
         }
 
         // ===== VISITES DANS MATCHING TAB =====

@@ -23,6 +23,9 @@
     },
     "api/google-auth.js": {
       "maxDuration": 15
+    },
+    "api/link-preview.js": {
+      "maxDuration": 15
     }
   },
   "headers": [

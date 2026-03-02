@@ -621,6 +621,17 @@ function setupSectorAutocomplete() {
     window.getSectorEntries = function() { return sectorEntries; };
 }
 
+// ===== PHOTO BIEN VENDEUR (depuis link_previews) =====
+/** Retourne l'URL de la photo principale du bien vendeur */
+function getSellerPhoto(seller) {
+    if (!seller || !seller.link_previews || typeof seller.link_previews !== 'object') return null;
+    for (const url of (seller.links || [])) {
+        const preview = seller.link_previews[url];
+        if (preview && preview.image_url) return preview.image_url;
+    }
+    return null;
+}
+
 // ===== COMPRESSION IMAGES AVANT UPLOAD =====
 async function compressImage(file, maxWidth = 1600, quality = 0.7) {
     return new Promise((resolve) => {
