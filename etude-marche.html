@@ -671,6 +671,149 @@
             font-size: 14px;
         }
 
+        /* ===== INTERVIEW EXPRESS ===== */
+        .interview-container {
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: center;
+            animation: fadeSlideIn 0.3s ease;
+        }
+        .interview-progress {
+            height: 4px;
+            background: #E5E7EB;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .interview-progress-bar {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        .interview-step-counter {
+            font-size: 12px;
+            color: var(--text-light);
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .interview-question {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 24px 0 28px;
+            line-height: 1.4;
+        }
+        .interview-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .interview-chip {
+            padding: 10px 20px;
+            border-radius: 24px;
+            border: 2px solid #E5E7EB;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            user-select: none;
+        }
+        .interview-chip:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+        }
+        .interview-chip.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #667eea12, #764ba212);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .interview-voice {
+            margin: 16px 0;
+        }
+        .interview-voice-btn {
+            padding: 10px 24px;
+            border-radius: 24px;
+            border: 1.5px dashed var(--primary);
+            background: transparent;
+            color: var(--primary);
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .interview-voice-btn:hover {
+            background: linear-gradient(135deg, #667eea08, #764ba208);
+        }
+        .interview-voice-btn.recording {
+            border-color: #e74c3c;
+            color: #e74c3c;
+            animation: pulse-border 1.5s infinite;
+        }
+        .interview-voice-text {
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--text-light);
+            font-style: italic;
+            min-height: 20px;
+        }
+        .interview-nav {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .interview-nav-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border-color);
+            background: white;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .interview-nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .interview-nav-btn.skip { color: var(--text-light); }
+        .interview-nav-btn.skip:hover { color: var(--primary); }
+        .interview-nav-btn.next {
+            background: var(--gradient);
+            color: white;
+            border: none;
+        }
+        .interview-nav-btn.next:hover { opacity: 0.9; }
+        .interview-nav-btn.finish {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            font-size: 15px;
+            padding: 12px 32px;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .interview-step-animate {
+            animation: fadeSlideIn 0.25s ease;
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .header-inner { padding: 0 16px; }
@@ -690,12 +833,17 @@
             .gauge-label.recommended .gauge-label-price { font-size: 16px; }
             .strengths-weaknesses { grid-template-columns: 1fr; }
             .buyer-profile-grid { grid-template-columns: 1fr 1fr; }
+            /* Interview mobile */
+            .interview-container { margin: 24px auto; }
+            .interview-question { font-size: 17px; margin: 20px 0 24px; }
+            .interview-chips { flex-direction: column; align-items: stretch; }
+            .interview-chip { text-align: center; }
         }
 
         /* ===== PRINT / PDF ===== */
         @media print {
             body { background: white; }
-            .header, .study-toolbar, #studyForm, #studyLoading, .no-print { display: none !important; }
+            .header, .study-toolbar, #studyForm, #studyLoading, #interviewSection, .no-print { display: none !important; }
             .main-container { max-width: 100%; padding: 0; margin: 0; }
             .study-page { box-shadow: none; border-radius: 0; margin: 0; }
             .study-cover { min-height: auto; padding: 40px; page-break-after: always; }
@@ -842,6 +990,35 @@
             </button>
         </div>
 
+        <!-- ===== INTERVIEW EXPRESS ===== -->
+        <div id="interviewSection" class="interview-container" style="display:none">
+            <div class="interview-progress">
+                <div class="interview-progress-bar" id="interviewProgressBar"></div>
+            </div>
+            <div class="interview-step-counter" id="interviewCounter">1 / 12</div>
+            <div id="interviewStepContent" class="interview-step-animate">
+                <div class="interview-question" id="interviewQuestion"></div>
+                <div class="interview-chips" id="interviewChips"></div>
+                <div class="interview-voice" id="interviewVoice" style="display:none">
+                    <button class="interview-voice-btn" id="interviewVoiceBtn" onclick="interviewDictate()">
+                        <i class="fas fa-microphone"></i> Dicter ma réponse
+                    </button>
+                    <div class="interview-voice-text" id="interviewVoiceText"></div>
+                </div>
+            </div>
+            <div class="interview-nav">
+                <button class="interview-nav-btn" id="interviewPrevBtn" onclick="interviewPrev()" style="visibility:hidden">
+                    <i class="fas fa-arrow-left"></i> Précédent
+                </button>
+                <button class="interview-nav-btn skip" id="interviewSkipBtn" onclick="interviewNext()">
+                    Passer <i class="fas fa-forward"></i>
+                </button>
+                <button class="interview-nav-btn next" id="interviewNextBtn" onclick="interviewNext()" style="display:none">
+                    Suivant <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
         <!-- ===== LOADING ===== -->
         <div class="loading-screen" id="studyLoading">
             <div class="loading-spinner"></div>
@@ -879,6 +1056,110 @@ const DPE_CLASSES = ['', 'A', 'B', 'C', 'D', 'E', 'F', 'G'];
 const DPE_COLORS = ['', 'var(--dpe-a)', 'var(--dpe-b)', 'var(--dpe-c)', 'var(--dpe-d)', 'var(--dpe-e)', 'var(--dpe-f)', 'var(--dpe-g)'];
 const DPE_COLORS_HEX = ['', '#319834', '#33cc33', '#cbfc33', '#fbeb09', '#fccc04', '#fc9a07', '#fc1c03'];
 
+// ===== INTERVIEW QUESTIONS =====
+const INTERVIEW_QUESTIONS = [
+    {
+        id: 'positioning',
+        question: 'Comment positionnez-vous ce bien sur le marché ?',
+        type: 'single',
+        options: ['Fourchette haute', 'Dans la moyenne', 'Fourchette basse', 'Difficile à dire'],
+        voice: true
+    },
+    {
+        id: 'condition',
+        question: "Quel est l'état général du bien ?",
+        type: 'single',
+        options: ['Neuf / Refait à neuf', 'Bon état', 'Correct, quelques rafraîchissements', 'À rénover'],
+        voice: true
+    },
+    {
+        id: 'floor',
+        question: 'À quel étage se situe le bien ?',
+        type: 'single',
+        options: ['RDC', '1er-2e étage', '3e-5e étage', '6e+ / Dernier étage'],
+        condition: (form) => form.propertyType === 'appartement'
+    },
+    {
+        id: 'elevator',
+        question: "Y a-t-il un ascenseur ?",
+        type: 'single',
+        options: ['Oui', 'Non'],
+        condition: (form) => form.propertyType === 'appartement'
+    },
+    {
+        id: 'exposure',
+        question: "Quelle est l'exposition principale ?",
+        type: 'single',
+        options: ['Sud / Sud-Ouest', 'Est / Ouest', 'Nord', 'Double exposition', 'Ne sait pas']
+    },
+    {
+        id: 'luminosity',
+        question: 'Comment qualifiez-vous la luminosité ?',
+        type: 'single',
+        options: ['Très lumineux', 'Correct', 'Sombre']
+    },
+    {
+        id: 'outdoor',
+        question: 'Espaces extérieurs ?',
+        type: 'multi',
+        options: ['Balcon', 'Terrasse', 'Jardin privatif', 'Loggia', 'Aucun'],
+        exclusive: ['Aucun']
+    },
+    {
+        id: 'parking',
+        question: 'Stationnement ?',
+        type: 'multi',
+        options: ['Garage', 'Place de parking', 'Box fermé', 'Parking extérieur', 'Aucun'],
+        exclusive: ['Aucun']
+    },
+    {
+        id: 'annexes',
+        question: 'Annexes et rangements ?',
+        type: 'multi',
+        options: ['Cave', 'Grenier', 'Cellier', 'Buanderie', 'Aucun'],
+        exclusive: ['Aucun']
+    },
+    {
+        id: 'renovations',
+        question: 'Travaux récents (< 5 ans) ?',
+        type: 'multi',
+        options: ['Cuisine équipée', 'Salle de bain', 'Fenêtres / Isolation', 'Électricité / Plomberie', 'Aucun'],
+        exclusive: ['Aucun'],
+        voice: true
+    },
+    {
+        id: 'strengths',
+        question: 'Points forts du bien ?',
+        type: 'multi',
+        options: ['Vue dégagée', 'Calme / Résidentiel', 'Proche transports', 'Proche commerces', 'Cachet / Charme', 'Copropriété bien entretenue'],
+        voice: true
+    },
+    {
+        id: 'weaknesses',
+        question: 'Points faibles ou travaux à prévoir ?',
+        type: 'multi',
+        options: ['Vis-à-vis', 'Bruyant', 'Travaux copro prévus', 'Toiture à refaire', 'Isolation insuffisante', 'Aucun'],
+        exclusive: ['Aucun'],
+        voice: true
+    }
+];
+
+// Labels pour le résumé (mapping id → label lisible)
+const INTERVIEW_LABELS = {
+    positioning: 'Positionnement marché',
+    condition: 'État général',
+    floor: 'Étage',
+    elevator: 'Ascenseur',
+    exposure: 'Exposition',
+    luminosity: 'Luminosité',
+    outdoor: 'Espaces extérieurs',
+    parking: 'Stationnement',
+    annexes: 'Annexes',
+    renovations: 'Travaux récents (< 5 ans)',
+    strengths: 'Points forts',
+    weaknesses: 'Points faibles'
+};
+
 // ===== STATE =====
 let dvfIndex = null;
 let dpeIndex = null;
@@ -888,6 +1169,13 @@ let loadedDpeDepts = {};
 let audioRecorder = null;
 let isRecording = false;
 let currentSellerId = null;
+
+// Interview state
+let interviewAnswers = {};      // { questionId: string | string[] }
+let interviewVoiceNotes = {};   // { questionId: string }
+let currentInterviewStep = 0;
+let filteredQuestions = [];      // questions après filtrage conditionnel
+let interviewAutoAdvanceTimer = null;
 
 // ===== INITIALISATION =====
 (async function init() {
@@ -1313,6 +1601,366 @@ async function collectDPEData(lat, lng, radius) {
     return results;
 }
 
+// ===== INTERVIEW EXPRESS =====
+
+/**
+ * startInterview() — Lance le questionnaire express
+ * Filtre les questions selon le type de bien, affiche la 1ère question
+ */
+function startInterview() {
+    const formData = {
+        propertyType: document.getElementById('studyType').value
+    };
+
+    // Filtrer les questions selon les conditions
+    filteredQuestions = INTERVIEW_QUESTIONS.filter(q => {
+        if (!q.condition) return true;
+        return q.condition(formData);
+    });
+
+    // Reset état
+    interviewAnswers = {};
+    interviewVoiceNotes = {};
+    currentInterviewStep = 0;
+
+    // Basculer l'affichage
+    document.getElementById('studyForm').style.display = 'none';
+    document.getElementById('interviewSection').style.display = '';
+
+    renderInterviewStep(0);
+}
+
+/**
+ * renderInterviewStep(index) — Affiche une question du stepper
+ */
+function renderInterviewStep(index) {
+    if (index < 0 || index >= filteredQuestions.length) return;
+    currentInterviewStep = index;
+
+    const q = filteredQuestions[index];
+    const total = filteredQuestions.length;
+
+    // Progress bar
+    const progress = ((index + 1) / total) * 100;
+    document.getElementById('interviewProgressBar').style.width = progress + '%';
+
+    // Compteur
+    document.getElementById('interviewCounter').textContent = `${index + 1} / ${total}`;
+
+    // Question
+    document.getElementById('interviewQuestion').textContent = q.question;
+
+    // Chips
+    const chipsContainer = document.getElementById('interviewChips');
+    const currentAnswer = interviewAnswers[q.id];
+    const selectedValues = Array.isArray(currentAnswer) ? currentAnswer : (currentAnswer ? [currentAnswer] : []);
+
+    chipsContainer.innerHTML = q.options.map((opt, i) => {
+        const isSelected = selectedValues.includes(opt);
+        return `<button class="interview-chip${isSelected ? ' selected' : ''}" data-value="${opt.replace(/"/g, '&quot;')}" data-qid="${q.id}" data-type="${q.type}" data-idx="${i}">${opt}</button>`;
+    }).join('');
+
+    // Attacher les événements click (plus robuste que onclick inline)
+    chipsContainer.querySelectorAll('.interview-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            handleChipClick(q.id, chip.dataset.value, q.type, q.exclusive || []);
+        });
+    });
+
+    // Voice button — visible seulement si voice: true
+    const voiceSection = document.getElementById('interviewVoice');
+    const voiceText = document.getElementById('interviewVoiceText');
+    if (q.voice) {
+        voiceSection.style.display = '';
+        voiceText.textContent = interviewVoiceNotes[q.id] || '';
+    } else {
+        voiceSection.style.display = 'none';
+    }
+
+    // Bouton Précédent
+    document.getElementById('interviewPrevBtn').style.visibility = index === 0 ? 'hidden' : 'visible';
+
+    // Boutons Skip/Next
+    const skipBtn = document.getElementById('interviewSkipBtn');
+    const nextBtn = document.getElementById('interviewNextBtn');
+    const isLastStep = (index === total - 1);
+
+    if (q.type === 'multi' && selectedValues.length > 0) {
+        // Multi avec sélection → afficher "Suivant" (ou "Générer l'étude")
+        skipBtn.style.display = 'none';
+        nextBtn.style.display = '';
+        if (isLastStep) {
+            nextBtn.className = 'interview-nav-btn finish';
+            nextBtn.innerHTML = '<i class="fas fa-magic"></i> Générer l\'étude';
+        } else {
+            nextBtn.className = 'interview-nav-btn next';
+            nextBtn.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+        }
+    } else if (q.type === 'multi') {
+        // Multi sans sélection → "Passer"
+        skipBtn.style.display = '';
+        nextBtn.style.display = 'none';
+        if (isLastStep) {
+            skipBtn.innerHTML = '<i class="fas fa-magic"></i> Générer l\'étude';
+            skipBtn.className = 'interview-nav-btn finish';
+        } else {
+            skipBtn.innerHTML = 'Passer <i class="fas fa-forward"></i>';
+            skipBtn.className = 'interview-nav-btn skip';
+        }
+    } else {
+        // Single → "Passer" (auto-advance gère le reste)
+        skipBtn.style.display = '';
+        nextBtn.style.display = 'none';
+        if (isLastStep) {
+            skipBtn.innerHTML = '<i class="fas fa-magic"></i> Générer l\'étude';
+            skipBtn.className = 'interview-nav-btn finish';
+        } else {
+            skipBtn.innerHTML = 'Passer <i class="fas fa-forward"></i>';
+            skipBtn.className = 'interview-nav-btn skip';
+        }
+    }
+
+    // Animation d'entrée
+    const content = document.getElementById('interviewStepContent');
+    content.classList.remove('interview-step-animate');
+    // Force reflow pour relancer l'animation
+    void content.offsetWidth;
+    content.classList.add('interview-step-animate');
+}
+
+/**
+ * handleChipClick() — Gère la sélection d'un chip
+ */
+function handleChipClick(questionId, value, type, exclusive) {
+    if (interviewAutoAdvanceTimer) {
+        clearTimeout(interviewAutoAdvanceTimer);
+        interviewAutoAdvanceTimer = null;
+    }
+
+    if (type === 'single') {
+        // Single-select : une seule valeur
+        interviewAnswers[questionId] = value;
+
+        // Mettre à jour visuellement
+        document.querySelectorAll('#interviewChips .interview-chip').forEach(chip => {
+            chip.classList.toggle('selected', chip.textContent === value);
+        });
+
+        // Auto-advance après 200ms
+        interviewAutoAdvanceTimer = setTimeout(() => {
+            interviewNext();
+        }, 250);
+
+    } else {
+        // Multi-select : toggle
+        let current = interviewAnswers[questionId] || [];
+        if (!Array.isArray(current)) current = [current];
+
+        const exclusiveOpts = exclusive || [];
+        const isExclusive = exclusiveOpts.includes(value);
+
+        if (isExclusive) {
+            // Cliquer une option exclusive → elle seule
+            if (current.includes(value)) {
+                current = [];
+            } else {
+                current = [value];
+            }
+        } else {
+            // Cliquer une option normale → retirer les exclusives
+            current = current.filter(v => !exclusiveOpts.includes(v));
+            if (current.includes(value)) {
+                current = current.filter(v => v !== value);
+            } else {
+                current.push(value);
+            }
+        }
+
+        interviewAnswers[questionId] = current;
+
+        // Mettre à jour visuellement
+        document.querySelectorAll('#interviewChips .interview-chip').forEach(chip => {
+            chip.classList.toggle('selected', current.includes(chip.textContent));
+        });
+
+        // Mettre à jour les boutons (multi avec sélection → "Suivant")
+        renderInterviewButtons();
+    }
+}
+
+/**
+ * renderInterviewButtons() — Met à jour Skip/Next sans re-render toute la question
+ */
+function renderInterviewButtons() {
+    const q = filteredQuestions[currentInterviewStep];
+    const isLastStep = (currentInterviewStep === filteredQuestions.length - 1);
+    const currentAnswer = interviewAnswers[q.id];
+    const hasVoiceNote = !!interviewVoiceNotes[q.id];
+    const hasSelection = (Array.isArray(currentAnswer) ? currentAnswer.length > 0 : !!currentAnswer) || hasVoiceNote;
+
+    const skipBtn = document.getElementById('interviewSkipBtn');
+    const nextBtn = document.getElementById('interviewNextBtn');
+
+    if (hasSelection) {
+        skipBtn.style.display = 'none';
+        nextBtn.style.display = '';
+        if (isLastStep) {
+            nextBtn.className = 'interview-nav-btn finish';
+            nextBtn.innerHTML = '<i class="fas fa-magic"></i> Générer l\'étude';
+        } else {
+            nextBtn.className = 'interview-nav-btn next';
+            nextBtn.innerHTML = 'Suivant <i class="fas fa-arrow-right"></i>';
+        }
+    } else {
+        skipBtn.style.display = '';
+        nextBtn.style.display = 'none';
+        if (isLastStep) {
+            skipBtn.innerHTML = '<i class="fas fa-magic"></i> Générer l\'étude';
+            skipBtn.className = 'interview-nav-btn finish';
+        } else {
+            skipBtn.innerHTML = 'Passer <i class="fas fa-forward"></i>';
+            skipBtn.className = 'interview-nav-btn skip';
+        }
+    }
+}
+
+/**
+ * interviewNext() / interviewPrev() — Navigation
+ */
+function interviewNext() {
+    if (interviewAutoAdvanceTimer) {
+        clearTimeout(interviewAutoAdvanceTimer);
+        interviewAutoAdvanceTimer = null;
+    }
+
+    if (currentInterviewStep >= filteredQuestions.length - 1) {
+        finishInterview();
+    } else {
+        renderInterviewStep(currentInterviewStep + 1);
+    }
+}
+
+function interviewPrev() {
+    if (interviewAutoAdvanceTimer) {
+        clearTimeout(interviewAutoAdvanceTimer);
+        interviewAutoAdvanceTimer = null;
+    }
+    if (currentInterviewStep > 0) {
+        renderInterviewStep(currentInterviewStep - 1);
+    }
+}
+
+/**
+ * interviewDictate() — Dictée vocale sur la question courante
+ */
+async function interviewDictate() {
+    const q = filteredQuestions[currentInterviewStep];
+    const voiceBtn = document.getElementById('interviewVoiceBtn');
+    const voiceText = document.getElementById('interviewVoiceText');
+
+    if (isRecording) {
+        // Arrêter
+        isRecording = false;
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i> Traitement...';
+        audioRecorder.stop();
+        return;
+    }
+
+    try {
+        if (!audioRecorder) {
+            audioRecorder = new AudioRecorder({
+                maxDuration: 30000, // 30s max par question
+                onStateChange: (state, msg) => {
+                    if (state === 'transcribing') voiceBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Transcription...';
+                    if (state === 'error') {
+                        console.error('[Interview] Recorder error:', msg);
+                        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i> Dicter ma réponse';
+                        voiceText.textContent = msg || 'Erreur';
+                    }
+                }
+            });
+        }
+
+        isRecording = true;
+        voiceBtn.classList.add('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-stop"></i> Cliquer pour arrêter';
+
+        const text = await audioRecorder.record();
+        isRecording = false;
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i> Dicter ma réponse';
+
+        if (text) {
+            interviewVoiceNotes[q.id] = text;
+            voiceText.textContent = `"${text}"`;
+            // Afficher bouton Suivant après dictée
+            renderInterviewButtons();
+        }
+    } catch (err) {
+        console.error('[Interview] Mic error:', err);
+        isRecording = false;
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i> Dicter ma réponse';
+        voiceText.textContent = err.message || 'Erreur microphone';
+    }
+}
+
+/**
+ * buildInterviewSummary() — Compile les réponses en texte structuré pour Claude
+ */
+function buildInterviewSummary() {
+    const lines = [];
+
+    for (const q of filteredQuestions) {
+        const answer = interviewAnswers[q.id];
+        const voiceNote = interviewVoiceNotes[q.id];
+        const label = INTERVIEW_LABELS[q.id] || q.id;
+
+        let value = '';
+        if (Array.isArray(answer) && answer.length > 0) {
+            value = answer.join(', ');
+        } else if (answer && !Array.isArray(answer)) {
+            value = answer;
+        }
+
+        // Combiner étage + ascenseur sur une ligne si les deux existent
+        if (q.id === 'elevator' && interviewAnswers['floor']) {
+            continue; // Géré avec 'floor'
+        }
+        if (q.id === 'floor') {
+            const elevator = interviewAnswers['elevator'];
+            if (value && elevator) {
+                value += `, ${elevator === 'Oui' ? 'avec ascenseur' : 'sans ascenseur'}`;
+            }
+        }
+
+        if (value) {
+            lines.push(`${label} : ${value}`);
+        }
+
+        if (voiceNote) {
+            lines.push(`  → Note vocale : "${voiceNote}"`);
+        }
+    }
+
+    return lines.length > 0 ? lines.join('\n') : '';
+}
+
+/**
+ * finishInterview() — Termine l'interview et lance la génération
+ */
+function finishInterview() {
+    const summary = buildInterviewSummary();
+    console.log('[Interview] Résumé :', summary);
+
+    // Masquer l'interview
+    document.getElementById('interviewSection').style.display = 'none';
+
+    // Lancer la génération avec le résumé
+    executeStudyGeneration(summary);
+}
+
 // ===== GÉNÉRATION =====
 async function generateStudy() {
     const address = document.getElementById('studyAddress').value.trim();
@@ -1338,6 +1986,21 @@ async function generateStudy() {
     }
     if (!propertyType) { alert('Veuillez sélectionner le type de bien.'); return; }
     if (!surface || surface <= 0) { alert('Veuillez saisir la surface.'); return; }
+
+    // Validation OK → lancer l'interview express
+    startInterview();
+}
+
+/**
+ * executeStudyGeneration() — Collecte DVF, appelle l'API IA, affiche l'étude
+ * Appelée par finishInterview() avec le résumé de l'interview
+ */
+async function executeStudyGeneration(interviewSummary) {
+    const address = document.getElementById('studyAddress').value.trim();
+    const lat = parseFloat(document.getElementById('studyLat').value);
+    const lng = parseFloat(document.getElementById('studyLng').value);
+    const propertyType = document.getElementById('studyType').value;
+    const surface = parseFloat(document.getElementById('studySurface').value);
 
     const btn = document.getElementById('generateBtn');
     const form = document.getElementById('studyForm');
@@ -1408,7 +2071,8 @@ async function generateStudy() {
             rooms: document.getElementById('studyRooms').value,
             dpe: document.getElementById('studyDpe').value,
             budget: parseFloat(document.getElementById('studyBudget').value) || 0,
-            description: document.getElementById('studyDescription').value.trim()
+            description: document.getElementById('studyDescription').value.trim(),
+            interviewSummary: interviewSummary || ''
         };
 
         // Limiter les données envoyées à l'API (Vercel body ~4.5MB max)
@@ -1875,9 +2539,15 @@ async function downloadPDF() {
 
 function newStudy() {
     document.getElementById('studyForm').style.display = '';
+    document.getElementById('interviewSection').style.display = 'none';
     document.getElementById('studyOutput').classList.remove('active');
     document.getElementById('studyToolbar').classList.remove('active');
     document.getElementById('generateBtn').disabled = false;
+    // Reset interview state
+    interviewAnswers = {};
+    interviewVoiceNotes = {};
+    currentInterviewStep = 0;
+    filteredQuestions = [];
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

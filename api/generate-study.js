@@ -217,7 +217,7 @@ DPE : ${property.dpe || 'Non précisé'}
 Description : ${property.description || 'Aucune'}
 Budget vendeur : ${property.budget ? property.budget + '€' : 'Non communiqué'}
 Annexes : ${(property.annexes || []).join(', ') || 'Aucune'}
-
+${property.interviewSummary ? `\nINFORMATIONS COMPLÉMENTAIRES (collectées auprès du propriétaire) :\n${property.interviewSummary}\n` : ''}
 VENTES DVF DU SECTEUR (${dvfSales.length} ventes) :
 Date | Type | Surface | Prix | Prix/m² | Distance
 ${dvfText}`;
@@ -269,6 +269,7 @@ Pièces : ${property.rooms || 'Non précisé'}
 DPE : ${property.dpe || 'Non précisé'}
 Description du bien : ${property.description || 'Aucune description fournie'}
 Annexes : ${(property.annexes || []).join(', ') || 'Aucune'}
+${property.interviewSummary ? `\nINFORMATIONS COMPLÉMENTAIRES DU PROPRIÉTAIRE :\n${property.interviewSummary}\n` : ''}
 ${budgetLine}
 
 RÉSULTATS DE L'ANALYSE CHIFFRÉE :
