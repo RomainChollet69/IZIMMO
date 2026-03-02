@@ -1,16 +1,15 @@
 /**
  * generate-study.js
- * Génère une étude de marché immobilière via 2 passes Claude.
- * Passe 1 (Haiku) : Analyse structurée JSON des données DVF — en parallèle avec POI + commune.
- * Passe 2 (Sonnet + Vision) : Rédaction narrative HTML + photos + données environnement.
+ * Génère une étude de marché immobilière via 2 passes Claude Sonnet.
+ * Passe 1 : Analyse structurée JSON des données DVF — en parallèle avec POI + commune.
+ * Passe 2 : Rédaction narrative HTML + Vision photos + données environnement.
  * APIs externes : Overpass (OSM), API Géo (geo.api.gouv.fr), Anthropic Claude.
  * Dépendances : lib/auth.js (verifyAuth, withCORS)
  */
 import { verifyAuth, withCORS } from '../lib/auth.js';
 
-const MODEL_WRITING = 'claude-sonnet-4-20250514'; // Passe 2 : rédaction narrative + Vision
-const MODEL_ANALYSIS = 'claude-haiku-4-5-20251001'; // Passe 1 : analyse JSON (rapide, ~3-5s)
-const ABORT_TIMEOUT_MS = 55000; // 55s (vercel max = 60s)
+const MODEL = 'claude-sonnet-4-20250514'; // Sonnet pour les 2 passes (Pro = 300s)
+const ABORT_TIMEOUT_MS = 120000; // 120s confort (Vercel Pro max = 300s)
 
 export default async function handler(req, res) {
     withCORS(res);
@@ -32,8 +31,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Aucune donnée DVF fournie' });
     }
 
-    // Limiter les données envoyées à Claude (30 = bon compromis précision/vitesse)
-    const MAX_DVF = 30;
+    // Limiter les données envoyées à Claude (40 = bon compromis précision/vitesse, Pro = 300s)
+    const MAX_DVF = 40;
     const limitedDvf = dvfSales.slice(0, MAX_DVF);
 
     const agentSignature = agentName
@@ -50,7 +49,7 @@ export default async function handler(req, res) {
         const hasCoords = property.latitude && property.longitude;
 
         const [analysisRaw, poiData, communeData] = await Promise.all([
-            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now(), [], MODEL_ANALYSIS),
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now()),
             hasCoords
                 ? fetchPOIData(property.latitude, property.longitude).catch(err => {
                     console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
@@ -90,9 +89,9 @@ export default async function handler(req, res) {
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData);
 
-        // Vision : 2 photos max pour rester sous 60s Vercel Hobby
-        const photoImages = (photos || []).slice(0, 2);
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 4000, remaining, photoImages);
+        // Photos Vision pour enrichir la description du bien
+        const photoImages = (photos || []).slice(0, 5);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6000, remaining, photoImages);
 
         let narrative;
         try {
@@ -122,7 +121,7 @@ export default async function handler(req, res) {
 
 // ========== Appel Claude générique ==========
 
-async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = [], model = MODEL_WRITING) {
+async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = []) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -148,7 +147,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
             'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-            model: model,
+            model: MODEL,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: [{ role: 'user', content: userContent }]
@@ -521,15 +520,15 @@ FORMAT HTML :
 
 Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) :
 {
-  "propertyPresentation": "HTML 2-3 paragraphes. Accroche emplacement + quartier. Description intérieurs (luminosité, matériaux, volumes). Environnement immédiat si pertinent.",
+  "propertyPresentation": "HTML (3-4 paragraphes). §1: Accroche sur l'emplacement et le caractère du bien (citer la rue, le quartier, l'ambiance). §2: Description détaillée des espaces intérieurs (distribution, luminosité, matériaux, volumes). §3: Environnement immédiat (commerces, transports, écoles, espaces verts à proximité). §4 (si pertinent): Potentiel du bien (travaux possibles, plus-value, évolution du quartier).",
 
-  "marketAnalysis": "HTML 2-3 paragraphes. Marché local (prix médian/m², tendance). 2-3 ventes comparables citées. Positionnement du bien vs marché.",
+  "marketAnalysis": "HTML (3-4 paragraphes). §1: Synthèse du marché local avec chiffres clés (prix médian/m², volume de transactions, tendance). §2: Comparaison avec les biens similaires vendus récemment (citer 2-3 ventes précises avec prix et surface). §3: Évolution des prix sur les dernières années et interprétation de la tendance. §4: Positionnement du bien par rapport au marché (au-dessus/en-dessous de la médiane et pourquoi).",
 
-  "estimation": "HTML 2-3 paragraphes. Méthode + argumentation fourchette. Facteurs valorisation/décote. Comparaison budget vendeur si communiqué.",
+  "estimation": "HTML (3-4 paragraphes). §1: Méthodologie utilisée (analyse comparative + ajustements). §2: Argumentation de la fourchette retenue avec les facteurs de valorisation (citer chaque atout et son impact). §3: Facteurs de décote éventuels (DPE, travaux, etc.) et comment les compenser. §4: Comparaison avec le budget vendeur si communiqué (conforter ou recadrer avec diplomatie).",
 
-  "recommendation": "HTML 2-3 paragraphes. Prix recommandé + stratégie. Ciblage acquéreur. Conclusion engageante du conseiller ${agentName || ''}.",
+  "recommendation": "HTML (3-4 paragraphes). §1: Prix de mise en vente recommandé avec justification stratégique (attirer des visites vs maximiser le prix). §2: Stratégie de commercialisation (comment mettre en valeur les atouts, quel angle marketing, ciblage acquéreur). §3: Timing et scénario de vente (durée prévisionnelle, étapes clés, quand envisager une baisse). §4: Conclusion personnelle engageante du conseiller ${agentName || ''} (confiance dans le bien, engagement d'accompagnement).",
 
-  "environment": "HTML 1-2 paragraphes. UNIQUEMENT si données environnement fournies. Cadre de vie, commerces, transports (citer noms POI). Commune + qualité de vie. Si aucune donnée → chaîne vide."
+  "environment": "HTML (2-3 paragraphes). UNIQUEMENT si des données environnement sont fournies. §1: Cadre de vie — décrire l'ambiance du quartier, la densité de commerces et services, l'accessibilité transport. Citer les POIs les plus proches PAR LEUR NOM. §2: Données communales — population, dynamisme de la commune. §3: Qualité de vie — espaces verts, calme/bruit, score piéton. Utilise UNIQUEMENT les données fournies, ne rien inventer. Si aucune donnée environnement n'est fournie, retourne une chaîne vide."
 }`;
 }
 
@@ -576,16 +575,6 @@ function buildEnvironmentBlock(poiData, communeData) {
     return block;
 }
 
-/** Alléger le JSON d'analyse pour la passe 2 (réduire les tokens d'input) */
-function trimAnalysisForWriting(analysis) {
-    const trimmed = { ...analysis };
-    // Garder seulement les 3 meilleurs comparables (suffisant pour citations)
-    if (trimmed.comparable_sales?.length > 3) {
-        trimmed.comparable_sales = trimmed.comparable_sales.slice(0, 3);
-    }
-    return trimmed;
-}
-
 function buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData) {
     const budgetLine = property.budget
         ? `Budget/estimation vendeur : ${property.budget.toLocaleString('fr-FR')} € — COMPARE avec ton estimation et commente (conforte si proche, recadre diplomatiquement si éloigné)`
@@ -605,9 +594,9 @@ ${property.interviewSummary ? `\nINFORMATIONS COMPLÉMENTAIRES DU PROPRIÉTAIRE 
 ${budgetLine}
 
 RÉSULTATS DE L'ANALYSE CHIFFRÉE :
-${JSON.stringify(trimAnalysisForWriting(analysis), null, 2)}
+${JSON.stringify(analysis, null, 2)}
 
 ${buildEnvironmentBlock(poiData, communeData)}
 ${customInstructions ? `INSTRUCTIONS PARTICULIÈRES DU CONSEILLER :\n${customInstructions}\n` : ''}
-RAPPEL : Rédige en français. Chaque section : 2-3 paragraphes argumentés. Cite des chiffres précis. Ton expert et confiant.`;
+RAPPEL : Rédige les sections en français. Chaque section doit faire 3-4 paragraphes riches et argumentés (2-3 pour "environment"). Cite des chiffres précis du JSON. Le ton doit inspirer confiance et expertise.`;
 }

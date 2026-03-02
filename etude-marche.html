@@ -2883,8 +2883,8 @@ async function executeStudyGeneration(interviewSummary) {
             interviewSummary: interviewSummary || ''
         };
 
-        // Trier par distance croissante et envoyer les 30 plus proches (aligné sur MAX_DVF serveur)
-        const MAX_DVF_SEND = 30;
+        // Trier par distance croissante et envoyer les 40 plus proches (aligné sur MAX_DVF serveur)
+        const MAX_DVF_SEND = 40;
         const dvfToSend = dvfSales
             .sort((a, b) => a.distance - b.distance)
             .slice(0, MAX_DVF_SEND);

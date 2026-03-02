@@ -28,7 +28,7 @@
       "maxDuration": 30
     },
     "api/generate-study.js": {
-      "maxDuration": 60
+      "maxDuration": 300
     }
   },
   "headers": [
