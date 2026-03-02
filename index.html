@@ -2299,260 +2299,105 @@
                 border-color: #2DD4BF;
             }
 
-            /* --- MOBILE TAB BAR --- */
-            /* --- MOBILE TAB BAR (couleur active dynamique) --- */
-            .mobile-tabs {
-                display: flex;
-                gap: 0;
+            /* --- MOBILE TAB BAR : cachée (remplacée par colonnes scroll) --- */
+            .mobile-tabs { display: none !important; }
+
+            /* --- CARD DECK : caché (remplacé par colonnes scroll) --- */
+            .mobile-card-deck { display: none !important; }
+
+            /* ===== PIPELINE : SCROLL HORIZONTAL MOBILE ===== */
+            .pipeline {
+                display: flex !important;
+                flex-direction: row;
+                gap: 12px;
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                margin-bottom: 0;
+                scroll-snap-type: x mandatory;
+                padding: 0 var(--m-page-x, 16px) 20px;
+                margin: 0;
+            }
+            .pipeline::-webkit-scrollbar { display: none; }
+            .pipeline { scrollbar-width: none; }
+
+            /* Chaque colonne = quasi pleine largeur, snap au centre */
+            .column {
+                flex: 0 0 85vw;
+                max-width: 85vw;
+                min-width: 85vw;
+                scroll-snap-align: center;
+                background: transparent;
+                border-radius: 16px;
+                padding: 0;
+                overflow-y: auto;
+                max-height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - 40px - env(safe-area-inset-bottom, 0px));
+            }
+
+            /* Header colonne : image de fond pleine largeur + titre */
+            .column-top {
                 position: sticky;
                 top: 0;
-                z-index: 50;
-            }
-            .mobile-tabs::-webkit-scrollbar { display: none; }
-            .mobile-tab {
-                flex-shrink: 0;
-                padding: 10px 14px;
-                border: none;
-                background: none;
-                font-family: 'Inter', sans-serif;
-                font-size: 13px;
-                font-weight: 600;
-                color: var(--text-light);
-                cursor: pointer;
-                white-space: nowrap;
-                border-bottom: 3px solid transparent;
-                transition: all 0.2s;
-            }
-            .mobile-tab.active { color: var(--text-dark); }
-            .mobile-tab .tab-count { font-weight: 400; }
-
-            /* --- PIPELINE KANBAN : caché sur mobile (remplacé par card deck) --- */
-            .pipeline { display: none !important; }
-
-            /* ===== CARD DECK (compatible iOS WebKit) ===== */
-            .mobile-card-deck {
-                display: block !important;
-                position: relative;
-                padding: 16px;
-                padding-bottom: 80px;
-            }
-            .deck-viewport {
-                position: relative;
-                width: 100%;
-                min-height: 460px;
-                overflow-x: clip;
-            }
-            .deck-card {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                background: #FFFFFF;
-                border-radius: 20px;
-                box-shadow: 0 6px 28px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
-                border-left: 4px solid #ccc;
-                padding: 28px 24px;
-                -webkit-transform: translateX(0);
-                transform: translateX(0);
-                -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                                    opacity 0.35s ease;
-                transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                            opacity 0.35s ease;
-                -webkit-user-select: none;
-                user-select: none;
-                -webkit-backface-visibility: hidden;
-                backface-visibility: hidden;
-            }
-            .deck-card.active {
-                -webkit-transform: translateX(0) scale(1);
-                transform: translateX(0) scale(1);
-                opacity: 1;
-                z-index: 3;
-            }
-            .deck-card.prev {
-                -webkit-transform: translateX(-110%) scale(0.95);
-                transform: translateX(-110%) scale(0.95);
-                opacity: 0;
-                z-index: 1;
-                pointer-events: none;
-            }
-            .deck-card.next {
-                -webkit-transform: translateX(110%) scale(0.95);
-                transform: translateX(110%) scale(0.95);
-                opacity: 0;
-                z-index: 1;
-                pointer-events: none;
-            }
-            .deck-card.swiping {
-                -webkit-transition: none;
-                transition: none;
-            }
-
-            /* --- Contenu carte deck — Hiérarchie 3 niveaux --- */
-
-            /* === NIVEAU 1 — Centré, accrocheur === */
-            .deck-card .mc-name {
-                font-family: 'Barlow Semi Condensed', sans-serif;
-                font-size: 24px;
-                font-weight: 700;
-                color: #243B53;
-                text-align: center;
-                letter-spacing: 0.01em;
-                margin-bottom: 18px;
-                line-height: 1.2;
-            }
-            .deck-card .mc-followup {
-                display: block;
-                text-align: center;
-                font-size: 14px;
-                font-weight: 600;
-                padding: 10px 16px;
-                border-radius: 10px;
-                margin-bottom: 12px;
-            }
-            .deck-card .mc-followup.followup-overdue {
-                background: #FEE2E2;
-                color: #DC2626;
-            }
-            .deck-card .mc-followup.followup-due {
-                background: #FEF3C7;
-                color: #D97706;
-            }
-            .deck-card .mc-followup.followup-ok {
-                background: #E0F2FE;
-                color: #0284C7;
-            }
-            .deck-card .mc-commission {
-                display: block;
-                text-align: center;
-                font-size: 14px;
-                color: #F57F17;
-                background: #FFF8E1;
-                padding: 6px 12px;
-                border-radius: 8px;
-                font-weight: 700;
-                margin-bottom: 14px;
-            }
-
-            /* === NIVEAU 2 — Scan rapide, aligné gauche === */
-            .deck-card .mc-property {
-                font-size: 15px;
-                color: #546E7A;
-                font-weight: 500;
-                margin-bottom: 6px;
-            }
-            .deck-card .mc-city {
-                font-size: 15px;
-                color: #374151;
-                font-weight: 600;
-                margin-bottom: 2px;
-            }
-            .deck-card .mc-address {
-                font-size: 13px;
-                color: #6B7280;
-                margin-bottom: 12px;
-            }
-            .deck-card .mc-phone { margin-bottom: 12px; }
-            .deck-card .mc-phone a {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                color: #243B53;
-                text-decoration: none;
-                font-size: 16px;
-                font-weight: 600;
-                padding: 10px 16px;
-                background: #F0F4F8;
-                border: 1px solid #E2E8F0;
-                border-radius: 12px;
-                transition: background 0.2s;
-            }
-            .deck-card .mc-phone a:active { background: #E2E8F0; }
-
-            /* === NIVEAU 3 — Contexte, discret === */
-            .deck-card .mc-context-row {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                margin-bottom: 4px;
-            }
-            .deck-card .mc-source { display: inline; }
-            .deck-card .mc-source .card-tag {
-                padding: 3px 8px;
-                font-size: 10px;
-                border-radius: 5px;
-                font-weight: 700;
-            }
-            .deck-card .mc-date {
-                font-size: 11px;
-                color: var(--text-light);
-            }
-
-            /* === ACTIONS === */
-            .deck-card .mc-actions {
-                display: flex;
-                justify-content: flex-end;
-                gap: 8px;
-                margin-top: 14px;
-                padding: 8px;
-                background: #F8FAFC;
-                border-radius: 12px;
-            }
-            .deck-card .mc-actions .card-btn {
-                font-size: 18px;
-                padding: 10px;
-                min-width: 44px;
-                min-height: 44px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
+                z-index: 10;
+                margin: 0;
+                padding: 0;
                 background: transparent;
-                border-radius: 10px;
-                border: none;
-                cursor: pointer;
-                transition: background 0.15s;
+                border-radius: 16px 16px 0 0;
+                flex-shrink: 0;
             }
-            .deck-card .mc-actions .card-btn:active { background: #E2E8F0; }
-
-            /* --- Indicateur de position (N/M) --- */
-            .deck-position {
-                position: fixed;
-                bottom: 86px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: rgba(0,0,0,0.5);
+            .column-header {
+                height: 70px;
+                border-radius: 16px;
+                margin-bottom: 8px;
+                background-size: cover;
+                background-position: center;
+                display: flex;
+                align-items: flex-end;
+                overflow: hidden;
+            }
+            .column-label {
+                position: relative;
+                padding: 8px 14px;
+                font-family: 'Barlow Semi Condensed', sans-serif;
+                font-size: 16px;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 1px;
                 color: white;
-                padding: 6px 16px;
-                border-radius: 20px;
-                font-size: 13px;
-                font-weight: 600;
-                font-family: 'Inter', sans-serif;
-                z-index: 60;
-                backdrop-filter: blur(8px);
-                -webkit-backdrop-filter: blur(8px);
+                text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
+                font-style: italic;
             }
-            .deck-position .deck-pos-sep {
-                margin: 0 2px;
-                opacity: 0.6;
+            .column-title { display: none; }
+            .column-count {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                padding: 4px 10px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--m-text-secondary, #4A5568);
             }
 
-            /* --- État vide colonne --- */
-            .deck-empty {
+            /* Lead cards dans les colonnes : compactes, style liste */
+            .cards-container {
+                display: flex;
                 flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 300px;
-                color: #94A3B8;
-                text-align: center;
+                gap: 8px;
+                padding: 0 4px 16px;
             }
-            .deck-empty-icon { font-size: 48px; margin-bottom: 12px; }
-            .deck-empty-text { font-size: 16px; font-weight: 500; }
+            .lead-card {
+                padding: 12px 14px;
+                border-radius: 12px;
+                width: 100%;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+                font-size: 14px;
+                max-height: none;
+                overflow: visible;
+            }
+            .lead-card:hover { transform: none; }
+
+            /* Cacher les éléments de vue étendue sur mobile par défaut */
+            .lead-card .card-extended { display: none !important; }
+            .lead-card .card-expand-arrow { display: none; }
+            .lead-card .card-actions { display: none; }
 
             /* ===== VUE DÉTAIL OVERLAY ===== */
             .mobile-detail-overlay {
@@ -7268,6 +7113,13 @@
             document.querySelectorAll('.lead-card').forEach(card => {
                 card.addEventListener('click', (e) => {
                     if (e.target.closest('a, button, .card-commission')) return;
+
+                    // Mobile : ouvrir le detail overlay au lieu d'expand
+                    if (isMobile() && card.dataset.id) {
+                        openMobileDetail(card.dataset.id);
+                        return;
+                    }
+
                     const column = card.closest('.column');
                     if (column) {
                         const prev = column.querySelector('.lead-card.expanded');
