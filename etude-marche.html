@@ -2810,7 +2810,8 @@ async function executeStudyGeneration(interviewSummary) {
                 dvfSales: dvfToSend,
                 agentName,
                 agencyName,
-                customInstructions: document.getElementById('studyInstructions').value.trim()
+                customInstructions: document.getElementById('studyInstructions').value.trim(),
+                photos: studyPhotos.length > 0 ? studyPhotos : undefined
             })
         });
 

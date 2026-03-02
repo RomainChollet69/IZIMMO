@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { property, dvfSales, agentName, agencyName, customInstructions } = req.body || {};
+    const { property, dvfSales, agentName, agencyName, customInstructions, photos } = req.body || {};
 
     if (!property || !property.address) {
         return res.status(400).json({ error: 'Adresse du bien requise' });
@@ -56,11 +56,13 @@ export default async function handler(req, res) {
             return res.status(502).json({ error: 'Erreur d\'analyse IA', detail: 'Le modèle n\'a pas retourné un JSON valide' });
         }
 
-        // ========== PASSE 2 : Rédaction narrative ==========
+        // ========== PASSE 2 : Rédaction narrative (+ Vision si photos) ==========
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions);
 
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6000, ABORT_TIMEOUT_MS);
+        // Envoyer les photos en mode Vision pour enrichir la description du bien
+        const photoImages = (photos || []).slice(0, 5);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6000, ABORT_TIMEOUT_MS, photoImages);
 
         let narrative;
         try {
@@ -91,9 +93,23 @@ export default async function handler(req, res) {
 
 // ========== Appel Claude générique ==========
 
-async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs) {
+async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = []) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+    // Construire le contenu multimodal si images présentes (Claude Vision)
+    let userContent;
+    if (images.length > 0) {
+        const imageBlocks = images.map(dataUrl => {
+            const match = dataUrl.match(/^data:(image\/\w+);base64,(.+)$/);
+            if (!match) return null;
+            return { type: 'image', source: { type: 'base64', media_type: match[1], data: match[2] } };
+        }).filter(Boolean);
+        userContent = [...imageBlocks, { type: 'text', text: userPrompt }];
+        console.log(`[GenerateStudy] Vision mode: ${imageBlocks.length} image(s) jointe(s)`);
+    } else {
+        userContent = userPrompt;
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -106,7 +122,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
             model: MODEL,
             max_tokens: maxTokens,
             system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }]
+            messages: [{ role: 'user', content: userContent }]
         }),
         signal: controller.signal
     });
@@ -250,6 +266,14 @@ STYLE RÉDACTIONNEL :
 - INTERDIT : "n'hésitez pas", "nous restons à votre disposition", "force est de constater", "il est important de noter", "il convient de", "en effet"
 - Chaque section doit apporter de la VALEUR : pas de remplissage, chaque phrase a un but
 - IMPORTANT : Les informations complémentaires du propriétaire contiennent des labels courts (ex: "3e étage", "Bon état"). Reformule-les en français naturel dans tes paragraphes. NE JAMAIS copier les labels tels quels. Ex : "situé au troisième étage" et non "situé au 3e étage". Ex: "l'appartement bénéficie d'un bon état général" et non "état général : Bon état".
+
+PHOTOS DU BIEN :
+Si des photos sont jointes au message, utilise-les pour enrichir ta description :
+- Décris ce que tu OBSERVES concrètement : luminosité, volumes, matériaux, état des finitions, vue depuis les fenêtres
+- Mentionne les éléments visuels remarquables (parquet, moulures, cuisine équipée, verrière, etc.)
+- Intègre ces observations naturellement dans "propertyPresentation" et "estimation" (ajustements basés sur l'état réel)
+- NE JAMAIS écrire "sur les photos" ou "comme on peut le voir" — décris comme si tu avais personnellement visité le bien
+- Si les photos montrent des défauts (peinture défraîchie, équipements vieillissants), mentionne-les diplomatiquement dans les points d'amélioration
 
 FORMAT HTML :
 - Utilise <p>, <strong>, <em>, <ul>/<li> pour structurer
