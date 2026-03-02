@@ -334,6 +334,49 @@ Scraping d'une annonce immobilière concurrente.
 
 ---
 
+### POST `/api/generate-study`
+
+Génération d'une étude de marché immobilière via 2 passes Claude Sonnet.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Bearer token |
+| **Body** | `{ property, dvfSales, dpeData, agentName, agencyName, customInstructions }` |
+| **Service externe** | Anthropic Claude Sonnet (`claude-sonnet-4-20250514`) |
+| **Timeout** | 60s (55s AbortController) |
+
+**Logique** :
+- **Passe 1** : Analyse structurée (JSON) — comparables, stats prix/m², DPE, estimation fourchette
+- **Passe 2** : Rédaction narrative (HTML) — présentation, marché, estimation, recommandation
+
+**Body détaillé** :
+```json
+{
+  "property": {
+    "address": "12 rue Victor Hugo, 69003 Lyon",
+    "latitude": 45.758, "longitude": 4.862,
+    "city": "Lyon", "postalCode": "69003",
+    "propertyType": "appartement",
+    "surface": 75, "rooms": "T3",
+    "description": "...", "budget": 280000
+  },
+  "dvfSales": [{ "date_mutation": "2024-03-15", "valeur_fonciere": 250000, "type_local": "Appartement", "surface_reelle_bati": 68, "distance": 150 }],
+  "dpeData": [{ "dpeClass": 3, "gesClass": 4, "conso": 180, "surface": 72, "type": 1, "year": 1975, "distance": 200 }],
+  "agentName": "Romain Chollet",
+  "agencyName": "Efficity"
+}
+```
+
+**Réponse** :
+```json
+{
+  "analysis": { "comparable_sales": [...], "price_per_m2": {...}, "estimation": { "low": 252000, "mid": 280000, "high": 308000 } },
+  "narrative": { "propertyPresentation": "<p>...</p>", "marketAnalysis": "...", "estimation": "...", "recommendation": "..." }
+}
+```
+
+---
+
 ### Helper : `_auth.js`
 
 Fonctions partagées par tous les endpoints.
@@ -488,7 +531,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 | Variable | Service | Endpoints |
 |----------|---------|-----------|
 | `OPENAI_API_KEY` | OpenAI Whisper | `/api/transcribe` |
-| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/parse-workflow-response`, `/api/scrape-listing`, `/api/assistant` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/parse-workflow-response`, `/api/scrape-listing`, `/api/assistant`, `/api/generate-study` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase (admin) | `/api/google-auth`, `/api/assistant` |
 | `GOOGLE_CLIENT_ID` | Google OAuth | `/api/google-auth`, `/api/assistant` (token refresh) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth | `/api/google-auth`, `/api/assistant` (token refresh) |

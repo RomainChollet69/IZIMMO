@@ -4,6 +4,63 @@
 
 ---
 
+## Session 2026-03-02f — Étude de Marché IA (Phase 1 MVP)
+
+### Résumé
+Création du module "Étude de Marché IA" : page dédiée `etude-marche.html` avec formulaire + dictée vocale, collecte automatique des données DVF/DPE, analyse et rédaction par Claude Sonnet en 2 passes, rendu professionnel 7 sections, export PDF. Bouton intégré dans la fiche vendeur.
+
+### Modifications
+
+**`api/generate-study.js`** (CRÉÉ) :
+- Endpoint Vercel Serverless orchestrant 2 appels Claude Sonnet
+- Passe 1 : analyse structurée (JSON) — comparables, prix/m², DPE distribution, estimation fourchette
+- Passe 2 : rédaction narrative (HTML) — présentation bien, analyse marché, estimation argumentée, recommandation conseiller
+- Timeout 55s (AbortController), limite 50 DVF + 100 DPE envoyés à Claude
+
+**`etude-marche.html`** (CRÉÉ) :
+- Formulaire saisie : adresse autocomplete (api-adresse.data.gouv.fr), type, surface, pièces, DPE, description, instructions IA
+- Dictée vocale : AudioRecorder → /api/transcribe → /api/parse-lead → pré-remplissage formulaire
+- Collecte données : DVF/DPE depuis Supabase Storage (copie logique dvf.html)
+- Rendu 7 sections : couverture, présentation, localisation (Google Maps Static), analyse marché (stats + graphique SVG + tableau comparables), DPE (barres horizontales), estimation (jauge visuelle), recommandation
+- Export PDF : html2pdf.js + CSS @media print
+- Pré-remplissage : ?seller_id=UUID ou ?address=&type=&surface=
+- Responsive mobile
+
+**`index.html`** :
+- Bouton "📋 Étude de marché" ajouté dans la modale vendeur (après DVF)
+- Fonction `openStudy()` : ouvre etude-marche.html avec seller_id ou params URL
+- Visibilité conditionnelle : affiché si le vendeur a une adresse
+
+**`vercel.json`** :
+- Ajout `api/generate-study.js` avec `maxDuration: 60`
+
+### Fichiers créés/modifiés
+- `api/generate-study.js` (créé)
+- `etude-marche.html` (créé)
+- `index.html` (modifié — bouton + fonction openStudy)
+- `vercel.json` (modifié — timeout)
+- `docs/ARCHITECTURE.md` (modifié — ajout page + endpoint)
+- `docs/API-MAP.md` (modifié — ajout endpoint generate-study)
+- `docs/DECISIONS.md` (modifié — D042, D043)
+- `docs/CHANGELOG.md` (modifié — cette entrée)
+
+### Décisions techniques
+- D042 : 2 passes Claude Sonnet (analyse JSON → narration HTML) — évite hallucinations chiffrées
+- D043 : Collecte DVF/DPE côté client — réutilise le cache, évite timeout serveur
+
+### Points d'attention / bugs connus
+- L'étude n'est pas sauvegardée en BDD (Phase 1 : téléchargement PDF uniquement)
+- Le modèle Claude Sonnet est plus coûteux que Haiku (~0.15-0.30€/étude vs ~0.02€)
+- html2pdf.js peut couper des éléments entre les pages — à affiner avec les page-break CSS
+
+### Prochaines étapes prioritaires
+- Phase 2 : données INSEE (socio-éco), cadastre (parcelle), annonces concurrentes
+- Phase 3 : matching acquéreurs du portefeuille, profil acquéreur idéal, branding personnalisé
+- Sauvegarde des études en Supabase Storage (Phase 1.5)
+- Test E2E sur données Lyon pour valider le rendu
+
+---
+
 ## Session 2026-03-02e — Refonte visuelle Matching + micro fixes + header acquéreurs
 
 ### Résumé

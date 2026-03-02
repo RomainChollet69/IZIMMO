@@ -20,6 +20,7 @@ IZIMMO/
 ├── parametres.html             # Page de paramètres utilisateur
 ├── micro.html                  # Enregistrement vocal + transcription (voice-first)
 ├── dvf.html                    # Visualiseur données DVF + DPE
+├── etude-marche.html           # Étude de marché IA — génération pro via Claude Sonnet + DVF/DPE
 ├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
 ├── leon.html                   # Cockpit quotidien — Guide intelligent Léon (priorisation tâches, debrief visites, relances)
 ├── visites.html                # Gestion des visites — Vue groupée par bien, visiteurs libres, feedback, promotion en acquéreur
@@ -51,6 +52,7 @@ IZIMMO/
 │   ├── parse-voice-note.js     # Parsing notes vocales
 │   ├── map-columns.js          # Mapping colonnes pour imports
 │   ├── scrape-listing.js       # Scraping d'annonces immobilières
+│   ├── generate-study.js       # Génération étude de marché IA (2 passes Claude Sonnet)
 │   ├── google-auth.js           # OAuth Google Calendar (POST=init nonce, GET=callback tokens)
 │   └── assistant.js             # Assistant unifié (orchestrate, draft_message, calendar CRUD)
 │

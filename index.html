@@ -4087,6 +4087,7 @@
                         <button type="button" class="modal-action-btn" id="dictateBtn"><i class="fa-solid fa-microphone"></i> Dicter</button>
                         <button type="button" class="modal-action-btn" id="importDocBtn">📎 Importer un document</button>
                         <button type="button" class="modal-action-btn" id="dvfBtn" style="display:none" onclick="openDVF()">📊 Marché local</button>
+                        <button type="button" class="modal-action-btn" id="studyBtn" style="display:none" onclick="openStudy()">📋 Étude de marché</button>
                     </div>
                     <div class="dictate-status" id="dictateStatus"></div>
                     <div class="pending-file-bar" id="pendingFileBar">
@@ -7669,6 +7670,7 @@
                 document.getElementById('modalSubtitle').style.display = '';
                 submitBtn.textContent = 'Créer le Lead';
                 document.getElementById('dvfBtn').style.display = 'none';
+                document.getElementById('studyBtn').style.display = 'none';
             }
 
             updateModalTabs();
@@ -8497,6 +8499,7 @@
             addrInput.dataset.city = seller.city || '';
             addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('dvfBtn').style.display = seller.address ? '' : 'none';
+            document.getElementById('studyBtn').style.display = seller.address ? '' : 'none';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('propertyType').value = seller.property_type || '';
             document.getElementById('rooms').value = seller.rooms || '';
@@ -8568,6 +8571,27 @@
             if (!address) return;
             const url = 'dvf.html?adresse=' + encodeURIComponent(address) + '&rayon=400';
             window.open(url, '_blank');
+        }
+
+        function openStudy() {
+            const submitBtn = document.getElementById('submitBtn');
+            const sellerId = submitBtn.dataset.editId;
+            if (sellerId) {
+                window.open('etude-marche.html?seller_id=' + sellerId, '_blank');
+            } else {
+                const address = document.getElementById('address').value.trim();
+                const type = document.getElementById('propertyType').value;
+                const surface = document.getElementById('surface').value;
+                const rooms = document.getElementById('rooms').value;
+                const budget = document.getElementById('budget').value;
+                const params = new URLSearchParams();
+                if (address) params.set('address', address);
+                if (type) params.set('type', type);
+                if (surface) params.set('surface', surface);
+                if (rooms) params.set('rooms', rooms);
+                if (budget) params.set('budget', budget);
+                window.open('etude-marche.html?' + params.toString(), '_blank');
+            }
         }
 
         function toggleCoContact() {

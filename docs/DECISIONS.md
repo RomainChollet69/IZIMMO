@@ -839,3 +839,40 @@
 - Raccourcit le parcours utilisateur : 1 clic au lieu de changer d'onglet + chercher le scénario
 - L'ouverture automatique de l'appli (SMS/WhatsApp/Email) après génération évite un clic supplémentaire
 - Le scénario via Messages IA reste disponible pour les cas où l'utilisateur n'a pas de visite liée
+
+## D042 — Étude de marché : 2 passes Claude Sonnet (pas un seul appel)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : L'étude de marché nécessite à la fois des calculs statistiques précis (prix/m², comparables, estimation) et une rédaction narrative de qualité professionnelle.
+
+**Décision** : Architecture en 2 passes séquentielles via Claude Sonnet (`claude-sonnet-4-20250514`) :
+- **Passe 1** : Analyse structurée → JSON strict (comparables, stats, estimation chiffrée)
+- **Passe 2** : Rédaction narrative → HTML (présentation, marché, estimation argumentée, recommandation)
+
+**Pourquoi** :
+- Un seul appel "calcule ET rédige" produit des hallucinations sur les chiffres (constaté en tests)
+- La séparation garantit la fiabilité : la passe 2 reçoit les vrais chiffres de la passe 1
+- Claude Sonnet plutôt que Haiku : la qualité narrative est critique pour un document client (~0.15-0.30€/étude)
+- Les données DVF/DPE sont collectées côté client (même pattern que dvf.html) puis envoyées à l'API
+
+**Alternatives rejetées** :
+- **Un seul appel** : Hallucinations fréquentes sur les chiffres quand on demande calculs + rédaction
+- **Claude Haiku** : Qualité narrative insuffisante pour un rapport remis au vendeur
+- **Streaming (SSE)** : Inconsistant avec le reste du codebase (tous les endpoints sont batch), et l'étude produit du HTML structuré, pas du texte incrémental
+
+## D043 — Collecte DVF/DPE côté client (pas côté serveur)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Pour l'étude de marché, il faut charger les données DVF et DPE du secteur.
+
+**Décision** : Collecte côté client (même pattern que dvf.html), puis envoi des données filtrées à l'API.
+
+**Pourquoi** :
+- Les données DVF/DPE sont dans des buckets Supabase Storage publics → pas besoin d'auth serveur
+- Le code de chargement existe déjà (dvf.html lignes 2070-2256) → copie directe
+- Côté serveur, les fonctions Vercel ont un timeout de 60s — charger un département de 15 Mo prendrait trop de temps
+- Le client peut cacher les données (loadedDepts) entre plusieurs études

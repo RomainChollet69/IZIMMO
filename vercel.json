@@ -26,6 +26,9 @@
     },
     "api/scrape-listing.js": {
       "maxDuration": 30
+    },
+    "api/generate-study.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
