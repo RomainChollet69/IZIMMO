@@ -1,4 +1,7 @@
 {
+  "rewrites": [
+    { "source": "/", "destination": "/home.html" }
+  ],
   "functions": {
     "api/parse-import-batch.js": {
       "maxDuration": 60
