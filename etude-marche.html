@@ -57,14 +57,15 @@
             min-height: 100vh;
         }
 
-        /* ===== HEADER ===== */
+        /* ===== HEADER (identique index.html) ===== */
         .header {
             width: 100%;
             background: #FFFFFF;
             border-bottom: 1px solid #E5E7EB;
             position: sticky;
             top: 0;
-            z-index: 500;
+            z-index: 1000;
+            margin-bottom: 0;
         }
         .header-inner {
             max-width: 1400px;
@@ -77,20 +78,27 @@
         }
         .logo { display: flex; align-items: center; text-decoration: none; margin-right: 48px; cursor: pointer; }
         .logo img { height: 36px; width: auto; }
-        .nav-tabs { display: flex; gap: 8px; flex: 1; }
+        .nav-tabs { display: flex; align-items: center; gap: 8px; }
         .nav-tab {
-            padding: 8px 20px;
-            border-radius: 24px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 14px;
             color: #6B7280;
-            transition: all 0.2s;
+            text-decoration: none;
+            padding: 20px 32px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             white-space: nowrap;
         }
-        .nav-tab:hover { background: #F3F4F6; color: #374151; }
-        .nav-tab.active { background: var(--gradient); color: white; }
-        .header-actions { display: flex; align-items: center; gap: 12px; }
+        .nav-tab i { font-size: 16px; }
+        .nav-tab:hover { color: #243B53; }
+        .nav-tab.active { color: #243B53; font-weight: 600; border-bottom-color: #243B53; }
+        .header-actions { display: flex; align-items: center; gap: 16px; }
         .user-profile { display: flex; align-items: center; gap: 8px; cursor: pointer; position: relative; }
         .user-avatar { width: 32px; height: 32px; border-radius: 50%; }
         .user-name { font-size: 13px; font-weight: 600; color: var(--text-dark); }
