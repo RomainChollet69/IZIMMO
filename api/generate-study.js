@@ -40,17 +40,16 @@ export default async function handler(req, res) {
         : 'Le conseiller';
 
     try {
-        const startTime = Date.now();
+        const deadline = Date.now() + ABORT_TIMEOUT_MS; // Deadline absolue (55s)
 
         // ========== PASSE 1 + POI + COMMUNE en parallèle ==========
         const analysisSystemPrompt = buildAnalysisPrompt();
         const analysisUserPrompt = buildAnalysisUserPrompt(property, limitedDvf);
 
         const hasCoords = property.latitude && property.longitude;
-        const PASS1_TIMEOUT = 25000; // 25s max pour la passe 1
 
         const [analysisRaw, poiData, communeData] = await Promise.all([
-            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, PASS1_TIMEOUT),
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now()),
             hasCoords
                 ? fetchPOIData(property.latitude, property.longitude).catch(err => {
                     console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
@@ -65,6 +64,9 @@ export default async function handler(req, res) {
                 : Promise.resolve(null)
         ]);
 
+        const pass1Ms = ABORT_TIMEOUT_MS - (deadline - Date.now());
+        console.log(`[GenerateStudy] Passe 1 terminée en ${Math.round(pass1Ms / 1000)}s`);
+
         let analysis;
         try {
             const jsonMatch = analysisRaw.match(/\{[\s\S]*\}/);
@@ -76,16 +78,20 @@ export default async function handler(req, res) {
         }
 
         // ========== PASSE 2 : Rédaction narrative (+ Vision + Environnement) ==========
-        const elapsedMs = Date.now() - startTime;
-        const pass2Timeout = Math.max(ABORT_TIMEOUT_MS - elapsedMs, 15000); // Temps restant, min 15s
-        console.log(`[GenerateStudy] Passe 1 terminée en ${Math.round(elapsedMs / 1000)}s, budget passe 2: ${Math.round(pass2Timeout / 1000)}s`);
+        const remaining = deadline - Date.now();
+        if (remaining < 5000) {
+            // Moins de 5s restantes — pas assez pour la passe 2
+            console.warn(`[GenerateStudy] Pas assez de temps pour passe 2 (${Math.round(remaining / 1000)}s). Retour analyse seule.`);
+            return res.status(200).json({ analysis, narrative: { propertyPresentation: '', marketAnalysis: '', estimation: '', recommendation: '' }, poiData, communeData });
+        }
+        console.log(`[GenerateStudy] Budget passe 2: ${Math.round(remaining / 1000)}s`);
 
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData);
 
         // Envoyer les photos en mode Vision pour enrichir la description du bien
         const photoImages = (photos || []).slice(0, 5);
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 7000, pass2Timeout, photoImages);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6500, remaining, photoImages);
 
         let narrative;
         try {
