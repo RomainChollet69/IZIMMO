@@ -662,6 +662,17 @@
             border-radius: 0 var(--radius) var(--radius) 0;
             margin: 20px 0;
         }
+        /* Texte IA éditable */
+        .study-editable {
+            outline: none;
+            border-radius: 4px;
+            padding: 2px 4px;
+            margin: -2px -4px;
+            transition: background 0.2s;
+        }
+        .study-editable:hover { background: rgba(102, 126, 234, 0.04); }
+        .study-editable:focus { background: rgba(102, 126, 234, 0.06); box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.15); }
+
         .recommendation-signature {
             margin-top: 24px;
             padding-top: 16px;
@@ -1279,6 +1290,9 @@
             /* Recommandation : garder ensemble */
             .recommendation-box { page-break-inside: avoid; }
 
+            /* Texte éditable : masquer indicateurs en impression */
+            .study-editable { background: none !important; box-shadow: none !important; }
+
             /* Carte : forcer le rendu de l'image */
             .study-map { max-height: 300px; width: 100%; object-fit: cover; }
 
@@ -1507,7 +1521,7 @@
     </div>
 
     <!-- ===== MODAL PARAMÈTRES ===== -->
-    <div class="modal" id="studySettingsModal" onclick="if(event.target===this)closeStudySettings()">
+    <div class="modal" id="studySettingsModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 class="modal-title">Paramètres</h2>
@@ -1709,6 +1723,7 @@ const INTERVIEW_LABELS = {
 };
 
 // ===== STATE =====
+let lastStudyData = null; // Données de la dernière étude pour re-render après changement paramètres
 let dvfIndex = null;
 let dpeIndex = null;
 let dpeSplits = {};
@@ -1803,6 +1818,12 @@ function saveStudySettings() {
         return;
     }
     closeStudySettings();
+
+    // Re-render l'étude affichée avec les nouveaux paramètres (logo, couleurs, nom...)
+    if (lastStudyData) {
+        const d = lastStudyData;
+        renderStudy(d.analysis, d.narrative, d.property, d.agentName, d.agencyName, d.dvfCount, d.poiData, d.communeData);
+    }
 }
 
 function resetStudySettings() {
@@ -3124,6 +3145,8 @@ async function executeStudyGeneration(interviewSummary) {
         loadingStep.textContent = 'Mise en page de l\'étude...';
         loadingSubstep.textContent = `Étude générée en ${totalSeconds}s`;
 
+        // Sauvegarder pour re-render après changement de paramètres
+        lastStudyData = { analysis, narrative, property, agentName, agencyName, dvfCount: dvfSales.length, poiData, communeData };
         renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length, poiData, communeData);
 
         loading.classList.remove('active');
@@ -3198,7 +3221,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-home"></i> Présentation du bien</div>
                 ${photosGridHtml}
-                ${narrative.propertyPresentation || '<p>Détails du bien non disponibles.</p>'}
+                <div class="study-editable" contenteditable="true">${narrative.propertyPresentation || '<p>Détails du bien non disponibles.</p>'}</div>
                 ${renderPropertyGrid(property)}
             </div>
         </div>
@@ -3224,7 +3247,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
         <div class="study-page">
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-chart-line"></i> Analyse du marché local</div>
-                ${narrative.marketAnalysis || ''}
+                <div class="study-editable" contenteditable="true">${narrative.marketAnalysis || ''}</div>
                 ${renderMarketStats(analysis)}
                 ${renderPriceEvolution(analysis)}
                 ${renderComparablesTable(analysis, property)}
@@ -3236,7 +3259,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-calculator"></i> Estimation de prix</div>
                 ${renderEstimationGauge(analysis.estimation)}
-                ${narrative.estimation || ''}
+                <div class="study-editable" contenteditable="true">${narrative.estimation || ''}</div>
                 ${renderBuyerProfile(analysis.buyer_profile)}
             </div>
         </div>
@@ -3246,7 +3269,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-lightbulb"></i> Recommandation du conseiller</div>
                 <div class="recommendation-box">
-                    ${narrative.recommendation || '<p>Recommandation non disponible.</p>'}
+                    <div class="study-editable" contenteditable="true">${narrative.recommendation || '<p>Recommandation non disponible.</p>'}</div>
                     ${agentSignature ? `<div class="recommendation-signature">${escapeHtml(agentSignature)}</div>` : ''}
                 </div>
             </div>
@@ -3307,7 +3330,7 @@ function renderEnvironmentSection(poiData, communeData, narrative, inline = fals
 
     // Texte IA environnement
     if (narrative?.environment) {
-        html += narrative.environment;
+        html += `<div class="study-editable" contenteditable="true">${narrative.environment}</div>`;
     }
 
     // Grille POI visuelle
