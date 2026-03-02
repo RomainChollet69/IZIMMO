@@ -106,6 +106,20 @@
         }, 300);
     }
 
+    // --- Bouton Todo flottant (image todo.svg) ---
+    const todoBtn = document.createElement('button');
+    todoBtn.className = 'm-todo-fab';
+    todoBtn.setAttribute('type', 'button');
+    todoBtn.setAttribute('title', 'Ma Todo List');
+    todoBtn.innerHTML = `
+        <img src="img/todo.svg" alt="Todo">
+        <span class="m-todo-badge" id="mTodoBadge">0</span>
+    `;
+    todoBtn.addEventListener('click', function () {
+        if (window.todoToggle) window.todoToggle();
+    });
+    document.body.appendChild(todoBtn);
+
     // Masquer l'ancienne bottom bar si elle existe encore (transition progressive)
     const oldNav = document.querySelector('.mobile-bottom-bar');
     if (oldNav) oldNav.style.display = 'none';
