@@ -75,11 +75,11 @@ async function logout() {
     window.location.href = 'login.html';
 }
 
-// ===== MOBILE HEADER (logo + prénom + photo/initiale) =====
+// ===== MOBILE HEADER (.m-header — styles dans css/mobile.css) =====
 function renderMobileHeader(user) {
-    // Skip if page already has its own mobile header (micro.html)
-    if (document.querySelector('.header-mobile')) return;
-    // Skip if no desktop header to replace
+    // Skip si la page a déjà un .m-header ou un .header-mobile legacy
+    if (document.querySelector('.m-header') || document.querySelector('.header-mobile')) return;
+    // Skip si pas de header desktop à remplacer
     const desktopHeader = document.querySelector('.header') || document.querySelector('.header-desktop');
     if (!desktopHeader) return;
 
@@ -88,109 +88,35 @@ function renderMobileHeader(user) {
     const firstName = fullName.split(' ')[0];
     const avatarUrl = meta.avatar_url || meta.picture || '';
     const avatarHTML = avatarUrl
-        ? `<img src="${avatarUrl}" alt="${firstName}" class="mobile-hdr-avatar" referrerpolicy="no-referrer">`
-        : `<div class="mobile-hdr-initial">${firstName.charAt(0).toUpperCase()}</div>`;
+        ? `<img src="${avatarUrl}" alt="${firstName}" class="m-header-avatar" referrerpolicy="no-referrer">`
+        : `<div class="m-header-initial">${firstName.charAt(0).toUpperCase()}</div>`;
 
-    const mobileHeader = document.createElement('div');
-    mobileHeader.className = 'header-mobile';
+    const mobileHeader = document.createElement('header');
+    mobileHeader.className = 'm-header';
     mobileHeader.innerHTML = `
-        <a href="home.html" class="logo-mobile">
+        <a href="home.html" class="m-header-logo">
             <img src="img/Logo_leon.svg" alt="Léon">
         </a>
-        <div class="mobile-hdr-user" id="mobileHdrUser">
-            <span class="mobile-hdr-name">${firstName}</span>
+        <div class="m-header-right" id="mHeaderRight">
+            <span class="m-header-name">${firstName}</span>
             ${avatarHTML}
-            <div class="mobile-hdr-dropdown" id="mobileHdrDropdown">
-                <a href="parametres.html" class="mobile-hdr-dropdown-item">Paramètres</a>
-                <button class="mobile-hdr-dropdown-item" onclick="logout()">Déconnexion</button>
+            <div class="m-header-dropdown" id="mHeaderDropdown">
+                <a href="parametres.html" class="m-header-dropdown-item">Paramètres</a>
+                <button class="m-header-dropdown-item" onclick="logout()">Déconnexion</button>
             </div>
         </div>
     `;
-    desktopHeader.parentNode.insertBefore(mobileHeader, desktopHeader.nextSibling);
+    desktopHeader.parentNode.insertBefore(mobileHeader, desktopHeader);
 
-    // Toggle mobile dropdown on user area tap
-    const mobileUser = mobileHeader.querySelector('#mobileHdrUser');
-    mobileUser.addEventListener('click', function(e) {
+    // Toggle dropdown on user area tap
+    const userArea = mobileHeader.querySelector('#mHeaderRight');
+    userArea.addEventListener('click', function (e) {
         e.stopPropagation();
-        const dd = document.getElementById('mobileHdrDropdown');
+        const dd = document.getElementById('mHeaderDropdown');
         if (dd) dd.classList.toggle('active');
     });
-    document.addEventListener('click', function() {
-        const dd = document.getElementById('mobileHdrDropdown');
+    document.addEventListener('click', function () {
+        const dd = document.getElementById('mHeaderDropdown');
         if (dd) dd.classList.remove('active');
     });
-
-    // Inject mobile header CSS
-    const style = document.createElement('style');
-    style.textContent = `
-        .header-mobile {
-            display: none;
-            padding: 16px 24px;
-            align-items: center;
-            justify-content: space-between;
-            background: #fff;
-        }
-        .header-mobile .logo-mobile {
-            display: flex; align-items: center; text-decoration: none;
-        }
-        .header-mobile .logo-mobile img { height: 28px; width: auto; }
-        .mobile-hdr-user {
-            display: flex; align-items: center; gap: 8px;
-        }
-        .mobile-hdr-name {
-            font-family: 'Inter', sans-serif;
-            font-size: 15px; font-weight: 500; color: #64748B;
-        }
-        .mobile-hdr-avatar {
-            width: 34px; height: 34px; border-radius: 50%;
-            object-fit: cover; border: 2px solid #E5E7EB;
-        }
-        .mobile-hdr-initial {
-            width: 34px; height: 34px; border-radius: 50%;
-            background: #243b53; color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif;
-        }
-        .mobile-hdr-user {
-            position: relative; cursor: pointer;
-        }
-        .mobile-hdr-dropdown {
-            display: none;
-            position: absolute;
-            top: calc(100% + 8px);
-            right: 0;
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-            min-width: 180px;
-            z-index: 1000;
-            overflow: hidden;
-        }
-        .mobile-hdr-dropdown.active {
-            display: block;
-            animation: dropdownSlide 0.2s ease;
-        }
-        .mobile-hdr-dropdown-item {
-            display: block; width: 100%;
-            padding: 14px 20px;
-            font-family: 'Inter', sans-serif;
-            font-size: 14px; font-weight: 500;
-            color: #334155;
-            background: none; border: none;
-            text-align: left; text-decoration: none;
-            cursor: pointer;
-        }
-        .mobile-hdr-dropdown-item:hover,
-        .mobile-hdr-dropdown-item:active {
-            background: #F1F5F9;
-        }
-        .mobile-hdr-dropdown-item + .mobile-hdr-dropdown-item {
-            border-top: 1px solid #E2E8F0;
-        }
-        @media (max-width: 768px) {
-            .header-mobile { display: flex; }
-            .header, .header-desktop { display: none !important; }
-        }
-    `;
-    document.head.appendChild(style);
 }

@@ -6,8 +6,8 @@
  */
 
 (function () {
-    const MQ = window.matchMedia('(max-width: 768px)');
-    if (!MQ.matches) return; // Desktop — ne rien injecter
+    // Toujours injecter la nav dans le DOM — le CSS gère la visibilité
+    // (@media min-width: 769px → display: none, max-width: 768px → display: flex)
 
     // Détection de la page active via le pathname
     const path = window.location.pathname.split('/').pop() || 'home.html';

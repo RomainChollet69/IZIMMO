@@ -15,6 +15,7 @@
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
@@ -3497,64 +3498,6 @@
 
     <script src="js/social.js"></script>
 
-    <!-- Bottom Mobile Tab Bar -->
-    <nav class="mobile-bottom-bar">
-        <a href="index.html?v=1" class="bottom-tab">
-            <i class="fa-solid fa-house"></i>
-            <span>Vendeurs</span>
-        </a>
-        <a href="acquereurs.html" class="bottom-tab">
-            <i class="fa-solid fa-key"></i>
-            <span>Acquéreurs</span>
-        </a>
-        <a href="micro.html" class="bottom-tab-micro">
-            <i class="fa-solid fa-microphone"></i>
-        </a>
-        <a href="dvf.html" class="bottom-tab">
-            <i class="fa-solid fa-chart-simple"></i>
-            <span>Marché</span>
-        </a>
-        <a href="social.html" class="bottom-tab active">
-            <i class="fa-solid fa-share-nodes"></i>
-            <span>Social</span>
-        </a>
-    </nav>
-    <style>
-        .mobile-bottom-bar { display: none; }
-        @media (max-width: 768px) {
-            .nav-tabs { display: none !important; }
-            body { padding-bottom: 80px !important; }
-            .mobile-bottom-bar {
-                display: flex;
-                position: fixed;
-                bottom: 0; left: 0; right: 0;
-                background: #FFFFFF;
-                border-top: 1px solid #E5E7EB;
-                padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
-                z-index: 9999;
-                justify-content: space-around;
-                align-items: flex-end;
-            }
-            .bottom-tab {
-                display: flex; flex-direction: column; align-items: center;
-                text-decoration: none; color: #94A3B8;
-                font-family: 'Inter', sans-serif;
-                font-size: 10px; font-weight: 500;
-                gap: 2px; padding: 4px 0; min-width: 56px;
-            }
-            .bottom-tab i { font-size: 22px; }
-            .bottom-tab.active { color: #243B53; font-weight: 600; }
-            .bottom-tab-micro {
-                display: flex; align-items: center; justify-content: center;
-                width: 56px; height: 56px; border-radius: 50%;
-                background: #6C4CC8; color: white;
-                text-decoration: none; font-size: 24px;
-                margin-top: -20px;
-                box-shadow: 0 4px 16px rgba(108, 76, 200, 0.4);
-                transition: transform 0.2s;
-            }
-            .bottom-tab-micro:active { transform: scale(0.93); }
-        }
-    </style>
+    <script src="js/mobile-nav.js"></script>
 </body>
 </html>
