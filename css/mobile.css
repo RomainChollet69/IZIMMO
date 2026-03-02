@@ -107,8 +107,10 @@ html {
     scroll-behavior: smooth;
 }
 body {
+    padding: 0 !important;
     padding-bottom: calc(var(--m-bottom-bar-h) + 16px + env(safe-area-inset-bottom, 0px)) !important;
     background: var(--m-surface-1);
+    margin: 0;
 }
 
 /* ============================================================
