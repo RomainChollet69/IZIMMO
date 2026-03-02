@@ -88,6 +88,19 @@
         .nav-tab:hover { color: #243B53; }
         .nav-tab.active { color: #243B53; font-weight: 600; border-bottom-color: #243B53; }
         .header-actions { display: flex; align-items: center; gap: 16px; }
+        .alert-bell {
+            position: relative; background: none; border: none;
+            color: #6B7280; font-size: 20px; cursor: pointer;
+            padding: 10px; transition: color 0.2s;
+        }
+        .alert-bell:hover { color: #243B53; }
+        .alert-badge {
+            position: absolute; top: 6px; right: 6px;
+            background: #EF4444; color: white; font-size: 11px;
+            font-weight: 600; padding: 2px 6px; border-radius: 10px;
+            min-width: 18px; text-align: center;
+        }
+        .header-separator { width: 1px; height: 32px; background: #E5E7EB; }
 
         /* ===== PAGE TITLE ===== */
         .page-title-bar {
@@ -685,8 +698,16 @@
                 <a href="social.html" class="nav-tab">
                     <i class="fa-solid fa-share-nodes"></i> Social
                 </a>
+                <a href="micro.html" class="nav-tab">
+                    <i class="fa-solid fa-microphone"></i> Micro
+                </a>
             </nav>
             <div class="header-actions">
+                <button class="alert-bell" id="alertBell" title="Relances du jour">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+                </button>
+                <div class="header-separator"></div>
                 <div class="user-profile" id="userProfile"></div>
             </div>
         </div>

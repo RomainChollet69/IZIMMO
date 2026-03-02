@@ -2765,51 +2765,43 @@
             body { padding-bottom: 80px; }
         }
 
-        /* FAB Visites — bouton flottant */
-        .visits-fab {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
+        /* Bouton Visites dans la bottom bar (gauche) */
+        .bottom-visites-btn {
+            position: absolute;
+            left: 32px;
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 12px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 16px;
-            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 12px;
+            background: #F9FAFB;
+            border: 1.5px solid #E5E7EB;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
             font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            font-size: 14px;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
-            z-index: 100;
-            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            text-decoration: none;
+            flex-shrink: 0;
         }
-        .visits-fab:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 28px rgba(102, 126, 234, 0.45);
-        }
-        .visits-fab i { font-size: 18px; }
-        .visits-fab-count {
-            background: white;
-            color: #667eea;
-            font-size: 12px;
+        .bottom-visites-btn:hover { border-color: #667eea; color: #667eea; }
+        .bottom-visites-btn i { color: #667eea; font-size: 15px; }
+        .bottom-visites-count {
+            background: #667eea;
+            color: white;
+            font-size: 10px;
             font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 10px;
-            min-width: 20px;
-            text-align: center;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
         }
         @media (max-width: 768px) {
-            .visits-fab {
-                bottom: calc(var(--m-bottom-bar-h, 64px) + 16px + env(safe-area-inset-bottom, 0px));
-                left: 16px;
-                right: auto;
-                padding: 10px 14px;
-                font-size: 13px;
-                border-radius: 14px;
-            }
-            .visits-fab-label { display: none; }
+            .bottom-visites-btn { display: none; }
         }
     </style>
 </head>
@@ -7592,6 +7584,12 @@
     <!-- Desktop Bottom Bar -->
     <div class="desktop-bottom-bar">
         <div class="desktop-bottom-bar-inner">
+            <!-- Visites à gauche -->
+            <a href="visites.html" class="bottom-visites-btn" id="visitsFab" title="Gérer les visites">
+                <i class="fa-solid fa-calendar-check"></i>
+                <span>Visites</span>
+                <span class="bottom-visites-count" id="visitsFabCount" style="display:none">0</span>
+            </a>
             <!-- Micro central — hero -->
             <button type="button" class="bottom-micro-btn" onclick="openMicroModal()" title="Dicter un lead">
                 <i class="fa-solid fa-microphone"></i>
@@ -7642,13 +7640,6 @@
             }
         });
     </script>
-
-    <!-- FAB Visites — bouton flottant vers la page Visites -->
-    <a href="visites.html" class="visits-fab" id="visitsFab" title="Gérer les visites">
-        <i class="fa-solid fa-calendar-check"></i>
-        <span class="visits-fab-label">Visites</span>
-        <span class="visits-fab-count" id="visitsFabCount" style="display:none">0</span>
-    </a>
 
     <script src="js/mobile-nav.js"></script>
 </body>

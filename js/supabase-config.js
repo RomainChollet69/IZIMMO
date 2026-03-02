@@ -624,10 +624,20 @@ function setupSectorAutocomplete() {
 // ===== PHOTO BIEN VENDEUR (depuis link_previews) =====
 /** Retourne l'URL de la photo principale du bien vendeur */
 function getSellerPhoto(seller) {
-    if (!seller || !seller.link_previews || typeof seller.link_previews !== 'object') return null;
+    if (!seller) return null;
+    let previews = seller.link_previews;
+    if (!previews) return null;
+    // Robustesse : si JSONB retourné comme string (edge case PostgREST)
+    if (typeof previews === 'string') { try { previews = JSON.parse(previews); } catch(e) { return null; } }
+    if (typeof previews !== 'object') return null;
+    // Priorité : chercher via l'ordre des links
     for (const url of (seller.links || [])) {
-        const preview = seller.link_previews[url];
+        const preview = previews[url];
         if (preview && preview.image_url) return preview.image_url;
+    }
+    // Fallback : parcourir toutes les entrées link_previews (si links[] désynchronisé)
+    for (const key of Object.keys(previews)) {
+        if (previews[key] && previews[key].image_url) return previews[key].image_url;
     }
     return null;
 }
