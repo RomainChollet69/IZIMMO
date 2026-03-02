@@ -574,6 +574,38 @@
             font-family: 'Inter', sans-serif;
         }
 
+        /* ===== DEMANDER UN RETOUR POPUP ===== */
+        .visit-retour-popup { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 20px 24px; max-width: 420px; width: 92%; }
+        .visit-retour-title { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 16px; font-weight: 700; color: var(--text-dark); margin-bottom: 14px; text-align: center; }
+        .visit-retour-channel-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+        .visit-retour-channel-btn { padding: 8px 14px; border-radius: 8px; border: 1.5px solid #E5E7EB; background: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-channel-btn:hover { border-color: #667eea; background: #f0f0ff; }
+        .visit-retour-channel-btn.active { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+        .visit-retour-generate-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .visit-retour-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .visit-retour-output { display: none; width: 100%; min-height: 80px; margin-top: 12px; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
+        .visit-retour-output:focus { outline: none; border-color: #667eea; }
+        .visit-retour-actions { display: none; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .visit-retour-actions.visible { display: flex; }
+        .visit-retour-action-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid #E5E7EB; background: white; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-action-btn:hover { border-color: #667eea; background: #f8f8ff; }
+        .visit-retour-action-btn.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .visit-retour-loading { display: none; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #667eea; }
+        .visit-retour-loading.visible { display: flex; }
+        .visit-retour-close { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999; line-height: 1; }
+        .visit-retour-close:hover { color: #333; }
+        .msg-ia-spinner { width: 20px; height: 20px; border: 2px solid var(--border-color); border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Tone popup (tu/vous) */
+        .tone-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); z-index: 30000; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.15s ease; }
+        .tone-popup { background: white; border-radius: 14px; padding: 20px 24px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); text-align: center; min-width: 220px; }
+        .tone-popup-title { font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700; font-size: 16px; color: var(--text-dark); margin-bottom: 14px; }
+        .tone-popup-buttons { display: flex; gap: 10px; justify-content: center; }
+        .tone-popup-btn { padding: 10px 24px; border-radius: 10px; border: 1.5px solid #E5E7EB; background: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .tone-popup-btn:hover { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
@@ -1083,6 +1115,7 @@
             const btnLabel = visit.feedback_rating ? 'Modifier le retour' : 'Donner un retour';
             actions = `<div class="visit-card-actions">
                 <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
+                <button type="button" class="visit-action-btn promote" style="background:#F3E5F5;color:#7B1FA2" onclick="event.stopPropagation();openVisitRetourPopup('${visit.id}')">Demander un retour</button>
                 ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation();openPromoteModal('${visit.id}')">Promouvoir en acquéreur</button>` : ''}
             </div>`;
         }
@@ -1703,6 +1736,201 @@
         allVisits = await loadAllVisits();
         renderVisitsPage();
         showToast('Acquéreur créé et lié');
+    }
+
+    // ===== DEMANDER UN RETOUR (message IA) =====
+
+    function askTone() {
+        return new Promise(resolve => {
+            const overlay = document.createElement('div');
+            overlay.className = 'tone-popup-overlay';
+            overlay.innerHTML = `
+                <div class="tone-popup">
+                    <div class="tone-popup-title">Tu ou vous ?</div>
+                    <div class="tone-popup-buttons">
+                        <button class="tone-popup-btn" data-tone="tu">Tutoyer</button>
+                        <button class="tone-popup-btn" data-tone="vous">Vouvoyer</button>
+                    </div>
+                </div>`;
+            overlay.addEventListener('click', e => {
+                const btn = e.target.closest('.tone-popup-btn');
+                if (btn) { overlay.remove(); resolve(btn.dataset.tone); }
+                else if (e.target === overlay) { overlay.remove(); resolve(null); }
+            });
+            document.body.appendChild(overlay);
+        });
+    }
+
+    async function openVisitRetourPopup(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) { console.error('[VisitRetour] Visit not found:', visitId); return; }
+
+        // Infos du bien visité
+        let propertyCity = '';
+        let propertyType = '';
+        if (visit.sellers) {
+            propertyCity = visit.sellers.address ? extractCity(visit.sellers.address) || visit.sellers.address : '';
+            propertyType = visit.sellers.property_type || '';
+        }
+
+        const TYPE_LABELS = { appartement: "l'appartement", maison: 'la maison', terrain: 'le terrain', immeuble: "l'immeuble", local_commercial: 'le local commercial', parking: 'le parking' };
+        const typeLbl = TYPE_LABELS[propertyType] || 'le bien';
+        const propertyLabel = propertyCity ? `${typeLbl} de ${propertyCity}` : typeLbl;
+
+        // Infos du visiteur
+        const visitorName = getVisitorName(visit);
+        const visitorPhone = getVisitorPhone(visit);
+        const visitorEmail = visit.buyers?.email || visit.visitor_email || '';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.style.zIndex = '25000';
+        overlay.innerHTML = `
+            <div class="visit-retour-popup" style="position:relative;">
+                <button type="button" class="visit-retour-close" id="visitRetourClose">&times;</button>
+                <div class="visit-retour-title">Demander un retour visite</div>
+                <div style="text-align:center;font-size:12px;color:#78909C;margin-bottom:12px;">
+                    ${escapeHtml(visitorName)} — ${escapeHtml(propertyLabel.charAt(0).toUpperCase() + propertyLabel.slice(1))}
+                </div>
+                <div class="visit-retour-channel-bar">
+                    <button type="button" class="visit-retour-channel-btn active" data-channel="sms">SMS</button>
+                    <button type="button" class="visit-retour-channel-btn" data-channel="whatsapp">WhatsApp</button>
+                    <button type="button" class="visit-retour-channel-btn" data-channel="email">Email</button>
+                </div>
+                <button type="button" class="visit-retour-generate-btn" id="visitRetourGenBtn">Générer le message</button>
+                <div class="visit-retour-loading" id="visitRetourLoading">
+                    <div class="msg-ia-spinner"></div>
+                    <span>Génération en cours...</span>
+                </div>
+                <textarea class="visit-retour-output" id="visitRetourOutput" placeholder="Le message apparaîtra ici..."></textarea>
+                <div class="visit-retour-actions" id="visitRetourActions">
+                    <button type="button" class="visit-retour-action-btn primary" id="vrCopy">Copier</button>
+                    <button type="button" class="visit-retour-action-btn" id="vrSMS">SMS</button>
+                    <button type="button" class="visit-retour-action-btn" id="vrWhatsApp">WhatsApp</button>
+                    <button type="button" class="visit-retour-action-btn" id="vrEmail">Email</button>
+                    <button type="button" class="visit-retour-action-btn" id="vrRegen">Régénérer</button>
+                </div>
+            </div>`;
+
+        document.body.appendChild(overlay);
+
+        let popupChannel = 'sms';
+
+        // Sélection de canal
+        overlay.querySelectorAll('.visit-retour-channel-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                popupChannel = btn.dataset.channel;
+                overlay.querySelectorAll('.visit-retour-channel-btn').forEach(b => b.classList.toggle('active', b === btn));
+            });
+        });
+
+        // Fermer
+        const closePopup = () => overlay.remove();
+        overlay.querySelector('#visitRetourClose').addEventListener('click', closePopup);
+        overlay.addEventListener('click', e => { if (e.target === overlay) closePopup(); });
+
+        // Ouvrir l'appli correspondante
+        const openChannelApp = (message) => {
+            const phone = visitorPhone.replace(/\s/g, '');
+            if (popupChannel === 'sms') {
+                if (!phone) { showToast('Pas de numéro de téléphone'); return; }
+                window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_blank');
+            } else if (popupChannel === 'whatsapp') {
+                if (!phone) { showToast('Pas de numéro de téléphone'); return; }
+                let waPhone = phone;
+                if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
+                window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
+            } else if (popupChannel === 'email') {
+                if (!visitorEmail) { showToast("Pas d'adresse email"); return; }
+                let subject = '', body = message;
+                const subjectMatch = message.match(/^Objet\s*:\s*(.+)\n/i);
+                if (subjectMatch) { subject = subjectMatch[1].trim(); body = message.slice(subjectMatch[0].length).trim(); }
+                window.open(`mailto:${visitorEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+            }
+        };
+
+        // Construire les données du lead pour l'API
+        const leadData = {
+            first_name: visit.buyers?.first_name || visit.buyer_name?.split(/\s+/)[0] || '',
+            last_name: visit.buyers?.last_name || visit.buyer_name?.split(/\s+/).slice(1).join(' ') || '',
+            phone: visitorPhone,
+            email: visitorEmail
+        };
+
+        // Génération du message
+        const doGenerate = async () => {
+            const tone = await askTone();
+            if (!tone) return;
+
+            const genBtn = overlay.querySelector('#visitRetourGenBtn');
+            const loading = overlay.querySelector('#visitRetourLoading');
+            const output = overlay.querySelector('#visitRetourOutput');
+            const actionsDiv = overlay.querySelector('#visitRetourActions');
+
+            genBtn.disabled = true;
+            loading.classList.add('visible');
+            output.style.display = 'none';
+            actionsDiv.classList.remove('visible');
+
+            const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+            const visitDateStr = visit.visit_date
+                ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+                : '';
+            const customPrompt = `La visite portait sur ${propertyLabel}.${visitDateStr ? ' Elle a eu lieu le ' + visitDateStr + '.' : ''} Mentionne le bien visité (ville) dans le message de manière naturelle.`;
+
+            try {
+                const resp = await fetch('/api/generate-message', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(),
+                    body: JSON.stringify({
+                        channel: popupChannel,
+                        scenario: 'retour_visite',
+                        leadData,
+                        notes: [],
+                        customPrompt,
+                        leadType: 'buyer',
+                        agentName,
+                        tone
+                    })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur');
+
+                output.value = data.message;
+                output.style.display = 'block';
+                actionsDiv.classList.add('visible');
+                openChannelApp(data.message);
+            } catch (err) {
+                alert('Erreur de génération : ' + err.message);
+            } finally {
+                genBtn.disabled = false;
+                loading.classList.remove('visible');
+            }
+        };
+
+        overlay.querySelector('#visitRetourGenBtn').addEventListener('click', doGenerate);
+
+        // Actions post-génération
+        overlay.querySelector('#vrCopy').addEventListener('click', () => {
+            const text = overlay.querySelector('#visitRetourOutput').value;
+            if (text) navigator.clipboard.writeText(text).then(() => showToast('Message copié !'));
+        });
+        overlay.querySelector('#vrSMS').addEventListener('click', () => {
+            const saved = popupChannel; popupChannel = 'sms';
+            openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+            popupChannel = saved;
+        });
+        overlay.querySelector('#vrWhatsApp').addEventListener('click', () => {
+            const saved = popupChannel; popupChannel = 'whatsapp';
+            openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+            popupChannel = saved;
+        });
+        overlay.querySelector('#vrEmail').addEventListener('click', () => {
+            const saved = popupChannel; popupChannel = 'email';
+            openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+            popupChannel = saved;
+        });
+        overlay.querySelector('#vrRegen').addEventListener('click', doGenerate);
     }
 
     // ===== UTILS =====
