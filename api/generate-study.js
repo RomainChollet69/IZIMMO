@@ -236,6 +236,7 @@ STYLE RÉDACTIONNEL :
 - Phrases variées : alterner courtes (impact) et développées (argumentation)
 - INTERDIT : "n'hésitez pas", "nous restons à votre disposition", "force est de constater", "il est important de noter", "il convient de", "en effet"
 - Chaque section doit apporter de la VALEUR : pas de remplissage, chaque phrase a un but
+- IMPORTANT : Les informations complémentaires du propriétaire contiennent des labels courts (ex: "3e étage", "Bon état"). Reformule-les en français naturel dans tes paragraphes. NE JAMAIS copier les labels tels quels. Ex : "situé au troisième étage" et non "situé au 3e étage". Ex: "l'appartement bénéficie d'un bon état général" et non "état général : Bon état".
 
 FORMAT HTML :
 - Utilise <p>, <strong>, <em>, <ul>/<li> pour structurer

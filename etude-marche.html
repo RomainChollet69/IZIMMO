@@ -1097,7 +1097,7 @@ const INTERVIEW_QUESTIONS = [
         id: 'exposure',
         question: "Quelle est l'exposition principale ?",
         type: 'single',
-        options: ['Sud / Sud-Ouest', 'Est / Ouest', 'Nord', 'Double exposition', 'Ne sait pas']
+        options: ['Sud / Sud-Ouest', 'Est / Ouest', 'Nord', 'Double exposition', 'Traversant', 'Ne sait pas']
     },
     {
         id: 'luminosity',
@@ -1631,11 +1631,110 @@ function startInterview() {
     interviewVoiceNotes = {};
     currentInterviewStep = 0;
 
+    // Pré-remplir depuis la description (dictée vocale ou saisie manuelle)
+    const description = document.getElementById('studyDescription').value.trim();
+    if (description) {
+        prefillInterviewFromDescription(description);
+    }
+
     // Basculer l'affichage
     document.getElementById('studyForm').style.display = 'none';
     document.getElementById('interviewSection').style.display = '';
 
     renderInterviewStep(0);
+}
+
+/**
+ * prefillInterviewFromDescription() — Scanne la description pour pré-cocher des réponses
+ * Matching par mots-clés, insensible à la casse
+ */
+function prefillInterviewFromDescription(text) {
+    const t = text.toLowerCase();
+
+    // Étage
+    if (/\brdc\b|rez[- ]de[- ]chauss[ée]/i.test(t)) interviewAnswers['floor'] = 'RDC';
+    else if (/\b1er?\s*étage/i.test(t)) interviewAnswers['floor'] = '1er étage';
+    else if (/\b2[eè](?:me)?\s*étage/i.test(t)) interviewAnswers['floor'] = '2e étage';
+    else if (/\b3[eè](?:me)?\s*étage/i.test(t)) interviewAnswers['floor'] = '3e étage';
+    else if (/\b[45][eè](?:me)?\s*étage/i.test(t)) interviewAnswers['floor'] = '4e-5e étage';
+    else if (/\b[6-9][eè](?:me)?\s*étage|\b\d{2,}[eè](?:me)?\s*étage/i.test(t)) interviewAnswers['floor'] = '6e étage ou +';
+
+    // Dernier étage
+    if (/dernier\s*étage/i.test(t)) interviewAnswers['lastFloor'] = 'Oui';
+
+    // Ascenseur
+    if (/avec\s*ascenseur/i.test(t)) interviewAnswers['elevator'] = 'Oui';
+    else if (/sans\s*ascenseur/i.test(t)) interviewAnswers['elevator'] = 'Non';
+
+    // État
+    if (/refait\s*[àa]\s*neuf|neuf/i.test(t)) interviewAnswers['condition'] = 'Neuf / Refait à neuf';
+    else if (/bon\s*état/i.test(t)) interviewAnswers['condition'] = 'Bon état';
+    else if (/[àa]\s*r[ée]nover|[àa]\s*rafra[iî]chir/i.test(t)) interviewAnswers['condition'] = 'À rénover';
+    else if (/quelques\s*travaux|rafra[iî]chissement/i.test(t)) interviewAnswers['condition'] = 'Correct, quelques rafraîchissements';
+
+    // Exposition
+    if (/traversant/i.test(t)) interviewAnswers['exposure'] = 'Traversant';
+    else if (/double\s*exposition/i.test(t)) interviewAnswers['exposure'] = 'Double exposition';
+    else if (/plein\s*sud|exposition\s*sud|sud[- ]ouest/i.test(t)) interviewAnswers['exposure'] = 'Sud / Sud-Ouest';
+    else if (/exposition?\s*nord/i.test(t)) interviewAnswers['exposure'] = 'Nord';
+
+    // Luminosité
+    if (/tr[èe]s\s*lumineu|baign[ée]\s*de\s*lumi[èe]re/i.test(t)) interviewAnswers['luminosity'] = 'Très lumineux';
+    else if (/lumineu/i.test(t)) interviewAnswers['luminosity'] = 'Correct';
+    else if (/sombre/i.test(t)) interviewAnswers['luminosity'] = 'Sombre';
+
+    // Extérieurs (multi)
+    const outdoor = [];
+    if (/balcon/i.test(t)) outdoor.push('Balcon');
+    if (/terrasse/i.test(t)) outdoor.push('Terrasse');
+    if (/jardin/i.test(t)) outdoor.push('Jardin privatif');
+    if (/loggia/i.test(t)) outdoor.push('Loggia');
+    if (outdoor.length > 0) interviewAnswers['outdoor'] = outdoor;
+
+    // Stationnement (multi)
+    const parking = [];
+    if (/garage/i.test(t)) parking.push('Garage');
+    if (/place\s*de\s*parking|parking/i.test(t) && !/garage/i.test(t)) parking.push('Place de parking');
+    if (/box\s*ferm/i.test(t)) parking.push('Box fermé');
+    if (parking.length > 0) interviewAnswers['parking'] = parking;
+
+    // Annexes (multi)
+    const annexes = [];
+    if (/cave/i.test(t)) annexes.push('Cave');
+    if (/grenier/i.test(t)) annexes.push('Grenier');
+    if (/cellier/i.test(t)) annexes.push('Cellier');
+    if (/buanderie/i.test(t)) annexes.push('Buanderie');
+    if (annexes.length > 0) interviewAnswers['annexes'] = annexes;
+
+    // Travaux récents (multi)
+    const reno = [];
+    if (/cuisine\s*[ée]quip[ée]|cuisine\s*r[ée]cente|cuisine\s*neuve/i.test(t)) reno.push('Cuisine équipée');
+    if (/salle\s*de\s*bain\s*(?:refaite|neuve|r[ée]nov)/i.test(t)) reno.push('Salle de bain');
+    if (/double\s*vitrage|fen[êe]tres?\s*(?:neuves|chang)|isolation/i.test(t)) reno.push('Fenêtres / Isolation');
+    if (reno.length > 0) interviewAnswers['renovations'] = reno;
+
+    // Points forts (multi)
+    const strengths = [];
+    if (/vue\s*d[ée]gag[ée]|vue\s*(?:sur|imprenable)/i.test(t)) strengths.push('Vue dégagée');
+    if (/calme|r[ée]sidentiel|tranquille/i.test(t)) strengths.push('Calme / Résidentiel');
+    if (/proche?\s*(?:des?\s*)?transport|m[ée]tro|tramway|bus/i.test(t)) strengths.push('Proche transports');
+    if (/proche?\s*(?:des?\s*)?commerc/i.test(t)) strengths.push('Proche commerces');
+    if (/cachet|charme|caract[èe]re|moulures|parquet/i.test(t)) strengths.push('Cachet / Charme');
+    if (strengths.length > 0) interviewAnswers['strengths'] = strengths;
+
+    // Points faibles (multi)
+    const weaknesses = [];
+    if (/vis[- ][àa][- ]vis/i.test(t)) weaknesses.push('Vis-à-vis');
+    if (/bruyant|bruit/i.test(t)) weaknesses.push('Bruyant');
+    if (/travaux\s*(?:de\s*)?copro/i.test(t)) weaknesses.push('Travaux copro prévus');
+    if (/toiture|toit/i.test(t)) weaknesses.push('Toiture à refaire');
+    if (/isolation\s*insuffisante|mal\s*isol/i.test(t)) weaknesses.push('Isolation insuffisante');
+    if (weaknesses.length > 0) interviewAnswers['weaknesses'] = weaknesses;
+
+    const prefilled = Object.keys(interviewAnswers).length;
+    if (prefilled > 0) {
+        console.log(`[Interview] ${prefilled} réponses pré-remplies depuis la description`);
+    }
 }
 
 /**
@@ -2271,7 +2370,7 @@ function renderMapSection(property) {
 
     const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=15&size=800x300&scale=2&maptype=roadmap&markers=color:red|${property.latitude},${property.longitude}&key=${mapKey}`;
     return `
-        <img src="${mapUrl}" alt="Localisation du bien" class="study-map" crossorigin="anonymous">
+        <img src="${mapUrl}" alt="Localisation du bien" class="study-map">
         <p style="text-align:center; color: var(--text-light); font-size: 12px;">${escapeHtml(property.address)}</p>
     `;
 }
