@@ -1076,7 +1076,14 @@ const INTERVIEW_QUESTIONS = [
         id: 'floor',
         question: 'À quel étage se situe le bien ?',
         type: 'single',
-        options: ['RDC', '1er-2e étage', '3e-5e étage', '6e+ / Dernier étage'],
+        options: ['RDC', '1er étage', '2e étage', '3e étage', '4e-5e étage', '6e étage ou +'],
+        condition: (form) => form.propertyType === 'appartement'
+    },
+    {
+        id: 'lastFloor',
+        question: 'Est-ce le dernier étage ?',
+        type: 'single',
+        options: ['Oui', 'Non', 'Ne sait pas'],
         condition: (form) => form.propertyType === 'appartement'
     },
     {
@@ -1149,6 +1156,7 @@ const INTERVIEW_LABELS = {
     positioning: 'Positionnement marché',
     condition: 'État général',
     floor: 'Étage',
+    lastFloor: 'Dernier étage',
     elevator: 'Ascenseur',
     exposure: 'Exposition',
     luminosity: 'Luminosité',
@@ -1924,13 +1932,17 @@ function buildInterviewSummary() {
             value = answer;
         }
 
-        // Combiner étage + ascenseur sur une ligne si les deux existent
-        if (q.id === 'elevator' && interviewAnswers['floor']) {
+        // Combiner étage + dernier étage + ascenseur sur une seule ligne
+        if (q.id === 'lastFloor' || q.id === 'elevator') {
             continue; // Géré avec 'floor'
         }
         if (q.id === 'floor') {
+            const lastFloor = interviewAnswers['lastFloor'];
             const elevator = interviewAnswers['elevator'];
-            if (value && elevator) {
+            if (lastFloor === 'Oui' && value) {
+                value += ' (dernier étage)';
+            }
+            if (elevator) {
                 value += `, ${elevator === 'Oui' ? 'avec ascenseur' : 'sans ascenseur'}`;
             }
         }
