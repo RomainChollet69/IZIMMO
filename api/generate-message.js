@@ -12,8 +12,13 @@ export default async function handler(req, res) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
-    const { channel, scenario, leadData, notes, customPrompt, leadType, agentName, tone } = req.body || {};
+    const { channel, scenario, leadData, notes, customPrompt, leadType, agentName, agencyName, tone } = req.body || {};
     if (!channel || !scenario || !leadData) return res.status(400).json({ error: 'Missing required fields' });
+
+    // Signature complète : "Prénom Nom, Réseau" ou "Prénom Nom" ou "Prénom"
+    const agentSignature = agentName
+        ? (agencyName ? `${agentName}, ${agencyName}` : agentName)
+        : '';
 
     const toneRule = tone === 'tu'
         ? 'Tutoiement obligatoire (tu/toi/ton/ta).'
@@ -22,7 +27,7 @@ export default async function handler(req, res) {
     const channelInstructions = {
         sms: `Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. ${toneRule}`,
         whatsapp: `Message WhatsApp conversationnel mais professionnel. Peut inclure des emojis (modérément). 2-4 phrases max. ${toneRule}`,
-        email: `Email professionnel avec objet. Format:\nObjet : [objet]\n\n[corps du message]\n\nCordialement,\n[prénom de l'agent si disponible]. ${toneRule}`
+        email: `Email professionnel avec objet. Format:\nObjet : [objet]\n\n[corps du message]\n\nCordialement,\n${agentSignature || '[nom de l\'agent]'}. ${toneRule}`
     };
 
     const sellerScenarios = {
@@ -92,7 +97,6 @@ export default async function handler(req, res) {
 
     let systemPrompt;
     if (isRetourVisiteBuyer) {
-        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
         systemPrompt = `Tu rédiges un message pour un agent immobilier qui demande à son acquéreur ce qu'il a pensé d'une visite. Tu écris comme un VRAI agent, pas comme une IA.
 
 Ton et style — CRITIQUE :
@@ -103,10 +107,9 @@ Ton et style — CRITIQUE :
 - ${channelInstructions[channel] || channelInstructions.sms}
 - Mentionne le bien visité (ville, type) naturellement dans le message
 - Utilise le prénom de l'acquéreur
-${agentFirstName ? `- Signe : ${agentFirstName}` : ''}
+${agentSignature ? `- Signe : ${agentSignature}` : ''}
 - Retourne UNIQUEMENT le message, sans explication`;
     } else if (isRetourVisiteSeller) {
-        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
         systemPrompt = `Tu es un agent immobilier qui écrit un message à son vendeur pour lui faire un retour de visite. Tu écris comme un VRAI agent, pas comme une IA.
 
 Ton et style — CRITIQUE, respecte ça à la lettre :
@@ -118,7 +121,7 @@ Ton et style — CRITIQUE, respecte ça à la lettre :
 - INTERDIT : listes à puces, structure "points positifs / points négatifs"
 - Utilise le prénom de l'acquéreur (jamais le nom complet) quand tu parles de lui au vendeur
 - ${channelInstructions[channel] || channelInstructions.sms}
-${agentFirstName ? `- Signe : ${agentFirstName}` : ''}
+${agentSignature ? `- Signe : ${agentSignature}` : ''}
 
 Voici des VRAIS exemples de messages d'agent immobilier — imite ce style :
 
@@ -149,7 +152,6 @@ Règles:
 - Ne mets JAMAIS de placeholder entre crochets [xxx]
 - Retourne UNIQUEMENT l'argumentaire, sans explication`;
     } else {
-        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
         systemPrompt = `Tu rédiges des messages pour un agent immobilier. Écris EXACTEMENT comme un vrai professionnel de l'immobilier écrirait — pas comme une IA.
 
 Style obligatoire :
@@ -160,7 +162,7 @@ Style obligatoire :
 - ${channelInstructions[channel] || channelInstructions.sms}
 - Utilise les informations du contact pour personnaliser (prénom, adresse, prix, etc.)
 - Ne mets JAMAIS de placeholder entre crochets [xxx]
-- Si une info manque, reformule sans placeholder${agentFirstName ? `\n- Signe avec le prénom de l'agent : ${agentFirstName}` : ''}
+- Si une info manque, reformule sans placeholder${agentSignature ? `\n- Signe : ${agentSignature}` : ''}
 - Retourne UNIQUEMENT le message, sans explication`;
     }
 

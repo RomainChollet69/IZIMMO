@@ -3347,6 +3347,22 @@
         let buyerMatchCounts = {};
         let matchRejections = null;
         let pendingReject = null;
+        let _cachedAgencyName = null;
+
+        /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
+        async function getAgencyName() {
+            if (_cachedAgencyName !== null) return _cachedAgencyName;
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return '';
+                const { data } = await supabaseClient.from('profiles').select('agency_name').eq('id', session.user.id).maybeSingle();
+                _cachedAgencyName = data?.agency_name || '';
+            } catch (e) {
+                console.error('[Acquéreurs] Erreur chargement agency_name:', e);
+                _cachedAgencyName = '';
+            }
+            return _cachedAgencyName;
+        }
 
         // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
         const EXAMPLE_BUYERS = [
@@ -4391,6 +4407,7 @@
                 const leadData = getBuyerLeadData();
                 const notes = currentNotes.slice(0, 5).map(n => n.content);
                 const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+                const agencyName = await getAgencyName();
 
                 // Contexte spécifique de la visite pour enrichir le prompt
                 const visitDateStr = visit.visit_date
@@ -4411,6 +4428,7 @@
                             customPrompt,
                             leadType: 'buyer',
                             agentName,
+                            agencyName,
                             tone
                         })
                     });
@@ -7427,13 +7445,14 @@
             const customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
 
             const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+            const agencyName = await getAgencyName();
 
             try {
                 console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'buyer' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'buyer', agentName, tone })
+                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'buyer', agentName, agencyName, tone })
                 });
                 const data = await resp.json().catch(() => ({}));
                 console.log('[MsgIA] Response:', resp.status, data);

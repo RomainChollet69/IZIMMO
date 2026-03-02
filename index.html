@@ -4579,6 +4579,22 @@
         let matchBuyers = null;
         let sellerMatchCounts = {};
         let matchRejections = null;
+        let _cachedAgencyName = null;
+
+        /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
+        async function getAgencyName() {
+            if (_cachedAgencyName !== null) return _cachedAgencyName;
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return '';
+                const { data } = await supabaseClient.from('profiles').select('agency_name').eq('id', session.user.id).maybeSingle();
+                _cachedAgencyName = data?.agency_name || '';
+            } catch (e) {
+                console.error('[Vendeurs] Erreur chargement agency_name:', e);
+                _cachedAgencyName = '';
+            }
+            return _cachedAgencyName;
+        }
 
         // ===== DONNÉES D'EXEMPLE (ONBOARDING) =====
         const EXAMPLE_SELLERS = [
@@ -10673,13 +10689,14 @@
             }
 
             const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+            const agencyName = await getAgencyName();
 
             try {
                 console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'seller' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName, tone })
+                    body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName, agencyName, tone })
                 });
                 const data = await resp.json().catch(() => ({}));
                 console.log('[MsgIA] Response:', resp.status, data);

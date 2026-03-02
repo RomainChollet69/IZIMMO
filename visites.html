@@ -798,6 +798,21 @@
     let allVisits = [];
     let activeSellers = [];
     let openAccordions = new Set();
+    let _cachedAgencyName = null;
+
+    /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
+    async function getAgencyName() {
+        if (_cachedAgencyName !== null) return _cachedAgencyName;
+        try {
+            const userId = await getCurrentUserId();
+            const { data } = await supabaseClient.from('profiles').select('agency_name').eq('id', userId).maybeSingle();
+            _cachedAgencyName = data?.agency_name || '';
+        } catch (e) {
+            console.error('[Visites] Erreur chargement agency_name:', e);
+            _cachedAgencyName = '';
+        }
+        return _cachedAgencyName;
+    }
 
     // ===== HELPERS =====
 
@@ -1873,6 +1888,7 @@
             actionsDiv.classList.remove('visible');
 
             const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+            const agencyName = await getAgencyName();
             const visitDateStr = visit.visit_date
                 ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
                 : '';
@@ -1890,6 +1906,7 @@
                         customPrompt,
                         leadType: 'buyer',
                         agentName,
+                        agencyName,
                         tone
                     })
                 });
