@@ -1260,6 +1260,7 @@ async function generateStudy() {
     const loadingStep = document.getElementById('loadingStep');
     const loadingSubstep = document.getElementById('loadingSubstep');
 
+    let timerInterval = null;
     btn.disabled = true;
     form.style.display = 'none';
     loading.classList.add('active');
@@ -1280,9 +1281,14 @@ async function generateStudy() {
 
         console.log(`[EtudeMarche] ${dvfSales.length} ventes DVF collectées`);
 
-        // Étape 2 : Génération IA
+        // Étape 2 : Génération IA — démarrer le timer
+        const timerStart = Date.now();
+        timerInterval = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - timerStart) / 1000);
+            loadingSubstep.textContent = `Analyse en cours... ${elapsed}s`;
+        }, 1000);
         loadingStep.textContent = 'Léon analyse le marché...';
-        loadingSubstep.textContent = `${dvfSales.length} ventes en cours d'analyse`;
+        loadingSubstep.textContent = 'Analyse en cours... 0s';
 
         // Récupérer les infos agent
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -1340,10 +1346,12 @@ async function generateStudy() {
         }
 
         const { analysis, narrative } = await response.json();
+        clearInterval(timerInterval);
+        const totalSeconds = Math.floor((Date.now() - timerStart) / 1000);
 
         // Étape 3 : Rendu
         loadingStep.textContent = 'Mise en page de l\'étude...';
-        loadingSubstep.textContent = 'Quelques instants...';
+        loadingSubstep.textContent = `Généré en ${totalSeconds}s`;
 
         renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length);
 
@@ -1355,6 +1363,7 @@ async function generateStudy() {
         output.scrollIntoView({ behavior: 'smooth' });
 
     } catch (err) {
+        if (timerInterval) clearInterval(timerInterval);
         console.error('[EtudeMarche] Error:', err);
         loading.classList.remove('active');
         form.style.display = '';
