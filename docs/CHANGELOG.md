@@ -4,6 +4,33 @@
 
 ---
 
+## Session 2026-03-02k — Phase 2 : Analyse photos par Claude Vision
+
+### Résumé
+Les photos du bien uploadées dans le formulaire sont maintenant envoyées à Claude Vision en passe 2 (rédaction). L'IA voit les photos et enrichit la description avec des détails visuels concrets (luminosité, matériaux, volumes, état).
+
+### Modifications
+
+**`api/generate-study.js`** :
+- `callClaude()` : nouveau paramètre `images`, construction du contenu multimodal (`type: 'image'` + `type: 'text'`)
+- Handler : extraction du champ `photos` du body
+- Passe 2 : photos envoyées en Vision (`photoImages.slice(0, 5)`)
+- `buildWritingPrompt()` : section "PHOTOS DU BIEN" avec instructions pour décrire naturellement
+
+**`etude-marche.html`** :
+- `executeStudyGeneration()` : ajout `photos: studyPhotos` dans le body POST
+
+### Fichiers modifiés
+- `api/generate-study.js`
+- `etude-marche.html`
+
+### Points d'attention
+- Surcoût Vision : ~0.01-0.02€ par étude pour 3-5 photos (négligeable)
+- Sans photos, le comportement est identique (pas de régression)
+- Les photos ne sont envoyées qu'en passe 2, pas en passe 1 (analyse chiffrée)
+
+---
+
 ## Session 2026-03-02j — Fix prefill surface + description depuis fiche vendeur
 
 ### Résumé
