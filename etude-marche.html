@@ -3202,13 +3202,15 @@ function renderWalkScoreAndNoise(walkScore, noise) {
 
 function renderMapSection(property) {
     if (!property.latitude || !property.longitude) return '<p>Coordonnées non disponibles.</p>';
-    const mapKey = window.GOOGLE_MAPS_KEY || '';
-    if (!mapKey) return '<p>Carte non disponible (clé Google Maps manquante).</p>';
 
-    const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${property.latitude},${property.longitude}&zoom=15&size=800x300&scale=2&maptype=roadmap&markers=color:red|${property.latitude},${property.longitude}&key=${mapKey}`;
+    // OpenStreetMap embed (gratuit, sans clé API)
+    const lat = property.latitude;
+    const lng = property.longitude;
+    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008},${lat - 0.005},${lng + 0.008},${lat + 0.005}&layer=mapnik&marker=${lat},${lng}`;
+
     return `
-        <img src="${mapUrl}" alt="Localisation du bien" class="study-map">
-        <p style="text-align:center; color: var(--text-light); font-size: 12px;">${escapeHtml(property.address)}</p>
+        <iframe src="${osmUrl}" class="study-map" style="border:none; border-radius:8px;" loading="lazy"></iframe>
+        <p style="text-align:center; color: var(--text-light); font-size: 12px; margin-top: 8px;">${escapeHtml(property.address)}</p>
     `;
 }
 
