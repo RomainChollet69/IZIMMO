@@ -40,14 +40,17 @@ export default async function handler(req, res) {
         : 'Le conseiller';
 
     try {
+        const startTime = Date.now();
+
         // ========== PASSE 1 + POI + COMMUNE en parallèle ==========
         const analysisSystemPrompt = buildAnalysisPrompt();
         const analysisUserPrompt = buildAnalysisUserPrompt(property, limitedDvf);
 
         const hasCoords = property.latitude && property.longitude;
+        const PASS1_TIMEOUT = 25000; // 25s max pour la passe 1
 
         const [analysisRaw, poiData, communeData] = await Promise.all([
-            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, ABORT_TIMEOUT_MS),
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, PASS1_TIMEOUT),
             hasCoords
                 ? fetchPOIData(property.latitude, property.longitude).catch(err => {
                     console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
@@ -73,12 +76,16 @@ export default async function handler(req, res) {
         }
 
         // ========== PASSE 2 : Rédaction narrative (+ Vision + Environnement) ==========
+        const elapsedMs = Date.now() - startTime;
+        const pass2Timeout = Math.max(ABORT_TIMEOUT_MS - elapsedMs, 15000); // Temps restant, min 15s
+        console.log(`[GenerateStudy] Passe 1 terminée en ${Math.round(elapsedMs / 1000)}s, budget passe 2: ${Math.round(pass2Timeout / 1000)}s`);
+
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData);
 
         // Envoyer les photos en mode Vision pour enrichir la description du bien
         const photoImages = (photos || []).slice(0, 5);
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 7000, ABORT_TIMEOUT_MS, photoImages);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 7000, pass2Timeout, photoImages);
 
         let narrative;
         try {
@@ -292,9 +299,10 @@ function structurePOIData(elements, lat, lng) {
         }
     }
 
-    // Trier chaque catégorie par distance
+    // Trier par distance et limiter à 5 items par catégorie (suffisant pour l'affichage)
     for (const cat of Object.values(categories)) {
         cat.items.sort((a, b) => a.distance - b.distance);
+        cat.items = cat.items.slice(0, 5);
     }
 
     const noise = estimateNoise(noiseElements, lat, lng);
