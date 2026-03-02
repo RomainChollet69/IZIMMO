@@ -1236,13 +1236,57 @@
 
         /* ===== PRINT / PDF ===== */
         @media print {
-            body { background: white; }
+            /* Reset global */
+            body { background: white; margin: 0; padding: 0; }
             .header, .study-toolbar, #studyForm, #studyLoading, #interviewSection, .modal, .no-print { display: none !important; }
             .main-container { max-width: 100%; padding: 0; margin: 0; }
-            .study-page { box-shadow: none; border-radius: 0; margin: 0; }
-            .study-cover { min-height: auto; padding: 40px; page-break-after: always; }
-            .study-section { page-break-inside: avoid; }
             #studyOutput { display: block !important; }
+
+            /* Pages : pas d'ombres ni marges entre sections */
+            .study-page {
+                box-shadow: none;
+                border-radius: 0;
+                margin: 0;
+                padding: 32px 40px;
+                page-break-after: always;
+            }
+            .study-page:last-child { page-break-after: auto; }
+
+            /* Couverture */
+            .study-cover {
+                min-height: auto;
+                padding: 60px 40px 40px;
+                page-break-after: always;
+            }
+            .study-cover-photos img { max-height: 140px; }
+
+            /* Sections : éviter les coupures */
+            .study-section { page-break-inside: avoid; }
+            .study-section-title { page-break-after: avoid; }
+
+            /* Tableau comparables : garder ensemble */
+            .comparables-table { page-break-inside: avoid; }
+
+            /* Grille POI : garder ensemble */
+            .poi-grid { page-break-inside: avoid; }
+            .commune-banner { page-break-inside: avoid; }
+            .env-indicators { page-break-inside: avoid; }
+
+            /* Estimation box : garder ensemble */
+            .estimation-box { page-break-inside: avoid; }
+            .buyer-profile { page-break-inside: avoid; }
+
+            /* Recommandation : garder ensemble */
+            .recommendation-box { page-break-inside: avoid; }
+
+            /* Carte : forcer le rendu de l'image */
+            .study-map { max-height: 300px; width: 100%; object-fit: cover; }
+
+            /* Graphique : garder ensemble */
+            .chart-container, canvas { page-break-inside: avoid; }
+
+            /* Points forts/faibles : garder ensemble */
+            .strengths-list, .weaknesses-list { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -3159,16 +3203,14 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             </div>
         </div>
 
-        <!-- LOCALISATION -->
+        <!-- LOCALISATION + ENVIRONNEMENT (même page en PDF) -->
         <div class="study-page">
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-map-marker-alt"></i> Localisation</div>
                 ${renderMapSection(property)}
             </div>
+            ${renderEnvironmentSection(poiData, communeData, narrative, true)}
         </div>
-
-        <!-- ENVIRONNEMENT & CADRE DE VIE -->
-        ${renderEnvironmentSection(poiData, communeData, narrative)}
 
         <!-- POINTS FORTS / POINTS FAIBLES -->
         <div class="study-page">
@@ -3199,7 +3241,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             </div>
         </div>
 
-        <!-- RECOMMANDATION -->
+        <!-- RECOMMANDATION + AVERTISSEMENT (même page) -->
         <div class="study-page">
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-lightbulb"></i> Recommandation du conseiller</div>
@@ -3208,11 +3250,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
                     ${agentSignature ? `<div class="recommendation-signature">${escapeHtml(agentSignature)}</div>` : ''}
                 </div>
             </div>
-        </div>
-
-        <!-- AVERTISSEMENT -->
-        <div class="study-page">
-            <div class="study-section" style="padding: 24px 48px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
+            <div class="study-section" style="padding: 24px 48px; font-size: 12px; color: var(--text-secondary); line-height: 1.7; margin-top: 24px;">
                 <p style="font-style: italic; border-left: 3px solid var(--primary); padding-left: 16px; margin-bottom: 16px;">
                     Cette étude se veut la plus objective possible. Je tiens toutefois à préciser que la valeur d'un bien ne se révèle qu'au moment de sa commercialisation et que seul le marché (les acquéreurs) fixe le prix.
                 </p>
@@ -3243,10 +3281,10 @@ function renderPropertyGrid(property) {
     `).join('')}</div>`;
 }
 
-function renderEnvironmentSection(poiData, communeData, narrative) {
+function renderEnvironmentSection(poiData, communeData, narrative, inline = false) {
     if (!poiData && !communeData) return '';
 
-    let html = '<div class="study-page"><div class="study-section">';
+    let html = inline ? '<div class="study-section" style="margin-top:24px;">' : '<div class="study-page"><div class="study-section">';
     html += '<div class="study-section-title"><i class="fas fa-city"></i> Environnement & Cadre de vie</div>';
 
     // Bannière commune
@@ -3282,7 +3320,7 @@ function renderEnvironmentSection(poiData, communeData, narrative) {
         html += renderWalkScoreAndNoise(poiData.walkScore, poiData.noise);
     }
 
-    html += '</div></div>';
+    html += inline ? '</div>' : '</div></div>';
     return html;
 }
 
@@ -3348,13 +3386,13 @@ function renderWalkScoreAndNoise(walkScore, noise) {
 function renderMapSection(property) {
     if (!property.latitude || !property.longitude) return '<p>Coordonnées non disponibles.</p>';
 
-    // OpenStreetMap embed (gratuit, sans clé API)
+    // Image statique OSM (fonctionne en impression PDF, contrairement aux iframes)
     const lat = property.latitude;
     const lng = property.longitude;
-    const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.008},${lat - 0.005},${lng + 0.008},${lat + 0.005}&layer=mapnik&marker=${lat},${lng}`;
+    const staticMapUrl = `https://staticmap.openstreetmap.de/staticmap.php?center=${lat},${lng}&zoom=15&size=800x400&markers=${lat},${lng},red-pushpin`;
 
     return `
-        <iframe src="${osmUrl}" class="study-map" style="border:none; border-radius:8px;" loading="lazy"></iframe>
+        <img src="${staticMapUrl}" alt="Carte du bien" class="study-map" style="border-radius:8px;">
         <p style="text-align:center; color: var(--text-light); font-size: 12px; margin-top: 8px;">${escapeHtml(property.address)}</p>
     `;
 }
