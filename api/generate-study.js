@@ -146,13 +146,16 @@ MÉTHODOLOGIE D'ANALYSE :
    - Si peu de comparables proches, élargir progressivement les critères
 
 2. STATISTIQUES DE PRIX :
-   - Calculer sur TOUTES les ventes du même type (pas seulement les comparables)
-   - Séparer les stats secteur (tout le dataset) des stats comparables (sélection fine)
+   - "price_per_m2" = calculé sur TOUTES les ventes du même type dans le dataset (pas seulement les comparables)
+   - "price_per_m2_comparable" = calculé uniquement sur les comparables sélectionnés (sélection fine)
    - Identifier les outliers (prix anormalement hauts ou bas) et les exclure du calcul médian
+   - IMPORTANT : les statistiques secteur ("price_per_m2") doivent utiliser le MAXIMUM de ventes disponibles
 
 3. ÉVOLUTION DES PRIX :
-   - Regrouper par année les ventes du même type
+   - Regrouper par année TOUTES les ventes du même type (pas seulement les comparables)
    - Calculer la médiane au m² par année
+   - IMPORTANT : N'inclure que les années avec au moins 3 ventes du même type. Les années avec 1-2 ventes donnent des médianes non fiables et des variations aberrantes.
+   - La variation affichée doit être réaliste et cohérente avec le marché immobilier (rarement > ±20% sur 5 ans hors crise majeure)
    - Identifier la tendance (hausse, baisse, stabilisation)
 
 4. ESTIMATION :
@@ -171,10 +174,13 @@ MÉTHODOLOGIE D'ANALYSE :
    - En déduire le revenu mensuel minimum (mensualité / 0.35 = taux endettement max)
    - Décrire le profil type d'acheteur pour ce bien
 
+FORMATS :
+- Les dates dans comparable_sales doivent être au format JJ/MM/AAAA (ex: 15/03/2024), PAS en format ISO.
+
 Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) :
 {
   "comparable_sales": [
-    { "date": "2024-03-15", "price": 250000, "type": "Appartement", "surface": 68, "price_m2": 3676, "distance": 150 }
+    { "date": "15/03/2024", "price": 250000, "type": "Appartement", "surface": 68, "price_m2": 3676, "distance": 150 }
   ],
   "price_per_m2": { "median": 4200, "mean": 4350, "min": 3500, "max": 5200, "count": 25 },
   "price_per_m2_comparable": { "median": 4100, "mean": 4150, "min": 3800, "max": 4500, "count": 8 },

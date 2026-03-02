@@ -2308,7 +2308,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
                 ${narrative.marketAnalysis || ''}
                 ${renderMarketStats(analysis)}
                 ${renderPriceEvolution(analysis)}
-                ${renderComparablesTable(analysis)}
+                ${renderComparablesTable(analysis, property)}
             </div>
         </div>
 
@@ -2401,7 +2401,10 @@ function renderMarketStats(analysis) {
 }
 
 function renderPriceEvolution(analysis) {
-    const evolution = analysis.price_evolution || [];
+    const rawEvolution = analysis.price_evolution || [];
+    // Filtrer les années avec < 3 ventes (médiane non fiable sur 1-2 ventes)
+    const MIN_SALES_PER_YEAR = 3;
+    const evolution = rawEvolution.filter(e => (e.count || 0) >= MIN_SALES_PER_YEAR);
     if (evolution.length < 2) return '';
 
     const prices = evolution.map(e => e.median_m2);
@@ -2469,7 +2472,7 @@ function renderPriceEvolution(analysis) {
     `;
 }
 
-function renderComparablesTable(analysis) {
+function renderComparablesTable(analysis, property) {
     const comparables = analysis.comparable_sales || [];
     if (comparables.length === 0) return '<p>Aucun bien comparable identifié.</p>';
 
@@ -2479,9 +2482,17 @@ function renderComparablesTable(analysis) {
         ? allPricesM2.sort((a, b) => a - b)[Math.floor(allPricesM2.length / 2)]
         : 0;
 
+    // Contexte géographique : commune et rayon max
+    const maxDist = Math.max(...comparables.map(c => c.distance || 0));
+    const cityName = property?.city || '';
+    const locationContext = cityName
+        ? `${escapeHtml(cityName)} — rayon de ${maxDist > 0 ? maxDist + ' m' : '1 km'}`
+        : `Rayon de ${maxDist > 0 ? maxDist + ' m' : '1 km'} autour du bien`;
+
     return `
         <div style="margin: 24px 0;">
-            <p style="font-weight: 600; margin-bottom: 12px;">Ventes comparables retenues (${comparables.length} biens)</p>
+            <p style="font-weight: 600; margin-bottom: 4px;">Ventes comparables retenues (${comparables.length} biens)</p>
+            <p style="font-size: 12px; color: var(--text-light); margin: 0 0 12px;"><i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>${locationContext}</p>
             <table class="comparables-table">
                 <thead>
                     <tr>
@@ -2498,9 +2509,13 @@ function renderComparablesTable(analysis) {
                         const priceM2 = c.price_m2 || 0;
                         const diff = medianM2 > 0 ? ((priceM2 - medianM2) / medianM2 * 100) : 0;
                         const diffColor = Math.abs(diff) < 5 ? '#6B7280' : diff > 0 ? '#27ae60' : '#e74c3c';
+                        // Format date YYYY-MM-DD → DD/MM/YYYY
+                        const rawDate = String(c.date || '');
+                        const dateParts = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                        const formattedDate = dateParts ? `${dateParts[3]}/${dateParts[2]}/${dateParts[1]}` : rawDate;
                         return `
                         <tr>
-                            <td>${escapeHtml(String(c.date || ''))}</td>
+                            <td>${escapeHtml(formattedDate)}</td>
                             <td>${escapeHtml(String(c.type || ''))}</td>
                             <td>${c.surface || '?'} m²</td>
                             <td><strong>${formatNumber(c.price || 0)} €</strong></td>
@@ -2513,7 +2528,8 @@ function renderComparablesTable(analysis) {
                 </tbody>
             </table>
             <p style="font-size: 11px; color: var(--text-light); margin-top: 8px;">
-                <em>Source : Demandes de Valeurs Foncières (DVF) — Direction Générale des Finances Publiques</em>
+                <em>Source : Demandes de Valeurs Foncières (DVF) — Direction Générale des Finances Publiques.
+                Les adresses exactes ne sont pas disponibles dans les données DVF publiques. La colonne « Distance » indique l'éloignement par rapport au bien estimé.</em>
             </p>
         </div>
     `;
