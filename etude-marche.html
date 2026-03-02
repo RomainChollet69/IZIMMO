@@ -2043,6 +2043,24 @@ async function prefillFromUrlParams() {
             if (seller.budget) document.getElementById('studyBudget').value = seller.budget;
             if (seller.description) document.getElementById('studyDescription').value = seller.description;
 
+            // Pré-remplir l'interview avec les annexes du lead
+            if (Array.isArray(seller.annexes) && seller.annexes.length > 0) {
+                const outdoor = [];
+                const parking = [];
+                const annexes = [];
+                for (const a of seller.annexes) {
+                    if (a === 'balcon') outdoor.push('Balcon');
+                    else if (a === 'jardin') outdoor.push('Jardin privatif');
+                    else if (a === 'piscine') outdoor.push('Piscine');
+                    else if (a === 'garage') parking.push('Garage');
+                    else if (a === 'parking') parking.push('Place de parking');
+                    else if (a === 'cave') annexes.push('Cave');
+                }
+                if (outdoor.length > 0) interviewAnswers['outdoor'] = outdoor;
+                if (parking.length > 0) interviewAnswers['parking'] = parking;
+                if (annexes.length > 0) interviewAnswers['annexes'] = annexes;
+            }
+
             // Géocoder l'adresse pour obtenir lat/lng
             if (seller.address) {
                 const geo = await geocodeAddress(seller.address);
