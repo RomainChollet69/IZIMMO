@@ -1,5 +1,79 @@
-// Vercel Serverless Function — Scrape listing URL + extract info via Claude Haiku
+/**
+ * scrape-listing.js
+ * Scrape une URL d'annonce immobilière.
+ * Mode 'preview' : extraction rapide OG tags (photo + titre), sans IA (~1-2s).
+ * Mode par défaut : extraction complète via Claude Haiku (agency, price, etc.).
+ * Dépendances : _auth.js (verifyAuth, withCORS)
+ */
 import { verifyAuth, withCORS } from './_auth.js';
+
+// --- Extraction OG tags via regex ---
+
+function extractMeta(html, property) {
+    const patterns = [
+        new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'),
+        new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'),
+        new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'),
+    ];
+    for (const p of patterns) {
+        const m = html.match(p);
+        if (m) return m[1].trim();
+    }
+    return null;
+}
+
+function extractTitle(html) {
+    const ogTitle = extractMeta(html, 'og:title');
+    if (ogTitle) return ogTitle;
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    return titleMatch ? titleMatch[1].trim() : null;
+}
+
+function extractImage(html) {
+    return extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image') || null;
+}
+
+// --- Fallbacks spécifiques par domaine (pour le mode preview) ---
+
+const DOMAIN_FALLBACKS = {
+    'efficity.com': efficityFallback,
+};
+
+function efficityFallback(url) {
+    // URL: /achat-immobilier/maison_96-m2_lyon_69009_28165417/
+    const idMatch = url.match(/[_-](\d{6,})\/?(?:\?.*)?$/);
+    if (!idMatch) return { image_url: null, title: null };
+    const listingId = idMatch[1];
+    const image_url = `https://d1q967606ga7w2.cloudfront.net/common/house/${listingId}/photos/xxl/2.png`;
+    let title = null;
+    const pathMatch = url.match(/\/([^/]+)_(\d+)\/?(?:\?.*)?$/);
+    if (pathMatch) {
+        title = pathMatch[1]
+            .replace(/-/g, ' ')
+            .replace(/_/g, ' ')
+            .replace(/\bm2\b/gi, 'm²')
+            .replace(/\b\w/g, c => c.toUpperCase())
+            .trim();
+    }
+    return { image_url, title };
+}
+
+function getDomainFallback(url) {
+    try {
+        const hostname = new URL(url).hostname.replace('www.', '');
+        for (const [domain, handler] of Object.entries(DOMAIN_FALLBACKS)) {
+            if (hostname.includes(domain)) return handler(url);
+        }
+    } catch (e) { /* URL invalide */ }
+    return null;
+}
+
+function extractDomain(url) {
+    try { return new URL(url).hostname.replace('www.', ''); } catch (e) { return null; }
+}
+
+// --- Handler principal ---
 
 export default async function handler(req, res) {
     withCORS(res);
@@ -9,18 +83,83 @@ export default async function handler(req, res) {
     const user = await verifyAuth(req);
     if (!user) return res.status(401).json({ error: 'Non authentifié' });
 
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-        return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+    const { url, mode } = req.body || {};
+    if (!url) return res.status(400).json({ error: 'URL manquante' });
+
+    // Mode 'preview' : extraction rapide OG tags, pas d'IA
+    if (mode === 'preview') {
+        return handlePreview(req, res, url);
     }
 
-    const { url } = req.body;
-    if (!url) {
-        return res.status(400).json({ error: 'URL manquante' });
-    }
+    // Mode par défaut : extraction complète via Claude Haiku
+    return handleFullScrape(req, res, url);
+}
+
+// --- Mode preview : OG tags + fallback domaine ---
+
+async function handlePreview(req, res, url) {
+    const domain = extractDomain(url);
 
     try {
-        // 1. Fetch the listing page
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 8000);
+
+        const pageResp = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml',
+                'Accept-Language': 'fr-FR,fr;q=0.9'
+            },
+            signal: controller.signal,
+            redirect: 'follow'
+        });
+        clearTimeout(fetchTimeout);
+
+        if (!pageResp.ok) {
+            const fallback = getDomainFallback(url);
+            if (fallback) return res.status(200).json({ ...fallback, domain });
+            return res.status(200).json({ image_url: null, title: null, domain, error: 'inaccessible' });
+        }
+
+        const html = (await pageResp.text()).substring(0, 30000);
+        let image_url = extractImage(html);
+        let title = extractTitle(html);
+
+        // Normaliser les URLs relatives/protocol-relative
+        if (image_url) {
+            if (image_url.startsWith('//')) image_url = 'https:' + image_url;
+            else if (image_url.startsWith('/')) {
+                try { image_url = new URL(image_url, url).href; } catch (e) { /* ignore */ }
+            }
+        }
+
+        // Fallback domaine si pas d'OG tags
+        if (!image_url && !title) {
+            const fallback = getDomainFallback(url);
+            if (fallback) return res.status(200).json({ ...fallback, domain });
+        }
+
+        return res.status(200).json({ image_url, title, domain });
+
+    } catch (err) {
+        const fallback = getDomainFallback(url);
+        if (err.name === 'AbortError') {
+            if (fallback) return res.status(200).json({ ...fallback, domain });
+            return res.status(200).json({ image_url: null, title: null, domain, error: 'timeout' });
+        }
+        console.error('[LinkPreview] Error:', err.message);
+        if (fallback) return res.status(200).json({ ...fallback, domain });
+        return res.status(200).json({ image_url: null, title: null, domain, error: err.message });
+    }
+}
+
+// --- Mode full scrape : extraction IA via Claude Haiku ---
+
+async function handleFullScrape(req, res, url) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+
+    try {
         const controller = new AbortController();
         const fetchTimeout = setTimeout(() => controller.abort(), 10000);
 
@@ -39,10 +178,8 @@ export default async function handler(req, res) {
         }
 
         let html = await pageResp.text();
-        // Truncate to 15000 chars to stay within API limits
         if (html.length > 15000) html = html.substring(0, 15000);
 
-        // 2. Send to Claude Haiku for extraction
         const claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -79,7 +216,6 @@ ${html}`
         const claudeData = await claudeResp.json();
         const text = claudeData.content?.[0]?.text || '{}';
 
-        // Parse JSON from Claude response
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
             return res.status(200).json({ error: 'Extraction échouée', agency: null, price: null });

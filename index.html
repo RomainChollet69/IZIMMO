@@ -8305,10 +8305,10 @@
             linkPreviews[url] = { loading: true };
             renderLinks();
             try {
-                const resp = await fetch('/api/link-preview', {
+                const resp = await fetch('/api/scrape-listing', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
-                    body: JSON.stringify({ url })
+                    body: JSON.stringify({ url, mode: 'preview' })
                 });
                 const data = await resp.json();
                 linkPreviews[url] = {
