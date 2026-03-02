@@ -1813,9 +1813,16 @@ async function prefillFromUrlParams() {
                 const typeMap = { appartement: 'appartement', maison: 'maison', terrain: 'terrain', local: 'local' };
                 document.getElementById('studyType').value = typeMap[seller.property_type] || '';
             }
-            if (seller.surface) document.getElementById('studySurface').value = seller.surface;
+            // Surface stockée comme "90 m²" → extraire le nombre pour le champ number
+            if (seller.surface) {
+                const surfaceNum = parseFloat(String(seller.surface).replace(/[^\d.,]/g, '').replace(',', '.'));
+                if (!isNaN(surfaceNum) && surfaceNum > 0) {
+                    document.getElementById('studySurface').value = surfaceNum;
+                }
+            }
             if (seller.rooms) document.getElementById('studyRooms').value = seller.rooms;
             if (seller.budget) document.getElementById('studyBudget').value = seller.budget;
+            if (seller.description) document.getElementById('studyDescription').value = seller.description;
 
             // Géocoder l'adresse pour obtenir lat/lng
             if (seller.address) {
