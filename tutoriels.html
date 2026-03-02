@@ -1,0 +1,578 @@
+<!--
+  Léon — Tutoriels & Onboarding (tutoriels.html)
+  Centre de formation et d'aide pour les utilisateurs de Léon.
+  Structure placeholder — contenu à enrichir progressivement.
+  Auth requise (js/auth.js) | Dépendances : supabase-config.js, auth.js, gamification.js
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Léon. — Tutoriels</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — Tutoriels">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/gamification.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-right: 48px;
+            cursor: pointer;
+        }
+
+        .logo img {
+            height: 36px;
+            width: auto;
+        }
+
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .nav-tab {
+            color: #6B7280;
+            text-decoration: none;
+            padding: 20px 24px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-tab i { font-size: 16px; }
+        .nav-tab:hover { color: #243B53; }
+
+        .nav-tab.active {
+            color: #243B53;
+            font-weight: 600;
+            border-bottom-color: #243B53;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .alert-bell {
+            position: relative;
+            background: none;
+            border: none;
+            color: #6B7280;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px;
+            transition: color 0.2s;
+        }
+
+        .alert-bell:hover { color: #243B53; }
+
+        .alert-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #EF4444;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .header-separator {
+            width: 1px;
+            height: 32px;
+            background: #E5E7EB;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #E5E7EB;
+            object-fit: cover;
+        }
+
+        .user-initials {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #243B53;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .user-name {
+            color: #374151;
+            font-weight: 500;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            min-width: 180px;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid #E5E7EB;
+        }
+
+        .user-dropdown.active { display: block; }
+
+        .user-dropdown-item {
+            display: block;
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            background: none;
+            text-align: left;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: background 0.15s;
+            text-decoration: none;
+        }
+
+        .user-dropdown-item:hover { background: #F3F4F6; }
+
+        /* ===== PAGE CONTENT ===== */
+        .page-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 48px 32px 100px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .page-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 24px;
+            background: #FFF8E1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .page-icon i {
+            font-size: 36px;
+            color: #F9A825;
+        }
+
+        .page-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 32px;
+            color: #243B53;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-size: 16px;
+            color: #6B7280;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* ===== SECTIONS DE TUTORIELS ===== */
+        .tuto-section {
+            margin-bottom: 40px;
+        }
+
+        .tuto-section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #243B53;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tuto-section-title i {
+            font-size: 18px;
+            color: #667eea;
+        }
+
+        .tuto-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .tuto-card {
+            background: #FFFFFF;
+            border-radius: 14px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: default;
+        }
+
+        .tuto-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .tuto-card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 14px;
+        }
+
+        .tuto-card-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: #243B53;
+            margin-bottom: 6px;
+        }
+
+        .tuto-card-desc {
+            font-size: 13px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+
+        .tuto-card-badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-soon {
+            background: #FFF3E0;
+            color: #F57C00;
+        }
+
+        .badge-available {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        /* ===== CTA BOTTOM ===== */
+        .cta-section {
+            text-align: center;
+            padding: 40px;
+            background: #FFFFFF;
+            border-radius: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .cta-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 22px;
+            color: #243B53;
+            margin-bottom: 8px;
+        }
+
+        .cta-desc {
+            font-size: 14px;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .header { display: none !important; }
+
+            .page-container {
+                padding: 24px 16px 100px;
+            }
+
+            .page-title { font-size: 24px; }
+            .page-subtitle { font-size: 14px; }
+            .page-icon { width: 64px; height: 64px; }
+            .page-icon i { font-size: 28px; }
+
+            .tuto-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .tuto-card { padding: 18px; }
+            .tuto-section-title { font-size: 17px; }
+
+            .cta-section { padding: 28px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="home.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+                <a href="micro.html" class="nav-tab">
+                    <i class="fa-solid fa-microphone"></i> Micro
+                </a>
+            </nav>
+
+            <div class="header-actions">
+                <button class="alert-bell" id="alertBell" title="Relances du jour">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
+                </button>
+
+                <div class="header-separator"></div>
+
+                <div class="user-profile" id="userProfile"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="page-container">
+
+        <!-- En-tête de page -->
+        <div class="page-header">
+            <div class="page-icon">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <h1 class="page-title">Tutoriels & Formation</h1>
+            <p class="page-subtitle">Apprenez à tirer le maximum de Léon en quelques minutes. Guides pratiques, astuces et bonnes pratiques.</p>
+        </div>
+
+        <!-- Section : Premiers pas -->
+        <div class="tuto-section">
+            <h2 class="tuto-section-title">
+                <i class="fa-solid fa-rocket"></i> Premiers pas
+            </h2>
+            <div class="tuto-grid">
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #EDE7F6; color: #5E35B1;">
+                        <i class="fa-solid fa-house-chimney"></i>
+                    </div>
+                    <div class="tuto-card-title">Créer votre premier vendeur</div>
+                    <div class="tuto-card-desc">Comment ajouter un lead vendeur, renseigner ses informations et le placer dans le pipeline.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #E0F7FA; color: #00897B;">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <div class="tuto-card-title">Gérer les acquéreurs</div>
+                    <div class="tuto-card-desc">Ajouter un acquéreur, définir ses critères de recherche et suivre son parcours d'achat.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #FFF3E0; color: #F57C00;">
+                        <i class="fa-solid fa-microphone"></i>
+                    </div>
+                    <div class="tuto-card-title">Dicter un lead au micro</div>
+                    <div class="tuto-card-desc">Utilisez la dictée vocale pour créer un lead en quelques secondes, sans rien taper.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #E3F2FD; color: #1565C0;">
+                        <i class="fa-solid fa-arrows-left-right"></i>
+                    </div>
+                    <div class="tuto-card-title">Déplacer un lead dans le pipeline</div>
+                    <div class="tuto-card-desc">Glissez-déposez vos leads d'une colonne à l'autre pour suivre leur progression.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section : Fonctionnalités avancées -->
+        <div class="tuto-section">
+            <h2 class="tuto-section-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Fonctionnalités avancées
+            </h2>
+            <div class="tuto-grid">
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #E8F5E9; color: #2E7D32;">
+                        <i class="fa-solid fa-map-location-dot"></i>
+                    </div>
+                    <div class="tuto-card-title">Analyser le marché avec DVF</div>
+                    <div class="tuto-card-desc">Consulter les ventes récentes autour d'une adresse, comparer les prix au m² et argumenter votre estimation.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #FCE4EC; color: #C62828;">
+                        <i class="fa-solid fa-share-nodes"></i>
+                    </div>
+                    <div class="tuto-card-title">Publier sur les réseaux sociaux</div>
+                    <div class="tuto-card-desc">Générer du contenu pour LinkedIn, Instagram et Facebook avec l'aide de Léa, votre assistante social media.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #F3E5F5; color: #7B1FA2;">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="tuto-card-title">Utiliser l'assistant Léon</div>
+                    <div class="tuto-card-desc">Demandez à Léon de gérer votre agenda, rédiger des messages ou organiser votre journée.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+
+                <div class="tuto-card">
+                    <div class="tuto-card-icon" style="background: #FFF8E1; color: #F9A825;">
+                        <i class="fa-solid fa-file-import"></i>
+                    </div>
+                    <div class="tuto-card-title">Importer vos contacts</div>
+                    <div class="tuto-card-desc">Importez vos leads existants depuis un fichier Excel ou CSV en quelques clics.</div>
+                    <span class="tuto-card-badge badge-soon">Bientôt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta-section">
+            <div class="cta-title">Besoin d'aide ?</div>
+            <div class="cta-desc">Les tutoriels vidéo et guides détaillés arrivent très bientôt. En attendant, n'hésitez pas à explorer Léon !</div>
+            <a href="home.html" class="cta-btn">
+                <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
+            </a>
+        </div>
+
+    </div>
+
+    <script src="js/mobile-nav.js"></script>
+
+</body>
+</html>

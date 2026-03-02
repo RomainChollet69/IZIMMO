@@ -4,6 +4,42 @@
 
 ---
 
+## Session 2026-03-02a — Page tutoriels + recherche globale fonctionnelle
+
+### Résumé
+Création de la page `tutoriels.html` (centre de formation placeholder avec 8 cartes thématiques) et activation de la recherche globale depuis la home : le paramètre `?search=` est désormais lu par `index.html` au chargement pour pré-remplir et filtrer le pipeline vendeurs.
+
+### Modifications
+
+**`tutoriels.html`** (NOUVEAU) :
+- Page complète avec header, icône graduation cap, titre "Tutoriels & Formation"
+- 2 sections : "Premiers pas" (4 cartes) + "Fonctionnalités avancées" (4 cartes)
+- Chaque carte a icône colorée, titre, description, badge "Bientôt"
+- CTA "Retour à l'accueil" en bas de page
+- Responsive (1 colonne mobile, 2 colonnes desktop)
+- Inclut css/mobile.css, js/gamification.js, js/mobile-nav.js
+
+**`index.html`** :
+- Ajout lecture du paramètre URL `?search=<query>` au chargement
+- Pré-remplit le champ de recherche et lance `filterLeads()` automatiquement
+- Nettoie l'URL après lecture (`history.replaceState`)
+
+**`home.html`** :
+- Tuile Tutoriels pointe maintenant vers `tutoriels.html` (plus de toast placeholder)
+- Suppression du JS `initTutoriels()` devenu inutile
+
+### Fichiers créés/modifiés
+- tutoriels.html (NOUVEAU)
+- index.html
+- home.html
+
+### Prochaines étapes prioritaires
+- Enrichir les tutoriels avec du contenu réel (vidéos, guides pas à pas)
+- Ajouter des illustrations 3D dédiées pour les tuiles home sans image
+- V2 : contexte personnalisé sur la home (relances du jour, leads urgents)
+
+---
+
 ## Session 2026-03-01g — Fix message onboarding
 
 ### Résumé

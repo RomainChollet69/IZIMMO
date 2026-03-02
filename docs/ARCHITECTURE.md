@@ -20,6 +20,7 @@ IZIMMO/
 ├── parametres.html             # Page de paramètres utilisateur
 ├── micro.html                  # Enregistrement vocal + transcription (voice-first)
 ├── dvf.html                    # Visualiseur données DVF + DPE
+├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
 ├── reset-password.html         # Réinitialisation mot de passe (redirige vers home.html)
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
 │
