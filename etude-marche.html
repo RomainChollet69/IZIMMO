@@ -840,10 +840,265 @@
             .interview-chip { text-align: center; }
         }
 
+        /* ===== BOUTON PARAMÈTRES ===== */
+        .settings-btn {
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            border: 1.5px solid var(--border-color);
+            background: white;
+            color: var(--text-light);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .settings-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        }
+
+        /* ===== MODAL PARAMÈTRES ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #FCFCFD;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 520px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-header {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .modal-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            text-transform: uppercase;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+        .modal-subtitle {
+            font-size: 13px;
+            color: var(--text-light);
+            margin: 4px 0 0;
+        }
+        .close-btn {
+            position: absolute;
+            top: 0; right: 0;
+            width: 32px; height: 32px;
+            border: none;
+            background: none;
+            font-size: 24px;
+            color: var(--text-light);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.15s;
+        }
+        .close-btn:hover { background: var(--bg-gray); color: var(--text-dark); }
+
+        .settings-group { margin-bottom: 20px; }
+        .settings-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            display: block;
+        }
+        .settings-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .logo-upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-light);
+            font-size: 13px;
+        }
+        .logo-upload-zone:hover { border-color: var(--primary); color: var(--primary); }
+        .logo-upload-zone i { display: block; font-size: 24px; margin-bottom: 8px; }
+        .settings-remove-btn {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 8px;
+            padding: 4px 0;
+        }
+        .settings-remove-btn:hover { text-decoration: underline; }
+        .color-input {
+            width: 50px;
+            height: 40px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            padding: 2px;
+            background: white;
+        }
+        .settings-auto-btn {
+            padding: 8px 14px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            font-size: 12px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .settings-auto-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .settings-save-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            background: var(--gradient);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .settings-save-btn:hover { opacity: 0.9; }
+        .settings-reset-btn {
+            padding: 12px 24px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 8px;
+            background: white;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .settings-reset-btn:hover { border-color: #e74c3c; color: #e74c3c; }
+
+        /* ===== UPLOAD PHOTOS ===== */
+        .photos-dropzone {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 28px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-light);
+            font-size: 13px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .photos-dropzone:hover { border-color: var(--primary); color: var(--primary); }
+        .photos-dropzone.dragover { border-color: var(--primary); background: rgba(102, 126, 234, 0.05); }
+        .photos-preview {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .photo-thumb {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .photo-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-thumb-remove {
+            position: absolute;
+            top: 2px; right: 2px;
+            width: 20px; height: 20px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        /* ===== PHOTOS DANS L'ÉTUDE ===== */
+        .study-cover-photos {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+            flex-wrap: wrap;
+        }
+        .study-cover-photo {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+        .study-photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .study-photos-grid img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
         /* ===== PRINT / PDF ===== */
         @media print {
             body { background: white; }
-            .header, .study-toolbar, #studyForm, #studyLoading, #interviewSection, .no-print { display: none !important; }
+            .header, .study-toolbar, #studyForm, #studyLoading, #interviewSection, .modal, .no-print { display: none !important; }
             .main-container { max-width: 100%; padding: 0; margin: 0; }
             .study-page { box-shadow: none; border-radius: 0; margin: 0; }
             .study-cover { min-height: auto; padding: 40px; page-break-after: always; }
@@ -882,8 +1137,15 @@
     <!-- Main -->
     <div class="main-container">
 
-        <div class="page-title no-print">Étude de Marché IA</div>
-        <div class="page-subtitle no-print">Léon génère une étude de marché professionnelle en quelques secondes.</div>
+        <div style="display:flex; align-items:center; justify-content:space-between;" class="no-print">
+            <div>
+                <div class="page-title">Étude de Marché IA</div>
+                <div class="page-subtitle" style="margin-bottom:0;">Léon génère une étude de marché professionnelle en quelques secondes.</div>
+            </div>
+            <button class="settings-btn" onclick="openStudySettings()" title="Paramètres de l'étude">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
 
         <!-- ===== FORMULAIRE ===== -->
         <div id="studyForm">
@@ -984,6 +1246,19 @@
                 </div>
             </div>
 
+            <!-- Photos du bien -->
+            <div class="form-card">
+                <label class="form-label">Photos du bien <small style="color:var(--text-light); font-weight:400;">(optionnel, max 5)</small></label>
+                <div id="photosUploadZone">
+                    <div class="photos-dropzone" id="photosDropzone">
+                        <i class="fas fa-camera"></i>
+                        <span>Glisser des photos ici ou cliquer pour en ajouter</span>
+                    </div>
+                    <input type="file" id="photosInput" accept="image/*" multiple style="display:none">
+                    <div class="photos-preview" id="photosPreview"></div>
+                </div>
+            </div>
+
             <button class="btn-generate" id="generateBtn" onclick="generateStudy()">
                 <i class="fas fa-magic"></i>
                 Générer l'étude de marché
@@ -1038,6 +1313,73 @@
         <!-- ===== RENDU DE L'ÉTUDE ===== -->
         <div id="studyOutput"></div>
 
+    </div>
+
+    <!-- ===== MODAL PARAMÈTRES ===== -->
+    <div class="modal" id="studySettingsModal" onclick="if(event.target===this)closeStudySettings()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Paramètres</h2>
+                <p class="modal-subtitle">Personnalisez le rendu de vos études de marché</p>
+                <button class="close-btn" onclick="closeStudySettings()">&times;</button>
+            </div>
+            <div class="settings-form">
+                <!-- Logo -->
+                <div class="settings-group">
+                    <label class="settings-label">Logo de l'agence</label>
+                    <div class="logo-upload-zone" id="logoUploadZone" onclick="document.getElementById('logoInput').click()">
+                        <img id="logoPreview" src="" style="display:none; max-height:60px;">
+                        <div id="logoPlaceholder"><i class="fas fa-cloud-upload-alt"></i> Cliquer pour charger un logo</div>
+                    </div>
+                    <input type="file" id="logoInput" accept="image/*" style="display:none">
+                    <button class="settings-remove-btn" id="logoRemoveBtn" style="display:none" onclick="event.stopPropagation(); removeStudyLogo()">
+                        <i class="fas fa-trash"></i> Supprimer le logo
+                    </button>
+                </div>
+                <!-- Couleurs -->
+                <div class="settings-group">
+                    <label class="settings-label">Couleurs de l'étude</label>
+                    <div style="display:flex; gap:16px; align-items:flex-end;">
+                        <div>
+                            <small style="display:block; margin-bottom:4px; color:var(--text-light);">Principale</small>
+                            <input type="color" id="settingColor1" value="#667eea" class="color-input">
+                        </div>
+                        <div>
+                            <small style="display:block; margin-bottom:4px; color:var(--text-light);">Secondaire</small>
+                            <input type="color" id="settingColor2" value="#764ba2" class="color-input">
+                        </div>
+                        <button class="settings-auto-btn" onclick="autoDetectColors()" title="Détecter les couleurs depuis le logo">
+                            <i class="fas fa-magic"></i> Auto
+                        </button>
+                    </div>
+                </div>
+                <!-- Conseiller -->
+                <div class="settings-group">
+                    <label class="settings-label">Conseiller</label>
+                    <input type="text" id="settingAgentName" placeholder="Nom complet" class="settings-input">
+                </div>
+                <!-- Agence -->
+                <div class="settings-group">
+                    <label class="settings-label">Agence</label>
+                    <input type="text" id="settingAgencyName" placeholder="Nom de l'agence" class="settings-input">
+                </div>
+                <!-- Coordonnées -->
+                <div class="settings-group">
+                    <label class="settings-label">Coordonnées</label>
+                    <input type="text" id="settingPhone" placeholder="Téléphone" class="settings-input">
+                    <input type="email" id="settingEmail" placeholder="Email" class="settings-input" style="margin-top:8px;">
+                </div>
+                <!-- Actions -->
+                <div style="display:flex; gap:8px; justify-content:space-between; margin-top:24px;">
+                    <button class="settings-reset-btn" onclick="resetStudySettings()">
+                        <i class="fas fa-undo"></i> Réinitialiser
+                    </button>
+                    <button class="settings-save-btn" onclick="saveStudySettings()">
+                        <i class="fas fa-check"></i> Enregistrer
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
 <script>
@@ -1184,11 +1526,267 @@ let interviewVoiceNotes = {};   // { questionId: string }
 let currentInterviewStep = 0;
 let filteredQuestions = [];      // questions après filtrage conditionnel
 let interviewAutoAdvanceTimer = null;
+let studyPhotos = [];           // Array de base64 data URLs (max 5 photos)
+
+// ===== PARAMÈTRES ÉTUDE =====
+const STUDY_SETTINGS_KEY = 'leon_study_settings';
+const DEFAULT_STUDY_SETTINGS = {
+    logo: null,
+    color1: '#667eea',
+    color2: '#764ba2',
+    agentName: '',
+    agencyName: '',
+    phone: '',
+    email: ''
+};
+
+function getStudySettings() {
+    try {
+        const raw = localStorage.getItem(STUDY_SETTINGS_KEY);
+        if (!raw) return { ...DEFAULT_STUDY_SETTINGS };
+        return { ...DEFAULT_STUDY_SETTINGS, ...JSON.parse(raw) };
+    } catch (e) {
+        console.warn('[Settings] Erreur lecture localStorage:', e);
+        return { ...DEFAULT_STUDY_SETTINGS };
+    }
+}
+
+function openStudySettings() {
+    const settings = getStudySettings();
+    // Pré-remplir depuis profil Google si champ vide
+    if (!settings.agentName) {
+        const userMeta = window._currentUserMeta || {};
+        settings.agentName = userMeta.full_name || userMeta.name || '';
+    }
+    document.getElementById('settingAgentName').value = settings.agentName;
+    document.getElementById('settingAgencyName').value = settings.agencyName;
+    document.getElementById('settingPhone').value = settings.phone;
+    document.getElementById('settingEmail').value = settings.email;
+    document.getElementById('settingColor1').value = settings.color1;
+    document.getElementById('settingColor2').value = settings.color2;
+    // Logo
+    if (settings.logo) {
+        document.getElementById('logoPreview').src = settings.logo;
+        document.getElementById('logoPreview').style.display = 'block';
+        document.getElementById('logoPlaceholder').style.display = 'none';
+        document.getElementById('logoRemoveBtn').style.display = 'block';
+    } else {
+        document.getElementById('logoPreview').style.display = 'none';
+        document.getElementById('logoPlaceholder').style.display = 'block';
+        document.getElementById('logoRemoveBtn').style.display = 'none';
+    }
+    document.getElementById('studySettingsModal').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeStudySettings() {
+    document.getElementById('studySettingsModal').classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+function saveStudySettings() {
+    const settings = {
+        logo: document.getElementById('logoPreview').style.display !== 'none'
+            ? document.getElementById('logoPreview').src
+            : null,
+        color1: document.getElementById('settingColor1').value,
+        color2: document.getElementById('settingColor2').value,
+        agentName: document.getElementById('settingAgentName').value.trim(),
+        agencyName: document.getElementById('settingAgencyName').value.trim(),
+        phone: document.getElementById('settingPhone').value.trim(),
+        email: document.getElementById('settingEmail').value.trim()
+    };
+    try {
+        localStorage.setItem(STUDY_SETTINGS_KEY, JSON.stringify(settings));
+        console.log('[Settings] Paramètres sauvegardés', settings);
+    } catch (e) {
+        console.error('[Settings] Erreur sauvegarde:', e);
+        alert('Erreur : le logo est peut-être trop volumineux pour le stockage local.');
+        return;
+    }
+    closeStudySettings();
+}
+
+function resetStudySettings() {
+    if (!confirm('Réinitialiser tous les paramètres ?')) return;
+    localStorage.removeItem(STUDY_SETTINGS_KEY);
+    document.getElementById('settingAgentName').value = '';
+    document.getElementById('settingAgencyName').value = '';
+    document.getElementById('settingPhone').value = '';
+    document.getElementById('settingEmail').value = '';
+    document.getElementById('settingColor1').value = DEFAULT_STUDY_SETTINGS.color1;
+    document.getElementById('settingColor2').value = DEFAULT_STUDY_SETTINGS.color2;
+    document.getElementById('logoPreview').style.display = 'none';
+    document.getElementById('logoPlaceholder').style.display = 'block';
+    document.getElementById('logoRemoveBtn').style.display = 'none';
+}
+
+function removeStudyLogo() {
+    document.getElementById('logoPreview').src = '';
+    document.getElementById('logoPreview').style.display = 'none';
+    document.getElementById('logoPlaceholder').style.display = 'block';
+    document.getElementById('logoRemoveBtn').style.display = 'none';
+}
+
+function handleLogoUpload(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    // Compresser puis convertir en base64
+    compressImage(file, 400, 0.8).then(compressed => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            document.getElementById('logoPreview').src = e.target.result;
+            document.getElementById('logoPreview').style.display = 'block';
+            document.getElementById('logoPlaceholder').style.display = 'none';
+            document.getElementById('logoRemoveBtn').style.display = 'block';
+        };
+        reader.readAsDataURL(compressed);
+    });
+}
+
+/**
+ * autoDetectColors() — Extrait les 2 couleurs dominantes du logo via canvas
+ * Algorithme simplifié : échantillonnage + regroupement par teinte
+ */
+function autoDetectColors() {
+    const logoImg = document.getElementById('logoPreview');
+    if (logoImg.style.display === 'none' || !logoImg.src) {
+        alert('Chargez d\'abord un logo pour détecter les couleurs automatiquement.');
+        return;
+    }
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+        const size = 50; // Petite taille pour performance
+        canvas.width = size;
+        canvas.height = size;
+        ctx.drawImage(img, 0, 0, size, size);
+        const data = ctx.getImageData(0, 0, size, size).data;
+        // Collecter les pixels non-blanc, non-noir, non-transparent
+        const pixels = [];
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+            if (a < 128) continue; // Transparent
+            const brightness = (r + g + b) / 3;
+            if (brightness > 240 || brightness < 15) continue; // Blanc/noir
+            const saturation = Math.max(r, g, b) - Math.min(r, g, b);
+            if (saturation < 20) continue; // Gris
+            pixels.push([r, g, b]);
+        }
+        if (pixels.length < 5) {
+            alert('Pas assez de couleurs détectées dans le logo.');
+            return;
+        }
+        // Tri par teinte et sélection de 2 clusters
+        pixels.sort((a, b) => {
+            const hueA = Math.atan2(a[1] - a[2], a[0] - (a[1] + a[2]) / 2);
+            const hueB = Math.atan2(b[1] - b[2], b[0] - (b[1] + b[2]) / 2);
+            return hueA - hueB;
+        });
+        const mid = Math.floor(pixels.length / 2);
+        const cluster1 = pixels.slice(0, mid);
+        const cluster2 = pixels.slice(mid);
+        const avg = (arr) => {
+            const sum = arr.reduce((s, p) => [s[0]+p[0], s[1]+p[1], s[2]+p[2]], [0,0,0]);
+            return [Math.round(sum[0]/arr.length), Math.round(sum[1]/arr.length), Math.round(sum[2]/arr.length)];
+        };
+        const c1 = avg(cluster1);
+        const c2 = avg(cluster2);
+        const toHex = (rgb) => '#' + rgb.map(v => v.toString(16).padStart(2, '0')).join('');
+        document.getElementById('settingColor1').value = toHex(c1);
+        document.getElementById('settingColor2').value = toHex(c2);
+        console.log('[Settings] Couleurs auto-détectées:', toHex(c1), toHex(c2));
+    };
+    img.src = logoImg.src;
+}
+
+// ===== GESTION PHOTOS =====
+const MAX_STUDY_PHOTOS = 5;
+
+function handlePhotosUpload(files) {
+    const remaining = MAX_STUDY_PHOTOS - studyPhotos.length;
+    if (remaining <= 0) {
+        alert(`Maximum ${MAX_STUDY_PHOTOS} photos autorisées.`);
+        return;
+    }
+    const filesToProcess = Array.from(files).slice(0, remaining);
+    filesToProcess.forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+        compressImage(file, 1200, 0.75).then(compressed => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                studyPhotos.push(e.target.result);
+                renderPhotoPreviews();
+            };
+            reader.readAsDataURL(compressed);
+        });
+    });
+}
+
+function renderPhotoPreviews() {
+    const container = document.getElementById('photosPreview');
+    if (!container) return;
+    container.innerHTML = studyPhotos.map((src, i) => `
+        <div class="photo-thumb">
+            <img src="${src}" alt="Photo ${i + 1}">
+            <button class="photo-thumb-remove" onclick="removePhoto(${i})" title="Supprimer">&times;</button>
+        </div>
+    `).join('');
+    // Mettre à jour le texte de la dropzone
+    const dropzone = document.getElementById('photosDropzone');
+    if (studyPhotos.length >= MAX_STUDY_PHOTOS) {
+        dropzone.style.display = 'none';
+    } else {
+        dropzone.style.display = '';
+    }
+}
+
+function removePhoto(index) {
+    studyPhotos.splice(index, 1);
+    renderPhotoPreviews();
+}
 
 // ===== INITIALISATION =====
 (async function init() {
     setupAddressAutocomplete();
     await prefillFromUrlParams();
+
+    // Stocker les métadonnées utilisateur pour les settings
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        window._currentUserMeta = session?.user?.user_metadata || {};
+    } catch (_) {}
+
+    // Event listeners — Logo upload
+    document.getElementById('logoInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) handleLogoUpload(e.target.files[0]);
+        e.target.value = ''; // Reset pour pouvoir recharger le même fichier
+    });
+
+    // Event listeners — Photos upload
+    const photosInput = document.getElementById('photosInput');
+    const photosDropzone = document.getElementById('photosDropzone');
+
+    photosDropzone.addEventListener('click', () => photosInput.click());
+    photosInput.addEventListener('change', (e) => {
+        handlePhotosUpload(e.target.files);
+        e.target.value = '';
+    });
+
+    // Drag & drop photos
+    photosDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        photosDropzone.classList.add('dragover');
+    });
+    photosDropzone.addEventListener('dragleave', () => {
+        photosDropzone.classList.remove('dragover');
+    });
+    photosDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        photosDropzone.classList.remove('dragover');
+        handlePhotosUpload(e.dataTransfer.files);
+    });
 })();
 
 // ===== PREFILL FROM URL PARAMS =====
@@ -2164,11 +2762,12 @@ async function executeStudyGeneration(interviewSummary) {
         loadingStep.textContent = LOADING_PHASES[0].step;
         loadingSubstep.textContent = LOADING_PHASES[0].sub;
 
-        // Récupérer les infos agent
+        // Récupérer les infos agent (settings en priorité, puis profil Google)
         const { data: { session } } = await supabaseClient.auth.getSession();
         const userMeta = session?.user?.user_metadata || {};
-        const agentName = userMeta.full_name || userMeta.name || session?.user?.email?.split('@')[0] || '';
-        const agencyName = ''; // À enrichir plus tard depuis les paramètres
+        const studySettings = getStudySettings();
+        const agentName = studySettings.agentName || userMeta.full_name || userMeta.name || session?.user?.email?.split('@')[0] || '';
+        const agencyName = studySettings.agencyName || '';
 
         const property = {
             address,
@@ -2251,16 +2850,35 @@ async function executeStudyGeneration(interviewSummary) {
 function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCount) {
     const output = document.getElementById('studyOutput');
     const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const agentSignature = agentName ? (agencyName ? `${agentName}, ${agencyName}` : agentName) : '';
+
+    // Utiliser les paramètres sauvegardés en priorité
+    const settings = getStudySettings();
+    const coverLogo = settings.logo || 'img/Logo_leon.svg';
+    const coverLogoIsCustom = !!settings.logo;
+    const coverGradient = `linear-gradient(135deg, ${settings.color1} 0%, ${settings.color2} 100%)`;
+    const displayAgentName = settings.agentName || agentName;
+    const displayAgencyName = settings.agencyName || agencyName;
+    const agentSignature = displayAgentName
+        ? (displayAgencyName ? `${displayAgentName}, ${displayAgencyName}` : displayAgentName)
+        : '';
+    const contactLine = [settings.phone, settings.email].filter(Boolean).join(' · ');
 
     const typeLabels = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', local: 'Local commercial' };
     const typeLabel = typeLabels[property.propertyType] || property.propertyType;
 
+    // Photos du bien
+    const photosHtml = studyPhotos.length > 0
+        ? `<div class="study-cover-photos">${studyPhotos.map(src => `<img src="${src}" class="study-cover-photo">`).join('')}</div>`
+        : '';
+    const photosGridHtml = studyPhotos.length > 0
+        ? `<div class="study-photos-grid">${studyPhotos.map((src, i) => `<img src="${src}" alt="Photo ${i+1}">`).join('')}</div>`
+        : '';
+
     output.innerHTML = `
         <!-- PAGE DE COUVERTURE -->
         <div class="study-page">
-            <div class="study-cover">
-                <img src="img/Logo_leon.svg" alt="Léon" class="study-cover-logo">
+            <div class="study-cover" style="background: ${coverGradient};">
+                <img src="${coverLogoIsCustom ? escapeHtml(coverLogo) : coverLogo}" alt="Logo" class="study-cover-logo" ${coverLogoIsCustom ? 'style="filter:none; max-height:80px;"' : ''}>
                 <h1>Étude de Marché Immobilier</h1>
                 <div class="study-cover-address">${escapeHtml(property.address)}</div>
                 <div class="study-cover-details">
@@ -2269,8 +2887,10 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
                     ${property.rooms ? `<span><i class="fas fa-door-open"></i> ${escapeHtml(property.rooms)}</span>` : ''}
                     ${property.dpe ? `<span><i class="fas fa-leaf"></i> DPE ${escapeHtml(property.dpe)}</span>` : ''}
                 </div>
+                ${photosHtml}
                 <div class="study-cover-agent">
                     ${agentSignature ? `<strong>Préparée par ${escapeHtml(agentSignature)}</strong>` : ''}
+                    ${contactLine ? `<div style="opacity:0.85; font-size:12px;">${escapeHtml(contactLine)}</div>` : ''}
                     ${today}
                 </div>
             </div>
@@ -2280,6 +2900,7 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
         <div class="study-page">
             <div class="study-section">
                 <div class="study-section-title"><i class="fas fa-home"></i> Présentation du bien</div>
+                ${photosGridHtml}
                 ${narrative.propertyPresentation || '<p>Détails du bien non disponibles.</p>'}
                 ${renderPropertyGrid(property)}
             </div>
@@ -2333,10 +2954,13 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
             </div>
         </div>
 
-        <!-- MENTIONS LÉGALES -->
+        <!-- AVERTISSEMENT -->
         <div class="study-page">
-            <div class="study-section" style="padding: 24px 48px; font-size: 11px; color: var(--text-light); line-height: 1.6;">
-                <p><em>Cette étude de marché a été générée par Léon, assistant IA pour professionnels de l'immobilier.
+            <div class="study-section" style="padding: 24px 48px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">
+                <p style="font-style: italic; border-left: 3px solid var(--primary); padding-left: 16px; margin-bottom: 16px;">
+                    Cette étude se veut la plus objective possible. Je tiens toutefois à préciser que la valeur d'un bien ne se révèle qu'au moment de sa commercialisation et que seul le marché (les acquéreurs) fixe le prix.
+                </p>
+                <p style="font-size: 11px; color: var(--text-light);"><em>Cette étude de marché a été générée par Léon, assistant IA pour professionnels de l'immobilier.
                 L'estimation est basée sur l'analyse comparative de ${analysis.price_per_m2?.count || dvfCount} ventes DVF réelles du secteur,
                 dont ${analysis.price_per_m2_comparable?.count || 'plusieurs'} biens directement comparables.
                 Ce document ne constitue pas une expertise immobilière au sens légal du terme.
@@ -2402,8 +3026,9 @@ function renderMarketStats(analysis) {
 
 function renderPriceEvolution(analysis) {
     const rawEvolution = analysis.price_evolution || [];
-    // Filtrer les années avec < 3 ventes (médiane non fiable sur 1-2 ventes)
-    const MIN_SALES_PER_YEAR = 3;
+    // Seuil adaptatif : si peu de données totales, accepter 2 ventes/an minimum
+    const totalSales = rawEvolution.reduce((sum, e) => sum + (e.count || 0), 0);
+    const MIN_SALES_PER_YEAR = totalSales < 15 ? 2 : 3; // Zone rurale vs dense
     const evolution = rawEvolution.filter(e => (e.count || 0) >= MIN_SALES_PER_YEAR);
     if (evolution.length < 2) return '';
 
@@ -2675,6 +3300,9 @@ function newStudy() {
     interviewVoiceNotes = {};
     currentInterviewStep = 0;
     filteredQuestions = [];
+    // Reset photos
+    studyPhotos = [];
+    renderPhotoPreviews();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

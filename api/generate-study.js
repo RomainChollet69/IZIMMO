@@ -136,12 +136,19 @@ function buildAnalysisPrompt() {
 Tu reçois des données DVF (Demandes de Valeurs Foncières) réelles pour un secteur géographique précis.
 Ton rôle est de produire une analyse approfondie et rigoureuse digne d'un rapport professionnel.
 
+ADAPTATION À LA DENSITÉ DU MARCHÉ :
+Le dataset contient toutes les ventes dans un rayon donné. Adapte ta rigueur selon le volume :
+- Zone dense (Paris, grandes villes) : > 30 ventes → sélection très fine, distance < 500m, surface ±20%
+- Zone intermédiaire (villes moyennes) : 10-30 ventes → critères modérés, distance < 1km, surface ±30%
+- Zone rurale / faible volume : < 10 ventes → utilise tout le dataset, élargis les critères de surface ±50%
+En zone dense, 100m d'écart change significativement le prix. En zone rurale, les prix sont homogènes sur plusieurs km.
+
 MÉTHODOLOGIE D'ANALYSE :
 
 1. SÉLECTION DES COMPARABLES (5-10 ventes) :
    - PRIORITÉ 1 : Même type de bien (appartement/maison)
-   - PRIORITÉ 2 : Surface proche (+/- 30% de la surface du bien)
-   - PRIORITÉ 3 : Proximité géographique (< 500m idéal, < 1km acceptable)
+   - PRIORITÉ 2 : Surface proche (±20% en zone dense, ±30% standard, ±50% en zone rurale)
+   - PRIORITÉ 3 : Proximité géographique (< 500m en zone dense, < 1km standard, rayon complet en zone rurale)
    - PRIORITÉ 4 : Date récente (pondérer les ventes 2024-2025 plus fortement)
    - Si peu de comparables proches, élargir progressivement les critères
 
@@ -154,7 +161,7 @@ MÉTHODOLOGIE D'ANALYSE :
 3. ÉVOLUTION DES PRIX :
    - Regrouper par année TOUTES les ventes du même type (pas seulement les comparables)
    - Calculer la médiane au m² par année
-   - IMPORTANT : N'inclure que les années avec au moins 3 ventes du même type. Les années avec 1-2 ventes donnent des médianes non fiables et des variations aberrantes.
+   - IMPORTANT : N'inclure que les années avec un minimum de ventes pour être fiable (3+ en zone dense, 2+ en zone rurale). Les années avec 1 seule vente donnent des médianes non fiables.
    - La variation affichée doit être réaliste et cohérente avec le marché immobilier (rarement > ±20% sur 5 ans hors crise majeure)
    - Identifier la tendance (hausse, baisse, stabilisation)
 
