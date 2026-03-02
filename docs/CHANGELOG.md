@@ -4,6 +4,40 @@
 
 ---
 
+## Session 2026-03-02i — Paramètres étude + Upload photos + Adaptativité
+
+### Résumé
+Ajout d'une modal paramètres (icône ⚙) pour personnaliser les études de marché : logo, couleurs, signature, agence, coordonnées. Zone d'upload photos du bien (drag & drop, max 5, compression auto). Disclaimer légal. Prompt IA adaptatif densité urbaine/rurale.
+
+### Modifications
+
+**`etude-marche.html`** :
+- Modal `#studySettingsModal` : logo upload + compression, 2 color pickers + auto-détection, champs conseiller/agence/coordonnées
+- Fonctions : `getStudySettings()`, `openStudySettings()`, `saveStudySettings()`, `resetStudySettings()`, `handleLogoUpload()`, `autoDetectColors()` (extraction palette via canvas)
+- Zone photos : `#photosDropzone` (drag & drop), `handlePhotosUpload()`, `renderPhotoPreviews()`, compression via `compressImage()`
+- `renderStudy()` : utilise settings (logo custom sans invert, gradient custom, signature + coordonnées), photos en couverture + page présentation
+- `executeStudyGeneration()` : `agentName`/`agencyName` depuis settings en priorité
+- `newStudy()` : reset photos
+- Disclaimer légal dans la section avertissement de l'étude
+- `renderPriceEvolution()` : seuil adaptatif (2 ventes/an si < 15 total, 3 sinon)
+- CSS : 200+ lignes pour modal, settings, photos upload, photos étude
+- localStorage key : `leon_study_settings`
+
+**`api/generate-study.js`** :
+- Section "ADAPTATION À LA DENSITÉ DU MARCHÉ" ajoutée au prompt (zone dense/intermédiaire/rurale)
+- Seuil évolution adaptatif (3+ en zone dense, 2+ en rural)
+- Stats secteur clarifiées (TOUTES les ventes vs comparables sélectionnés)
+
+### Fichiers modifiés
+- `etude-marche.html`
+- `api/generate-study.js`
+
+### Prochaines étapes
+- Phase 2 : Analyse photos par Claude Vision (envoi base64 à l'API, ~0.01€/étude)
+- Sauvegarde settings dans Supabase (actuellement localStorage = par navigateur)
+
+---
+
 ## Session 2026-03-02h — Qualité étude de marché (dates, évolution, comparables)
 
 ### Résumé
