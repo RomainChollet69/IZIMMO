@@ -5,7 +5,7 @@
  * Mode par défaut : extraction complète via Claude Haiku (agency, price, etc.).
  * Dépendances : _auth.js (verifyAuth, withCORS)
  */
-import { verifyAuth, withCORS } from './_auth.js';
+import { verifyAuth, withCORS } from '../lib/auth.js';
 
 // --- Extraction OG tags via regex ---
 

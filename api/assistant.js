@@ -6,7 +6,7 @@
  * Dépendances : _auth.js (verifyAuth, withCORS, getSupabaseAdmin)
  */
 
-import { verifyAuth, withCORS, getSupabaseAdmin } from './_auth.js';
+import { verifyAuth, withCORS, getSupabaseAdmin } from '../lib/auth.js';
 
 // =================================================================
 // Constantes Calendar

@@ -1,4 +1,4 @@
-import { verifyAuth, withCORS } from './_auth.js';
+import { verifyAuth, withCORS } from '../lib/auth.js';
 
 export default async function handler(req, res) {
     withCORS(res);

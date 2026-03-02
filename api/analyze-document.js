@@ -6,7 +6,7 @@
  * Dépendances : _auth.js (verifyAuth, withCORS)
  */
 
-import { verifyAuth, withCORS } from './_auth.js';
+import { verifyAuth, withCORS } from '../lib/auth.js';
 
 /* ─── Prompts pour le mode screenshot_import ─── */
 
