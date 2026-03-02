@@ -876,3 +876,58 @@
 - Le code de chargement existe déjà (dvf.html lignes 2070-2256) → copie directe
 - Côté serveur, les fonctions Vercel ont un timeout de 60s — charger un département de 15 Mo prendrait trop de temps
 - Le client peut cacher les données (loadedDepts) entre plusieurs études
+
+---
+
+## D044 — Landing page v2 : narration Apple-style (pas feature-list)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : La landing v1 (`landing.html`) listait les features avec tutoiement décontracté. Besoin d'un positionnement plus premium mettant en avant la dictée vocale et l'IA.
+
+**Décision** : Nouvelle page `landing-v2.html` avec narration émotionnelle en 8 actes, vouvoiement, typographie Barlow SC 800 comme élément de design principal.
+
+**Pourquoi** :
+- La v1 ressemblait à une page SaaS générique — pas de différenciation
+- L'approche Apple (problème → révélation → preuve → désir) crée un arc émotionnel plus convaincant
+- Le vouvoiement positionne Léon comme un outil professionnel, pas un side-project
+- La typo géante + gradient text capte l'attention sans avoir besoin d'illustrations complexes
+- Les mockups HTML/CSS (section 5) montrent le produit mieux qu'un screenshot statique
+
+**Alternatives rejetées** :
+- **Modifier la v1** : Trop de changements structurels, préférable de repartir de zéro
+- **Framework landing (Framer, Webflow)** : Ajouterait une dépendance externe et casserait le workflow Vercel auto-deploy
+- **Vidéo hero** : Pas encore de contenu vidéo produit, la typo seule est plus impactante pour l'instant
+
+**Conséquences** :
+- Deux fichiers landing coexistent temporairement (v1 et v2)
+- 7 placeholders screenshots à remplacer par de vraies captures
+- Le ton vouvoiement est différent du reste de l'app (tutoiement) — c'est volontaire pour le positionnement externe
+
+---
+
+## D045 — Cockpit Léon : priorisation client-side (pas de nouvel endpoint API)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Création d'un guide quotidien intelligent (`leon.html`) qui analyse les données CRM + Google Calendar pour proposer un parcours de tâches priorisées.
+
+**Décision** : Le moteur de priorisation tourne côté client. Les données Supabase sont fetchées directement via `supabaseClient` et les événements Calendar via l'endpoint `/api/assistant` existant (`list_events`). Pas de nouvel endpoint API.
+
+**Pourquoi** :
+- Réutilise les patterns existants (toutes les pages fetchent Supabase côté client)
+- Évite un nouvel endpoint Vercel à maintenir
+- Le token Calendar est déjà géré par `/api/assistant` avec refresh automatique
+- Les 8 requêtes en parallèle (`Promise.all`) chargent en < 1s
+- La priorisation est déterministe (règles métier P1→P6), pas besoin d'IA
+
+**Alternatives rejetées** :
+- **Endpoint `/api/leon-cockpit`** : Aurait centralisé la logique mais ajouté un cold-start Vercel et de la complexité
+- **IA (Claude) pour prioriser** : Overkill — les règles métier sont simples et prévisibles
+- **Intégrer dans home.html** : Surchargerait la page d'accueil, mieux vaut une page dédiée
+
+**Conséquences** :
+- L'état de session est dans localStorage (éphémère, par jour, expire après 4h)
+- Le matching Calendar → lead est approximatif (score nom + adresse) — acceptable car l'utilisateur peut corriger manuellement

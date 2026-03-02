@@ -4,6 +4,70 @@
 
 ---
 
+## Session 2026-03-02h — Qualité étude de marché (dates, évolution, comparables)
+
+### Résumé
+Correction de 4 problèmes signalés sur l'étude de marché générée : format de dates, graphe d'évolution aberrant, manque de contexte géographique dans les comparables, et statistiques calculées sur trop peu de ventes.
+
+### Modifications
+
+**`etude-marche.html`** :
+- `renderComparablesTable()` : format dates YYYY-MM-DD → DD/MM/YYYY, ajout contexte géo (commune + rayon), note explicative DVF anonymisé
+- `renderPriceEvolution()` : filtre les années avec < 3 ventes (médiane non fiable → variations aberrantes type -51%)
+
+**`api/generate-study.js`** :
+- `buildAnalysisPrompt()` : instructions renforcées — stats secteur sur TOUTES les ventes, évolution sur ≥3 ventes/an, format dates JJ/MM/AAAA, variation réaliste
+
+### Fichiers modifiés
+- `etude-marche.html`
+- `api/generate-study.js`
+
+### Points d'attention
+- Le front-end gère les 2 formats de date (ISO et DD/MM/YYYY) pour compatibilité
+- Si une zone géographique n'a que 1-2 ventes/an, le graphe d'évolution ne s'affichera pas (mieux que des données trompeuses)
+- Les adresses DVF restent indisponibles (données anonymisées par la DGFiP)
+
+---
+
+## Session 2026-03-02g — Landing Page Premium (Apple-style)
+
+### Résumé
+Création d'une landing page premium `landing-v2.html` avec narration émotionnelle en 8 sections, style Apple. Accent sur la dictée vocale et l'IA contextuelle. Vouvoiement, typographie Barlow Semi Condensed 800 comme élément de design principal, animations scroll-reveal via IntersectionObserver natif.
+
+### Modifications
+
+**`landing-v2.html`** (CRÉÉ) :
+- Section 1 — Hero : "PARLEZ. L'IA FAIT LE RESTE." en typo géante + gradient text
+- Section 2 — Rupture : empathie pure, texte seul sur fond gris, zéro image
+- Section 3 — Voice-First : split layout texte/téléphone + 3 stats pills (15s, 0 champs, 100% mains libres)
+- Section 4 — CRM Intelligent : split inversé pipeline/features + 3 mini-cards (matching, messages IA, briefing)
+- Section 5 — IA Contextuelle : 3 mockups réalistes HTML/CSS (post LinkedIn, SMS relance, match 87%)
+- Section 6 — Mobile : 3 téléphones en éventail CSS (perspective + rotation)
+- Section 7 — Chiffres : 4 stats gradient en gros (15s, 87%, 3x, 0€)
+- Section 8 — CTA Final : fond gradient pleine largeur + double CTA
+- Header sticky glassmorphism (blur 20px)
+- Footer minimal "Fait à Lyon"
+- Responsive mobile complet (stack vertical, phones fan → single phone)
+- Animations scroll-reveal (IntersectionObserver, zéro dépendance)
+- Placeholders identifiés pour screenshots à fournir (7 emplacements avec IDs)
+
+### Fichiers créés/modifiés
+- `landing-v2.html` (CRÉÉ)
+- `docs/CHANGELOG.md` (mis à jour)
+- `docs/ARCHITECTURE.md` (mis à jour — ajout landing-v2.html dans l'arborescence)
+- `docs/DECISIONS.md` (mis à jour — D-landing-v2)
+
+### Points d'attention
+- 7 placeholders screenshots à remplacer par de vraies captures
+- Le lien "Voir une démo" pointe vers `#` (pas de vidéo démo encore)
+
+### Prochaines étapes prioritaires
+- Fournir les screenshots (pipeline desktop, mode micro, pipeline mobile, social mobile)
+- Éventuellement créer une vidéo démo courte
+- Connecter le CTA "Voir une démo" à la vidéo ou un calendly
+
+---
+
 ## Session 2026-03-02f — Étude de Marché IA (Phase 1 MVP)
 
 ### Résumé

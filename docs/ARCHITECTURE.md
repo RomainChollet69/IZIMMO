@@ -15,7 +15,8 @@ IZIMMO/
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5 colonnes + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth (redirige vers home.html)
-├── landing.html                # Page marketing / vitrine
+├── landing.html                # Page marketing / vitrine (v1, tutoiement)
+├── landing-v2.html             # Landing page premium Apple-style (v2, vouvoiement, scroll-reveal)
 ├── social.html                 # Moteur de contenu réseaux sociaux
 ├── parametres.html             # Page de paramètres utilisateur
 ├── micro.html                  # Enregistrement vocal + transcription (voice-first)
