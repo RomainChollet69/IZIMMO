@@ -611,20 +611,30 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="header no-print">
+    <div class="header no-print">
         <div class="header-inner">
-            <a href="home.html" class="logo"><img src="img/logo_200.png" alt="Léon"></a>
+            <a href="home.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
             <nav class="nav-tabs">
-                <a href="index.html" class="nav-tab">Vendeurs</a>
-                <a href="acquereurs.html" class="nav-tab">Acquéreurs</a>
-                <a href="dvf.html" class="nav-tab">DVF</a>
-                <a href="etude-marche.html" class="nav-tab active">Étude de Marché</a>
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
             </nav>
             <div class="header-actions">
                 <div id="userProfile" class="user-profile"></div>
             </div>
         </div>
-    </header>
+    </div>
 
     <!-- Main -->
     <div class="main-container">
@@ -924,51 +934,55 @@ async function handleDictation() {
     const label = document.getElementById('dictateLabel');
 
     if (isRecording) {
-        // Arrêter l'enregistrement
+        // Arrêter l'enregistrement — stop() résout la Promise de record()
         isRecording = false;
         btn.classList.remove('recording');
         icon.innerHTML = '<i class="fas fa-microphone"></i>';
         label.textContent = 'Traitement en cours...';
-
-        try {
-            const audioBlob = await audioRecorder.stop();
-            const text = await transcribeAudio(audioBlob);
-            if (text) await parseAndFillForm(text);
-            label.textContent = 'Dicter les caractéristiques du bien';
-        } catch (err) {
-            console.error('[EtudeMarche] Dictation error:', err);
-            label.textContent = 'Erreur — réessayez';
-            setTimeout(() => { label.textContent = 'Dicter les caractéristiques du bien'; }, 3000);
-        }
+        audioRecorder.stop();
         return;
     }
 
     // Démarrer l'enregistrement
     try {
         if (!audioRecorder) {
-            audioRecorder = new AudioRecorder();
+            audioRecorder = new AudioRecorder({
+                maxDuration: 60000,
+                onStateChange: (state, msg) => {
+                    if (state === 'transcribing') label.textContent = 'Transcription en cours...';
+                    if (state === 'error') {
+                        console.error('[EtudeMarche] Recorder error:', msg);
+                        label.textContent = msg || 'Erreur';
+                        setTimeout(() => { label.textContent = 'Dicter les caractéristiques du bien'; }, 3000);
+                    }
+                }
+            });
         }
-        await audioRecorder.start();
+
         isRecording = true;
         btn.classList.add('recording');
         icon.innerHTML = '<i class="fas fa-stop"></i>';
         label.textContent = 'Enregistrement en cours... Cliquez pour arrêter';
+
+        // record() retourne le texte transcrit une fois stop() appelé
+        const text = await audioRecorder.record();
+        isRecording = false;
+        btn.classList.remove('recording');
+        icon.innerHTML = '<i class="fas fa-microphone"></i>';
+
+        if (text) {
+            label.textContent = 'Analyse en cours...';
+            await parseAndFillForm(text);
+        }
+        label.textContent = 'Dicter les caractéristiques du bien';
     } catch (err) {
         console.error('[EtudeMarche] Mic error:', err);
-        label.textContent = 'Erreur microphone';
+        isRecording = false;
+        btn.classList.remove('recording');
+        icon.innerHTML = '<i class="fas fa-microphone"></i>';
+        label.textContent = err.message || 'Erreur microphone';
         setTimeout(() => { label.textContent = 'Dicter les caractéristiques du bien'; }, 3000);
     }
-}
-
-async function transcribeAudio(audioBlob) {
-    const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        headers: { 'Content-Type': audioBlob.type || 'audio/webm' },
-        body: audioBlob
-    });
-    if (!response.ok) throw new Error('Transcription failed');
-    const result = await response.json();
-    return result.text;
 }
 
 async function parseAndFillForm(text) {
