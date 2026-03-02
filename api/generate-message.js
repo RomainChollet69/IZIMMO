@@ -15,7 +15,9 @@ export default async function handler(req, res) {
     const { channel, scenario, leadData, notes, customPrompt, leadType, agentName, tone } = req.body || {};
     if (!channel || !scenario || !leadData) return res.status(400).json({ error: 'Missing required fields' });
 
-    const toneRule = tone === 'tu' ? 'Tutoiement obligatoire.' : 'Vouvoiement obligatoire.';
+    const toneRule = tone === 'tu'
+        ? 'Tutoiement obligatoire (tu/toi/ton/ta).'
+        : 'Vouvoiement OBLIGATOIRE (vous/votre/vos). Registre formel et respectueux. INTERDIT : "Salut", "Hey", "Coucou", "Hello" — commence toujours par "Bonjour" suivi du prénom.';
 
     const channelInstructions = {
         sms: `Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. ${toneRule}`,
@@ -85,10 +87,25 @@ export default async function handler(req, res) {
 
     const isAnnonce = scenario === 'redaction_annonce';
     const isArgPrix = scenario === 'repositionnement_prix';
-    const isRetourVisite = scenario === 'retour_visite';
+    const isRetourVisiteSeller = scenario === 'retour_visite' && leadType !== 'buyer';
+    const isRetourVisiteBuyer = scenario === 'retour_visite' && leadType === 'buyer';
 
     let systemPrompt;
-    if (isRetourVisite) {
+    if (isRetourVisiteBuyer) {
+        const agentFirstName = agentName ? agentName.split(' ')[0] : '';
+        systemPrompt = `Tu rédiges un message pour un agent immobilier qui demande à son acquéreur ce qu'il a pensé d'une visite. Tu écris comme un VRAI agent, pas comme une IA.
+
+Ton et style — CRITIQUE :
+- Message court, naturel, comme un vrai SMS/WhatsApp entre pro et client
+- Tu demandes simplement son ressenti, son avis, s'il se projette
+- INTERDIT : "retour constructif", "n'hésitez pas", "je reste à votre disposition", "je me permets de"
+- ${toneRule}
+- ${channelInstructions[channel] || channelInstructions.sms}
+- Mentionne le bien visité (ville, type) naturellement dans le message
+- Utilise le prénom de l'acquéreur
+${agentFirstName ? `- Signe : ${agentFirstName}` : ''}
+- Retourne UNIQUEMENT le message, sans explication`;
+    } else if (isRetourVisiteSeller) {
         const agentFirstName = agentName ? agentName.split(' ')[0] : '';
         systemPrompt = `Tu es un agent immobilier qui écrit un message à son vendeur pour lui faire un retour de visite. Tu écris comme un VRAI agent, pas comme une IA.
 

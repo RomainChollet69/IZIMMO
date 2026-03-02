@@ -2173,10 +2173,11 @@
         .visit-card-points { font-size: 11px; margin-top: 2px; line-height: 1.4; }
         .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
         .visit-card-actions { display: flex; gap: 6px; margin-top: 6px; }
-        .visit-action-done, .visit-action-cancel, .visit-action-feedback { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .visit-action-done, .visit-action-cancel, .visit-action-feedback, .visit-action-msg { padding: 5px 10px; border: none; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; }
         .visit-action-done { background: #E8F5E9; color: #2E7D32; }
         .visit-action-cancel { background: #FFF3E0; color: #E65100; }
         .visit-action-feedback { background: #E8EAF6; color: #3F51B5; }
+        .visit-action-msg { background: #F3E5F5; color: #7B1FA2; }
         .visit-delete-btn-match { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
         .visit-match-card:hover .visit-delete-btn-match { opacity: 1; }
         .visits-match-separator { height: 1px; background: #E0E0E0; margin: 12px 0; }
@@ -2213,6 +2214,28 @@
         .feedback-actions { display: flex; gap: 8px; }
         .feedback-save-btn { flex: 1; padding: 9px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .feedback-skip-btn { padding: 9px 14px; background: #f8f9fa; color: #78909C; border: 1px solid #E0E0E0; border-radius: 8px; cursor: pointer; }
+
+        /* Popup retour visite */
+        .visit-retour-popup { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 20px 24px; max-width: 420px; width: 92%; }
+        .visit-retour-title { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 16px; font-weight: 700; color: #2C3E50; margin-bottom: 14px; text-align: center; }
+        .visit-retour-channel-bar { display: flex; gap: 8px; justify-content: center; margin-bottom: 12px; }
+        .visit-retour-channel-btn { padding: 8px 14px; border-radius: 8px; border: 1.5px solid #E5E7EB; background: white; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-channel-btn:hover { border-color: #667eea; background: #f0f0ff; }
+        .visit-retour-channel-btn.active { border-color: #667eea; background: #f0f0ff; color: #667eea; }
+        .visit-retour-generate-btn { width: 100%; padding: 10px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-generate-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+        .visit-retour-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .visit-retour-output { display: none; width: 100%; min-height: 80px; margin-top: 12px; padding: 10px 12px; border: 1px solid #E5E7EB; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 13px; line-height: 1.5; resize: vertical; box-sizing: border-box; }
+        .visit-retour-output:focus { outline: none; border-color: #667eea; }
+        .visit-retour-actions { display: none; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .visit-retour-actions.visible { display: flex; }
+        .visit-retour-action-btn { padding: 7px 12px; border-radius: 8px; border: 1px solid #E5E7EB; background: white; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+        .visit-retour-action-btn:hover { border-color: #667eea; background: #f8f8ff; }
+        .visit-retour-action-btn.primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .visit-retour-loading { display: none; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; font-size: 13px; color: #667eea; }
+        .visit-retour-loading.visible { display: flex; }
+        .visit-retour-close { position: absolute; top: 10px; right: 14px; background: none; border: none; font-size: 20px; cursor: pointer; color: #999; line-height: 1; }
+        .visit-retour-close:hover { color: #333; }
 
         /* Sector tags */
         .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s, box-shadow 0.2s; background: white; }
@@ -2692,6 +2715,52 @@
         }
         @media (min-width: 769px) {
             body { padding-bottom: 80px; }
+        }
+
+        /* FAB Visites — bouton flottant */
+        .visits-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
+            z-index: 100;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .visits-fab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 28px rgba(102, 126, 234, 0.45);
+        }
+        .visits-fab i { font-size: 18px; }
+        .visits-fab-count {
+            background: white;
+            color: #667eea;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .visits-fab {
+                bottom: calc(var(--m-bottom-bar-h, 64px) + 16px + env(safe-area-inset-bottom, 0px));
+                right: 16px;
+                padding: 10px 14px;
+                font-size: 13px;
+                border-radius: 14px;
+            }
+            .visits-fab-label { display: none; }
         }
     </style>
 </head>
@@ -3782,7 +3851,7 @@
 
             const { data, error } = await supabaseClient
                 .from('visits')
-                .select('*, sellers(first_name, last_name, address)')
+                .select('*, sellers(first_name, last_name, address, property_type)')
                 .eq('buyer_id', buyerId)
                 .eq('user_id', userId)
                 .order('visit_date', { ascending: false });
@@ -3857,6 +3926,7 @@
                 const btnLabel = visit.feedback_rating ? '✏️ Modifier le retour' : '📝 Donner un retour';
                 actions = `<div class="visit-card-actions">
                     <button type="button" class="visit-action-feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
+                    <button type="button" class="visit-action-msg" onclick="event.stopPropagation();openVisitRetourPopup('${visit.id}')">💬 Demander un retour</button>
                 </div>`;
             }
 
@@ -4204,6 +4274,209 @@
             closeFeedbackModal();
             renderMatchingVisits();
             showMatchToast('Retour enregistré');
+        }
+
+        // ===== POPUP RETOUR VISITE (message IA depuis carte visite) =====
+
+        /**
+         * Ouvre un popup de génération de message pour demander un retour visite à l'acquéreur.
+         * Utilise les données de la visite (bien, ville) pour personnaliser le message.
+         */
+        async function openVisitRetourPopup(visitId) {
+            const visit = currentMatchVisits.find(v => v.id === visitId);
+            if (!visit) { console.error('[VisitRetour] Visit not found:', visitId); return; }
+
+            // Extraire les infos du bien visité
+            let propertyCity = '';
+            let propertyType = '';
+            if (visit.sellers) {
+                propertyCity = visit.sellers.address ? extractCity(visit.sellers.address) || visit.sellers.address : '';
+                propertyType = visit.sellers.property_type || '';
+            }
+
+            // Construire le label du bien pour le prompt
+            const TYPE_LABELS = { appartement: 'l\'appartement', maison: 'la maison', terrain: 'le terrain', immeuble: 'l\'immeuble', local_commercial: 'le local commercial', parking: 'le parking' };
+            const typeLbl = TYPE_LABELS[propertyType] || 'le bien';
+            const propertyLabel = propertyCity ? `${typeLbl} de ${propertyCity}` : typeLbl;
+
+            // Créer l'overlay popup
+            const overlay = document.createElement('div');
+            overlay.className = 'reject-modal-overlay';
+            overlay.style.zIndex = '25000';
+            overlay.innerHTML = `
+                <div class="visit-retour-popup" style="position:relative;">
+                    <button type="button" class="visit-retour-close" id="visitRetourClose">&times;</button>
+                    <div class="visit-retour-title">💬 Demander un retour visite</div>
+                    <div style="text-align:center;font-size:12px;color:#78909C;margin-bottom:12px;">
+                        ${escapeHtml(propertyLabel.charAt(0).toUpperCase() + propertyLabel.slice(1))}
+                    </div>
+                    <div class="visit-retour-channel-bar">
+                        <button type="button" class="visit-retour-channel-btn active" data-channel="sms">📱 SMS</button>
+                        <button type="button" class="visit-retour-channel-btn" data-channel="whatsapp">💬 WhatsApp</button>
+                        <button type="button" class="visit-retour-channel-btn" data-channel="email">📧 Email</button>
+                    </div>
+                    <button type="button" class="visit-retour-generate-btn" id="visitRetourGenBtn">✨ Générer le message</button>
+                    <div class="visit-retour-loading" id="visitRetourLoading">
+                        <div class="msg-ia-spinner"></div>
+                        <span>Génération en cours...</span>
+                    </div>
+                    <textarea class="visit-retour-output" id="visitRetourOutput" placeholder="Le message apparaîtra ici..."></textarea>
+                    <div class="visit-retour-actions" id="visitRetourActions">
+                        <button type="button" class="visit-retour-action-btn primary" id="vrCopy">📋 Copier</button>
+                        <button type="button" class="visit-retour-action-btn" id="vrSMS">📱 SMS</button>
+                        <button type="button" class="visit-retour-action-btn" id="vrWhatsApp">💬 WhatsApp</button>
+                        <button type="button" class="visit-retour-action-btn" id="vrEmail">📧 Email</button>
+                        <button type="button" class="visit-retour-action-btn" id="vrRegen">🔄 Régénérer</button>
+                        <button type="button" class="visit-retour-action-btn" id="vrSaveNote">💾 Note</button>
+                    </div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+
+            // État local du popup
+            let popupChannel = 'sms';
+            let lastTone = null;
+
+            // Sélection de canal
+            overlay.querySelectorAll('.visit-retour-channel-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    popupChannel = btn.dataset.channel;
+                    overlay.querySelectorAll('.visit-retour-channel-btn').forEach(b => b.classList.toggle('active', b === btn));
+                });
+            });
+
+            // Fermer
+            const closePopup = () => overlay.remove();
+            overlay.querySelector('#visitRetourClose').addEventListener('click', closePopup);
+            overlay.addEventListener('click', e => { if (e.target === overlay) closePopup(); });
+
+            // Ouvrir l'appli correspondante au canal sélectionné
+            const openChannelApp = (message) => {
+                const phone = document.getElementById('phone').value.replace(/\s/g, '');
+                const email = document.getElementById('email').value;
+
+                if (popupChannel === 'sms') {
+                    if (!phone) { showMatchToast('Pas de numéro de téléphone'); return; }
+                    window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_blank');
+                } else if (popupChannel === 'whatsapp') {
+                    if (!phone) { showMatchToast('Pas de numéro de téléphone'); return; }
+                    let waPhone = phone;
+                    if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
+                    window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
+                } else if (popupChannel === 'email') {
+                    if (!email) { showMatchToast('Pas d\'adresse email'); return; }
+                    let subject = '', body = message;
+                    const subjectMatch = message.match(/^Objet\s*:\s*(.+)\n/i);
+                    if (subjectMatch) { subject = subjectMatch[1].trim(); body = message.slice(subjectMatch[0].length).trim(); }
+                    window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+                }
+            };
+
+            // Génération du message
+            const doGenerate = async () => {
+                const tone = await askTone();
+                if (!tone) return;
+                lastTone = tone;
+
+                const genBtn = overlay.querySelector('#visitRetourGenBtn');
+                const loading = overlay.querySelector('#visitRetourLoading');
+                const output = overlay.querySelector('#visitRetourOutput');
+                const actionsDiv = overlay.querySelector('#visitRetourActions');
+
+                genBtn.disabled = true;
+                loading.classList.add('visible');
+                output.style.display = 'none';
+                actionsDiv.classList.remove('visible');
+
+                const leadData = getBuyerLeadData();
+                const notes = currentNotes.slice(0, 5).map(n => n.content);
+                const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
+
+                // Contexte spécifique de la visite pour enrichir le prompt
+                const visitDateStr = visit.visit_date
+                    ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })
+                    : '';
+                const customPrompt = `La visite portait sur ${propertyLabel}.${visitDateStr ? ' Elle a eu lieu le ' + visitDateStr + '.' : ''} Mentionne le bien visité (ville) dans le message de manière naturelle.`;
+
+                try {
+                    console.log('[VisitRetour] Generating:', { channel: popupChannel, propertyLabel, tone });
+                    const resp = await fetch('/api/generate-message', {
+                        method: 'POST',
+                        headers: await getAuthHeaders(),
+                        body: JSON.stringify({
+                            channel: popupChannel,
+                            scenario: 'retour_visite',
+                            leadData,
+                            notes,
+                            customPrompt,
+                            leadType: 'buyer',
+                            agentName,
+                            tone
+                        })
+                    });
+                    const data = await resp.json().catch(() => ({}));
+                    if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur');
+
+                    output.value = data.message;
+                    output.style.display = 'block';
+                    actionsDiv.classList.add('visible');
+
+                    // Ouvrir automatiquement l'appli du canal sélectionné
+                    openChannelApp(data.message);
+                } catch (err) {
+                    alert('Erreur de génération : ' + err.message);
+                } finally {
+                    genBtn.disabled = false;
+                    loading.classList.remove('visible');
+                }
+            };
+
+            overlay.querySelector('#visitRetourGenBtn').addEventListener('click', doGenerate);
+
+            // Actions post-génération
+            overlay.querySelector('#vrCopy').addEventListener('click', () => {
+                const text = overlay.querySelector('#visitRetourOutput').value;
+                if (text) navigator.clipboard.writeText(text).then(() => showMatchToast('Message copié !'));
+            });
+
+            overlay.querySelector('#vrSMS').addEventListener('click', () => {
+                const saved = popupChannel; popupChannel = 'sms';
+                openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+                popupChannel = saved;
+            });
+
+            overlay.querySelector('#vrWhatsApp').addEventListener('click', () => {
+                const saved = popupChannel; popupChannel = 'whatsapp';
+                openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+                popupChannel = saved;
+            });
+
+            overlay.querySelector('#vrEmail').addEventListener('click', () => {
+                const saved = popupChannel; popupChannel = 'email';
+                openChannelApp(overlay.querySelector('#visitRetourOutput').value);
+                popupChannel = saved;
+            });
+
+            overlay.querySelector('#vrRegen').addEventListener('click', doGenerate);
+
+            overlay.querySelector('#vrSaveNote').addEventListener('click', async () => {
+                const text = overlay.querySelector('#visitRetourOutput').value;
+                if (!text) return;
+                const editId = document.getElementById('submitBtn').dataset.editId;
+                if (!editId) { alert('Enregistrez le lead d\'abord'); return; }
+                const channelLabel = { sms: 'SMS', whatsapp: 'WhatsApp', email: 'Email' }[popupChannel] || popupChannel;
+                const noteText = `[Message IA - ${channelLabel} - Retour visite] ${text}`;
+                const userId = await getCurrentUserId();
+                if (!userId) return;
+                const { data, error } = await supabaseClient
+                    .from('lead_notes')
+                    .insert({ user_id: userId, buyer_id: editId, content: noteText })
+                    .select().single();
+                if (error) { console.error('[VisitRetour] Note error:', error); return; }
+                currentNotes.unshift(data);
+                renderBuyerNotes();
+                showMatchToast('Message sauvegardé en note !');
+            });
         }
 
         // ===== MOBILE TABS =====
@@ -7062,6 +7335,24 @@
             }
 
             // Alert counter click handled by relance-widget.js
+
+            // FAB Visites — charger le compteur de visites planifiées
+            (async function loadVisitsFabCount() {
+                try {
+                    const userId = await getCurrentUserId();
+                    if (!userId) return;
+                    const { count } = await supabaseClient
+                        .from('visits')
+                        .select('*', { count: 'exact', head: true })
+                        .eq('user_id', userId)
+                        .eq('status', 'planifiee');
+                    const badge = document.getElementById('visitsFabCount');
+                    if (badge && count > 0) {
+                        badge.textContent = count;
+                        badge.style.display = '';
+                    }
+                } catch (e) { console.warn('[FAB Visites] Count error:', e); }
+            })();
         });
 
         // ===== MESSAGES IA =====
@@ -7301,6 +7592,13 @@
             }
         });
     </script>
+
+    <!-- FAB Visites — bouton flottant vers la page Visites -->
+    <a href="visites.html" class="visits-fab" id="visitsFab" title="Gérer les visites">
+        <i class="fa-solid fa-calendar-check"></i>
+        <span class="visits-fab-label">Visites</span>
+        <span class="visits-fab-count" id="visitsFabCount" style="display:none">0</span>
+    </a>
 
     <script src="js/mobile-nav.js"></script>
 </body>
