@@ -398,7 +398,7 @@ scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
 | `property_type` | TEXT        | `appartement` \| `maison` \| `terrain` \| `immeuble`    |
 | `budget`        | NUMERIC     | Prix estimé (EUR)                                        |
 | `surface`       | NUMERIC     | Surface en m²                                            |
-| `rooms`         | NUMERIC     | Nombre de pièces                                         |
+| `rooms`         | TEXT        | Nombre de pièces (`T1`, `T2`, `T3`, `T4`, `T5+`)        |
 | `description`   | TEXT        | Description physique du bien                             |
 | `annexes`       | TEXT[]      | `parking`, `cave`, `balcon`, `jardin`, `garage`, `piscine`, `ascenseur` |
 | `status`        | TEXT        | `hot` \| `warm` \| `cold` \| `off_market` …             |

@@ -4,6 +4,68 @@
 
 ---
 
+## Session 2026-03-02e — Refonte visuelle Matching + micro fixes + header acquéreurs
+
+### Résumé
+Refonte visuelle complète de l'onglet Matching (fiche vendeur) : cartes visite aérées avec chips colorées, boutons discrets, cartes matching avec ombre et barres fines. Ajout du champ rooms (pièces) pour vendeurs. Fix bugs micro (source, referrer, phone, property_type). Fix ordering cartes, scroll chaining, Leon doublon, auto-close micro modal. Nom acquéreur cliquable dans les cartes visite. Header acquéreurs aligné sur le header vendeurs.
+
+### Modifications
+
+**`index.html`** :
+- **Matching visites CSS** : cartes avec padding 14px, border-radius 12px, ombre légère, date en badge gris (#F3F4F6), gap 10px entre cartes, séparateur 20px
+- **Matching visites JS** : `renderVisitCard()` refactorisé — feedback, prix, points positifs/négatifs, ambiance, décision → chips colorées horizontales (`.visit-card-chip`) avec couleurs par type (bleu, vert, orange, rouge, violet)
+- **Boutons visite** : fond transparent, bordure grise #E5E7EB, couleur uniquement au hover
+- **Matching acquéreurs CSS** : fond blanc, bordure fine #F3F4F6, ombre, hover bordure violette, score circle 42px (était 48px, opacity 0.9), barres 4px (était 6px), labels 11px, gap 12px
+- **Nom acquéreur cliquable** : lien `<a>` vers `acquereurs.html?openLead=ID` (hover violet souligné)
+- **Match cards deep-link** : clic ouvre `?openLead=ID` au lieu de la page sans contexte
+- **Rooms sur carte** : affichage T1-T5+ dans les infos compactes
+- **Rooms formulaire** : dropdown entre Type de bien et Surface, avec load/save/reset/OCR mapping
+- **Fix ordering** : `prepend()` → `appendChild()` dans renderSellers + `nullsFirst: false`
+- **Fix scroll chaining** : `overscroll-behavior-y: none` sur colonnes et pipeline
+- **Fix Leon doublon** : FAB caché dans closeModal() et désactivé dans dismissLeonPopup()
+- **Auto-close micro** : `closeMicroModal()` dans le listener `lead-created`
+- **Card cleanup** : suppression badge "À RELANCER", match indicator simplifié "🎯 5", max-height 150px, followup en vue étendue uniquement
+- **Bouton + Lead** : déplacé dans search-bar-section, positionné `left: calc(50% + 360px)`
+
+**`acquereurs.html`** :
+- **Header** : bouton + Lead déplacé du header vers search-bar-section (identique vendeurs)
+- **CSS** : `.search-bar-section .add-btn` positionné `left: calc(50% + 360px)` + hover override
+- **Fix scroll chaining** : `overscroll-behavior-y: none`
+- **Fix ordering** : `nullsFirst: false`
+- **Auto-close micro** : `closeMicroModal()` dans listener `lead-created`
+
+**`micro.html`** :
+- Phone cleanup : dots/tirets → espaces
+- `property_type` sorti du bloc buyer-only (commun vendeurs/acquéreurs)
+- Seller fields ajoutés : source, referrer_name, budget, address, rooms
+- Mapping `reminder_date` → `reminder`
+
+**`api/parse-voice-note.js`** :
+- Schema enrichi : phone format instruction, source, referrer_name, rooms, address, reminder_date
+- note_content : exclusions strictes renforcées (pas de téléphone, type, surface, budget, pièces, source, adresse)
+
+**`sql/011_sellers_rooms.sql`** (NOUVEAU) :
+- `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS rooms TEXT`
+
+### Fichiers créés/modifiés
+- `index.html` (CSS matching, JS chips, rooms, ordering, scroll, Leon, micro, bouton Lead)
+- `acquereurs.html` (header, scroll, ordering, micro)
+- `micro.html` (phone, property_type, seller fields, reminder)
+- `api/parse-voice-note.js` (schema, exclusions)
+- `sql/011_sellers_rooms.sql` (nouveau)
+
+### Points d'attention
+- Migration SQL `rooms` déjà exécutée sur Supabase
+- Le deep-link `?openLead=ID` existait déjà sur les deux pages, simplement branché sur les cartes matching/visite
+- `overscroll-behavior-y: none` (pas `none` tout court) pour ne pas bloquer le scroll horizontal trackpad
+
+### Prochaines étapes prioritaires
+- Tester le rendu des chips visite avec différents retours (feedback, prix, points, décision)
+- Vérifier le deep-link acquéreur depuis les cartes visite
+- Tester le micro avec tous les champs vendeur (source recommandation + referrer)
+
+---
+
 ## Session 2026-03-02d — Bouton "Demander un retour" visite acquéreur + fix ton vouvoiement
 
 ### Résumé

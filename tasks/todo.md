@@ -10,6 +10,11 @@ _(rien en cours)_
 
 ## À faire
 
+### Matching / Visites
+- [ ] Tester le rendu des chips visite avec différents retours (feedback, prix, points, décision)
+- [ ] Vérifier le deep-link acquéreur depuis les cartes visite (clic nom → fiche)
+- [ ] Tester le micro avec tous les champs vendeur (source recommandation + referrer_name)
+
 ### Messages IA
 - [ ] Tester le retour visite avec différents feedback_rating (coup de coeur vs pas convaincu)
 - [ ] Tester les 3 canaux (SMS, WhatsApp, Email) avec tu et vous
@@ -46,6 +51,17 @@ _(rien en cours)_
 
 ## Terminé
 
+- [x] Refonte visuelle onglet Matching : chips colorées, cartes aérées, boutons discrets, barres fines
+- [x] Nom acquéreur cliquable dans cartes visite (deep-link openLead)
+- [x] Match cards deep-link vers fiche acquéreur/vendeur
+- [x] Champ rooms (pièces) vendeurs : formulaire, carte, micro, SQL migration
+- [x] Fix ordering cartes (prepend → appendChild + nullsFirst)
+- [x] Fix scroll chaining (overscroll-behavior-y: none)
+- [x] Fix Leon doublon (FAB désactivé)
+- [x] Auto-close micro modal après création lead
+- [x] Card cleanup (suppression À RELANCER, match indicator compact, max-height 150px)
+- [x] Header acquéreurs aligné sur vendeurs (bouton Lead dans search-bar-section)
+- [x] Bouton + Lead positionné identique sur les deux pipelines
 - [x] Actions rapides widget relances (snooze +7j / dismiss) + fix arrondissements 1er/2e
 - [x] Date de RDV vendeur + auto-relance J+15 (appointment_date, badge vert, constante 15j)
 - [x] Fix CSS iOS WebKit pour card deck (préfixes -webkit-, suppression propriétés problématiques)
