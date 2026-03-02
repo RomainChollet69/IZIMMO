@@ -8,7 +8,8 @@
  */
 import { verifyAuth, withCORS } from '../lib/auth.js';
 
-const MODEL = 'claude-sonnet-4-20250514'; // Sonnet pour les 2 passes (Pro = 300s)
+const MODEL_ANALYSIS = 'claude-haiku-4-5-20251001'; // Haiku pour passe 1 (JSON structuré, rapide, économique)
+const MODEL_WRITING = 'claude-sonnet-4-20250514';  // Sonnet pour passe 2 (rédaction narrative + Vision)
 const ABORT_TIMEOUT_MS = 120000; // 120s confort (Vercel Pro max = 300s)
 
 export default async function handler(req, res) {
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
         const hasCoords = property.latitude && property.longitude;
 
         const [analysisRaw, poiData, communeData] = await Promise.all([
-            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now()),
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, deadline - Date.now(), [], MODEL_ANALYSIS),
             hasCoords
                 ? fetchPOIData(property.latitude, property.longitude).catch(err => {
                     console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
@@ -121,7 +122,7 @@ export default async function handler(req, res) {
 
 // ========== Appel Claude générique ==========
 
-async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = []) {
+async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs, images = [], model = MODEL_WRITING) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -147,7 +148,7 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
             'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-            model: MODEL,
+            model: model,
             max_tokens: maxTokens,
             system: systemPrompt,
             messages: [{ role: 'user', content: userContent }]

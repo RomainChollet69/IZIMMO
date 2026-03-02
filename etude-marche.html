@@ -3344,6 +3344,7 @@ function renderPropertyGrid(property) {
     if (ia.luminosity) items.push({ value: ia.luminosity, label: 'Luminosité' });
     if (ia.outdoor && Array.isArray(ia.outdoor)) items.push({ value: ia.outdoor.join(', '), label: 'Extérieurs' });
     if (ia.parking && Array.isArray(ia.parking)) items.push({ value: ia.parking.join(', '), label: 'Stationnement' });
+    if (ia.annexes && Array.isArray(ia.annexes)) items.push({ value: ia.annexes.join(', '), label: 'Annexes' });
 
     if (items.length === 0) return '';
     return `<div class="property-grid">${items.map(i => `
