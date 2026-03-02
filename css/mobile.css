@@ -105,12 +105,14 @@
 html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 body {
+    margin: 0 !important;
     padding: 0 !important;
     padding-bottom: calc(var(--m-bottom-bar-h) + 16px + env(safe-area-inset-bottom, 0px)) !important;
     background: var(--m-surface-1);
-    margin: 0;
 }
 
 /* ============================================================
