@@ -4,6 +4,52 @@
 
 ---
 
+## Session 2026-03-02c — Page Visites (vue centrée biens)
+
+### Résumé
+Création d'une page dédiée `visites.html` pour gérer les visites de biens, groupées par propriété vendeur. Permet d'enregistrer des visiteurs libres (non qualifiés) et de les promouvoir en acquéreurs. Accessible via un FAB sur la page acquéreurs et le menu "Plus..." mobile.
+
+### Modifications
+
+**`visites.html`** (NOUVEAU) :
+- Vue accordéon groupée par bien vendeur avec badges (nb visites, prochaine date, effectuées)
+- Stats rapides : visites aujourd'hui, cette semaine, retours en attente
+- Filtres par statut, date range, recherche textuelle
+- Modal création visite : choix visiteur libre (nom/tél/email) ou acquéreur existant
+- Modal feedback post-visite : chips ressenti, points +/-, prix, quartier, décision
+- Promotion visiteur libre → acquéreur avec liaison automatique des visites
+- Responsive mobile complet (header caché, stats scrollables, bottom nav)
+- Auth guard via getCurrentUserId() + redirection login
+
+**`acquereurs.html`** :
+- Ajout FAB flottant "Visites" en bas à droite avec compteur de visites planifiées
+- CSS responsive du FAB (desktop : texte + icône, mobile : icône seule au-dessus de la bottom bar)
+
+**`js/mobile-nav.js`** :
+- Ajout "Visites" dans le menu "Plus..." de la navigation mobile
+
+### Migration DB requise
+```sql
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS visitor_phone text;
+ALTER TABLE visits ADD COLUMN IF NOT EXISTS visitor_email text;
+```
+
+### Fichiers créés/modifiés
+- `visites.html` (NOUVEAU)
+- `acquereurs.html` (FAB + CSS + JS compteur)
+- `js/mobile-nav.js` (MORE_ITEMS)
+
+### Points d'attention
+- Les constantes de feedback (FEEDBACK_LABELS, etc.) sont dupliquées entre acquereurs.html et visites.html — à extraire dans un fichier partagé lors d'un refactoring futur
+- La migration DB (visitor_phone, visitor_email) doit être exécutée manuellement dans Supabase Dashboard
+
+### Prochaines étapes prioritaires
+- Exécuter la migration SQL dans Supabase
+- Tester le flow complet : créer visite libre → retour → promotion → vérifier dans acquéreurs
+- Ajouter un lien depuis les fiches vendeurs vers leurs visites (optionnel)
+
+---
+
 ## Session 2026-03-02b — Cockpit quotidien Léon (Guide intelligent)
 
 ### Résumé

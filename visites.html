@@ -1,0 +1,1751 @@
+<!--
+  Léon — Page Visites (visites.html)
+  Vue centrée sur les biens : toutes les visites groupées par propriété vendeur.
+  Gestion des visiteurs libres (non qualifiés) et liés à des acquéreurs.
+  Table Supabase : visits (FK → sellers, buyers) | Auth requise (js/auth.js)
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Léon. — Visites</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — CRM Immobilier">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/gamification.js"></script>
+    <script src="js/mobile-nav.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --visit-planned: #3F51B5;
+            --visit-done: #2E7D32;
+            --visit-cancelled: #9E9E9E;
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            padding: 0;
+            color: var(--text-dark);
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-right: 48px;
+            cursor: pointer;
+        }
+        .logo img { height: 36px; width: auto; }
+        .nav-tabs { display: flex; align-items: center; gap: 8px; }
+        .nav-tab {
+            color: #6B7280;
+            text-decoration: none;
+            padding: 20px 32px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            font-size: 15px;
+            transition: all 0.2s ease;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .nav-tab i { font-size: 16px; }
+        .nav-tab:hover { color: #243B53; }
+        .nav-tab.active { color: #243B53; font-weight: 600; border-bottom-color: #243B53; }
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+
+        /* ===== PAGE TITLE ===== */
+        .page-title-bar {
+            max-width: 1200px;
+            margin: 24px auto 0;
+            padding: 0 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .page-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-dark);
+            text-transform: uppercase;
+        }
+        .page-title i { margin-right: 10px; color: var(--visit-planned); }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            padding: 20px 32px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .stat-card {
+            flex: 1;
+            background: white;
+            border-radius: 14px;
+            padding: 18px 22px;
+            box-shadow: var(--shadow);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+        .stat-value {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-dark);
+        }
+        .stat-label { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+        .stat-card.planned .stat-value { color: var(--visit-planned); }
+        .stat-card.week .stat-value { color: #7C4DFF; }
+        .stat-card.feedback .stat-value { color: #FF9800; }
+
+        /* ===== FILTERS BAR ===== */
+        .filters-bar {
+            padding: 20px 32px 0;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .filter-select, .filter-input {
+            padding: 9px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
+        }
+        .filter-search {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+        .filter-search input {
+            width: 100%;
+            padding: 9px 14px 9px 36px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            background: white;
+            transition: border-color 0.2s;
+        }
+        .filter-search input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
+        }
+        .filter-search i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9CA3AF;
+            font-size: 14px;
+        }
+        .new-visit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: transform 0.15s, box-shadow 0.15s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .new-visit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+
+        /* ===== VISITS CONTAINER ===== */
+        .visits-container {
+            max-width: 1200px;
+            margin: 20px auto 40px;
+            padding: 0 32px;
+        }
+        .visits-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+        .visits-empty i { font-size: 48px; margin-bottom: 16px; display: block; color: #D1D5DB; }
+        .visits-empty p { font-size: 16px; margin-bottom: 8px; }
+        .visits-empty small { font-size: 13px; color: #9CA3AF; }
+
+        /* ===== PROPERTY ACCORDION ===== */
+        .property-accordion {
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            margin-bottom: 12px;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .property-accordion:hover { box-shadow: var(--shadow-hover); }
+        .property-accordion-header {
+            display: flex;
+            align-items: center;
+            padding: 18px 22px;
+            cursor: pointer;
+            transition: background 0.15s;
+            gap: 16px;
+        }
+        .property-accordion-header:hover { background: #FAFBFC; }
+        .accordion-property-info { flex: 1; min-width: 0; }
+        .accordion-address {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .accordion-seller {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        .accordion-badges { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+        .accordion-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+        .accordion-badge.count { background: #E8EAF6; color: var(--visit-planned); }
+        .accordion-badge.next { background: #FFF3E0; color: #E65100; }
+        .accordion-badge.done-count { background: #E8F5E9; color: var(--visit-done); }
+        .accordion-chevron {
+            font-size: 14px;
+            color: #9CA3AF;
+            transition: transform 0.2s;
+            flex-shrink: 0;
+        }
+        .property-accordion.open .accordion-chevron { transform: rotate(180deg); }
+        .property-accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .property-accordion.open .property-accordion-body {
+            max-height: 2000px;
+        }
+        .accordion-body-inner {
+            padding: 0 22px 18px;
+            border-top: 1px solid #F3F4F6;
+        }
+
+        /* ===== VISIT CARDS ===== */
+        .visit-group-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #78909C;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 14px 0 6px;
+        }
+        .visit-card {
+            position: relative;
+            padding: 14px 18px;
+            background: #FAFBFC;
+            border-radius: 10px;
+            border: 1px solid #E0E0E0;
+            margin-bottom: 8px;
+            transition: border-color 0.2s;
+        }
+        .visit-card:hover { border-color: #667eea; }
+        .visit-card.planifiee { border-left: 4px solid var(--visit-planned); }
+        .visit-card.effectuee { border-left: 4px solid var(--visit-done); }
+        .visit-card.annulee { border-left: 4px solid var(--visit-cancelled); opacity: 0.7; }
+
+        .visit-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .visit-status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+        .visit-status-badge.planned { background: #E8EAF6; color: var(--visit-planned); }
+        .visit-status-badge.done { background: #E8F5E9; color: var(--visit-done); }
+        .visit-status-badge.cancelled { background: #F5F5F5; color: var(--visit-cancelled); }
+        .visit-card-date { font-size: 13px; color: #78909C; font-weight: 500; }
+
+        .visit-card-visitor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .visit-card-name { font-weight: 700; font-size: 14px; color: var(--text-dark); }
+        .visit-card-phone { font-size: 13px; color: var(--text-light); }
+        .visit-card-type-badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .visit-card-type-badge.libre { background: #FFF3E0; color: #E65100; }
+        .visit-card-type-badge.lie { background: #E8F5E9; color: var(--visit-done); }
+
+        .visit-card-feedback { font-size: 13px; margin-top: 6px; }
+        .visit-card-price { font-size: 13px; color: #78909C; }
+        .visit-card-points { font-size: 12px; margin-top: 3px; line-height: 1.5; }
+        .visit-card-decision { font-size: 13px; font-weight: 600; margin-top: 3px; }
+        .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 4px; max-height: 40px; overflow: hidden; }
+
+        .visit-card-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .visit-action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: opacity 0.15s;
+        }
+        .visit-action-btn:hover { opacity: 0.85; }
+        .visit-action-btn.done { background: #E8F5E9; color: #2E7D32; }
+        .visit-action-btn.cancel { background: #FFF3E0; color: #E65100; }
+        .visit-action-btn.feedback { background: #E8EAF6; color: #3F51B5; }
+        .visit-action-btn.promote { background: #F3E5F5; color: #7B1FA2; }
+        .visit-delete-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            color: #bbb;
+        }
+        .visit-card:hover .visit-delete-btn { opacity: 1; }
+        .visit-delete-btn:hover { color: #E53935; }
+
+        /* ===== MODAL OVERLAY ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.35);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.15s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            padding: 24px 28px;
+            max-width: 500px;
+            width: 92%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* ===== FORM STYLES ===== */
+        .form-section { margin-bottom: 18px; }
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #546E7A;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            transition: border-color 0.2s;
+            background: white;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08);
+        }
+        .form-textarea { resize: vertical; min-height: 60px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .form-hint { font-size: 11px; color: #9CA3AF; margin-top: 4px; }
+
+        /* Autocomplete dropdown */
+        .ac-dropdown-visit {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 9999;
+            display: none;
+            margin-top: 4px;
+        }
+        .ac-dropdown-visit.active { display: block; }
+        .ac-option {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.15s;
+        }
+        .ac-option:last-child { border-bottom: none; }
+        .ac-option:hover { background: #f0f7ff; }
+        .ac-option-name { font-weight: 700; color: var(--text-dark); }
+        .ac-option-addr { font-size: 12px; color: #999; margin-top: 2px; }
+
+        /* Visitor type toggle */
+        .visitor-type-toggle {
+            display: flex;
+            gap: 0;
+            background: #F3F4F6;
+            border-radius: 10px;
+            padding: 3px;
+            margin-bottom: 16px;
+        }
+        .visitor-type-btn {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+        .visitor-type-btn.active {
+            background: white;
+            color: var(--text-dark);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+        .cancel-btn {
+            width: 100%;
+            padding: 10px;
+            background: #F3F4F6;
+            color: var(--text-light);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            margin-top: 8px;
+        }
+
+        /* ===== FEEDBACK MODAL ===== */
+        .feedback-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .feedback-section { margin-bottom: 14px; }
+        .feedback-label { font-size: 13px; font-weight: 600; color: #546E7A; margin-bottom: 6px; }
+        .feedback-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .feedback-chip {
+            padding: 7px 12px;
+            border-radius: 20px;
+            border: 1px solid #E0E0E0;
+            background: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        .feedback-chip:hover { border-color: #667eea; background: #f0f0ff; }
+        .feedback-chip.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
+        .feedback-notes {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .feedback-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .feedback-save-btn {
+            flex: 1;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .feedback-skip-btn {
+            padding: 10px 16px;
+            background: #f8f9fa;
+            color: #78909C;
+            border: 1px solid #E0E0E0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-dark);
+            color: white;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 30000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* ===== RESPONSIVE MOBILE ===== */
+        @media (max-width: 768px) {
+            .header { display: none; }
+            .page-title-bar { padding: 16px 16px 0; margin-top: calc(var(--m-header-h, 56px) + 8px); }
+            .page-title { font-size: 22px; }
+            .stats-bar {
+                flex-direction: row;
+                overflow-x: auto;
+                padding: 12px 16px 0;
+                gap: 8px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .stat-card { min-width: 130px; flex-shrink: 0; padding: 14px 16px; }
+            .stat-value { font-size: 26px; }
+            .filters-bar {
+                padding: 12px 16px 0;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                gap: 8px;
+            }
+            .filter-search { min-width: 160px; }
+            .new-visit-btn { padding: 9px 14px; font-size: 13px; }
+            .new-visit-btn span { display: none; }
+            .visits-container { padding: 0 16px; margin-bottom: calc(var(--m-bottom-bar-h, 64px) + 20px); }
+            .property-accordion-header { padding: 14px 16px; gap: 10px; }
+            .accordion-badges { flex-wrap: wrap; gap: 4px; }
+            .accordion-body-inner { padding: 0 16px 14px; }
+            .visit-card { padding: 12px 14px; }
+            .modal-card { padding: 20px; width: 95%; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== HEADER DESKTOP ===== -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="home.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+            </nav>
+            <div class="header-actions">
+                <div class="user-profile" id="userProfile"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PAGE TITLE ===== -->
+    <div class="page-title-bar">
+        <h1 class="page-title"><i class="fa-solid fa-calendar-check"></i> Visites</h1>
+    </div>
+
+    <!-- ===== STATS ===== -->
+    <section class="stats-bar">
+        <div class="stat-card planned">
+            <div class="stat-value" id="statToday">0</div>
+            <div class="stat-label">Aujourd'hui</div>
+        </div>
+        <div class="stat-card week">
+            <div class="stat-value" id="statWeek">0</div>
+            <div class="stat-label">Cette semaine</div>
+        </div>
+        <div class="stat-card feedback">
+            <div class="stat-value" id="statFeedback">0</div>
+            <div class="stat-label">Retours en attente</div>
+        </div>
+    </section>
+
+    <!-- ===== FILTERS ===== -->
+    <section class="filters-bar">
+        <select class="filter-select" id="filterStatus">
+            <option value="">Tous les statuts</option>
+            <option value="planifiee">Planifiées</option>
+            <option value="effectuee">Effectuées</option>
+            <option value="annulee">Annulées</option>
+        </select>
+        <input type="date" class="filter-input" id="filterDateFrom" title="Date de début">
+        <input type="date" class="filter-input" id="filterDateTo" title="Date de fin">
+        <div class="filter-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="filterSearch" placeholder="Rechercher (visiteur, adresse...)">
+        </div>
+        <button class="new-visit-btn" id="newVisitBtn">
+            <i class="fa-solid fa-plus"></i>
+            <span>Nouvelle visite</span>
+        </button>
+    </section>
+
+    <!-- ===== MAIN CONTENT ===== -->
+    <main class="visits-container" id="visitsContainer">
+        <div class="visits-empty">
+            <i class="fa-solid fa-calendar-check"></i>
+            <p>Chargement...</p>
+        </div>
+    </main>
+
+    <script>
+    /**
+     * visites.html — Script principal
+     * Gère le chargement, rendu et interactions de la page Visites.
+     * Vue groupée par bien vendeur avec accordéons.
+     */
+
+    // ===== CONSTANTES FEEDBACK (duplicées d'acquereurs.html) =====
+    const FEEDBACK_LABELS = {
+        coup_de_coeur: { emoji: '😍', label: 'Coup de coeur' },
+        interessant: { emoji: '😊', label: 'Intéressant' },
+        pas_convaincu: { emoji: '😕', label: 'Pas convaincu' },
+        pas_du_tout: { emoji: '😞', label: 'Pas du tout' }
+    };
+    const PRICE_LABELS = {
+        adapte: '✅ Adapté',
+        un_peu_eleve: '⚠️ Un peu élevé',
+        trop_eleve: '🚫 Trop élevé'
+    };
+    const DECISION_LABELS = {
+        en_attente:    { emoji: '⏳', label: 'En attente', color: '#78909C' },
+        interesse:     { emoji: '👍', label: 'Intéressé', color: '#2196F3' },
+        contre_visite: { emoji: '🔄', label: 'Contre-visite', color: '#FF9800' },
+        offre:         { emoji: '🎉', label: 'Offre', color: '#4CAF50' },
+        refus:         { emoji: '👎', label: 'Refus', color: '#F44336' }
+    };
+    const POSITIVE_POINTS = [
+        { value: 'luminosite', label: '☀️ Luminosité' },
+        { value: 'agencement', label: '📐 Agencement' },
+        { value: 'exterieur', label: '🌳 Extérieur' },
+        { value: 'emplacement', label: '📍 Emplacement' },
+        { value: 'calme', label: '🤫 Calme' },
+        { value: 'vue', label: '🏔️ Vue' },
+        { value: 'etat_general', label: '✨ État général' }
+    ];
+    const NEGATIVE_POINTS = [
+        { value: 'travaux', label: '🔨 Travaux' },
+        { value: 'bruit', label: '🔊 Bruit' },
+        { value: 'petit', label: '📏 Petit' },
+        { value: 'sombre', label: '🌑 Sombre' },
+        { value: 'agencement_neg', label: '📐 Agencement' },
+        { value: 'vis_a_vis', label: '👀 Vis-à-vis' },
+        { value: 'stationnement', label: '🅿️ Stationnement' }
+    ];
+    const NEIGHBORHOOD_LABELS = {
+        connait_bien: '🏘️ Connaît bien',
+        decouvre: '🗺️ Découvre',
+        pas_convaincu: '😕 Pas convaincu'
+    };
+
+    const STATUS_BADGES = {
+        planifiee: '<span class="visit-status-badge planned">Planifiée</span>',
+        effectuee: '<span class="visit-status-badge done">Effectuée</span>',
+        annulee: '<span class="visit-status-badge cancelled">Annulée</span>'
+    };
+
+    // ===== AUTH =====
+    async function getCurrentUserId() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return null; }
+        return session.user.id;
+    }
+
+    // ===== STATE =====
+    let allVisits = [];
+    let activeSellers = [];
+    let openAccordions = new Set();
+
+    // ===== HELPERS =====
+
+    function extractCity(address) {
+        if (!address) return null;
+        const trimmed = address.trim();
+        const cpMatch = trimmed.match(/\d{5}\s+(.+)/);
+        if (cpMatch) return cpMatch[1].trim();
+        const commaMatch = trimmed.match(/,\s*([^,]+)$/);
+        if (commaMatch) return commaMatch[1].trim();
+        if (trimmed.split(/\s+/).length <= 3) return trimmed;
+        return null;
+    }
+
+    function showToast(msg) {
+        const t = document.createElement('div');
+        t.className = 'toast';
+        t.textContent = msg;
+        document.body.appendChild(t);
+        requestAnimationFrame(() => t.style.opacity = '1');
+        setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2000);
+    }
+
+    function getVisitorName(visit) {
+        if (visit.buyers) {
+            return [(visit.buyers.first_name || ''), (visit.buyers.last_name || '')].filter(Boolean).join(' ');
+        }
+        return visit.buyer_name || 'Visiteur inconnu';
+    }
+
+    function getVisitorPhone(visit) {
+        if (visit.buyers && visit.buyers.phone) return visit.buyers.phone;
+        return visit.visitor_phone || '';
+    }
+
+    function isLinkedBuyer(visit) {
+        return !!visit.buyer_id && !!visit.buyers;
+    }
+
+    // ===== DATA LOADING =====
+
+    async function loadAllVisits() {
+        const userId = await getCurrentUserId();
+        if (!userId) return [];
+
+        const { data, error } = await supabaseClient
+            .from('visits')
+            .select(`
+                *,
+                sellers(id, first_name, last_name, address, budget, property_type, status),
+                buyers(id, first_name, last_name, phone, email)
+            `)
+            .eq('user_id', userId)
+            .order('visit_date', { ascending: false });
+
+        if (error) {
+            console.error('[Visites] Load error:', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    async function loadActiveSellers() {
+        const userId = await getCurrentUserId();
+        if (!userId) return [];
+
+        const { data, error } = await supabaseClient
+            .from('sellers')
+            .select('id, first_name, last_name, address, budget, property_type, status')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('[Visites] Load sellers error:', error);
+            return [];
+        }
+        // Filtrer côté JS pour exclure les vendus/perdus
+        return (data || []).filter(s => s.status !== 'sold' && s.status !== 'lost');
+    }
+
+    // ===== GROUPING & FILTERING =====
+
+    function groupVisitsBySeller(visits) {
+        const groups = {};
+        visits.forEach(v => {
+            const key = v.seller_id || 'no_seller';
+            if (!groups[key]) {
+                groups[key] = {
+                    seller: v.sellers || null,
+                    visits: [],
+                    nextVisit: null,
+                    plannedCount: 0,
+                    doneCount: 0
+                };
+            }
+            groups[key].visits.push(v);
+            if (v.status === 'planifiee') {
+                groups[key].plannedCount++;
+                const vDate = new Date(v.visit_date);
+                if (!groups[key].nextVisit || vDate < new Date(groups[key].nextVisit)) {
+                    groups[key].nextVisit = v.visit_date;
+                }
+            } else if (v.status === 'effectuee') {
+                groups[key].doneCount++;
+            }
+        });
+        return groups;
+    }
+
+    function filterVisits(visits, filters) {
+        return visits.filter(v => {
+            // Status filter
+            if (filters.status && v.status !== filters.status) return false;
+
+            // Date range filter
+            if (filters.dateFrom && v.visit_date < filters.dateFrom) return false;
+            if (filters.dateTo && v.visit_date > filters.dateTo) return false;
+
+            // Search filter
+            if (filters.search) {
+                const q = filters.search.toLowerCase();
+                const visitorName = getVisitorName(v).toLowerCase();
+                const address = (v.sellers?.address || '').toLowerCase();
+                const sellerName = v.sellers
+                    ? [(v.sellers.first_name || ''), (v.sellers.last_name || '')].join(' ').toLowerCase()
+                    : '';
+                const phone = getVisitorPhone(v).toLowerCase();
+                if (!visitorName.includes(q) && !address.includes(q) && !sellerName.includes(q) && !phone.includes(q)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    function getFilters() {
+        return {
+            status: document.getElementById('filterStatus').value,
+            dateFrom: document.getElementById('filterDateFrom').value,
+            dateTo: document.getElementById('filterDateTo').value,
+            search: document.getElementById('filterSearch').value.trim()
+        };
+    }
+
+    // ===== STATS =====
+
+    function computeQuickStats(visits) {
+        const today = new Date().toISOString().split('T')[0];
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Lundi
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6); // Dimanche
+        const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+        let todayCount = 0;
+        let weekCount = 0;
+        let pendingFeedback = 0;
+
+        visits.forEach(v => {
+            if (v.status === 'planifiee' && v.visit_date === today) todayCount++;
+            if (v.status === 'planifiee' && v.visit_date >= weekStartStr && v.visit_date <= weekEndStr) weekCount++;
+            if (v.status === 'effectuee' && !v.feedback_rating) pendingFeedback++;
+        });
+
+        return { todayCount, weekCount, pendingFeedback };
+    }
+
+    function renderQuickStats(stats) {
+        document.getElementById('statToday').textContent = stats.todayCount;
+        document.getElementById('statWeek').textContent = stats.weekCount;
+        document.getElementById('statFeedback').textContent = stats.pendingFeedback;
+    }
+
+    // ===== RENDERING =====
+
+    function renderVisitsPage() {
+        const filters = getFilters();
+        const filtered = filterVisits(allVisits, filters);
+        const stats = computeQuickStats(allVisits); // Stats toujours sur toutes les visites
+        renderQuickStats(stats);
+
+        const container = document.getElementById('visitsContainer');
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="visits-empty">
+                <i class="fa-solid fa-calendar-check"></i>
+                <p>${allVisits.length === 0 ? 'Aucune visite enregistrée' : 'Aucune visite ne correspond aux filtres'}</p>
+                <small>${allVisits.length === 0 ? 'Planifiez votre première visite pour commencer' : 'Modifiez vos critères de recherche'}</small>
+            </div>`;
+            return;
+        }
+
+        const groups = groupVisitsBySeller(filtered);
+
+        // Tri : propriétés avec visites planifiées en premier, puis par date de prochaine visite
+        const sortedKeys = Object.keys(groups).sort((a, b) => {
+            const ga = groups[a], gb = groups[b];
+            if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
+            if (gb.plannedCount > 0 && ga.plannedCount === 0) return 1;
+            if (ga.nextVisit && gb.nextVisit) return ga.nextVisit.localeCompare(gb.nextVisit);
+            return gb.visits.length - ga.visits.length;
+        });
+
+        let html = '';
+        sortedKeys.forEach(key => {
+            html += renderPropertyAccordion(key, groups[key]);
+        });
+        container.innerHTML = html;
+
+        // Re-open previously opened accordions
+        openAccordions.forEach(id => {
+            const el = document.querySelector(`.property-accordion[data-seller-id="${id}"]`);
+            if (el) el.classList.add('open');
+        });
+    }
+
+    function renderPropertyAccordion(sellerId, group) {
+        const seller = group.seller;
+        let address = 'Bien non renseigné';
+        let sellerName = '';
+        let propertyInfo = '';
+
+        if (seller) {
+            address = seller.address || 'Adresse inconnue';
+            sellerName = [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ');
+            const type = seller.property_type ? seller.property_type.charAt(0).toUpperCase() + seller.property_type.slice(1) : '';
+            const price = seller.budget ? formatEuro(seller.budget) : '';
+            propertyInfo = [type, price].filter(Boolean).join(' — ');
+        }
+
+        const totalVisits = group.visits.length;
+        const isOpen = openAccordions.has(sellerId);
+
+        // Badges
+        let badges = `<span class="accordion-badge count">${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`;
+        if (group.plannedCount > 0) {
+            const nextDate = new Date(group.nextVisit).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+            badges += `<span class="accordion-badge next">Prochaine : ${nextDate}</span>`;
+        }
+        if (group.doneCount > 0) {
+            badges += `<span class="accordion-badge done-count">${group.doneCount} effectuée${group.doneCount > 1 ? 's' : ''}</span>`;
+        }
+
+        // Séparer visites par statut
+        const planned = group.visits.filter(v => v.status === 'planifiee').sort((a, b) => a.visit_date.localeCompare(b.visit_date));
+        const done = group.visits.filter(v => v.status === 'effectuee').sort((a, b) => b.visit_date.localeCompare(a.visit_date));
+        const cancelled = group.visits.filter(v => v.status === 'annulee').sort((a, b) => b.visit_date.localeCompare(a.visit_date));
+
+        let visitCards = '';
+        if (planned.length > 0) {
+            visitCards += '<div class="visit-group-label">À venir</div>';
+            planned.forEach(v => { visitCards += renderVisitCard(v); });
+        }
+        if (done.length > 0) {
+            visitCards += '<div class="visit-group-label">Effectuées</div>';
+            done.forEach(v => { visitCards += renderVisitCard(v); });
+        }
+        if (cancelled.length > 0) {
+            visitCards += '<div class="visit-group-label">Annulées</div>';
+            cancelled.forEach(v => { visitCards += renderVisitCard(v); });
+        }
+
+        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
+            <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
+                <div class="accordion-property-info">
+                    <div class="accordion-address">${escapeHtml(address)}</div>
+                    <div class="accordion-seller">${escapeHtml(sellerName)}${propertyInfo ? ' — ' + escapeHtml(propertyInfo) : ''}</div>
+                </div>
+                <div class="accordion-badges">${badges}</div>
+                <i class="fa-solid fa-chevron-down accordion-chevron"></i>
+            </div>
+            <div class="property-accordion-body">
+                <div class="accordion-body-inner">${visitCards}</div>
+            </div>
+        </div>`;
+    }
+
+    function renderVisitCard(visit) {
+        const dateStr = visit.visit_date
+            ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' })
+            : '';
+        const timeStr = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+        const visitorName = getVisitorName(visit);
+        const visitorPhone = getVisitorPhone(visit);
+        const linked = isLinkedBuyer(visit);
+
+        const fb = visit.feedback_rating ? FEEDBACK_LABELS[visit.feedback_rating] : null;
+        const pp = visit.price_perception ? PRICE_LABELS[visit.price_perception] : null;
+        const dec = visit.buyer_decision && visit.buyer_decision !== 'en_attente'
+            ? DECISION_LABELS[visit.buyer_decision] : null;
+
+        // Points feedback
+        let pointsHtml = '';
+        const pos = Array.isArray(visit.positive_points) && visit.positive_points.length > 0
+            ? visit.positive_points.map(v => { const p = POSITIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+            : '';
+        const neg = Array.isArray(visit.negative_points) && visit.negative_points.length > 0
+            ? visit.negative_points.map(v => { const p = NEGATIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+            : '';
+        const nh = visit.neighborhood_feel ? (NEIGHBORHOOD_LABELS[visit.neighborhood_feel] || '') : '';
+        if (pos) pointsHtml += `<div class="visit-card-points" style="color:#2E7D32">${pos}</div>`;
+        if (neg) pointsHtml += `<div class="visit-card-points" style="color:#C62828">${neg}</div>`;
+        if (nh) pointsHtml += `<div class="visit-card-points" style="color:#546E7A">${nh}</div>`;
+
+        // Actions
+        let actions = '';
+        if (visit.status === 'planifiee') {
+            actions = `<div class="visit-card-actions">
+                <button type="button" class="visit-action-btn done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">Effectuée</button>
+                <button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation();cancelVisit('${visit.id}')">Annuler</button>
+            </div>`;
+        } else if (visit.status === 'effectuee') {
+            const btnLabel = visit.feedback_rating ? 'Modifier le retour' : 'Donner un retour';
+            actions = `<div class="visit-card-actions">
+                <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
+                ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation();openPromoteModal('${visit.id}')">Promouvoir en acquéreur</button>` : ''}
+            </div>`;
+        }
+
+        const typeBadge = linked
+            ? '<span class="visit-card-type-badge lie">Acquéreur</span>'
+            : '<span class="visit-card-type-badge libre">Visiteur libre</span>';
+
+        return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}">
+            <div class="visit-card-top">
+                ${STATUS_BADGES[visit.status] || ''}
+                <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
+            </div>
+            <div class="visit-card-visitor">
+                <span class="visit-card-name">${escapeHtml(visitorName)}</span>
+                ${typeBadge}
+                ${visitorPhone ? `<span class="visit-card-phone">${escapeHtml(visitorPhone)}</span>` : ''}
+            </div>
+            ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
+            ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
+            ${pointsHtml}
+            ${dec ? `<div class="visit-card-decision" style="color:${dec.color}">${dec.emoji} ${dec.label}</div>` : ''}
+            ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
+            ${actions}
+            <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${visit.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
+        </div>`;
+    }
+
+    // ===== ACCORDION =====
+
+    function toggleAccordion(sellerId) {
+        const el = document.querySelector(`.property-accordion[data-seller-id="${sellerId}"]`);
+        if (!el) return;
+        if (el.classList.contains('open')) {
+            el.classList.remove('open');
+            openAccordions.delete(sellerId);
+        } else {
+            el.classList.add('open');
+            openAccordions.add(sellerId);
+        }
+    }
+
+    // ===== CRUD =====
+
+    async function createVisitRecord(visit) {
+        const userId = await getCurrentUserId();
+        if (!userId) return null;
+        visit.user_id = userId;
+        const { data, error } = await supabaseClient.from('visits').insert([visit]).select();
+        if (error) {
+            console.error('[Visites] Create error:', error);
+            alert('Erreur : ' + error.message);
+            return null;
+        }
+        return data[0];
+    }
+
+    async function markVisitDone(visitId) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { error } = await supabaseClient.from('visits')
+            .update({ status: 'effectuee', updated_at: new Date().toISOString() })
+            .eq('id', visitId).eq('user_id', userId);
+        if (error) { console.error('[Visites] Update error:', error); return; }
+
+        const visit = allVisits.find(v => v.id === visitId);
+        if (visit) visit.status = 'effectuee';
+        renderVisitsPage();
+        openFeedbackForm(visitId);
+        showToast('Visite marquée effectuée');
+    }
+
+    async function cancelVisit(visitId) {
+        if (!confirm('Annuler cette visite ?')) return;
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { error } = await supabaseClient.from('visits')
+            .update({ status: 'annulee', updated_at: new Date().toISOString() })
+            .eq('id', visitId).eq('user_id', userId);
+        if (error) { console.error('[Visites] Cancel error:', error); return; }
+
+        const visit = allVisits.find(v => v.id === visitId);
+        if (visit) visit.status = 'annulee';
+        renderVisitsPage();
+        showToast('Visite annulée');
+    }
+
+    async function confirmDeleteVisit(visitId) {
+        if (!confirm('Supprimer cette visite ?')) return;
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { error } = await supabaseClient.from('visits')
+            .delete().eq('id', visitId).eq('user_id', userId);
+        if (error) { console.error('[Visites] Delete error:', error); return; }
+
+        allVisits = allVisits.filter(v => v.id !== visitId);
+        renderVisitsPage();
+        showToast('Visite supprimée');
+    }
+
+    // ===== MODAL: NOUVELLE VISITE =====
+
+    function openVisitModal(preselectedSellerId = null) {
+        closeModal('visitModal');
+        const modal = document.createElement('div');
+        modal.id = 'visitModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card">
+                <div class="modal-title">Nouvelle visite</div>
+
+                <!-- Sélection du bien -->
+                <div class="form-section">
+                    <label class="form-label">Bien à visiter *</label>
+                    <div style="position:relative">
+                        <input type="text" class="form-input" id="modalSellerSearch" placeholder="Rechercher un bien (adresse, nom vendeur...)" autocomplete="off">
+                        <input type="hidden" id="modalSelectedSellerId">
+                        <div class="ac-dropdown-visit" id="modalSellerDropdown"></div>
+                    </div>
+                </div>
+
+                <!-- Type de visiteur -->
+                <div class="form-section">
+                    <label class="form-label">Visiteur</label>
+                    <div class="visitor-type-toggle">
+                        <button type="button" class="visitor-type-btn active" data-type="libre" onclick="setVisitorType('libre')">Visiteur libre</button>
+                        <button type="button" class="visitor-type-btn" data-type="acquereur" onclick="setVisitorType('acquereur')">Acquéreur existant</button>
+                    </div>
+                </div>
+
+                <!-- Visiteur libre -->
+                <div id="visitorLibreFields">
+                    <div class="form-row">
+                        <div class="form-section">
+                            <label class="form-label">Nom *</label>
+                            <input type="text" class="form-input" id="modalVisitorName" placeholder="Nom du visiteur">
+                        </div>
+                        <div class="form-section">
+                            <label class="form-label">Téléphone</label>
+                            <input type="tel" class="form-input" id="modalVisitorPhone" placeholder="06 ...">
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="modalVisitorEmail" placeholder="email@exemple.com">
+                    </div>
+                </div>
+
+                <!-- Acquéreur existant -->
+                <div id="visitorBuyerFields" style="display:none">
+                    <div class="form-section">
+                        <label class="form-label">Rechercher un acquéreur *</label>
+                        <div style="position:relative">
+                            <input type="text" class="form-input" id="modalBuyerSearch" placeholder="Nom, téléphone..." autocomplete="off">
+                            <input type="hidden" id="modalSelectedBuyerId">
+                            <div class="ac-dropdown-visit" id="modalBuyerDropdown"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Date & heure -->
+                <div class="form-row">
+                    <div class="form-section">
+                        <label class="form-label">Date *</label>
+                        <input type="date" class="form-input" id="modalVisitDate">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Heure</label>
+                        <input type="time" class="form-input" id="modalVisitTime">
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="form-section">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-textarea" id="modalVisitNotes" rows="2" placeholder="Remarques, contexte..."></textarea>
+                </div>
+
+                <button type="button" class="submit-btn" onclick="submitVisitForm()">Planifier la visite</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('visitModal')">Annuler</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Fermer au clic sur l'overlay
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal('visitModal');
+        });
+
+        // Pré-remplir la date à demain
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('modalVisitDate').value = tomorrow.toISOString().split('T')[0];
+
+        // Pré-sélectionner un vendeur si fourni
+        if (preselectedSellerId) {
+            const seller = activeSellers.find(s => s.id === preselectedSellerId);
+            if (seller) {
+                const label = [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ')
+                    + (seller.address ? ' — ' + seller.address : '');
+                document.getElementById('modalSellerSearch').value = label;
+                document.getElementById('modalSelectedSellerId').value = seller.id;
+            }
+        }
+
+        // Setup autocomplete
+        setupSellerAutocomplete();
+        setupBuyerAutocomplete();
+    }
+
+    function setVisitorType(type) {
+        document.querySelectorAll('.visitor-type-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.type === type);
+        });
+        document.getElementById('visitorLibreFields').style.display = type === 'libre' ? '' : 'none';
+        document.getElementById('visitorBuyerFields').style.display = type === 'acquereur' ? '' : 'none';
+    }
+
+    function setupSellerAutocomplete() {
+        const input = document.getElementById('modalSellerSearch');
+        const dropdown = document.getElementById('modalSellerDropdown');
+        if (!input || !dropdown) return;
+
+        let timer = null;
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            const q = this.value.trim().toLowerCase();
+            document.getElementById('modalSelectedSellerId').value = '';
+            if (q.length < 2) { dropdown.classList.remove('active'); return; }
+
+            timer = setTimeout(() => {
+                const results = activeSellers.filter(s => {
+                    const name = ((s.first_name || '') + ' ' + (s.last_name || '')).toLowerCase();
+                    const addr = (s.address || '').toLowerCase();
+                    return name.includes(q) || addr.includes(q);
+                }).slice(0, 8);
+
+                if (results.length === 0) { dropdown.classList.remove('active'); return; }
+
+                dropdown.innerHTML = results.map(s => {
+                    const name = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ');
+                    const addr = s.address || '';
+                    const city = extractCity(addr) || addr;
+                    return `<div class="ac-option" data-id="${s.id}">
+                        <div class="ac-option-name">${escapeHtml(name)}</div>
+                        <div class="ac-option-addr">${escapeHtml(city)}</div>
+                    </div>`;
+                }).join('');
+                dropdown.classList.add('active');
+
+                dropdown.querySelectorAll('.ac-option').forEach(opt => {
+                    opt.addEventListener('click', function() {
+                        const sid = this.dataset.id;
+                        const s = activeSellers.find(x => x.id === sid);
+                        if (s) {
+                            input.value = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ')
+                                + (s.address ? ' — ' + s.address : '');
+                            document.getElementById('modalSelectedSellerId').value = sid;
+                        }
+                        dropdown.classList.remove('active');
+                    });
+                });
+            }, 200);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('active');
+        });
+    }
+
+    function setupBuyerAutocomplete() {
+        const input = document.getElementById('modalBuyerSearch');
+        const dropdown = document.getElementById('modalBuyerDropdown');
+        if (!input || !dropdown) return;
+
+        let timer = null;
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            const q = this.value.trim().toLowerCase();
+            document.getElementById('modalSelectedBuyerId').value = '';
+            if (q.length < 2) { dropdown.classList.remove('active'); return; }
+
+            timer = setTimeout(async () => {
+                const userId = await getCurrentUserId();
+                const { data } = await supabaseClient
+                    .from('buyers')
+                    .select('id, first_name, last_name, phone, email')
+                    .eq('user_id', userId)
+                    .or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,phone.ilike.%${q}%`)
+                    .limit(8);
+
+                if (!data || data.length === 0) { dropdown.classList.remove('active'); return; }
+
+                dropdown.innerHTML = data.map(b => {
+                    const name = [(b.first_name || ''), (b.last_name || '')].filter(Boolean).join(' ');
+                    const detail = b.phone || b.email || '';
+                    return `<div class="ac-option" data-id="${b.id}" data-name="${escapeHtml(name)}">
+                        <div class="ac-option-name">${escapeHtml(name)}</div>
+                        <div class="ac-option-addr">${escapeHtml(detail)}</div>
+                    </div>`;
+                }).join('');
+                dropdown.classList.add('active');
+
+                dropdown.querySelectorAll('.ac-option').forEach(opt => {
+                    opt.addEventListener('click', function() {
+                        input.value = this.dataset.name;
+                        document.getElementById('modalSelectedBuyerId').value = this.dataset.id;
+                        dropdown.classList.remove('active');
+                    });
+                });
+            }, 200);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('active');
+        });
+    }
+
+    async function submitVisitForm() {
+        const sellerId = document.getElementById('modalSelectedSellerId').value;
+        const visitDate = document.getElementById('modalVisitDate').value;
+        const visitTime = document.getElementById('modalVisitTime').value;
+        const notes = document.getElementById('modalVisitNotes').value.trim();
+
+        if (!visitDate) { alert('Veuillez renseigner une date.'); return; }
+
+        const isLibre = document.querySelector('.visitor-type-btn.active')?.dataset.type === 'libre';
+
+        let visit = {
+            seller_id: sellerId || null,
+            visit_date: visitDate,
+            visit_time: visitTime || null,
+            notes: notes || null,
+            status: 'planifiee'
+        };
+
+        if (isLibre) {
+            const name = document.getElementById('modalVisitorName').value.trim();
+            if (!name) { alert('Veuillez renseigner le nom du visiteur.'); return; }
+            visit.buyer_name = name;
+            visit.visitor_phone = document.getElementById('modalVisitorPhone').value.trim() || null;
+            visit.visitor_email = document.getElementById('modalVisitorEmail').value.trim() || null;
+            visit.buyer_id = null;
+        } else {
+            const buyerId = document.getElementById('modalSelectedBuyerId').value;
+            if (!buyerId) { alert('Veuillez sélectionner un acquéreur.'); return; }
+            visit.buyer_id = buyerId;
+            // Récupérer le nom pour affichage
+            const buyerInput = document.getElementById('modalBuyerSearch').value.trim();
+            visit.buyer_name = buyerInput;
+        }
+
+        const created = await createVisitRecord(visit);
+        if (created) {
+            if (typeof awardPoints === 'function') {
+                awardPoints('plan_visit', { visit_id: created.id, lead_type: 'visit' });
+            }
+            closeModal('visitModal');
+            // Recharger les données pour avoir les joins
+            allVisits = await loadAllVisits();
+            // Ouvrir l'accordéon du bien concerné
+            if (sellerId) openAccordions.add(sellerId);
+            renderVisitsPage();
+            showToast('Visite planifiée');
+        }
+    }
+
+    // ===== MODAL: FEEDBACK =====
+
+    function openFeedbackForm(visitId) {
+        closeModal('feedbackModal');
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) return;
+
+        const er = visit.feedback_rating || '';
+        const ep = visit.price_perception || '';
+        const ed = visit.buyer_decision || '';
+        const en = visit.notes || '';
+        const ePosArr = visit.positive_points || [];
+        const eNegArr = visit.negative_points || [];
+        const eNh = visit.neighborhood_feel || '';
+
+        const posChips = POSITIVE_POINTS.map(p =>
+            `<span class="feedback-chip feedback-chip-multi${ePosArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
+        ).join('');
+        const negChips = NEGATIVE_POINTS.map(p =>
+            `<span class="feedback-chip feedback-chip-multi${eNegArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
+        ).join('');
+
+        const modal = document.createElement('div');
+        modal.id = 'feedbackModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:440px">
+                <div class="feedback-title">Retour de visite</div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Ressenti global</div>
+                    <div class="feedback-chips" id="feedbackRatingChips">
+                        <span class="feedback-chip${er === 'coup_de_coeur' ? ' active' : ''}" data-value="coup_de_coeur">😍 Coup de coeur</span>
+                        <span class="feedback-chip${er === 'interessant' ? ' active' : ''}" data-value="interessant">😊 Intéressant</span>
+                        <span class="feedback-chip${er === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
+                        <span class="feedback-chip${er === 'pas_du_tout' ? ' active' : ''}" data-value="pas_du_tout">😞 Pas du tout</span>
+                    </div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Points positifs</div>
+                    <div class="feedback-chips feedback-multi" id="feedbackPosChips">${posChips}</div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Points négatifs</div>
+                    <div class="feedback-chips feedback-multi" id="feedbackNegChips">${negChips}</div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Perception du prix</div>
+                    <div class="feedback-chips" id="feedbackPriceChips">
+                        <span class="feedback-chip${ep === 'adapte' ? ' active' : ''}" data-value="adapte">✅ Adapté</span>
+                        <span class="feedback-chip${ep === 'un_peu_eleve' ? ' active' : ''}" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
+                        <span class="feedback-chip${ep === 'trop_eleve' ? ' active' : ''}" data-value="trop_eleve">🚫 Trop élevé</span>
+                    </div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Quartier</div>
+                    <div class="feedback-chips" id="feedbackNeighborhoodChips">
+                        <span class="feedback-chip${eNh === 'connait_bien' ? ' active' : ''}" data-value="connait_bien">🏘️ Connaît bien</span>
+                        <span class="feedback-chip${eNh === 'decouvre' ? ' active' : ''}" data-value="decouvre">🗺️ Découvre</span>
+                        <span class="feedback-chip${eNh === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
+                    </div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Décision visiteur</div>
+                    <div class="feedback-chips" id="feedbackDecisionChips">
+                        <span class="feedback-chip${ed === 'en_attente' ? ' active' : ''}" data-value="en_attente">⏳ En attente</span>
+                        <span class="feedback-chip${ed === 'interesse' ? ' active' : ''}" data-value="interesse">👍 Intéressé</span>
+                        <span class="feedback-chip${ed === 'contre_visite' ? ' active' : ''}" data-value="contre_visite">🔄 Contre-visite</span>
+                        <span class="feedback-chip${ed === 'offre' ? ' active' : ''}" data-value="offre">🎉 Offre</span>
+                        <span class="feedback-chip${ed === 'refus' ? ' active' : ''}" data-value="refus">👎 Refus</span>
+                    </div>
+                </div>
+                <div class="feedback-section">
+                    <div class="feedback-label">Notes</div>
+                    <textarea class="feedback-notes" id="feedbackNotes" rows="2" placeholder="Observations...">${escapeHtml(en)}</textarea>
+                </div>
+                <div class="feedback-actions">
+                    <button class="feedback-save-btn" onclick="saveFeedback('${visitId}')">Enregistrer</button>
+                    <button class="feedback-skip-btn" onclick="closeModal('feedbackModal')">Plus tard</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal('feedbackModal');
+        });
+
+        // Chips mono-sélection
+        modal.querySelectorAll('.feedback-chip:not(.feedback-chip-multi)').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        // Chips multi-sélection
+        modal.querySelectorAll('.feedback-chip-multi').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    }
+
+    async function saveFeedback(visitId) {
+        const ratingChip = document.querySelector('#feedbackRatingChips .feedback-chip.active');
+        const priceChip = document.querySelector('#feedbackPriceChips .feedback-chip.active');
+        const decisionChip = document.querySelector('#feedbackDecisionChips .feedback-chip.active');
+        const neighborhoodChip = document.querySelector('#feedbackNeighborhoodChips .feedback-chip.active');
+        const posPoints = Array.from(document.querySelectorAll('#feedbackPosChips .feedback-chip.active')).map(c => c.dataset.value);
+        const negPoints = Array.from(document.querySelectorAll('#feedbackNegChips .feedback-chip.active')).map(c => c.dataset.value);
+        const notes = document.getElementById('feedbackNotes').value.trim();
+
+        if (!ratingChip) { alert('Sélectionnez un ressenti.'); return; }
+
+        const updates = {
+            feedback_rating: ratingChip.dataset.value,
+            price_perception: priceChip ? priceChip.dataset.value : null,
+            buyer_decision: decisionChip ? decisionChip.dataset.value : null,
+            positive_points: posPoints.length > 0 ? posPoints : null,
+            negative_points: negPoints.length > 0 ? negPoints : null,
+            neighborhood_feel: neighborhoodChip ? neighborhoodChip.dataset.value : null,
+            notes: notes || null,
+            updated_at: new Date().toISOString()
+        };
+
+        const userId = await getCurrentUserId();
+        const { error } = await supabaseClient.from('visits')
+            .update(updates).eq('id', visitId).eq('user_id', userId);
+
+        if (error) { console.error('[Visites] Feedback error:', error); alert('Erreur'); return; }
+
+        const visit = allVisits.find(v => v.id === visitId);
+        if (visit) Object.assign(visit, updates);
+
+        if (typeof awardPoints === 'function') {
+            awardPoints('visit_feedback', { visit_id: visitId });
+        }
+
+        closeModal('feedbackModal');
+        renderVisitsPage();
+        showToast('Retour enregistré');
+    }
+
+    // ===== MODAL: PROMOTE =====
+
+    function openPromoteModal(visitId) {
+        closeModal('promoteModal');
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit || visit.buyer_id) {
+            showToast('Ce visiteur est déjà lié à un acquéreur');
+            return;
+        }
+
+        const name = visit.buyer_name || '';
+        const phone = visit.visitor_phone || '';
+        const email = visit.visitor_email || '';
+
+        // Pré-découper le nom
+        const parts = name.trim().split(/\s+/);
+        const firstName = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
+        const lastName = parts.length > 1 ? parts[parts.length - 1] : '';
+
+        const modal = document.createElement('div');
+        modal.id = 'promoteModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:420px">
+                <div class="modal-title">Promouvoir en acquéreur</div>
+                <p style="text-align:center;font-size:13px;color:var(--text-light);margin:-12px 0 20px">
+                    Ce visiteur sera ajouté au pipeline acquéreurs.
+                </p>
+                <div class="form-row">
+                    <div class="form-section">
+                        <label class="form-label">Prénom *</label>
+                        <input type="text" class="form-input" id="promoteFirstName" value="${escapeHtml(firstName)}">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-input" id="promoteLastName" value="${escapeHtml(lastName)}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-section">
+                        <label class="form-label">Téléphone</label>
+                        <input type="tel" class="form-input" id="promotePhone" value="${escapeHtml(phone)}">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="promoteEmail" value="${escapeHtml(email)}">
+                    </div>
+                </div>
+                <button type="button" class="submit-btn" onclick="confirmPromote('${visitId}')">Créer l'acquéreur</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('promoteModal')">Annuler</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeModal('promoteModal');
+        });
+    }
+
+    async function confirmPromote(visitId) {
+        const firstName = document.getElementById('promoteFirstName').value.trim();
+        const lastName = document.getElementById('promoteLastName').value.trim();
+        const phone = document.getElementById('promotePhone').value.trim();
+        const email = document.getElementById('promoteEmail').value.trim();
+
+        if (!firstName) { alert('Le prénom est requis.'); return; }
+
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        // Créer le buyer
+        const buyer = {
+            user_id: userId,
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone || null,
+            email: email || null,
+            status: 'nouveau',
+            source: 'autre',
+            notes: `Promu depuis visite du ${new Date().toLocaleDateString('fr-FR')}`
+        };
+
+        const { data, error } = await supabaseClient.from('buyers').insert([buyer]).select();
+        if (error) {
+            console.error('[Visites] Promote error:', error);
+            alert('Erreur : ' + error.message);
+            return;
+        }
+
+        const newBuyerId = data[0].id;
+        const visit = allVisits.find(v => v.id === visitId);
+
+        // Lier cette visite au buyer créé
+        await supabaseClient.from('visits')
+            .update({ buyer_id: newBuyerId, updated_at: new Date().toISOString() })
+            .eq('id', visitId).eq('user_id', userId);
+
+        // Lier toutes les visites du même visiteur libre (même nom + même téléphone)
+        if (visit && visit.buyer_name && visit.visitor_phone) {
+            await supabaseClient.from('visits')
+                .update({ buyer_id: newBuyerId })
+                .eq('buyer_name', visit.buyer_name)
+                .eq('visitor_phone', visit.visitor_phone)
+                .eq('user_id', userId)
+                .is('buyer_id', null);
+        }
+
+        closeModal('promoteModal');
+        allVisits = await loadAllVisits();
+        renderVisitsPage();
+        showToast('Acquéreur créé et lié');
+    }
+
+    // ===== UTILS =====
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.remove();
+    }
+
+    // ===== FILTERS EVENTS =====
+
+    let searchDebounce = null;
+
+    function setupFilterListeners() {
+        document.getElementById('filterStatus').addEventListener('change', () => renderVisitsPage());
+        document.getElementById('filterDateFrom').addEventListener('change', () => renderVisitsPage());
+        document.getElementById('filterDateTo').addEventListener('change', () => renderVisitsPage());
+        document.getElementById('filterSearch').addEventListener('input', () => {
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => renderVisitsPage(), 250);
+        });
+        document.getElementById('newVisitBtn').addEventListener('click', () => openVisitModal());
+    }
+
+    // ===== INITIALIZATION =====
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        console.log('[Visites] Initializing...');
+
+        // Charger les données en parallèle
+        const [visits, sellers] = await Promise.all([
+            loadAllVisits(),
+            loadActiveSellers()
+        ]);
+
+        allVisits = visits;
+        activeSellers = sellers;
+
+        console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers');
+
+        renderVisitsPage();
+        setupFilterListeners();
+    });
+    </script>
+</body>
+</html>

@@ -22,6 +22,7 @@
 
     const MORE_ITEMS = [
         { href: 'leon.html',      icon: 'fa-solid fa-compass',        label: 'Mon Guide' },
+        { href: 'visites.html',   icon: 'fa-solid fa-calendar-check', label: 'Visites' },
         { href: 'social.html',     icon: 'fa-solid fa-share-nodes',    label: 'Social' },
         { href: 'assistant.html',  icon: 'fa-solid fa-robot',          label: 'Assistant' },
         { href: 'parametres.html', icon: 'fa-solid fa-gear',           label: 'Paramètres' },

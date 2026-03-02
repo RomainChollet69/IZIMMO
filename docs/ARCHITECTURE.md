@@ -22,6 +22,7 @@ IZIMMO/
 ├── dvf.html                    # Visualiseur données DVF + DPE
 ├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
 ├── leon.html                   # Cockpit quotidien — Guide intelligent Léon (priorisation tâches, debrief visites, relances)
+├── visites.html                # Gestion des visites — Vue groupée par bien, visiteurs libres, feedback, promotion en acquéreur
 ├── reset-password.html         # Réinitialisation mot de passe (redirige vers home.html)
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
 │
