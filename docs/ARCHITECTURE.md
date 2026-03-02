@@ -10,7 +10,7 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
-├── home.html                   # Page d'accueil / Cockpit — 7 tuiles métiers, recherche globale, bienvenue personnalisée
+├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée
 ├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5 colonnes + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
@@ -21,6 +21,7 @@ IZIMMO/
 ├── micro.html                  # Enregistrement vocal + transcription (voice-first)
 ├── dvf.html                    # Visualiseur données DVF + DPE
 ├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
+├── leon.html                   # Cockpit quotidien — Guide intelligent Léon (priorisation tâches, debrief visites, relances)
 ├── reset-password.html         # Réinitialisation mot de passe (redirige vers home.html)
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
 │
@@ -34,6 +35,7 @@ IZIMMO/
 │   ├── audio-recorder.js       # Enregistrement micro + détection silence
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
+│   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
 │   └── maps-config.js          # Clé API Google Maps
 │
 ├── api/                        # Vercel Serverless Functions

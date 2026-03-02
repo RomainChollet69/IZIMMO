@@ -403,6 +403,9 @@
         .tile-tutoriels .tile-icon-area { background: #FFF8E1; }
         .tile-tutoriels .tile-fa-icon { color: #F9A825; }
 
+        .tile-guide .tile-icon-area { background: #EEF2FF; }
+        .tile-guide .tile-fa-icon { color: #667eea; }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
@@ -430,17 +433,10 @@
 
         /* ===== RESPONSIVE ===== */
 
-        /* Tablette : 2 colonnes */
+        /* Tablette : 2 colonnes (8 tuiles = grille paire) */
         @media (max-width: 900px) {
             .tiles-grid {
                 grid-template-columns: repeat(2, 1fr);
-            }
-
-            /* 7e tuile (impaire) centrée */
-            .tile:last-child {
-                grid-column: 1 / -1;
-                max-width: calc(50% - 10px);
-                justify-self: center;
             }
         }
 
@@ -483,12 +479,6 @@
 
             .tile-fa-icon { font-size: 28px; }
             .tile-label { font-size: 13px; }
-
-            .tile:last-child {
-                grid-column: 1 / -1;
-                max-width: calc(50% - 6px);
-                justify-self: center;
-            }
         }
     </style>
 </head>
@@ -616,6 +606,14 @@
                     <i class="fa-solid fa-graduation-cap tile-fa-icon"></i>
                 </div>
                 <div class="tile-label">Tutoriels</div>
+            </a>
+
+            <!-- 8. Mon Guide Léon -->
+            <a href="leon.html" class="tile tile-guide">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-compass tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Mon<br>Guide</div>
             </a>
 
         </div>

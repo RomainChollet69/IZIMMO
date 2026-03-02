@@ -4,6 +4,56 @@
 
 ---
 
+## Session 2026-03-02b — Cockpit quotidien Léon (Guide intelligent)
+
+### Résumé
+Création de `leon.html`, une page de coaching proactif qui analyse les données CRM (Supabase) et Google Agenda pour proposer un parcours de tâches priorisées chaque matin. Léon guide l'agent immobilier étape par étape : debriefs de visite, relances en retard, leads inactifs, workflows à compléter.
+
+### Modifications
+
+**`leon.html`** (NOUVEAU) :
+- Page complète avec greeting personnalisé + avatar Léon
+- Moteur de priorisation : P1 (debriefs visite via Calendar), P2 (relances retard), P3 (relances du jour), P4 (leads inactifs 5j+), P5 (workflows en retard), P6 (suggestions)
+- 8 requêtes Supabase + Calendar en parallèle (`Promise.all`)
+- Matching automatique événements Calendar → leads (score nom + adresse)
+- Formulaire de debrief visite complet (ressenti, points +/-, prix, quartier, décision)
+- Recherche autocomplete pour associer manuellement un lead quand pas de match
+- Actions : appeler (tel:), reporter +7j, marquer fait, planifier relance +3j, compléter workflow step
+- Barre de progression + état final "Bravo"
+- Persistance localStorage (reprise dans les 4h)
+- Responsive mobile + desktop
+- Fallback gracieux si Calendar non connecté (P2-P6 fonctionnent)
+
+**`home.html`** :
+- Ajout 8ème tuile "Mon Guide" (icône compass, lien leon.html)
+- Suppression centrage dernière tuile impaire (grille paire maintenant)
+
+**`js/mobile-nav.js`** :
+- Ajout "Mon Guide" en premier dans MORE_ITEMS
+
+**`docs/ARCHITECTURE.md`** :
+- Ajout leon.html et mobile-nav.js dans l'arborescence
+
+### Fichiers créés/modifiés
+- leon.html (NOUVEAU)
+- home.html
+- js/mobile-nav.js
+- docs/ARCHITECTURE.md
+- docs/CHANGELOG.md
+
+### Points d'attention / bugs connus
+- Le matching Calendar → lead repose sur des mots-clés dans le titre d'événement — si l'agent utilise des titres très différents, les visites ne seront pas détectées
+- La table `visits` doit accepter les inserts sans `seller_id` ni `buyer_id` (retour libre sans association)
+- Le cockpit ne récupère pas les workflow_steps liés à des leads spécifiques (pas de JOIN pour le nom du lead dans les cartes P5)
+
+### Prochaines étapes prioritaires
+- Améliorer les cartes workflow P5 en fetchant le nom du lead associé
+- Ajouter des transitions animées entre les cartes
+- Possibilité de choisir entre 2-3 parcours ("relances d'abord" vs "debriefs d'abord")
+- Tester avec des données réelles sur l'environnement de production
+
+---
+
 ## Session 2026-03-02a — Page tutoriels + recherche globale fonctionnelle
 
 ### Résumé

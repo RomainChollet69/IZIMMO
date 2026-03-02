@@ -1,0 +1,1911 @@
+<!--
+  Léon — Cockpit quotidien / Guide intelligent (leon.html)
+  Page de coaching proactif : Léon analyse les données CRM + Google Agenda
+  et propose un parcours de tâches priorisées pour la journée.
+  Auth requise (js/auth.js) | Supabase + /api/assistant (Calendar).
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Léon. — Mon Guide</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <meta property="og:title" content="Léon. — CRM Immobilier">
+    <meta property="og:image" content="/img/F.png">
+    <meta property="og:type" content="website">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/gamification.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --text-dark: #2C3E50;
+            --text-light: #7F8C8D;
+            --border-color: #E1E8ED;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --leon-primary: #667eea;
+            --leon-success: #10B981;
+            --leon-warning: #F59E0B;
+            --leon-danger: #EF4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        /* ===== HEADER & NAVIGATION ===== */
+        .header {
+            width: 100%;
+            background: #FFFFFF;
+            border-bottom: 1px solid #E5E7EB;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            margin-right: 48px;
+            cursor: pointer;
+        }
+
+        .logo img { height: 36px; width: auto; }
+
+        .nav-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            flex: 1;
+        }
+
+        .nav-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 20px 24px;
+            text-decoration: none;
+            color: #6B7280;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+            white-space: nowrap;
+            height: 64px;
+        }
+
+        .nav-tab:hover { color: #374151; }
+        .nav-tab.active { color: #243B53; font-weight: 600; border-bottom-color: #243B53; }
+        .nav-tab i { font-size: 15px; }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .header-separator {
+            width: 1px;
+            height: 28px;
+            background: #E5E7EB;
+        }
+
+        .user-profile { position: relative; }
+
+        /* ===== MAIN CONTAINER ===== */
+        .leon-container {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 32px 24px 120px;
+        }
+
+        /* ===== GREETING CARD ===== */
+        .leon-greeting {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .leon-avatar {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .leon-bubble {
+            background: white;
+            border-radius: 0 16px 16px 16px;
+            padding: 16px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+            flex: 1;
+        }
+
+        .leon-bubble h2 {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 20px;
+            color: #243B53;
+            margin-bottom: 6px;
+        }
+
+        .leon-bubble p {
+            font-size: 14px;
+            color: #4A5568;
+            line-height: 1.5;
+        }
+
+        .leon-bubble strong { color: #243B53; }
+
+        /* ===== CALENDAR BANNER ===== */
+        .leon-calendar-banner {
+            background: #FFF7ED;
+            border: 1px solid #FDBA74;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: #9A3412;
+        }
+
+        .leon-calendar-banner a {
+            color: #EA580C;
+            font-weight: 600;
+            text-decoration: underline;
+        }
+
+        /* ===== PROGRESS BAR ===== */
+        .leon-progress {
+            margin-bottom: 20px;
+        }
+
+        .leon-progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .leon-progress-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6B7280;
+        }
+
+        .leon-progress-count {
+            font-size: 13px;
+            color: #9CA3AF;
+        }
+
+        .leon-progress-bar {
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .leon-progress-fill {
+            height: 100%;
+            background: var(--gradient);
+            border-radius: 3px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* ===== TASK CARDS ===== */
+        .leon-task-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.04);
+            animation: cardSlideIn 0.3s ease-out;
+        }
+
+        @keyframes cardSlideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .leon-task-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .leon-task-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .leon-task-type {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: #243B53;
+        }
+
+        .leon-task-urgency {
+            margin-left: auto;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            white-space: nowrap;
+        }
+
+        .leon-urgency-overdue {
+            background: #FEE2E2;
+            color: #DC2626;
+        }
+
+        .leon-urgency-today {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .leon-urgency-inactive {
+            background: #E0E7FF;
+            color: #4338CA;
+        }
+
+        .leon-urgency-workflow {
+            background: #F3E8FF;
+            color: #7C3AED;
+        }
+
+        /* ===== TASK BODY ===== */
+        .leon-task-body {
+            margin-bottom: 16px;
+        }
+
+        .leon-lead-name {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1F2937;
+            margin-bottom: 4px;
+        }
+
+        .leon-lead-info {
+            font-size: 13px;
+            color: #6B7280;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .leon-lead-info i {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-right: 3px;
+        }
+
+        .leon-status-chip {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* ===== EVENT INFO (Calendar) ===== */
+        .leon-event-info {
+            background: #F8FAFC;
+            border-radius: 10px;
+            padding: 12px 14px;
+            margin-bottom: 10px;
+        }
+
+        .leon-event-title {
+            font-weight: 600;
+            font-size: 15px;
+            color: #1F2937;
+            margin-bottom: 4px;
+        }
+
+        .leon-event-detail {
+            font-size: 13px;
+            color: #6B7280;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .leon-event-detail i {
+            color: #9CA3AF;
+            font-size: 12px;
+            width: 14px;
+            text-align: center;
+        }
+
+        .leon-match-info {
+            margin-top: 8px;
+            font-size: 13px;
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+
+        .leon-match-found {
+            background: #F0FDF4;
+            color: #16A34A;
+        }
+
+        .leon-match-none {
+            background: #FFF7ED;
+            color: #EA580C;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .leon-task-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .leon-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+
+        .leon-btn:active { transform: scale(0.97); }
+
+        .leon-btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .leon-btn-primary:hover {
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+        }
+
+        .leon-btn-secondary {
+            background: #F3F4F6;
+            color: #374151;
+        }
+
+        .leon-btn-secondary:hover { background: #E5E7EB; }
+
+        .leon-btn-ghost {
+            background: transparent;
+            color: #9CA3AF;
+            padding: 10px 12px;
+        }
+
+        .leon-btn-ghost:hover { color: #6B7280; }
+
+        .leon-btn-call {
+            background: #ECFDF5;
+            color: #059669;
+        }
+
+        .leon-btn-call:hover { background: #D1FAE5; }
+
+        /* ===== SUGGESTION CARD ===== */
+        .leon-suggestion-body {
+            padding: 4px 0;
+        }
+
+        .leon-suggestion-title {
+            font-weight: 600;
+            font-size: 16px;
+            color: #1F2937;
+            margin-bottom: 6px;
+        }
+
+        .leon-suggestion-desc {
+            font-size: 14px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+
+        /* ===== DONE STATE ===== */
+        .leon-done {
+            text-align: center;
+            padding: 40px 20px;
+            animation: cardSlideIn 0.4s ease-out;
+        }
+
+        .leon-done-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .leon-done h2 {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: #243B53;
+            margin-bottom: 8px;
+        }
+
+        .leon-done p {
+            font-size: 15px;
+            color: #6B7280;
+            margin-bottom: 20px;
+        }
+
+        .leon-done-stats {
+            font-size: 14px;
+            color: #9CA3AF;
+            margin-bottom: 24px;
+        }
+
+        /* ===== LOADING STATE ===== */
+        .leon-loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .leon-loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #E5E7EB;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .leon-loading-text {
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        /* ===== FEEDBACK MODAL ===== */
+        .leon-modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            padding: 20px;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .leon-modal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .leon-modal-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #243B53;
+            margin-bottom: 16px;
+        }
+
+        .leon-fb-section {
+            margin-bottom: 14px;
+        }
+
+        .leon-fb-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .leon-fb-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .leon-fb-chip {
+            padding: 6px 12px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 8px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: white;
+            color: #374151;
+            user-select: none;
+        }
+
+        .leon-fb-chip:hover { border-color: #A5B4FC; }
+
+        .leon-fb-chip.active {
+            background: #EEF2FF;
+            border-color: #667eea;
+            color: #4338CA;
+            font-weight: 600;
+        }
+
+        .leon-fb-notes {
+            width: 100%;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 60px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .leon-fb-notes:focus { border-color: #667eea; }
+
+        .leon-fb-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .leon-fb-actions .leon-btn { flex: 1; justify-content: center; }
+
+        /* ===== LEAD SEARCH (autocomplete) ===== */
+        .leon-lead-search {
+            margin-top: 10px;
+        }
+
+        .leon-lead-search input {
+            width: 100%;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .leon-lead-search input:focus { border-color: #667eea; }
+
+        .leon-search-results {
+            margin-top: 6px;
+            max-height: 160px;
+            overflow-y: auto;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .leon-search-results.visible { display: block; }
+
+        .leon-search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            border-bottom: 1px solid #F3F4F6;
+            transition: background 0.1s;
+        }
+
+        .leon-search-item:last-child { border-bottom: none; }
+        .leon-search-item:hover { background: #F9FAFB; }
+
+        .leon-search-item-name { font-weight: 600; color: #1F2937; }
+        .leon-search-item-detail { color: #6B7280; font-size: 12px; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: #243B53;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 10000;
+            pointer-events: none;
+        }
+
+        .toast.visible {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== RESPONSIVE MOBILE ===== */
+        @media (max-width: 768px) {
+            .header { display: none !important; }
+            .nav-tabs { display: none !important; }
+
+            .leon-container {
+                padding: 16px 16px 100px;
+            }
+
+            .leon-avatar { width: 56px; height: 56px; }
+
+            .leon-bubble h2 { font-size: 17px; }
+            .leon-bubble p { font-size: 13px; }
+
+            .leon-task-card { padding: 16px; }
+
+            .leon-task-actions {
+                flex-direction: column;
+            }
+
+            .leon-task-actions .leon-btn {
+                justify-content: center;
+            }
+
+            .leon-done-avatar { width: 80px; height: 80px; }
+            .leon-done h2 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-inner">
+            <a href="home.html" class="logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+            <nav class="nav-tabs">
+                <a href="index.html" class="nav-tab">
+                    <i class="fa-solid fa-house"></i> Vendeurs
+                </a>
+                <a href="acquereurs.html" class="nav-tab">
+                    <i class="fa-solid fa-key"></i> Acquéreurs
+                </a>
+                <a href="dvf.html" class="nav-tab">
+                    <i class="fa-solid fa-chart-simple"></i> Marché
+                </a>
+                <a href="social.html" class="nav-tab">
+                    <i class="fa-solid fa-share-nodes"></i> Social
+                </a>
+                <a href="leon.html" class="nav-tab active">
+                    <i class="fa-solid fa-compass"></i> Guide
+                </a>
+            </nav>
+            <div class="header-actions">
+                <div class="header-separator"></div>
+                <div class="user-profile" id="userProfile"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="leon-container">
+        <!-- Greeting -->
+        <div class="leon-greeting" id="leonGreeting">
+            <img src="img/Leon.png" alt="Léon" class="leon-avatar">
+            <div class="leon-bubble">
+                <h2 id="leonTitle">Bonjour</h2>
+                <p id="leonSubtitle">Analyse de ta journée en cours...</p>
+            </div>
+        </div>
+
+        <!-- Calendar not connected banner (hidden by default) -->
+        <div class="leon-calendar-banner" id="calendarBanner" style="display:none">
+            <i class="fa-solid fa-calendar-xmark"></i>
+            <span>Connecte ton <a href="parametres.html">Google Calendar</a> pour que je détecte tes visites automatiquement.</span>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="leon-progress" id="leonProgress" style="display:none">
+            <div class="leon-progress-header">
+                <span class="leon-progress-text" id="progressText">Étape 0/0</span>
+                <span class="leon-progress-count" id="progressCount"></span>
+            </div>
+            <div class="leon-progress-bar">
+                <div class="leon-progress-fill" id="progressFill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- Task container (one card at a time) -->
+        <div id="leonTaskContainer">
+            <div class="leon-loading">
+                <div class="leon-loading-spinner"></div>
+                <div class="leon-loading-text">Léon analyse ta journée...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/mobile-nav.js"></script>
+
+    <script>
+    /**
+     * leon-cockpit.js (inline)
+     * Moteur du cockpit quotidien : fetch données, priorise, affiche carte par carte.
+     * Sources : Supabase (sellers, buyers, workflow_steps) + Google Calendar API.
+     */
+
+    // ===== CONSTANTS =====
+    const CALENDAR_LOOKBACK_DAYS = 3;
+    const INACTIVITY_THRESHOLD_DAYS = 5;
+    const SESSION_EXPIRY_HOURS = 4;
+    const VISIT_KEYWORDS = ['visite', 'rdv', 'estimation', 'rendez-vous', 'r1', 'r2',
+                            'contre-visite', 'mandat', 'signature', 'estimation'];
+    const MATCH_SCORE_THRESHOLD = 5;
+
+    const POSITIVE_POINTS = [
+        { value: 'luminosite', label: '☀️ Luminosité' },
+        { value: 'agencement', label: '📐 Agencement' },
+        { value: 'exterieur', label: '🌳 Extérieur' },
+        { value: 'emplacement', label: '📍 Emplacement' },
+        { value: 'calme', label: '🤫 Calme' },
+        { value: 'vue', label: '🏔️ Vue' },
+        { value: 'etat_general', label: '✨ État général' }
+    ];
+    const NEGATIVE_POINTS = [
+        { value: 'travaux', label: '🔨 Travaux' },
+        { value: 'bruit', label: '🔊 Bruit' },
+        { value: 'petit', label: '📏 Petit' },
+        { value: 'sombre', label: '🌑 Sombre' },
+        { value: 'agencement_neg', label: '📐 Agencement' },
+        { value: 'vis_a_vis', label: '👀 Vis-à-vis' },
+        { value: 'stationnement', label: '🅿️ Stationnement' }
+    ];
+
+    const STATUS_LABELS = {
+        hot: { label: 'Chaud', color: '#FF4757', bg: '#FEE2E2' },
+        warm: { label: 'Tiède', color: '#F59E0B', bg: '#FEF3C7' },
+        cold: { label: 'Froid', color: '#2E86DE', bg: '#DBEAFE' },
+        off_market: { label: 'Off-market', color: '#6B7280', bg: '#F3F4F6' },
+        mandate: { label: 'Mandat', color: '#8B5CF6', bg: '#F3E8FF' },
+        nouveau: { label: 'Nouveau', color: '#0284C7', bg: '#E0F2FE' },
+        actif: { label: 'Actif', color: '#8B5CF6', bg: '#F3E8FF' }
+    };
+
+    const DAY_SUGGESTIONS = [
+        { key: 'phoning', title: 'Session de phoning', desc: 'Appelle tes leads tièdes ou froids pour relancer la relation. 30 minutes bien investies !', cta: 'Voir mes leads', href: 'index.html' },
+        { key: 'prospection', title: 'Prospection terrain', desc: 'Un peu de boîtage ou de porte-à-porte dans ton secteur. Le terrain, ça paye toujours.', cta: 'C\'est parti', href: null },
+        { key: 'social', title: 'Publier sur les réseaux', desc: 'Léa peut te générer un post en 30 secondes. Reste visible pour tes prospects !', cta: 'Aller sur Social', href: 'social.html' },
+        { key: 'matching', title: 'Vérifier les matchings', desc: 'Regarde si de nouveaux acquéreurs correspondent à tes mandats.', cta: 'Voir les acquéreurs', href: 'acquereurs.html' },
+        { key: 'admin', title: 'Mise à jour des fiches', desc: 'Prends 15 minutes pour mettre à jour tes leads : notes, relances, statuts.', cta: 'Pipeline vendeurs', href: 'index.html' }
+    ];
+
+    // ===== STATE =====
+    let taskQueue = [];
+    let currentTaskIndex = 0;
+    let completedIds = [];
+    let skippedIds = [];
+    let allLeads = []; // Pour le matching Calendar → lead
+    let currentUserId = null;
+    let userFirstName = '';
+    let calendarConnected = false;
+
+    // ===== HELPERS =====
+    function todayStr() {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    function dateMinusDays(dateStr, days) {
+        const d = new Date(dateStr + 'T00:00:00');
+        d.setDate(d.getDate() - days);
+        return d.toISOString().split('T')[0];
+    }
+
+    function daysDiff(dateStr1, dateStr2) {
+        const d1 = new Date(dateStr1 + 'T00:00:00');
+        const d2 = new Date(dateStr2 + 'T00:00:00');
+        return Math.floor((d2 - d1) / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDateFr(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        const options = { weekday: 'long', day: 'numeric', month: 'long' };
+        return d.toLocaleDateString('fr-FR', options);
+    }
+
+    function formatTimeFr(isoStr) {
+        if (!isoStr) return '';
+        const d = new Date(isoStr);
+        return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function getTaskId(task) {
+        switch (task.type) {
+            case 'visit_debrief': return 'debrief_' + task.calendarEvent.id;
+            case 'overdue_reminder': return 'reminder_' + task.lead.id;
+            case 'today_reminder': return 'today_' + task.lead.id;
+            case 'inactive_lead': return 'inactive_' + task.lead.id;
+            case 'overdue_workflow': return 'workflow_' + task.step.id;
+            case 'suggestion': return 'suggestion_' + task.suggestion.key;
+            default: return 'unknown_' + Math.random();
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('visible');
+        setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+
+    // ===== AUTH =====
+    async function getCurrentUserId() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) { window.location.href = 'login.html'; return null; }
+        return session.user.id;
+    }
+
+    async function getUserFirstName() {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return '';
+        const meta = session.user.user_metadata || {};
+        const fullName = meta.full_name || meta.name || session.user.email.split('@')[0];
+        return fullName.split(' ')[0];
+    }
+
+    // ===== LOCAL STORAGE SESSION =====
+    function getSessionKey() {
+        return 'leon_session_' + todayStr();
+    }
+
+    function loadSession() {
+        try {
+            const raw = localStorage.getItem(getSessionKey());
+            if (!raw) return null;
+            const session = JSON.parse(raw);
+            // Vérifier expiration (4h max)
+            const buildTime = new Date(session.buildTimestamp);
+            const now = new Date();
+            if ((now - buildTime) > SESSION_EXPIRY_HOURS * 60 * 60 * 1000) return null;
+            return session;
+        } catch { return null; }
+    }
+
+    function saveSession() {
+        const session = {
+            date: todayStr(),
+            taskQueue: taskQueue,
+            currentIndex: currentTaskIndex,
+            completedIds: completedIds,
+            skippedIds: skippedIds,
+            buildTimestamp: new Date().toISOString()
+        };
+        localStorage.setItem(getSessionKey(), JSON.stringify(session));
+    }
+
+    function cleanOldSessions() {
+        const todayKey = getSessionKey();
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.startsWith('leon_session_') && key !== todayKey) {
+                localStorage.removeItem(key);
+            }
+        }
+    }
+
+    // ===== DATA FETCHING =====
+    async function fetchOverdueReminders(table, today, userId) {
+        const closedStatuses = table === 'sellers'
+            ? ['sold', 'lost']
+            : ['achete_avec_moi', 'achete_ailleurs', 'abandon'];
+        let query = supabaseClient
+            .from(table)
+            .select('id, first_name, last_name, phone, reminder, status, address, property_type, budget')
+            .eq('user_id', userId)
+            .lt('reminder', today)
+            .not('reminder', 'is', null)
+            .order('reminder', { ascending: true });
+        // Exclure les statuts terminés un par un (compatible Supabase JS v2)
+        for (const s of closedStatuses) {
+            query = query.neq('status', s);
+        }
+        const { data } = await query;
+        return data || [];
+    }
+
+    async function fetchTodayReminders(table, today, userId) {
+        const closedStatuses = table === 'sellers'
+            ? ['sold', 'lost']
+            : ['achete_avec_moi', 'achete_ailleurs', 'abandon'];
+        let query = supabaseClient
+            .from(table)
+            .select('id, first_name, last_name, phone, reminder, status, address, property_type, budget')
+            .eq('user_id', userId)
+            .eq('reminder', today);
+        for (const s of closedStatuses) {
+            query = query.neq('status', s);
+        }
+        const { data } = await query;
+        return data || [];
+    }
+
+    async function fetchInactiveLeads(table, thresholdDate, userId) {
+        const activeStatuses = table === 'sellers'
+            ? ['hot', 'warm']
+            : ['nouveau', 'actif'];
+        const { data } = await supabaseClient
+            .from(table)
+            .select('id, first_name, last_name, phone, status, updated_at, address, property_type')
+            .eq('user_id', userId)
+            .in('status', activeStatuses)
+            .lt('updated_at', thresholdDate + 'T00:00:00')
+            .order('updated_at', { ascending: true })
+            .limit(10); // Limiter pour ne pas surcharger
+        return data || [];
+    }
+
+    async function fetchOverdueWorkflowSteps(userId) {
+        const today = todayStr();
+        const { data } = await supabaseClient
+            .from('workflow_steps')
+            .select('id, seller_id, buyer_id, workflow_type, step_key, status, due_date, sort_order')
+            .eq('user_id', userId)
+            .eq('status', 'pending')
+            .lt('due_date', today)
+            .order('due_date', { ascending: true })
+            .limit(10);
+        return data || [];
+    }
+
+    async function fetchAllLeadsForMatching(userId) {
+        const [{ data: sellers }, { data: buyers }] = await Promise.all([
+            supabaseClient.from('sellers')
+                .select('id, first_name, last_name, address, status, phone, property_type')
+                .eq('user_id', userId)
+                .neq('status', 'sold')
+                .neq('status', 'lost'),
+            supabaseClient.from('buyers')
+                .select('id, first_name, last_name, address, status, phone, property_type, sector')
+                .eq('user_id', userId)
+                .neq('status', 'achete_avec_moi')
+                .neq('status', 'achete_ailleurs')
+                .neq('status', 'abandon')
+        ]);
+        return [
+            ...(sellers || []).map(s => ({ ...s, leadType: 'seller' })),
+            ...(buyers || []).map(b => ({ ...b, leadType: 'buyer' }))
+        ];
+    }
+
+    async function fetchCalendarEvents(dateFrom, dateTo) {
+        try {
+            const headers = await getAuthHeaders();
+            const response = await fetch('/api/assistant', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ action: 'list_events', date_from: dateFrom, date_to: dateTo })
+            });
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                if (err.error === 'calendar_not_connected' || response.status === 400) {
+                    return { success: false, reason: 'not_connected' };
+                }
+                return { success: false, reason: 'api_error' };
+            }
+            const data = await response.json();
+            return { success: true, events: data.events || [] };
+        } catch (err) {
+            console.error('[Leon] Calendar fetch error:', err);
+            return { success: false, reason: 'network_error' };
+        }
+    }
+
+    // ===== VISIT DETECTION & MATCHING =====
+    function isVisitEvent(event) {
+        if (event.all_day) return false;
+        const summary = (event.summary || '').toLowerCase();
+        return VISIT_KEYWORDS.some(kw => summary.includes(kw));
+    }
+
+    function matchEventToLead(event, leads) {
+        const summary = (event.summary || '').toLowerCase();
+        const location = (event.location || '').toLowerCase();
+        const description = (event.description || '').toLowerCase();
+        let bestMatch = null;
+        let bestScore = 0;
+
+        for (const lead of leads) {
+            let score = 0;
+            const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.trim().toLowerCase();
+            const lastName = (lead.last_name || '').toLowerCase();
+            const address = (lead.address || '').toLowerCase();
+
+            if (lastName.length >= 3 && summary.includes(lastName)) score += 10;
+            if (fullName.length >= 5 && summary.includes(fullName)) score += 15;
+            if (lastName.length >= 3 && description.includes(lastName)) score += 5;
+
+            if (address.length >= 5) {
+                if (location.includes(address)) score += 8;
+                if (summary.includes(address)) score += 6;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = lead;
+            }
+        }
+
+        return bestScore >= MATCH_SCORE_THRESHOLD ? { lead: bestMatch, score: bestScore } : null;
+    }
+
+    // ===== PRIORITIZATION ENGINE =====
+    async function buildTaskQueue() {
+        const today = todayStr();
+        const lookbackDate = dateMinusDays(today, CALENDAR_LOOKBACK_DAYS);
+        const inactiveThreshold = dateMinusDays(today, INACTIVITY_THRESHOLD_DAYS);
+
+        // Fetch tout en parallèle
+        const [
+            calendarResult,
+            overdueSellers,
+            overdueBuyers,
+            todaySellers,
+            todayBuyers,
+            inactiveSellers,
+            inactiveBuyers,
+            overdueSteps
+        ] = await Promise.all([
+            fetchCalendarEvents(lookbackDate, today),
+            fetchOverdueReminders('sellers', today, currentUserId),
+            fetchOverdueReminders('buyers', today, currentUserId),
+            fetchTodayReminders('sellers', today, currentUserId),
+            fetchTodayReminders('buyers', today, currentUserId),
+            fetchInactiveLeads('sellers', inactiveThreshold, currentUserId),
+            fetchInactiveLeads('buyers', inactiveThreshold, currentUserId),
+            fetchOverdueWorkflowSteps(currentUserId)
+        ]);
+
+        const tasks = [];
+
+        // P1 — Debriefs visite
+        if (calendarResult.success) {
+            calendarConnected = true;
+            const visitEvents = calendarResult.events.filter(isVisitEvent);
+            if (visitEvents.length > 0) {
+                allLeads = await fetchAllLeadsForMatching(currentUserId);
+                for (const event of visitEvents) {
+                    const match = matchEventToLead(event, allLeads);
+                    tasks.push({
+                        priority: 1,
+                        type: 'visit_debrief',
+                        calendarEvent: event,
+                        matchedLead: match,
+                        sortKey: event.start
+                    });
+                }
+            }
+        } else {
+            calendarConnected = false;
+        }
+
+        // P2 — Relances en retard
+        const overdueAll = [
+            ...overdueSellers.map(s => ({ ...s, leadType: 'seller' })),
+            ...overdueBuyers.map(b => ({ ...b, leadType: 'buyer' }))
+        ].sort((a, b) => new Date(a.reminder) - new Date(b.reminder));
+
+        for (const lead of overdueAll) {
+            tasks.push({
+                priority: 2,
+                type: 'overdue_reminder',
+                lead: lead,
+                daysDue: daysDiff(lead.reminder.split('T')[0], today),
+                sortKey: lead.reminder
+            });
+        }
+
+        // P3 — Relances du jour
+        const todayAll = [
+            ...todaySellers.map(s => ({ ...s, leadType: 'seller' })),
+            ...todayBuyers.map(b => ({ ...b, leadType: 'buyer' }))
+        ];
+        for (const lead of todayAll) {
+            tasks.push({
+                priority: 3,
+                type: 'today_reminder',
+                lead: lead,
+                sortKey: (lead.first_name || '') + (lead.last_name || '')
+            });
+        }
+
+        // P4 — Leads inactifs
+        const inactiveAll = [
+            ...inactiveSellers.map(s => ({ ...s, leadType: 'seller' })),
+            ...inactiveBuyers.map(b => ({ ...b, leadType: 'buyer' }))
+        ];
+        for (const lead of inactiveAll) {
+            const updatedDate = (lead.updated_at || '').split('T')[0];
+            tasks.push({
+                priority: 4,
+                type: 'inactive_lead',
+                lead: lead,
+                daysSinceActivity: updatedDate ? daysDiff(updatedDate, today) : 99,
+                sortKey: lead.updated_at || ''
+            });
+        }
+
+        // P5 — Étapes workflow en retard
+        for (const step of overdueSteps) {
+            tasks.push({
+                priority: 5,
+                type: 'overdue_workflow',
+                step: step,
+                sortKey: step.due_date || ''
+            });
+        }
+
+        // P6 — Suggestion si peu de tâches
+        if (tasks.length < 3) {
+            const dayOfWeek = new Date().getDay(); // 0=dim, 1=lun...
+            const suggestion = DAY_SUGGESTIONS[dayOfWeek % DAY_SUGGESTIONS.length];
+            tasks.push({
+                priority: 6,
+                type: 'suggestion',
+                suggestion: suggestion,
+                sortKey: 'zzzz'
+            });
+        }
+
+        // Tri par priorité puis sortKey
+        tasks.sort((a, b) => {
+            if (a.priority !== b.priority) return a.priority - b.priority;
+            return (a.sortKey || '').localeCompare(b.sortKey || '');
+        });
+
+        return tasks;
+    }
+
+    // ===== RENDERING =====
+    function updateProgress() {
+        const progressEl = document.getElementById('leonProgress');
+        const textEl = document.getElementById('progressText');
+        const countEl = document.getElementById('progressCount');
+        const fillEl = document.getElementById('progressFill');
+
+        const total = taskQueue.length;
+        const done = completedIds.length + skippedIds.length;
+        const current = Math.min(done + 1, total);
+
+        if (total > 0) {
+            progressEl.style.display = 'block';
+            textEl.textContent = `Étape ${current}/${total}`;
+            countEl.textContent = `${completedIds.length} traitée${completedIds.length > 1 ? 's' : ''} · ${skippedIds.length} passée${skippedIds.length > 1 ? 's' : ''}`;
+            fillEl.style.width = Math.round((done / total) * 100) + '%';
+        } else {
+            progressEl.style.display = 'none';
+        }
+    }
+
+    function updateGreeting(taskCount) {
+        const titleEl = document.getElementById('leonTitle');
+        const subtitleEl = document.getElementById('leonSubtitle');
+
+        titleEl.textContent = `Bonjour ${userFirstName} !`;
+
+        if (taskCount === 0) {
+            subtitleEl.innerHTML = `Rien de spécial aujourd'hui. Profites-en pour avancer sur tes projets !`;
+        } else {
+            // Compter par type
+            const debriefs = taskQueue.filter(t => t.type === 'visit_debrief').length;
+            const reminders = taskQueue.filter(t => t.type === 'overdue_reminder' || t.type === 'today_reminder').length;
+            const inactive = taskQueue.filter(t => t.type === 'inactive_lead').length;
+
+            const parts = [];
+            if (debriefs > 0) parts.push(`${debriefs} débrief${debriefs > 1 ? 's' : ''} de visite`);
+            if (reminders > 0) parts.push(`${reminders} relance${reminders > 1 ? 's' : ''}`);
+            if (inactive > 0) parts.push(`${inactive} lead${inactive > 1 ? 's' : ''} inactif${inactive > 1 ? 's' : ''}`);
+
+            const summary = parts.length > 0 ? parts.join(', ') + '.' : '';
+            subtitleEl.innerHTML = `Tu as <strong>${taskCount} action${taskCount > 1 ? 's' : ''}</strong> à traiter. ${summary}`;
+        }
+
+        if (!calendarConnected) {
+            document.getElementById('calendarBanner').style.display = 'flex';
+        }
+    }
+
+    function renderCurrentTask() {
+        const container = document.getElementById('leonTaskContainer');
+
+        // Trouver la prochaine tâche non traitée
+        while (currentTaskIndex < taskQueue.length) {
+            const task = taskQueue[currentTaskIndex];
+            const taskId = getTaskId(task);
+            if (!completedIds.includes(taskId) && !skippedIds.includes(taskId)) break;
+            currentTaskIndex++;
+        }
+
+        if (currentTaskIndex >= taskQueue.length) {
+            renderDoneState();
+            return;
+        }
+
+        const task = taskQueue[currentTaskIndex];
+        updateProgress();
+
+        switch (task.type) {
+            case 'visit_debrief': container.innerHTML = renderVisitDebriefCard(task); break;
+            case 'overdue_reminder': container.innerHTML = renderReminderCard(task, true); break;
+            case 'today_reminder': container.innerHTML = renderReminderCard(task, false); break;
+            case 'inactive_lead': container.innerHTML = renderInactiveCard(task); break;
+            case 'overdue_workflow': container.innerHTML = renderWorkflowCard(task); break;
+            case 'suggestion': container.innerHTML = renderSuggestionCard(task); break;
+        }
+    }
+
+    function renderVisitDebriefCard(task) {
+        const event = task.calendarEvent;
+        const match = task.matchedLead;
+        const eventDate = formatTimeFr(event.start) + ' – ' + formatTimeFr(event.end);
+        const eventDay = formatDateFr(event.start.split('T')[0] || event.start);
+
+        let matchHtml = '';
+        if (match) {
+            const lead = match.lead;
+            const name = `${lead.first_name || ''} ${lead.last_name || ''}`.trim();
+            const type = lead.leadType === 'seller' ? 'Vendeur' : 'Acquéreur';
+            matchHtml = `<div class="leon-match-info leon-match-found"><i class="fa-solid fa-link"></i> ${type} : <strong>${escapeHtml(name)}</strong></div>`;
+        } else {
+            matchHtml = `<div class="leon-match-info leon-match-none"><i class="fa-solid fa-question-circle"></i> Aucun lead associé automatiquement</div>`;
+        }
+
+        return `
+            <div class="leon-task-card" style="animation: cardSlideIn 0.3s ease-out">
+                <div class="leon-task-header">
+                    <span class="leon-task-icon">📝</span>
+                    <span class="leon-task-type">Débrief visite</span>
+                </div>
+                <div class="leon-task-body">
+                    <div class="leon-event-info">
+                        <div class="leon-event-title">${escapeHtml(event.summary)}</div>
+                        <div class="leon-event-detail"><i class="fa-regular fa-calendar"></i> ${escapeHtml(eventDay)}</div>
+                        <div class="leon-event-detail"><i class="fa-regular fa-clock"></i> ${escapeHtml(eventDate)}</div>
+                        ${event.location ? `<div class="leon-event-detail"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(event.location)}</div>` : ''}
+                    </div>
+                    ${matchHtml}
+                </div>
+                <div class="leon-task-actions">
+                    <button class="leon-btn leon-btn-primary" onclick="openDebriefForm(${currentTaskIndex})">
+                        <i class="fa-solid fa-pen-to-square"></i> Donner mon retour
+                    </button>
+                    <button class="leon-btn leon-btn-ghost" onclick="skipTask(${currentTaskIndex})">
+                        Passer
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderReminderCard(task, isOverdue) {
+        const lead = task.lead;
+        const name = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Sans nom';
+        const type = lead.leadType === 'seller' ? 'Vendeur' : 'Acquéreur';
+        const statusInfo = STATUS_LABELS[lead.status] || { label: lead.status, color: '#6B7280', bg: '#F3F4F6' };
+
+        const urgencyLabel = isOverdue ? `J+${task.daysDue}` : "Aujourd'hui";
+        const urgencyClass = isOverdue ? 'leon-urgency-overdue' : 'leon-urgency-today';
+        const taskTypeLabel = isOverdue ? 'Relance en retard' : 'Relance du jour';
+        const icon = isOverdue ? '⏰' : '📅';
+
+        return `
+            <div class="leon-task-card" style="animation: cardSlideIn 0.3s ease-out">
+                <div class="leon-task-header">
+                    <span class="leon-task-icon">${icon}</span>
+                    <span class="leon-task-type">${taskTypeLabel}</span>
+                    <span class="leon-task-urgency ${urgencyClass}">${urgencyLabel}</span>
+                </div>
+                <div class="leon-task-body">
+                    <div class="leon-lead-name">${escapeHtml(name)}</div>
+                    <div class="leon-lead-info">
+                        <span class="leon-status-chip" style="background:${statusInfo.bg};color:${statusInfo.color}">${type} · ${statusInfo.label}</span>
+                        ${lead.address ? `<span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(lead.address)}</span>` : ''}
+                    </div>
+                    ${lead.phone ? `<div class="leon-lead-info" style="margin-top:6px"><span><i class="fa-solid fa-phone"></i> ${escapeHtml(lead.phone)}</span></div>` : ''}
+                </div>
+                <div class="leon-task-actions">
+                    ${lead.phone ? `<a href="tel:${escapeHtml(lead.phone)}" class="leon-btn leon-btn-call"><i class="fa-solid fa-phone"></i> Appeler</a>` : ''}
+                    <button class="leon-btn leon-btn-secondary" onclick="snoozeReminder(${currentTaskIndex}, 7)">
+                        <i class="fa-solid fa-clock-rotate-left"></i> +7j
+                    </button>
+                    <button class="leon-btn leon-btn-primary" onclick="markReminderDone(${currentTaskIndex})">
+                        <i class="fa-solid fa-check"></i> Fait
+                    </button>
+                    <button class="leon-btn leon-btn-ghost" onclick="skipTask(${currentTaskIndex})">
+                        Passer
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderInactiveCard(task) {
+        const lead = task.lead;
+        const name = `${lead.first_name || ''} ${lead.last_name || ''}`.trim() || 'Sans nom';
+        const type = lead.leadType === 'seller' ? 'Vendeur' : 'Acquéreur';
+        const statusInfo = STATUS_LABELS[lead.status] || { label: lead.status, color: '#6B7280', bg: '#F3F4F6' };
+        const pipelineUrl = lead.leadType === 'seller' ? 'index.html' : 'acquereurs.html';
+
+        return `
+            <div class="leon-task-card" style="animation: cardSlideIn 0.3s ease-out">
+                <div class="leon-task-header">
+                    <span class="leon-task-icon">💤</span>
+                    <span class="leon-task-type">Lead inactif</span>
+                    <span class="leon-task-urgency leon-urgency-inactive">${task.daysSinceActivity}j sans activité</span>
+                </div>
+                <div class="leon-task-body">
+                    <div class="leon-lead-name">${escapeHtml(name)}</div>
+                    <div class="leon-lead-info">
+                        <span class="leon-status-chip" style="background:${statusInfo.bg};color:${statusInfo.color}">${type} · ${statusInfo.label}</span>
+                        ${lead.address ? `<span><i class="fa-solid fa-location-dot"></i> ${escapeHtml(lead.address)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="leon-task-actions">
+                    <a href="${pipelineUrl}?highlight=${lead.id}" class="leon-btn leon-btn-primary">
+                        <i class="fa-solid fa-eye"></i> Voir la fiche
+                    </a>
+                    <button class="leon-btn leon-btn-secondary" onclick="setReminderFromCockpit(${currentTaskIndex})">
+                        <i class="fa-solid fa-bell"></i> Planifier relance
+                    </button>
+                    <button class="leon-btn leon-btn-ghost" onclick="skipTask(${currentTaskIndex})">
+                        Passer
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderWorkflowCard(task) {
+        const step = task.step;
+        const workflowLabels = {
+            warm_seller: 'Parcours vendeur tiède',
+            mandate: 'Parcours mandat',
+            post_sale: 'Après-vente'
+        };
+        const label = workflowLabels[step.workflow_type] || step.workflow_type;
+        const stepLabel = (step.step_key || '').replace(/_/g, ' ');
+
+        return `
+            <div class="leon-task-card" style="animation: cardSlideIn 0.3s ease-out">
+                <div class="leon-task-header">
+                    <span class="leon-task-icon">📋</span>
+                    <span class="leon-task-type">${escapeHtml(label)}</span>
+                    <span class="leon-task-urgency leon-urgency-workflow">En retard</span>
+                </div>
+                <div class="leon-task-body">
+                    <div class="leon-lead-name" style="text-transform:capitalize">${escapeHtml(stepLabel)}</div>
+                </div>
+                <div class="leon-task-actions">
+                    <button class="leon-btn leon-btn-primary" onclick="completeWorkflowStep(${currentTaskIndex})">
+                        <i class="fa-solid fa-check"></i> Fait
+                    </button>
+                    <button class="leon-btn leon-btn-ghost" onclick="skipTask(${currentTaskIndex})">
+                        Plus tard
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSuggestionCard(task) {
+        const s = task.suggestion;
+        return `
+            <div class="leon-task-card" style="animation: cardSlideIn 0.3s ease-out">
+                <div class="leon-task-header">
+                    <span class="leon-task-icon">💡</span>
+                    <span class="leon-task-type">Suggestion</span>
+                </div>
+                <div class="leon-task-body">
+                    <div class="leon-suggestion-body">
+                        <div class="leon-suggestion-title">${escapeHtml(s.title)}</div>
+                        <div class="leon-suggestion-desc">${escapeHtml(s.desc)}</div>
+                    </div>
+                </div>
+                <div class="leon-task-actions">
+                    ${s.href ? `<a href="${s.href}" class="leon-btn leon-btn-primary"><i class="fa-solid fa-arrow-right"></i> ${escapeHtml(s.cta)}</a>` : `<button class="leon-btn leon-btn-primary" onclick="completeTask(${currentTaskIndex})"><i class="fa-solid fa-check"></i> ${escapeHtml(s.cta)}</button>`}
+                    <button class="leon-btn leon-btn-ghost" onclick="skipTask(${currentTaskIndex})">
+                        Passer
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderDoneState() {
+        const container = document.getElementById('leonTaskContainer');
+        const progressEl = document.getElementById('leonProgress');
+        if (progressEl) {
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = 'Terminé !';
+        }
+
+        container.innerHTML = `
+            <div class="leon-done">
+                <img src="img/Leon.png" alt="Léon" class="leon-done-avatar">
+                <h2>Bravo ${escapeHtml(userFirstName)} !</h2>
+                <p>Toutes tes actions du jour sont traitées.</p>
+                <div class="leon-done-stats">
+                    ${completedIds.length} traitée${completedIds.length > 1 ? 's' : ''} · ${skippedIds.length} passée${skippedIds.length > 1 ? 's' : ''}
+                </div>
+                <a href="index.html" class="leon-btn leon-btn-primary" style="display:inline-flex">
+                    <i class="fa-solid fa-house"></i> Retour au pipeline
+                </a>
+            </div>
+        `;
+    }
+
+    // ===== ACTIONS =====
+    function completeTask(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const taskId = getTaskId(task);
+        if (!completedIds.includes(taskId)) completedIds.push(taskId);
+        currentTaskIndex = taskIndex + 1;
+        saveSession();
+        showToast('Action traitée');
+        renderCurrentTask();
+    }
+
+    function skipTask(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const taskId = getTaskId(task);
+        if (!skippedIds.includes(taskId)) skippedIds.push(taskId);
+        currentTaskIndex = taskIndex + 1;
+        saveSession();
+        renderCurrentTask();
+    }
+
+    async function snoozeReminder(taskIndex, days) {
+        const task = taskQueue[taskIndex];
+        const lead = task.lead;
+        const table = lead.leadType === 'seller' ? 'sellers' : 'buyers';
+        const newDate = new Date();
+        newDate.setDate(newDate.getDate() + days);
+
+        const { error } = await supabaseClient
+            .from(table)
+            .update({ reminder: newDate.toISOString().split('T')[0] })
+            .eq('id', lead.id);
+
+        if (error) {
+            console.error('[Leon] Snooze error:', error);
+            showToast('Erreur lors du report');
+            return;
+        }
+
+        showToast(`Relance reportée de ${days} jours`);
+        completeTask(taskIndex);
+    }
+
+    async function markReminderDone(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const lead = task.lead;
+        const table = lead.leadType === 'seller' ? 'sellers' : 'buyers';
+
+        const { error } = await supabaseClient
+            .from(table)
+            .update({ reminder: null, updated_at: new Date().toISOString() })
+            .eq('id', lead.id);
+
+        if (error) {
+            console.error('[Leon] Mark done error:', error);
+            showToast('Erreur');
+            return;
+        }
+
+        showToast('Relance terminée');
+        completeTask(taskIndex);
+    }
+
+    async function setReminderFromCockpit(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const lead = task.lead;
+        const table = lead.leadType === 'seller' ? 'sellers' : 'buyers';
+
+        // Planifier dans 3 jours par défaut
+        const reminderDate = new Date();
+        reminderDate.setDate(reminderDate.getDate() + 3);
+
+        const { error } = await supabaseClient
+            .from(table)
+            .update({ reminder: reminderDate.toISOString().split('T')[0], updated_at: new Date().toISOString() })
+            .eq('id', lead.id);
+
+        if (error) {
+            console.error('[Leon] Set reminder error:', error);
+            showToast('Erreur');
+            return;
+        }
+
+        showToast('Relance planifiée dans 3 jours');
+        completeTask(taskIndex);
+    }
+
+    async function completeWorkflowStep(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const step = task.step;
+
+        const { error } = await supabaseClient
+            .from('workflow_steps')
+            .update({ status: 'done', completed_at: new Date().toISOString() })
+            .eq('id', step.id);
+
+        if (error) {
+            console.error('[Leon] Complete step error:', error);
+            showToast('Erreur');
+            return;
+        }
+
+        showToast('Étape complétée');
+        completeTask(taskIndex);
+    }
+
+    // ===== DEBRIEF FORM =====
+    function openDebriefForm(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const event = task.calendarEvent;
+        const match = task.matchedLead;
+
+        const posChips = POSITIVE_POINTS.map(p =>
+            `<span class="leon-fb-chip leon-fb-chip-multi" data-value="${p.value}">${p.label}</span>`
+        ).join('');
+        const negChips = NEGATIVE_POINTS.map(p =>
+            `<span class="leon-fb-chip leon-fb-chip-multi" data-value="${p.value}">${p.label}</span>`
+        ).join('');
+
+        // Si pas de match, ajouter un champ de recherche lead
+        let leadSearchHtml = '';
+        if (!match) {
+            leadSearchHtml = `
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Associer à un lead (optionnel)</div>
+                    <div class="leon-lead-search">
+                        <input type="text" id="leonLeadSearch" placeholder="Rechercher un lead par nom..."
+                               oninput="searchLeadsForDebrief(this.value)">
+                        <div class="leon-search-results" id="leonSearchResults"></div>
+                    </div>
+                    <input type="hidden" id="leonMatchedLeadId" value="">
+                    <input type="hidden" id="leonMatchedLeadType" value="">
+                </div>
+            `;
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'leonDebriefModal';
+        modal.className = 'leon-modal-overlay';
+        modal.innerHTML = `
+            <div class="leon-modal-card">
+                <div class="leon-modal-title">Retour de visite</div>
+                <div style="font-size:13px;color:#6B7280;margin-bottom:14px">
+                    ${escapeHtml(event.summary)} — ${formatDateFr(event.start.split('T')[0] || event.start)}
+                </div>
+                ${leadSearchHtml}
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Ressenti global</div>
+                    <div class="leon-fb-chips" id="leonRatingChips">
+                        <span class="leon-fb-chip" data-value="coup_de_coeur">😍 Coup de coeur</span>
+                        <span class="leon-fb-chip" data-value="interessant">😊 Intéressant</span>
+                        <span class="leon-fb-chip" data-value="pas_convaincu">😕 Pas convaincu</span>
+                        <span class="leon-fb-chip" data-value="pas_du_tout">😞 Pas du tout</span>
+                    </div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Points positifs</div>
+                    <div class="leon-fb-chips leon-fb-multi" id="leonPosChips">${posChips}</div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Points négatifs</div>
+                    <div class="leon-fb-chips leon-fb-multi" id="leonNegChips">${negChips}</div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Perception du prix</div>
+                    <div class="leon-fb-chips" id="leonPriceChips">
+                        <span class="leon-fb-chip" data-value="adapte">✅ Adapté</span>
+                        <span class="leon-fb-chip" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
+                        <span class="leon-fb-chip" data-value="trop_eleve">🚫 Trop élevé</span>
+                    </div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Quartier</div>
+                    <div class="leon-fb-chips" id="leonNeighborhoodChips">
+                        <span class="leon-fb-chip" data-value="connait_bien">🏘️ Connaît bien</span>
+                        <span class="leon-fb-chip" data-value="decouvre">🗺️ Découvre</span>
+                        <span class="leon-fb-chip" data-value="pas_convaincu">😕 Pas convaincu</span>
+                    </div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Décision acquéreur</div>
+                    <div class="leon-fb-chips" id="leonDecisionChips">
+                        <span class="leon-fb-chip" data-value="en_attente">⏳ En attente</span>
+                        <span class="leon-fb-chip" data-value="interesse">👍 Intéressé</span>
+                        <span class="leon-fb-chip" data-value="contre_visite">🔄 Contre-visite</span>
+                        <span class="leon-fb-chip" data-value="offre">🎉 Offre</span>
+                        <span class="leon-fb-chip" data-value="refus">👎 Refus</span>
+                    </div>
+                </div>
+                <div class="leon-fb-section">
+                    <div class="leon-fb-label">Notes</div>
+                    <textarea class="leon-fb-notes" id="leonFbNotes" rows="2" placeholder="Observations..."></textarea>
+                </div>
+                <div class="leon-fb-actions">
+                    <button class="leon-btn leon-btn-primary" onclick="saveDebrief(${taskIndex})">Enregistrer</button>
+                    <button class="leon-btn leon-btn-secondary" onclick="closeDebriefModal()">Annuler</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Close on overlay click
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) closeDebriefModal();
+        });
+
+        // Chip selection: mono
+        modal.querySelectorAll('.leon-fb-chip:not(.leon-fb-chip-multi)').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.parentElement.querySelectorAll('.leon-fb-chip').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Chip selection: multi
+        modal.querySelectorAll('.leon-fb-chip-multi').forEach(chip => {
+            chip.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+    }
+
+    function closeDebriefModal() {
+        const modal = document.getElementById('leonDebriefModal');
+        if (modal) modal.remove();
+    }
+
+    let searchDebounce = null;
+    async function searchLeadsForDebrief(query) {
+        clearTimeout(searchDebounce);
+        const resultsEl = document.getElementById('leonSearchResults');
+        if (!query || query.length < 2) {
+            resultsEl.classList.remove('visible');
+            return;
+        }
+
+        searchDebounce = setTimeout(async () => {
+            // Chercher dans les leads déjà chargés (allLeads) ou fetch si pas encore chargés
+            let leads = allLeads;
+            if (!leads.length) {
+                leads = await fetchAllLeadsForMatching(currentUserId);
+                allLeads = leads;
+            }
+
+            const q = query.toLowerCase();
+            const matches = leads.filter(l => {
+                const name = `${l.first_name || ''} ${l.last_name || ''}`.toLowerCase();
+                return name.includes(q);
+            }).slice(0, 5);
+
+            if (matches.length === 0) {
+                resultsEl.innerHTML = '<div class="leon-search-item"><span class="leon-search-item-detail">Aucun résultat</span></div>';
+            } else {
+                resultsEl.innerHTML = matches.map(l => {
+                    const name = `${l.first_name || ''} ${l.last_name || ''}`.trim();
+                    const type = l.leadType === 'seller' ? 'Vendeur' : 'Acquéreur';
+                    return `<div class="leon-search-item" onclick="selectLeadForDebrief('${l.id}', '${l.leadType}', '${escapeHtml(name)}')">
+                        <div class="leon-search-item-name">${escapeHtml(name)}</div>
+                        <div class="leon-search-item-detail">${type} ${l.address ? '· ' + escapeHtml(l.address) : ''}</div>
+                    </div>`;
+                }).join('');
+            }
+            resultsEl.classList.add('visible');
+        }, 300);
+    }
+
+    function selectLeadForDebrief(leadId, leadType, name) {
+        document.getElementById('leonMatchedLeadId').value = leadId;
+        document.getElementById('leonMatchedLeadType').value = leadType;
+        document.getElementById('leonLeadSearch').value = name;
+        document.getElementById('leonSearchResults').classList.remove('visible');
+    }
+
+    async function saveDebrief(taskIndex) {
+        const task = taskQueue[taskIndex];
+        const match = task.matchedLead;
+
+        const ratingChip = document.querySelector('#leonRatingChips .leon-fb-chip.active');
+        const priceChip = document.querySelector('#leonPriceChips .leon-fb-chip.active');
+        const decisionChip = document.querySelector('#leonDecisionChips .leon-fb-chip.active');
+        const neighborhoodChip = document.querySelector('#leonNeighborhoodChips .leon-fb-chip.active');
+        const posPoints = Array.from(document.querySelectorAll('#leonPosChips .leon-fb-chip.active')).map(c => c.dataset.value);
+        const negPoints = Array.from(document.querySelectorAll('#leonNegChips .leon-fb-chip.active')).map(c => c.dataset.value);
+        const notes = document.getElementById('leonFbNotes').value.trim();
+
+        if (!ratingChip) {
+            showToast('Sélectionne un ressenti global');
+            return;
+        }
+
+        // Déterminer le lead associé
+        let sellerId = null;
+        let buyerId = null;
+
+        if (match) {
+            if (match.lead.leadType === 'seller') sellerId = match.lead.id;
+            else buyerId = match.lead.id;
+        } else {
+            const manualId = document.getElementById('leonMatchedLeadId')?.value;
+            const manualType = document.getElementById('leonMatchedLeadType')?.value;
+            if (manualId) {
+                if (manualType === 'seller') sellerId = manualId;
+                else buyerId = manualId;
+            }
+        }
+
+        // Créer un enregistrement visite
+        const visitData = {
+            user_id: currentUserId,
+            seller_id: sellerId,
+            buyer_id: buyerId,
+            feedback_rating: ratingChip.dataset.value,
+            price_perception: priceChip ? priceChip.dataset.value : null,
+            buyer_decision: decisionChip ? decisionChip.dataset.value : null,
+            positive_points: posPoints.length > 0 ? posPoints : null,
+            negative_points: negPoints.length > 0 ? negPoints : null,
+            neighborhood_feel: neighborhoodChip ? neighborhoodChip.dataset.value : null,
+            notes: notes || null,
+            created_at: task.calendarEvent.start || new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient.from('visits').insert(visitData);
+
+        if (error) {
+            console.error('[Leon] Save debrief error:', error);
+            showToast('Erreur lors de l\'enregistrement');
+            return;
+        }
+
+        // Mettre à jour le lead si associé
+        if (sellerId) {
+            await supabaseClient.from('sellers')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', sellerId);
+        }
+        if (buyerId) {
+            await supabaseClient.from('buyers')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', buyerId);
+        }
+
+        // Points gamification
+        if (typeof awardPoints === 'function') {
+            awardPoints('visit_feedback', {});
+        }
+
+        closeDebriefModal();
+        showToast('Retour de visite enregistré');
+        completeTask(taskIndex);
+    }
+
+    // ===== INIT =====
+    (async function initLeonCockpit() {
+        currentUserId = await getCurrentUserId();
+        if (!currentUserId) return;
+
+        userFirstName = await getUserFirstName();
+        cleanOldSessions();
+
+        // Essayer de restaurer la session
+        const savedSession = loadSession();
+        if (savedSession && savedSession.taskQueue && savedSession.taskQueue.length > 0) {
+            taskQueue = savedSession.taskQueue;
+            currentTaskIndex = savedSession.currentIndex || 0;
+            completedIds = savedSession.completedIds || [];
+            skippedIds = savedSession.skippedIds || [];
+
+            // Vérifier si Calendar était connecté (présence de tâches P1)
+            calendarConnected = taskQueue.some(t => t.type === 'visit_debrief');
+
+            updateGreeting(taskQueue.length);
+            renderCurrentTask();
+            return;
+        }
+
+        // Construire une nouvelle file de tâches
+        try {
+            taskQueue = await buildTaskQueue();
+            currentTaskIndex = 0;
+            completedIds = [];
+            skippedIds = [];
+            saveSession();
+
+            updateGreeting(taskQueue.length);
+            renderCurrentTask();
+        } catch (err) {
+            console.error('[Leon] Init error:', err);
+            document.getElementById('leonTaskContainer').innerHTML = `
+                <div class="leon-task-card">
+                    <div class="leon-task-header">
+                        <span class="leon-task-icon">⚠️</span>
+                        <span class="leon-task-type">Erreur</span>
+                    </div>
+                    <div class="leon-task-body">
+                        <p style="color:#6B7280">Impossible de charger tes données. Réessaie dans quelques instants.</p>
+                    </div>
+                    <div class="leon-task-actions">
+                        <button class="leon-btn leon-btn-primary" onclick="location.reload()">
+                            <i class="fa-solid fa-refresh"></i> Réessayer
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+    })();
+    </script>
+
+</body>
+</html>
