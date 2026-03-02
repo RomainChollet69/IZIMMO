@@ -1,6 +1,6 @@
 <!--
   Léon — Page d'accueil / Cockpit (home.html)
-  Point d'entrée principal du CRM. Affiche une grille de 7 tuiles-modules,
+  Point d'entrée principal du CRM. Affiche une grille de 9 tuiles-modules,
   une barre de recherche globale, et un message d'accueil personnalisé.
   Auth requise (js/auth.js) | Supabase pour le prénom utilisateur.
 -->
@@ -406,6 +406,9 @@
         .tile-guide .tile-icon-area { background: #EEF2FF; }
         .tile-guide .tile-fa-icon { color: #667eea; }
 
+        .tile-etude .tile-icon-area { background: linear-gradient(135deg, #667eea15, #764ba215); }
+        .tile-etude .tile-fa-icon { color: #764ba2; }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
@@ -577,7 +580,15 @@
                 <div class="tile-label">Marché /<br>DVF</div>
             </a>
 
-            <!-- 4. Community management -->
+            <!-- 4. Étude de marché -->
+            <a href="etude-marche.html" class="tile tile-etude">
+                <div class="tile-icon-area">
+                    <i class="fa-solid fa-file-lines tile-fa-icon"></i>
+                </div>
+                <div class="tile-label">Étude de<br>marché</div>
+            </a>
+
+            <!-- 5. Community management -->
             <a href="social.html" class="tile tile-social">
                 <div class="tile-icon-area">
                     <img src="img/lea_social.png" alt="" class="tile-illustration">
@@ -585,7 +596,7 @@
                 <div class="tile-label">Community<br>management</div>
             </a>
 
-            <!-- 5. Assistant agenda -->
+            <!-- 6. Assistant agenda -->
             <a href="assistant.html" class="tile tile-assistant">
                 <div class="tile-icon-area">
                     <i class="fa-solid fa-calendar-check tile-fa-icon"></i>
@@ -593,7 +604,7 @@
                 <div class="tile-label">Assistant<br>agenda</div>
             </a>
 
-            <!-- 6. Paramètres -->
+            <!-- 7. Paramètres -->
             <a href="parametres.html" class="tile tile-parametres">
                 <div class="tile-icon-area">
                     <i class="fa-solid fa-gear tile-fa-icon"></i>
@@ -601,7 +612,7 @@
                 <div class="tile-label">Paramètres</div>
             </a>
 
-            <!-- 7. Tutoriels -->
+            <!-- 8. Tutoriels -->
             <a href="tutoriels.html" class="tile tile-tutoriels">
                 <div class="tile-icon-area">
                     <i class="fa-solid fa-graduation-cap tile-fa-icon"></i>
@@ -609,7 +620,7 @@
                 <div class="tile-label">Tutoriels</div>
             </a>
 
-            <!-- 8. Mon Guide Léon -->
+            <!-- 9. Mon Guide Léon -->
             <a href="leon.html" class="tile tile-guide">
                 <div class="tile-icon-area">
                     <i class="fa-solid fa-compass tile-fa-icon"></i>
