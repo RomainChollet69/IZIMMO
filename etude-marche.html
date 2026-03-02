@@ -3145,6 +3145,10 @@ async function executeStudyGeneration(interviewSummary) {
         loadingStep.textContent = 'Mise en page de l\'étude...';
         loadingSubstep.textContent = `Étude générée en ${totalSeconds}s`;
 
+        // Enrichir les comparables avec les adresses (reverse-géocodage)
+        loadingSubstep.textContent = 'Récupération des adresses comparables...';
+        await enrichComparablesWithAddresses(analysis.comparable_sales, dvfSales);
+
         // Sauvegarder pour re-render après changement de paramètres
         lastStudyData = { analysis, narrative, property, agentName, agencyName, dvfCount: dvfSales.length, poiData, communeData };
         renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length, poiData, communeData);
@@ -3164,6 +3168,42 @@ async function executeStudyGeneration(interviewSummary) {
         btn.disabled = false;
         alert('Erreur : ' + err.message);
     }
+}
+
+// ===== ENRICHISSEMENT ADRESSES COMPARABLES =====
+async function enrichComparablesWithAddresses(comparables, dvfSales) {
+    if (!comparables?.length || !dvfSales?.length) return;
+
+    // Matcher chaque comparable Claude à une vente DVF originale (qui a lat/lng)
+    for (const comp of comparables) {
+        const match = dvfSales.find(d =>
+            Math.abs(d.valeur_fonciere - comp.price) < 100 &&
+            Math.abs(d.surface_reelle_bati - comp.surface) < 2
+        );
+        if (match) {
+            comp._lat = match.lat;
+            comp._lng = match.lng;
+        }
+    }
+
+    // Reverse-géocoder les comparables matchés (en parallèle, max 10)
+    const toGeocode = comparables.filter(c => c._lat && c._lng);
+    const GEOCODE_URL = 'https://api-adresse.data.gouv.fr/reverse/';
+    const results = await Promise.allSettled(
+        toGeocode.map(c =>
+            fetch(`${GEOCODE_URL}?lon=${c._lng}&lat=${c._lat}&limit=1`)
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data?.features?.[0]) {
+                        const props = data.features[0].properties;
+                        // Rue uniquement (pas le code postal / ville, on le sait déjà)
+                        c.address = props.name || props.label || '';
+                    }
+                })
+                .catch(() => {}) // Silencieux si échec
+        )
+    );
+    console.log(`[EtudeMarche] Adresses géocodées : ${toGeocode.filter(c => c.address).length}/${toGeocode.length}`);
 }
 
 // ===== RENDU DE L'ÉTUDE =====
@@ -3294,6 +3334,16 @@ function renderPropertyGrid(property) {
     if (property.surfaceTerrain) items.push({ value: property.surfaceTerrain + ' m²', label: 'Surface terrain' });
     if (property.rooms) items.push({ value: property.rooms, label: 'Pièces' });
     if (property.dpe) items.push({ value: property.dpe, label: 'Classe DPE' });
+
+    // Enrichir avec les données de l'interview express
+    const ia = interviewAnswers || {};
+    if (ia.floor) items.push({ value: ia.floor, label: 'Étage' });
+    if (ia.elevator) items.push({ value: ia.elevator, label: 'Ascenseur' });
+    if (ia.condition) items.push({ value: ia.condition, label: 'État général' });
+    if (ia.exposure) items.push({ value: ia.exposure, label: 'Exposition' });
+    if (ia.luminosity) items.push({ value: ia.luminosity, label: 'Luminosité' });
+    if (ia.outdoor && Array.isArray(ia.outdoor)) items.push({ value: ia.outdoor.join(', '), label: 'Extérieurs' });
+    if (ia.parking && Array.isArray(ia.parking)) items.push({ value: ia.parking.join(', '), label: 'Stationnement' });
 
     if (items.length === 0) return '';
     return `<div class="property-grid">${items.map(i => `
@@ -3547,7 +3597,7 @@ function renderComparablesTable(analysis, property) {
                         <th>Surface</th>
                         <th>Prix de vente</th>
                         <th>Prix/m²</th>
-                        <th>Distance</th>
+                        <th>Localisation</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -3559,6 +3609,10 @@ function renderComparablesTable(analysis, property) {
                         const rawDate = String(c.date || '');
                         const dateParts = rawDate.match(/^(\d{4})-(\d{2})-(\d{2})$/);
                         const formattedDate = dateParts ? `${dateParts[3]}/${dateParts[2]}/${dateParts[1]}` : rawDate;
+                        // Adresse + distance
+                        const locHtml = c.address
+                            ? `${escapeHtml(c.address)}<br><span style="font-size:11px;color:var(--text-light)">${c.distance || '?'} m</span>`
+                            : `${c.distance || '?'} m`;
                         return `
                         <tr>
                             <td>${escapeHtml(formattedDate)}</td>
@@ -3568,14 +3622,14 @@ function renderComparablesTable(analysis, property) {
                             <td>
                                 ${formatNumber(priceM2)} €/m²
                             </td>
-                            <td>${c.distance || '?'} m</td>
+                            <td>${locHtml}</td>
                         </tr>`;
                     }).join('')}
                 </tbody>
             </table>
             <p style="font-size: 11px; color: var(--text-light); margin-top: 8px;">
                 <em>Source : Demandes de Valeurs Foncières (DVF) — Direction Générale des Finances Publiques.
-                Les adresses exactes ne sont pas disponibles dans les données DVF publiques. La colonne « Distance » indique l'éloignement par rapport au bien estimé.</em>
+                Adresses approximatives obtenues par géolocalisation inversée.</em>
             </p>
         </div>
     `;
