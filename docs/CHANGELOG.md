@@ -4,6 +4,19 @@
 
 ---
 
+## Session 2026-03-02j — Fix prefill surface + description depuis fiche vendeur
+
+### Résumé
+Correction du pré-remplissage du formulaire étude de marché quand on arrive via une fiche vendeur (`seller_id`). La surface (stockée "90 m²") n'était pas parsée pour le champ number, et la description n'était pas mappée du tout.
+
+### Modifications
+- `etude-marche.html` > `prefillFromUrlParams()` : parse surface texte → nombre, ajout mapping description
+
+### Fichiers modifiés
+- `etude-marche.html`
+
+---
+
 ## Session 2026-03-02i — Paramètres étude + Upload photos + Adaptativité
 
 ### Résumé

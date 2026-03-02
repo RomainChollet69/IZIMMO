@@ -931,3 +931,70 @@
 **Conséquences** :
 - L'état de session est dans localStorage (éphémère, par jour, expire après 4h)
 - Le matching Calendar → lead est approximatif (score nom + adresse) — acceptable car l'utilisateur peut corriger manuellement
+
+---
+
+## D046 — Paramètres étude en localStorage (pas Supabase)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Les études de marché doivent être personnalisables (logo, couleurs, signature, coordonnées). Où stocker ces préférences ?
+
+**Décision** : Stockage dans `localStorage` sous la clé `leon_study_settings`. Logo en base64 compressé (400px max).
+
+**Pourquoi** :
+- Instantané (pas de requête réseau)
+- Cohérent avec les autres prefs UI du projet (`leon_mobile_tab_sellers`, `onboarding_pipeline_done`)
+- Un seul utilisateur par navigateur dans le use case cible
+- Le logo compressé à 400px pèse ~20-50 Ko en base64, bien sous la limite localStorage (~5 Mo)
+
+**Alternatives rejetées** :
+- **Supabase** : Plus pérenne mais nécessite une table dédiée, un endpoint, et de la gestion de migration. À faire en V2 si multi-device devient critique
+- **Cookie** : Trop petit (4 Ko), pas adapté pour un logo
+
+**Conséquences** :
+- Les settings sont par navigateur (pas synchronisés entre devices)
+- Un clear de cache perd les settings → acceptable pour V1
+
+---
+
+## D047 — Photos du bien côté client uniquement (pas d'upload Supabase)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : L'étude de marché peut inclure des photos du bien. Où les stocker ?
+
+**Décision** : Photos compressées (1200px, 75%) stockées en mémoire JS (`studyPhotos[]`) sous forme de base64. Pas de persistence — elles sont perdues au rechargement.
+
+**Pourquoi** :
+- Simplifie l'implémentation V1 (pas de Storage, pas de cleanup)
+- Les photos ne sont utiles que le temps de la génération + export PDF
+- L'export PDF via html2pdf.js inclut les images base64 directement
+- Phase 2 prévue : envoi à Claude Vision pour analyse (~0.01€/étude)
+
+**Alternatives rejetées** :
+- **Supabase Storage** : Overkill pour des images éphémères — nécessite upload, URL signées, cleanup
+- **IndexedDB** : Persistant mais complexe, pas nécessaire à ce stade
+
+---
+
+## D048 — Prompt IA adaptatif densité urbaine/rurale (pas de seuils fixes)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Les études de marché donnaient des résultats aberrants en zone rurale (médiane sur 1-2 ventes, variations de -51%, rayon trop restrictif).
+
+**Décision** : Section "ADAPTATION À LA DENSITÉ DU MARCHÉ" dans le prompt d'analyse. L'IA adapte ses critères selon le volume de données reçu :
+- Zone dense (>30 ventes) : rayon <500m, surface ±20%
+- Zone intermédiaire (10-30) : rayon <1km, surface ±30%
+- Zone rurale (<10) : rayon complet, surface ±50%
+
+Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est aussi adaptatif (2 si <15 ventes totales, 3 sinon).
+
+**Pourquoi** :
+- À Paris, 100m d'écart change le prix. En Creuse, les prix sont homogènes sur des km
+- Un seuil fixe de 3 ventes/an éliminait toutes les données en zone rurale
+- Laisser l'IA décider selon le volume est plus souple qu'un paramètre utilisateur
