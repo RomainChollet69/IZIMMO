@@ -4,6 +4,43 @@
 
 ---
 
+## Session 2026-03-02d — Bouton "Demander un retour" visite acquéreur + fix ton vouvoiement
+
+### Résumé
+Ajout d'un bouton `💬 Demander un retour` directement sur chaque visite effectuée dans l'onglet Matching de la fiche acquéreur. Ce bouton ouvre un popup dédié qui génère un message IA contextualisé (avec le bien visité : ville, type) et ouvre automatiquement l'appli correspondante (SMS/WhatsApp/Email) avec le message pré-rempli. Correction du ton vouvoiement qui produisait parfois un langage familier ("Salut !").
+
+### Modifications
+
+**`acquereurs.html`** :
+- Requête visits enrichie : ajout `property_type` au join sellers (`sellers(first_name, last_name, address, property_type)`)
+- Nouveau bouton `💬 Demander un retour` (classe `.visit-action-msg`, violet) dans `renderVisitCard()` pour les visites `effectuee`
+- Styles CSS du popup retour visite (`.visit-retour-popup`, channel bar, output, actions)
+- Nouvelle fonction `openVisitRetourPopup(visitId)` : popup complet avec sélection canal, génération IA, ouverture auto de l'appli, actions (copier, SMS, WhatsApp, Email, régénérer, sauver en note)
+- Helper `openChannelApp(message)` : ouvre SMS/WhatsApp/Email avec numéro/email et message pré-remplis
+- Fix z-index popup tu/vous : `10000` → `30000` pour passer au-dessus du popup retour visite (`25000`)
+
+**`api/generate-message.js`** :
+- Tone vouvoiement renforcé : interdit "Salut", "Hey", "Coucou", "Hello", impose "Bonjour" + prénom
+- Séparation `isRetourVisite` en `isRetourVisiteSeller` (leadType !== 'buyer') et `isRetourVisiteBuyer` (leadType === 'buyer')
+- Nouveau system prompt dédié acquéreur `retour_visite` : message court et naturel demandant le ressenti, mention du bien visité (ville/type)
+- Ajout champ `agencyName` dans le body (signature agent complète : "Prénom Nom, Réseau")
+- Signature `agentSignature` utilisée dans tous les prompts (remplace `agentFirstName`)
+
+### Fichiers créés/modifiés
+- `acquereurs.html` (bouton, popup, CSS, JS, requête visits)
+- `api/generate-message.js` (prompt buyer, tone fix, signature)
+
+### Points d'attention
+- Le scénario `retour_visite` depuis l'onglet Messages IA (classique) fonctionne toujours mais sans le contexte spécifique du bien visité — seul le popup depuis la carte visite passe le `customPrompt` avec ville/type
+- Le bouton n'apparaît que sur les visites `effectuee`, pas sur les planifiées ou annulées
+
+### Prochaines étapes prioritaires
+- Tester la génération retour visite avec les 3 canaux + tu/vous
+- Vérifier que le vouvoiement ne produit plus de "Salut" après le fix
+- Tester l'ouverture auto de l'appli sur mobile (iOS + Android)
+
+---
+
 ## Session 2026-03-02c — Page Visites (vue centrée biens)
 
 ### Résumé

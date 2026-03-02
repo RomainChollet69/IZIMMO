@@ -82,7 +82,7 @@ Génération de messages contextuels (SMS, WhatsApp, Email).
 | Champ | Valeur |
 |-------|--------|
 | **Auth** | Bearer token |
-| **Body** | `{ channel, scenario, leadData, notes, customPrompt, leadType, agentName, tone }` |
+| **Body** | `{ channel, scenario, leadData, notes, customPrompt, leadType, agentName, agencyName, tone }` |
 | **Service externe** | Anthropic Claude Haiku |
 | **Timeout** | 20s |
 
@@ -92,11 +92,19 @@ Génération de messages contextuels (SMS, WhatsApp, Email).
 
 **agentName** : Nom complet de l'agent (récupéré du profil header), utilisé pour la signature
 
+**agencyName** : Nom du réseau/agence (optionnel), combiné avec agentName pour la signature complète ("Prénom Nom, Réseau")
+
 **Scénarios vendeurs** (18) : `confirmation_rdv`, `compte_rendu_estimation`, `relance`, `relance_estimation`, `proposition_baisse`, `point_visites`, `anniversaire_mandat`, `bonne_nouvelle`, `remerciement`, `mandat_signe`, `demande_avis`, `relance_recommandation`, `suivi_acquereur_pret`, `relance_fin_mandat_concurrent`, `redaction_annonce`, `repositionnement_prix`, `retour_visite`, `libre`
 
 **Scénarios acquéreurs** (11) : `confirmation_visite`, `envoi_bien`, `retour_visite`, `relance`, `point_recherche`, `bonne_nouvelle`, `felicitations_achat`, `selection_biens`, `demande_avis`, `relance_recommandation`, `libre`
 
-**System prompts dédiés** : `redaction_annonce`, `repositionnement_prix`, `retour_visite` (avec exemples réels de ton agent)
+**System prompts dédiés** :
+- `redaction_annonce` : rédaction d'annonce immobilière
+- `repositionnement_prix` : argumentaire de baisse de prix (principes Shift de Gary Keller)
+- `retour_visite` (vendeur) : récit narratif de la visite au vendeur, avec exemples réels few-shot
+- `retour_visite` (acquéreur) : demande de ressenti post-visite à l'acquéreur, mentionne le bien visité (ville/type). Activé quand `leadType === 'buyer'`
+
+**Vouvoiement renforcé** : Quand `tone === 'vous'`, le prompt interdit explicitement "Salut", "Hey", "Coucou" et impose "Bonjour" + prénom
 
 **Réponse** :
 ```json

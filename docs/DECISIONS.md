@@ -801,3 +801,41 @@
 
 **Alternatives rejetées** :
 - **Boutons inline** : Quasi-invisibles, surchargent la barre canal, testés et rejetés par l'utilisateur
+
+---
+
+## D040 — Prompt retour_visite séparé buyer/seller (pas un prompt unique)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Le scénario `retour_visite` avait un seul system prompt, conçu pour le vendeur (narration de la visite). Or côté acquéreur, l'usage est très différent : on demande au buyer son ressenti, on ne raconte pas la visite.
+
+**Décision** : Séparer en deux prompts distincts selon `leadType` :
+- `isRetourVisiteSeller` : prompt narratif existant (few-shot avec 3 exemples réels d'agent)
+- `isRetourVisiteBuyer` : prompt court et direct, demande le ressenti, mentionne le bien visité (ville/type via `customPrompt`)
+
+**Pourquoi** :
+- L'intention est opposée : raconter (vendeur) vs demander (acquéreur)
+- Le prompt vendeur avec des exemples de 5 lignes narratives ne convient pas pour un SMS de 2 phrases à un acquéreur
+- Le contexte visite (ville, type de bien) est passé via `customPrompt` depuis le popup, ce qui personnalise le message
+
+**Alternatives rejetées** :
+- **Un seul prompt avec branchement** : Trop complexe, le style demandé est radicalement différent
+
+---
+
+## D041 — Bouton retour visite sur la carte (pas via l'onglet Messages IA)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : Pour demander un retour de visite à un acquéreur, l'utilisateur devait aller dans l'onglet Messages IA, choisir le scénario "Retour visite", et le message généré n'avait aucun contexte sur le bien visité.
+
+**Décision** : Bouton `💬 Demander un retour` directement sur la carte de visite effectuée, dans l'onglet Matching. Popup dédié avec sélection canal + génération + ouverture auto de l'appli.
+
+**Pourquoi** :
+- Le contexte de la visite (bien, ville, type) est disponible sur la carte → injecté automatiquement dans le prompt
+- Raccourcit le parcours utilisateur : 1 clic au lieu de changer d'onglet + chercher le scénario
+- L'ouverture automatique de l'appli (SMS/WhatsApp/Email) après génération évite un clic supplémentaire
+- Le scénario via Messages IA reste disponible pour les cas où l'utilisateur n'a pas de visite liée

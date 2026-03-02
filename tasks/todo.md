@@ -14,6 +14,9 @@ _(rien en cours)_
 - [ ] Tester le retour visite avec différents feedback_rating (coup de coeur vs pas convaincu)
 - [ ] Tester les 3 canaux (SMS, WhatsApp, Email) avec tu et vous
 - [ ] Vérifier que la signature agent fonctionne sur les deux pages
+- [ ] Tester le bouton "Demander un retour" depuis une visite effectuée (popup + génération)
+- [ ] Vérifier que le vouvoiement ne produit plus de "Salut" / langage familier
+- [ ] Tester l'ouverture auto de SMS/WhatsApp/Email sur mobile (iOS + Android)
 
 ### Acquéreurs
 - [ ] Vérifier que l'import CSV acquéreurs fonctionne (jamais confirmé)
