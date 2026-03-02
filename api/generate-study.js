@@ -60,7 +60,7 @@ export default async function handler(req, res) {
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
         const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions);
 
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 4096, ABORT_TIMEOUT_MS);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6000, ABORT_TIMEOUT_MS);
 
         let narrative;
         try {
@@ -132,19 +132,46 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
 // ========== Prompts ==========
 
 function buildAnalysisPrompt() {
-    return `Tu es un analyste immobilier expert spécialisé dans l'estimation de biens en France.
-Tu reçois des données DVF (valeurs foncières) pour un secteur géographique.
+    return `Tu es un analyste immobilier senior avec 20 ans d'expérience en estimation de biens en France.
+Tu reçois des données DVF (Demandes de Valeurs Foncières) réelles pour un secteur géographique précis.
+Ton rôle est de produire une analyse approfondie et rigoureuse digne d'un rapport professionnel.
 
-RÈGLES STRICTES :
-- Utilise UNIQUEMENT les données fournies. Ne jamais inventer de ventes ou de prix.
-- Pour les comparables, sélectionne les 5-10 ventes les plus pertinentes : même type de bien (appartement/maison), surface proche (+/- 30%), et les plus proches géographiquement.
-- Calcule les statistiques UNIQUEMENT sur les ventes du même type de bien.
-- Pour l'estimation, base-toi sur le prix médian au m² des comparables × surface du bien.
-  Fourchette : -10% (low) à +10% (high) autour de l'estimation centrale (mid).
-- Si le DPE est défavorable (F ou G), applique une décote de 5-15% sur l'estimation.
-- Si des atouts sont mentionnés (dernier étage, rénové, vue, garage), mentionne-le dans le raisonnement.
+MÉTHODOLOGIE D'ANALYSE :
 
-Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) avec cette structure :
+1. SÉLECTION DES COMPARABLES (5-10 ventes) :
+   - PRIORITÉ 1 : Même type de bien (appartement/maison)
+   - PRIORITÉ 2 : Surface proche (+/- 30% de la surface du bien)
+   - PRIORITÉ 3 : Proximité géographique (< 500m idéal, < 1km acceptable)
+   - PRIORITÉ 4 : Date récente (pondérer les ventes 2024-2025 plus fortement)
+   - Si peu de comparables proches, élargir progressivement les critères
+
+2. STATISTIQUES DE PRIX :
+   - Calculer sur TOUTES les ventes du même type (pas seulement les comparables)
+   - Séparer les stats secteur (tout le dataset) des stats comparables (sélection fine)
+   - Identifier les outliers (prix anormalement hauts ou bas) et les exclure du calcul médian
+
+3. ÉVOLUTION DES PRIX :
+   - Regrouper par année les ventes du même type
+   - Calculer la médiane au m² par année
+   - Identifier la tendance (hausse, baisse, stabilisation)
+
+4. ESTIMATION :
+   - Base : prix médian au m² des comparables × surface du bien
+   - Ajustements : DPE (F/G = -5 à -15%, A/B = +3 à +5%), étage élevé (+3-5%), rénové (+5-10%),
+     vue dégagée (+3-5%), parking/garage (+5-15k€), balcon/terrasse (+2-5%)
+   - Fourchette : -10% (basse) à +10% (haute) autour de l'estimation centrale
+
+5. POINTS FORTS / POINTS FAIBLES :
+   - Identifier 5-8 atouts spécifiques du bien basés sur sa description et son positionnement
+   - Identifier 3-6 points faibles ou axes d'amélioration
+   - Être SPÉCIFIQUE (pas de généralités) : citer l'étage, l'exposition, le quartier, etc.
+
+6. PROFIL ACQUÉREUR :
+   - Calculer la mensualité de crédit (taux 3.2%, durée 20 ans, apport 10%)
+   - En déduire le revenu mensuel minimum (mensualité / 0.35 = taux endettement max)
+   - Décrire le profil type d'acheteur pour ce bien
+
+Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) :
 {
   "comparable_sales": [
     { "date": "2024-03-15", "price": 250000, "type": "Appartement", "surface": 68, "price_m2": 3676, "distance": 150 }
@@ -152,12 +179,27 @@ Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) avec c
   "price_per_m2": { "median": 4200, "mean": 4350, "min": 3500, "max": 5200, "count": 25 },
   "price_per_m2_comparable": { "median": 4100, "mean": 4150, "min": 3800, "max": 4500, "count": 8 },
   "price_evolution": [
+    { "year": 2020, "median_m2": 3600, "count": 5 },
+    { "year": 2021, "median_m2": 3800, "count": 8 },
     { "year": 2022, "median_m2": 3900, "count": 12 },
     { "year": 2023, "median_m2": 4100, "count": 10 },
     { "year": 2024, "median_m2": 4200, "count": 8 }
   ],
   "estimation": { "low": 252000, "mid": 280000, "high": 308000 },
-  "estimation_reasoning": "Explication courte en 2-3 phrases."
+  "estimation_reasoning": "Raisonnement détaillé en 3-5 phrases expliquant la méthode, les ajustements appliqués et la fourchette retenue.",
+  "strengths": ["Emplacement prisé dans le 6e arrondissement", "Exposition plein sud avec luminosité exceptionnelle", "Hauteurs sous plafond et cachet ancien", "Proximité transports (métro, bus)", "Étage élevé avec ascenseur"],
+  "weaknesses": ["DPE défavorable (classe E) — coût de rénovation énergétique à prévoir", "Surface limitée pour un T2 (67 m²)", "Charges de copropriété potentiellement élevées dans l'ancien"],
+  "buyer_profile": {
+    "monthly_payment": 1350,
+    "required_income": 3860,
+    "loan_amount": 252000,
+    "downpayment": 28000,
+    "rate": 3.2,
+    "duration_years": 20,
+    "profile_description": "Jeune couple actif ou investisseur — CSP+ avec revenus stables"
+  },
+  "market_trend": "stable",
+  "market_trend_detail": "Le marché du 6e arrondissement montre une stabilisation des prix après la hausse de 2021-2022, avec un volume de transactions maintenu."
 }`;
 }
 
@@ -182,41 +224,56 @@ ${dvfText}`;
 }
 
 function buildWritingPrompt(agentSignature, agentName) {
-    return `Tu es un rédacteur professionnel spécialisé en rapports immobiliers.
-Tu rédiges pour ${agentSignature}, conseiller immobilier.
+    return `Tu es un rédacteur expert en rapports immobiliers professionnels haut de gamme.
+Tu rédiges une étude de marché pour ${agentSignature}, conseiller immobilier.
+Ce document sera remis au propriétaire vendeur pour l'accompagner dans sa prise de décision.
 
-STYLE :
-- Professionnel mais accessible. Pas de jargon incompréhensible.
-- Parle à la 1ère personne du conseiller ("D'après mon analyse...", "Je recommande...")
-- Utilise les VRAIS chiffres du JSON fourni (jamais d'approximation vague)
-- Formate les montants avec espaces : "280 000 €"
-- Phrases courtes et percutantes. Pas de blabla corporate.
-- INTERDIT : "n'hésitez pas", "nous restons à votre disposition", "force est de constater", "il est important de noter"
-- Structure chaque section en HTML avec des <p>, <strong>, <ul> si pertinent.
-- NE PAS inclure de balises <h1>, <h2>, <h3> — les titres sont gérés par le template.
+STYLE RÉDACTIONNEL :
+- Ton professionnel, confiant et expert. Tu ES le conseiller qui s'adresse à son client.
+- 1ère personne : "D'après mon analyse...", "Je recommande...", "Mon expertise du secteur..."
+- Utilise les VRAIS chiffres du JSON (jamais d'approximation : "environ 280 000 €" → "280 000 €")
+- Formate TOUJOURS les montants avec espaces : "280 000 €", "4 500 €/m²"
+- Phrases variées : alterner courtes (impact) et développées (argumentation)
+- INTERDIT : "n'hésitez pas", "nous restons à votre disposition", "force est de constater", "il est important de noter", "il convient de", "en effet"
+- Chaque section doit apporter de la VALEUR : pas de remplissage, chaque phrase a un but
 
-Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) avec cette structure :
+FORMAT HTML :
+- Utilise <p>, <strong>, <em>, <ul>/<li> pour structurer
+- NE PAS inclure de <h1>, <h2>, <h3> — les titres sont gérés par le template
+- Utilise <strong> pour mettre en valeur les chiffres clés dans le texte
+
+Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) :
 {
-  "propertyPresentation": "<p>HTML de la présentation du bien (2-3 paragraphes)</p>",
-  "marketAnalysis": "<p>HTML de la synthèse du marché local (1-2 paragraphes avec chiffres clés)</p>",
-  "estimation": "<p>HTML de l'argumentation de l'estimation (1-2 paragraphes)</p>",
-  "recommendation": "<p>HTML de la recommandation stratégique du conseiller ${agentName || ''} (2-3 paragraphes)</p>"
+  "propertyPresentation": "HTML (3-4 paragraphes). §1: Accroche sur l'emplacement et le caractère du bien (citer la rue, le quartier, l'ambiance). §2: Description détaillée des espaces intérieurs (distribution, luminosité, matériaux, volumes). §3: Environnement immédiat (commerces, transports, écoles, espaces verts à proximité). §4 (si pertinent): Potentiel du bien (travaux possibles, plus-value, évolution du quartier).",
+
+  "marketAnalysis": "HTML (3-4 paragraphes). §1: Synthèse du marché local avec chiffres clés (prix médian/m², volume de transactions, tendance). §2: Comparaison avec les biens similaires vendus récemment (citer 2-3 ventes précises avec prix et surface). §3: Évolution des prix sur les dernières années et interprétation de la tendance. §4: Positionnement du bien par rapport au marché (au-dessus/en-dessous de la médiane et pourquoi).",
+
+  "estimation": "HTML (3-4 paragraphes). §1: Méthodologie utilisée (analyse comparative + ajustements). §2: Argumentation de la fourchette retenue avec les facteurs de valorisation (citer chaque atout et son impact). §3: Facteurs de décote éventuels (DPE, travaux, etc.) et comment les compenser. §4: Comparaison avec le budget vendeur si communiqué (conforter ou recadrer avec diplomatie).",
+
+  "recommendation": "HTML (3-4 paragraphes). §1: Prix de mise en vente recommandé avec justification stratégique (attirer des visites vs maximiser le prix). §2: Stratégie de commercialisation (comment mettre en valeur les atouts, quel angle marketing, ciblage acquéreur). §3: Timing et scénario de vente (durée prévisionnelle, étapes clés, quand envisager une baisse). §4: Conclusion personnelle engageante du conseiller ${agentName || ''} (confiance dans le bien, engagement d'accompagnement)."
 }`;
 }
 
 function buildWritingUserPrompt(property, analysis, customInstructions) {
-    return `BIEN :
-Adresse : ${property.address}
-Type : ${property.propertyType || 'Non précisé'}
-Surface : ${property.surface || '?'}m²
-Pièces : ${property.rooms || '?'}
-Description : ${property.description || 'Aucune description'}
-Annexes : ${(property.annexes || []).join(', ') || 'Aucune'}
+    const budgetLine = property.budget
+        ? `Budget/estimation vendeur : ${property.budget.toLocaleString('fr-FR')} € — COMPARE avec ton estimation et commente (conforte si proche, recadre diplomatiquement si éloigné)`
+        : 'Budget vendeur : Non communiqué';
 
-DONNÉES D'ANALYSE (JSON) :
+    return `BIEN À VALORISER :
+Adresse : ${property.address}
+Ville : ${property.city || ''} ${property.postalCode || ''}
+Type : ${property.propertyType || 'Non précisé'}
+Surface habitable : ${property.surface || '?'} m²
+${property.surfaceTerrain ? `Surface terrain : ${property.surfaceTerrain} m²` : ''}
+Pièces : ${property.rooms || 'Non précisé'}
+DPE : ${property.dpe || 'Non précisé'}
+Description du bien : ${property.description || 'Aucune description fournie'}
+Annexes : ${(property.annexes || []).join(', ') || 'Aucune'}
+${budgetLine}
+
+RÉSULTATS DE L'ANALYSE CHIFFRÉE :
 ${JSON.stringify(analysis, null, 2)}
 
-${customInstructions ? `INSTRUCTIONS SUPPLÉMENTAIRES DU CONSEILLER :\n${customInstructions}` : ''}
-
-Rédige les 4 sections en français.`;
+${customInstructions ? `INSTRUCTIONS PARTICULIÈRES DU CONSEILLER :\n${customInstructions}\n` : ''}
+RAPPEL : Rédige les 4 sections en français. Chaque section doit faire 3-4 paragraphes riches et argumentés. Cite des chiffres précis du JSON. Le ton doit inspirer confiance et expertise.`;
 }
