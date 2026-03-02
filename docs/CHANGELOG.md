@@ -334,6 +334,8 @@ Ajout d'un compteur mensuel (reset au 1er du mois) en complément du score total
 - Ajout `monthStr()` helper + champs `monthly_points`/`month_year` dans `createProfile()` et `saveProfile()`
 - Reset mensuel dans `initGamification()` quand `month_year` change
 - Incrémentation `monthly_points` dans `awardPoints()` et `awardDailyStreak()`
+- Tooltips au survol du compteur ("Tes points Léon — Niveau X") et du streak ("X jours d'affilée !")
+- CSS tooltips custom (fond #333, flèche, animation scale+opacity)
 
 **`parametres.html`** (modifié) :
 - Nouvelle section "Mes performances" en première position (avant "Mon Profil")
