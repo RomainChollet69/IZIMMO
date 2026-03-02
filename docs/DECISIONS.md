@@ -998,3 +998,29 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - À Paris, 100m d'écart change le prix. En Creuse, les prix sont homogènes sur des km
 - Un seuil fixe de 3 ventes/an éliminait toutes les données en zone rurale
 - Laisser l'IA décider selon le volume est plus souple qu'un paramètre utilisateur
+
+---
+
+## D049 — Données environnement via Overpass + API Géo côté serveur (pas côté client)
+
+**Date** : 2026-03-02
+**Statut** : Actif
+
+**Contexte** : L'étude de marché manquait de données concrètes sur l'environnement du bien (commerces, transports, écoles, espaces verts, bruit). L'utilisateur a demandé l'intégration de données INSEE/POI.
+
+**Décision** : Fetch POI (Overpass API) et données communales (API Géo) **côté serveur** dans `api/generate-study.js`, **en parallèle avec la passe 1 Claude** via `Promise.all`. Les données sont injectées dans le prompt de la passe 2 et renvoyées au client pour affichage visuel.
+
+**Pourquoi** :
+- Overpass API n'a pas de headers CORS → appel client-side impossible
+- L'exécution en parallèle avec la passe 1 (10-20s) ne rajoute aucun temps (Overpass: 1-3s, API Géo: 0.1-0.3s)
+- Pas besoin d'un nouvel endpoint API, tout est intégré dans generate-study
+- Dégradation gracieuse : si Overpass/API Géo échoue, l'étude se génère normalement sans la section
+
+**Alternatives rejetées** :
+- **Nouvel endpoint `/api/poi-data`** : complexité inutile, une requête en plus côté client
+- **Appel client-side** : bloqué par CORS pour Overpass
+- **INSEE Données Locales** : nécessite inscription et clé API, complexité disproportionnée
+
+**APIs utilisées** :
+- `https://overpass-api.de/api/interpreter` : POIs OpenStreetMap (commerces, transport, écoles, santé, parcs, routes/rail pour bruit)
+- `https://geo.api.gouv.fr/communes` : nom, code INSEE, population, département, région

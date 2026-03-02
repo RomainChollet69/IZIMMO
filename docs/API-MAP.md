@@ -336,18 +336,21 @@ Scraping d'une annonce immobilière concurrente.
 
 ### POST `/api/generate-study`
 
-Génération d'une étude de marché immobilière via 2 passes Claude Sonnet.
+Génération d'une étude de marché immobilière via 2 passes Claude Sonnet + données environnement.
 
 | Champ | Valeur |
 |-------|--------|
 | **Auth** | Bearer token |
-| **Body** | `{ property, dvfSales, dpeData, agentName, agencyName, customInstructions }` |
-| **Service externe** | Anthropic Claude Sonnet (`claude-sonnet-4-20250514`) |
+| **Body** | `{ property, dvfSales, agentName, agencyName, customInstructions, photos }` |
+| **Services externes** | Anthropic Claude Sonnet, Overpass API (OSM), API Géo (geo.api.gouv.fr) |
 | **Timeout** | 60s (55s AbortController) |
 
 **Logique** :
-- **Passe 1** : Analyse structurée (JSON) — comparables, stats prix/m², DPE, estimation fourchette
-- **Passe 2** : Rédaction narrative (HTML) — présentation, marché, estimation, recommandation
+- **Passe 1 + POI + Commune en parallèle** (`Promise.all`) :
+  - Claude Sonnet : Analyse structurée JSON (10-20s)
+  - Overpass API : POIs proches — commerces, transports, écoles, santé, parcs, bruit (1-3s, timeout 8s)
+  - API Géo : Données communales — nom, population, département, région (0.1-0.3s, timeout 5s)
+- **Passe 2** : Rédaction narrative (HTML) + Vision photos + données environnement injectées dans le prompt
 
 **Body détaillé** :
 ```json
@@ -361,9 +364,9 @@ Génération d'une étude de marché immobilière via 2 passes Claude Sonnet.
     "description": "...", "budget": 280000
   },
   "dvfSales": [{ "date_mutation": "2024-03-15", "valeur_fonciere": 250000, "type_local": "Appartement", "surface_reelle_bati": 68, "distance": 150 }],
-  "dpeData": [{ "dpeClass": 3, "gesClass": 4, "conso": 180, "surface": 72, "type": 1, "year": 1975, "distance": 200 }],
   "agentName": "Romain Chollet",
-  "agencyName": "Efficity"
+  "agencyName": "Efficity",
+  "photos": ["data:image/jpeg;base64,..."]
 }
 ```
 
@@ -371,9 +374,13 @@ Génération d'une étude de marché immobilière via 2 passes Claude Sonnet.
 ```json
 {
   "analysis": { "comparable_sales": [...], "price_per_m2": {...}, "estimation": { "low": 252000, "mid": 280000, "high": 308000 } },
-  "narrative": { "propertyPresentation": "<p>...</p>", "marketAnalysis": "...", "estimation": "...", "recommendation": "..." }
+  "narrative": { "propertyPresentation": "<p>...</p>", "marketAnalysis": "...", "estimation": "...", "recommendation": "...", "environment": "<p>...</p>" },
+  "poiData": { "categories": { "schools": { "count": 4, "nearest": { "name": "...", "distance": 120 } }, ... }, "noise": { "level": "calme", "sources": [] }, "walkScore": 8 },
+  "communeData": { "name": "Lyon 3e", "inseeCode": "69383", "population": 104014, "departement": { "code": "69", "nom": "Rhône" }, "region": { "nom": "Auvergne-Rhône-Alpes" } }
 }
 ```
+
+**Note** : `poiData` et `communeData` peuvent être `null` si les APIs échouent (dégradation gracieuse).
 
 ---
 
@@ -437,7 +444,42 @@ Endpoint unifié de l'assistant organisationnel. Routage par champ `action`.
 
 ---
 
-## 2. APIs externes (frontend)
+## 2. APIs externes (serveur — generate-study)
+
+### Overpass API (OpenStreetMap)
+
+Requêtes de points d'intérêt (POI) autour d'un point géographique.
+
+**Endpoint** :
+```
+POST https://overpass-api.de/api/interpreter
+Content-Type: application/x-www-form-urlencoded
+Body: data={overpass_query_encodée}
+```
+
+- Utilisé dans : `api/generate-study.js` → `fetchPOIData()`
+- **Catégories requêtées** : écoles, transports (bus/tram/train), commerces, santé, espaces verts, routes/voies ferrées (bruit)
+- **Rayons** : 500m (bus, commerces), 1000m (écoles, santé, parcs), 2000m (gares), 300m (bruit)
+- **Timeout** : 8s (AbortController)
+- **Auth** : Aucune | **Coût** : Gratuit | **Limite** : ~10 000 req/jour par IP
+
+### API Géo (geo.api.gouv.fr)
+
+Données communales depuis coordonnées GPS (reverse geocoding administratif).
+
+**Endpoint** :
+```
+GET https://geo.api.gouv.fr/communes?lat={lat}&lon={lng}&fields=nom,code,population,codesPostaux,codeDepartement,departement,region&limit=1
+```
+
+- Utilisé dans : `api/generate-study.js` → `fetchCommuneData()`
+- **Données retournées** : nom commune, code INSEE, population, codes postaux, département, région
+- **Timeout** : 5s
+- **Auth** : Aucune | **Coût** : Gratuit | **Limite** : Aucune documentée
+
+---
+
+## 3. APIs externes (frontend)
 
 ### api-adresse.data.gouv.fr
 
@@ -488,7 +530,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 
 ---
 
-## 3. Opérations Supabase (client → DB)
+## 4. Opérations Supabase (client → DB)
 
 ### Tables et opérations CRUD
 
@@ -524,7 +566,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 
 ---
 
-## 4. Variables d'environnement
+## 5. Variables d'environnement
 
 ### Vercel (serveur — jamais exposées au client)
 
@@ -547,7 +589,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 
 ---
 
-## 5. Codes d'erreur communs
+## 6. Codes d'erreur communs
 
 | Code | Signification | Quand |
 |------|---------------|-------|
@@ -561,7 +603,7 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 
 ---
 
-## 6. Résumé des modèles IA
+## 7. Résumé des modèles IA
 
 | Modèle | Service | Usage | Coût approximatif |
 |--------|---------|-------|-------------------|

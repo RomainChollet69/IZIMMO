@@ -1,8 +1,9 @@
 /**
  * generate-study.js
  * Génère une étude de marché immobilière via 2 passes Claude Sonnet.
- * Passe 1 : Analyse structurée (JSON) des données DVF/DPE fournies.
- * Passe 2 : Rédaction narrative (HTML) basée sur l'analyse.
+ * Passe 1 : Analyse structurée (JSON) des données DVF/DPE fournies — en parallèle avec POI + commune.
+ * Passe 2 : Rédaction narrative (HTML) + Vision photos + données environnement.
+ * APIs externes : Overpass (OSM), API Géo (geo.api.gouv.fr), Anthropic Claude.
  * Dépendances : lib/auth.js (verifyAuth, withCORS)
  */
 import { verifyAuth, withCORS } from '../lib/auth.js';
@@ -39,15 +40,30 @@ export default async function handler(req, res) {
         : 'Le conseiller';
 
     try {
-        // ========== PASSE 1 : Analyse structurée ==========
+        // ========== PASSE 1 + POI + COMMUNE en parallèle ==========
         const analysisSystemPrompt = buildAnalysisPrompt();
         const analysisUserPrompt = buildAnalysisUserPrompt(property, limitedDvf);
 
-        const analysisRaw = await callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, ABORT_TIMEOUT_MS);
+        const hasCoords = property.latitude && property.longitude;
+
+        const [analysisRaw, poiData, communeData] = await Promise.all([
+            callClaude(apiKey, analysisSystemPrompt, analysisUserPrompt, 4096, ABORT_TIMEOUT_MS),
+            hasCoords
+                ? fetchPOIData(property.latitude, property.longitude).catch(err => {
+                    console.warn('[GenerateStudy] POI fetch failed (non-blocking):', err.message);
+                    return null;
+                })
+                : Promise.resolve(null),
+            hasCoords
+                ? fetchCommuneData(property.latitude, property.longitude).catch(err => {
+                    console.warn('[GenerateStudy] Commune fetch failed (non-blocking):', err.message);
+                    return null;
+                })
+                : Promise.resolve(null)
+        ]);
 
         let analysis;
         try {
-            // Extraire le JSON même si enveloppé dans du texte
             const jsonMatch = analysisRaw.match(/\{[\s\S]*\}/);
             if (!jsonMatch) throw new Error('Pas de JSON trouvé');
             analysis = JSON.parse(jsonMatch[0]);
@@ -56,13 +72,13 @@ export default async function handler(req, res) {
             return res.status(502).json({ error: 'Erreur d\'analyse IA', detail: 'Le modèle n\'a pas retourné un JSON valide' });
         }
 
-        // ========== PASSE 2 : Rédaction narrative (+ Vision si photos) ==========
+        // ========== PASSE 2 : Rédaction narrative (+ Vision + Environnement) ==========
         const writingSystemPrompt = buildWritingPrompt(agentSignature, agentName);
-        const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions);
+        const writingUserPrompt = buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData);
 
         // Envoyer les photos en mode Vision pour enrichir la description du bien
         const photoImages = (photos || []).slice(0, 5);
-        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 6000, ABORT_TIMEOUT_MS, photoImages);
+        const narrativeRaw = await callClaude(apiKey, writingSystemPrompt, writingUserPrompt, 7000, ABORT_TIMEOUT_MS, photoImages);
 
         let narrative;
         try {
@@ -70,7 +86,6 @@ export default async function handler(req, res) {
             if (!jsonMatch) throw new Error('Pas de JSON trouvé');
             narrative = JSON.parse(jsonMatch[0]);
         } catch (parseErr) {
-            // Fallback : utiliser le texte brut comme recommandation
             console.warn('[GenerateStudy] Parse warning passe 2, utilisation texte brut');
             narrative = {
                 propertyPresentation: narrativeRaw,
@@ -80,7 +95,7 @@ export default async function handler(req, res) {
             };
         }
 
-        return res.status(200).json({ analysis, narrative });
+        return res.status(200).json({ analysis, narrative, poiData, communeData });
 
     } catch (err) {
         if (err.name === 'AbortError') {
@@ -143,6 +158,215 @@ async function callClaude(apiKey, systemPrompt, userPrompt, maxTokens, timeoutMs
 
     const result = await response.json();
     return result.content?.[0]?.text || '';
+}
+
+// ========== POI & Commune (Overpass + API Géo) ==========
+
+const OVERPASS_API = 'https://overpass-api.de/api/interpreter';
+const OVERPASS_TIMEOUT_MS = 8000; // 8s max pour ne pas bloquer la génération
+const GEO_API_TIMEOUT_MS = 5000;
+
+/** Distance Haversine en mètres */
+function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.asin(Math.sqrt(a));
+}
+
+/** Requête Overpass combinée — toutes catégories en une seule requête HTTP */
+async function fetchPOIData(lat, lng) {
+    const query = `[out:json][timeout:10];
+(
+  nw["amenity"~"school|kindergarten"](around:1000,${lat},${lng});
+  nw["railway"="station"](around:2000,${lat},${lng});
+  nw["railway"="tram_stop"](around:1000,${lat},${lng});
+  nw["highway"="bus_stop"](around:500,${lat},${lng});
+  nw["shop"~"supermarket|convenience|bakery|butcher"](around:500,${lat},${lng});
+  nw["amenity"~"pharmacy|bank"](around:500,${lat},${lng});
+  nw["amenity"~"doctors|dentist|clinic|hospital"](around:1000,${lat},${lng});
+  nw["leisure"~"park|garden"](around:1000,${lat},${lng});
+  way["highway"~"motorway|trunk|primary"](around:300,${lat},${lng});
+  way["railway"~"rail|light_rail"](around:300,${lat},${lng});
+);
+out center;`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), OVERPASS_TIMEOUT_MS);
+
+    const response = await fetch(OVERPASS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `data=${encodeURIComponent(query)}`,
+        signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) throw new Error(`Overpass ${response.status}`);
+    const data = await response.json();
+    console.log(`[GenerateStudy] Overpass: ${data.elements?.length || 0} éléments`);
+    return structurePOIData(data.elements || [], lat, lng);
+}
+
+/** Données communales via API Géo */
+async function fetchCommuneData(lat, lng) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), GEO_API_TIMEOUT_MS);
+
+    const url = `https://geo.api.gouv.fr/communes?lat=${lat}&lon=${lng}&fields=nom,code,population,codesPostaux,codeDepartement,departement,region&limit=1`;
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) throw new Error(`API Géo ${response.status}`);
+    const communes = await response.json();
+    if (!communes.length) return null;
+
+    const c = communes[0];
+    console.log(`[GenerateStudy] Commune: ${c.nom} (${c.code}), pop=${c.population}`);
+    return {
+        name: c.nom,
+        inseeCode: c.code,
+        population: c.population,
+        postalCodes: c.codesPostaux || [],
+        departement: c.departement || { code: c.codeDepartement, nom: '' },
+        region: c.region || { nom: '' }
+    };
+}
+
+/** Classifier un élément Overpass dans une catégorie POI */
+function classifyElement(tags) {
+    if (!tags) return null;
+    // Écoles
+    if (tags.amenity === 'school' || tags.amenity === 'kindergarten') return 'schools';
+    // Transports
+    if (tags.railway === 'station' || tags.railway === 'tram_stop' || tags.highway === 'bus_stop') return 'transport';
+    // Commerces
+    if (tags.shop && /supermarket|convenience|bakery|butcher/.test(tags.shop)) return 'commerce';
+    if (tags.amenity === 'pharmacy' || tags.amenity === 'bank') return 'commerce';
+    // Santé
+    if (/doctors|dentist|clinic|hospital/.test(tags.amenity)) return 'health';
+    // Espaces verts
+    if (tags.leisure === 'park' || tags.leisure === 'garden') return 'greenSpaces';
+    // Bruit (route/rail majeur) — traité séparément
+    if (tags.highway && /motorway|trunk|primary/.test(tags.highway)) return '_noise_road';
+    if (tags.railway && /rail|light_rail/.test(tags.railway)) return '_noise_rail';
+    return null;
+}
+
+/** Structurer les éléments Overpass bruts en catégories exploitables */
+function structurePOIData(elements, lat, lng) {
+    const categories = {
+        schools: { count: 0, nearest: null, items: [] },
+        transport: { count: 0, nearest: null, items: [] },
+        commerce: { count: 0, nearest: null, items: [] },
+        health: { count: 0, nearest: null, items: [] },
+        greenSpaces: { count: 0, nearest: null, items: [] }
+    };
+    const noiseElements = [];
+
+    for (const el of elements) {
+        const cat = classifyElement(el.tags);
+        if (!cat) continue;
+
+        const elLat = el.lat || el.center?.lat;
+        const elLng = el.lon || el.center?.lon;
+        if (!elLat || !elLng) continue;
+
+        const distance = Math.round(haversine(lat, lng, elLat, elLng));
+        const name = el.tags?.name || '';
+
+        if (cat.startsWith('_noise')) {
+            noiseElements.push({ ...el, _distance: distance });
+            continue;
+        }
+
+        const item = { name, distance, type: el.tags?.amenity || el.tags?.shop || el.tags?.railway || el.tags?.highway || el.tags?.leisure || '' };
+        categories[cat].items.push(item);
+        categories[cat].count++;
+
+        if (!categories[cat].nearest || distance < categories[cat].nearest.distance) {
+            categories[cat].nearest = { name, distance };
+        }
+    }
+
+    // Trier chaque catégorie par distance
+    for (const cat of Object.values(categories)) {
+        cat.items.sort((a, b) => a.distance - b.distance);
+    }
+
+    const noise = estimateNoise(noiseElements, lat, lng);
+    const walkScore = computeWalkScore(categories);
+
+    return { categories, noise, walkScore };
+}
+
+/** Estimer le niveau sonore d'après la proximité routes/voies ferrées */
+function estimateNoise(noiseElements, lat, lng) {
+    let nearestRoad = null;
+    let nearestRailway = null;
+
+    for (const el of noiseElements) {
+        const dist = el._distance;
+        const tags = el.tags || {};
+
+        if (tags.highway && (!nearestRoad || dist < nearestRoad.distance)) {
+            nearestRoad = { type: tags.highway, distance: dist };
+        }
+        if (tags.railway && (!nearestRailway || dist < nearestRailway.distance)) {
+            nearestRailway = { type: tags.railway, distance: dist };
+        }
+    }
+
+    const ROAD_LABELS = { motorway: 'Autoroute', trunk: 'Voie rapide', primary: 'Route principale' };
+    const sources = [];
+    let score = 0;
+
+    if (nearestRoad) {
+        sources.push(`${ROAD_LABELS[nearestRoad.type] || 'Route'} à ${nearestRoad.distance}m`);
+        if (nearestRoad.distance < 50) score += 3;
+        else if (nearestRoad.distance < 150) score += 2;
+        else score += 1;
+    }
+    if (nearestRailway) {
+        sources.push(`Voie ferrée à ${nearestRailway.distance}m`);
+        if (nearestRailway.distance < 100) score += 3;
+        else if (nearestRailway.distance < 200) score += 2;
+        else score += 1;
+    }
+
+    let level = 'calme';
+    if (score >= 4) level = 'bruyant';
+    else if (score >= 2) level = 'modere';
+
+    return { level, sources, nearestRoad, nearestRailway };
+}
+
+/** Score piéton heuristique (1-10) basé sur la couverture d'aménités */
+function computeWalkScore(categories) {
+    let score = 0;
+    const c = categories;
+    // Commerce à proximité
+    if (c.commerce.nearest && c.commerce.nearest.distance < 300) score += 2;
+    else if (c.commerce.count > 0) score += 1;
+    // Transport
+    if (c.transport.nearest && c.transport.nearest.distance < 400) score += 2;
+    else if (c.transport.count > 0) score += 1;
+    // Écoles
+    if (c.schools.nearest && c.schools.nearest.distance < 500) score += 1;
+    // Santé
+    if (c.health.nearest && c.health.nearest.distance < 800) score += 1;
+    // Espaces verts
+    if (c.greenSpaces.nearest && c.greenSpaces.nearest.distance < 500) score += 1;
+    // Bonus diversité
+    if (c.commerce.count >= 5) score += 1;
+    if (c.transport.count >= 3) score += 1;
+    const coveredCategories = Object.values(c).filter(cat => cat.count > 0).length;
+    if (coveredCategories >= 5) score += 1;
+
+    return Math.min(score, 10);
 }
 
 // ========== Prompts ==========
@@ -288,11 +512,56 @@ Retourne UNIQUEMENT un JSON valide (pas de texte autour, pas de markdown) :
 
   "estimation": "HTML (3-4 paragraphes). §1: Méthodologie utilisée (analyse comparative + ajustements). §2: Argumentation de la fourchette retenue avec les facteurs de valorisation (citer chaque atout et son impact). §3: Facteurs de décote éventuels (DPE, travaux, etc.) et comment les compenser. §4: Comparaison avec le budget vendeur si communiqué (conforter ou recadrer avec diplomatie).",
 
-  "recommendation": "HTML (3-4 paragraphes). §1: Prix de mise en vente recommandé avec justification stratégique (attirer des visites vs maximiser le prix). §2: Stratégie de commercialisation (comment mettre en valeur les atouts, quel angle marketing, ciblage acquéreur). §3: Timing et scénario de vente (durée prévisionnelle, étapes clés, quand envisager une baisse). §4: Conclusion personnelle engageante du conseiller ${agentName || ''} (confiance dans le bien, engagement d'accompagnement)."
+  "recommendation": "HTML (3-4 paragraphes). §1: Prix de mise en vente recommandé avec justification stratégique (attirer des visites vs maximiser le prix). §2: Stratégie de commercialisation (comment mettre en valeur les atouts, quel angle marketing, ciblage acquéreur). §3: Timing et scénario de vente (durée prévisionnelle, étapes clés, quand envisager une baisse). §4: Conclusion personnelle engageante du conseiller ${agentName || ''} (confiance dans le bien, engagement d'accompagnement).",
+
+  "environment": "HTML (2-3 paragraphes). UNIQUEMENT si des données environnement sont fournies. §1: Cadre de vie — décrire l'ambiance du quartier, la densité de commerces et services, l'accessibilité transport. Citer les POIs les plus proches PAR LEUR NOM. §2: Données communales — population, dynamisme de la commune. §3: Qualité de vie — espaces verts, calme/bruit, score piéton. Utilise UNIQUEMENT les données fournies, ne rien inventer. Si aucune donnée environnement n'est fournie, retourne une chaîne vide."
 }`;
 }
 
-function buildWritingUserPrompt(property, analysis, customInstructions) {
+/** Formater les données environnement pour le prompt IA */
+function buildEnvironmentBlock(poiData, communeData) {
+    if (!poiData && !communeData) return '';
+
+    let block = 'DONNÉES ENVIRONNEMENT DU BIEN :\n';
+
+    if (communeData) {
+        const pop = communeData.population ? communeData.population.toLocaleString('fr-FR') : 'N/A';
+        const dept = communeData.departement?.nom || '';
+        const region = communeData.region?.nom || '';
+        block += `Commune : ${communeData.name} (${communeData.inseeCode}) — ${pop} habitants — ${dept} — ${region}\n`;
+    }
+
+    if (poiData?.categories) {
+        const LABELS = { schools: 'Écoles', transport: 'Transports', commerce: 'Commerces', health: 'Santé', greenSpaces: 'Espaces verts' };
+        block += '\nAménités à proximité :\n';
+        for (const [key, data] of Object.entries(poiData.categories)) {
+            const label = LABELS[key] || key;
+            let line = `- ${label} : ${data.count}`;
+            if (data.nearest) {
+                const name = data.nearest.name || 'sans nom';
+                line += ` (le plus proche : ${name} à ${data.nearest.distance}m)`;
+            }
+            block += line + '\n';
+        }
+    }
+
+    if (poiData?.noise) {
+        block += `\nAmbiance sonore estimée : ${poiData.noise.level}`;
+        if (poiData.noise.sources.length > 0) {
+            block += ` (${poiData.noise.sources.join(', ')})`;
+        }
+        block += '\n';
+    }
+
+    if (poiData?.walkScore != null) {
+        block += `Score piéton estimé : ${poiData.walkScore}/10\n`;
+    }
+
+    block += '\nUtilise ces données pour enrichir "propertyPresentation" (§3 environnement) ET pour la section "environment".\n';
+    return block;
+}
+
+function buildWritingUserPrompt(property, analysis, customInstructions, poiData, communeData) {
     const budgetLine = property.budget
         ? `Budget/estimation vendeur : ${property.budget.toLocaleString('fr-FR')} € — COMPARE avec ton estimation et commente (conforte si proche, recadre diplomatiquement si éloigné)`
         : 'Budget vendeur : Non communiqué';
@@ -313,6 +582,7 @@ ${budgetLine}
 RÉSULTATS DE L'ANALYSE CHIFFRÉE :
 ${JSON.stringify(analysis, null, 2)}
 
+${buildEnvironmentBlock(poiData, communeData)}
 ${customInstructions ? `INSTRUCTIONS PARTICULIÈRES DU CONSEILLER :\n${customInstructions}\n` : ''}
-RAPPEL : Rédige les 4 sections en français. Chaque section doit faire 3-4 paragraphes riches et argumentés. Cite des chiffres précis du JSON. Le ton doit inspirer confiance et expertise.`;
+RAPPEL : Rédige les sections en français. Chaque section doit faire 3-4 paragraphes riches et argumentés (2-3 pour "environment"). Cite des chiffres précis du JSON. Le ton doit inspirer confiance et expertise.`;
 }

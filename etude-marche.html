@@ -1095,6 +1095,97 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
+        /* ===== ENVIRONNEMENT / POI ===== */
+        .commune-banner {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .commune-stat {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .commune-stat-value {
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-dark);
+        }
+        .commune-stat-label {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        .poi-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .poi-card {
+            text-align: center;
+            padding: 16px 8px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .poi-card i {
+            font-size: 20px;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .poi-card-count {
+            font-weight: 700;
+            font-size: 22px;
+            color: var(--text-dark);
+        }
+        .poi-card-label {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        .poi-card-nearest {
+            font-size: 10px;
+            color: var(--text-light);
+            margin-top: 6px;
+            line-height: 1.3;
+        }
+        .env-indicators {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .env-indicator-card {
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 16px;
+            text-align: center;
+        }
+        .env-indicator-value {
+            font-size: 28px;
+            font-weight: 800;
+        }
+        .env-indicator-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .env-indicator-detail {
+            font-size: 11px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+        @media (max-width: 768px) {
+            .poi-grid { grid-template-columns: repeat(3, 1fr); }
+            .commune-banner { flex-direction: column; gap: 8px; }
+            .env-indicators { flex-direction: column; gap: 8px; }
+        }
+        @media (max-width: 480px) {
+            .poi-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
         /* ===== PRINT / PDF ===== */
         @media print {
             body { background: white; }
@@ -2827,7 +2918,7 @@ async function executeStudyGeneration(interviewSummary) {
             throw new Error(errMsg);
         }
 
-        const { analysis, narrative } = await response.json();
+        const { analysis, narrative, poiData, communeData } = await response.json();
         clearInterval(timerInterval);
         const totalSeconds = Math.floor((Date.now() - timerStart) / 1000);
 
@@ -2835,7 +2926,7 @@ async function executeStudyGeneration(interviewSummary) {
         loadingStep.textContent = 'Mise en page de l\'étude...';
         loadingSubstep.textContent = `Étude générée en ${totalSeconds}s`;
 
-        renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length);
+        renderStudy(analysis, narrative, property, agentName, agencyName, dvfSales.length, poiData, communeData);
 
         loading.classList.remove('active');
         output.classList.add('active');
@@ -2855,7 +2946,7 @@ async function executeStudyGeneration(interviewSummary) {
 }
 
 // ===== RENDU DE L'ÉTUDE =====
-function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCount) {
+function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCount, poiData, communeData) {
     const output = document.getElementById('studyOutput');
     const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -2921,6 +3012,9 @@ function renderStudy(analysis, narrative, property, agentName, agencyName, dvfCo
                 ${renderMapSection(property)}
             </div>
         </div>
+
+        <!-- ENVIRONNEMENT & CADRE DE VIE -->
+        ${renderEnvironmentSection(poiData, communeData, narrative)}
 
         <!-- POINTS FORTS / POINTS FAIBLES -->
         <div class="study-page">
@@ -2993,6 +3087,108 @@ function renderPropertyGrid(property) {
             <div class="property-item-label">${escapeHtml(i.label)}</div>
         </div>
     `).join('')}</div>`;
+}
+
+function renderEnvironmentSection(poiData, communeData, narrative) {
+    if (!poiData && !communeData) return '';
+
+    let html = '<div class="study-page"><div class="study-section">';
+    html += '<div class="study-section-title"><i class="fas fa-city"></i> Environnement & Cadre de vie</div>';
+
+    // Bannière commune
+    if (communeData) {
+        html += `<div class="commune-banner">
+            <div class="commune-stat">
+                <div class="commune-stat-value">${escapeHtml(communeData.name)}</div>
+                <div class="commune-stat-label">Commune</div>
+            </div>
+            <div class="commune-stat">
+                <div class="commune-stat-value">${(communeData.population || 0).toLocaleString('fr-FR')}</div>
+                <div class="commune-stat-label">Habitants</div>
+            </div>
+            <div class="commune-stat">
+                <div class="commune-stat-value">${escapeHtml(communeData.departement?.nom || '')}</div>
+                <div class="commune-stat-label">Département</div>
+            </div>
+        </div>`;
+    }
+
+    // Texte IA environnement
+    if (narrative?.environment) {
+        html += narrative.environment;
+    }
+
+    // Grille POI visuelle
+    if (poiData?.categories) {
+        html += renderPOIGrid(poiData.categories);
+    }
+
+    // Score piéton + bruit
+    if (poiData) {
+        html += renderWalkScoreAndNoise(poiData.walkScore, poiData.noise);
+    }
+
+    html += '</div></div>';
+    return html;
+}
+
+function renderPOIGrid(categories) {
+    const CONFIG = {
+        schools:     { icon: 'fa-graduation-cap', label: 'Écoles',        color: '#3498db' },
+        transport:   { icon: 'fa-subway',         label: 'Transports',    color: '#e67e22' },
+        commerce:    { icon: 'fa-shopping-bag',   label: 'Commerces',     color: '#27ae60' },
+        health:      { icon: 'fa-heartbeat',      label: 'Santé',         color: '#e74c3c' },
+        greenSpaces: { icon: 'fa-leaf',           label: 'Espaces verts', color: '#2ecc71' }
+    };
+
+    let html = '<div class="poi-grid">';
+    for (const [key, data] of Object.entries(categories)) {
+        const c = CONFIG[key];
+        if (!c) continue;
+        const nearestText = data.nearest
+            ? `${escapeHtml(data.nearest.name || 'Sans nom')} — ${data.nearest.distance}m`
+            : 'Aucun trouvé';
+        html += `<div class="poi-card">
+            <i class="fas ${c.icon}" style="color:${c.color};"></i>
+            <div class="poi-card-count">${data.count}</div>
+            <div class="poi-card-label">${c.label}</div>
+            <div class="poi-card-nearest">${nearestText}</div>
+        </div>`;
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderWalkScoreAndNoise(walkScore, noise) {
+    let html = '<div class="env-indicators">';
+
+    if (walkScore != null) {
+        const color = walkScore >= 7 ? '#27ae60' : walkScore >= 4 ? '#f39c12' : '#e74c3c';
+        const label = walkScore >= 7 ? 'Très bien desservi' : walkScore >= 4 ? 'Correctement desservi' : 'Peu desservi';
+        html += `<div class="env-indicator-card">
+            <div class="env-indicator-value" style="color:${color};">${walkScore}/10</div>
+            <div class="env-indicator-title">Score piéton</div>
+            <div class="env-indicator-detail">${label}</div>
+        </div>`;
+    }
+
+    if (noise) {
+        const NOISE_CONFIG = {
+            calme:   { icon: 'fa-volume-off',  color: '#27ae60', label: 'Calme' },
+            modere:  { icon: 'fa-volume-down', color: '#f39c12', label: 'Modéré' },
+            bruyant: { icon: 'fa-volume-up',   color: '#e74c3c', label: 'Bruyant' }
+        };
+        const nc = NOISE_CONFIG[noise.level] || NOISE_CONFIG.calme;
+        html += `<div class="env-indicator-card">
+            <i class="fas ${nc.icon}" style="font-size:24px; color:${nc.color}; margin-bottom:4px;"></i>
+            <div class="env-indicator-title" style="color:${nc.color};">${nc.label}</div>
+            <div class="env-indicator-detail">Ambiance sonore</div>
+            ${noise.sources.length > 0 ? `<div class="env-indicator-detail">${noise.sources.map(s => escapeHtml(s)).join('<br>')}</div>` : ''}
+        </div>`;
+    }
+
+    html += '</div>';
+    return html;
 }
 
 function renderMapSection(property) {

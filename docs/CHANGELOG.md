@@ -4,6 +4,55 @@
 
 ---
 
+## Session 2026-03-02l — Phase 3 : Données environnement (POI + Commune)
+
+### Résumé
+Intégration de données environnement réelles dans l'étude de marché : commerces, transports, écoles, espaces verts et santé proches (Overpass API / OpenStreetMap), données communales (API Géo), estimation du bruit (proximité routes/voies ferrées), score piéton heuristique. Les données sont fetchées côté serveur en parallèle avec la passe 1 Claude (zéro temps ajouté), injectées dans le prompt passe 2 pour que l'IA écrive une section "Environnement", et affichées visuellement dans l'étude.
+
+### Modifications
+
+**`api/generate-study.js`** :
+- +`haversine()` : distance en mètres entre deux coordonnées
+- +`fetchPOIData()` : requête Overpass combinée (10 catégories, timeout 8s)
+- +`fetchCommuneData()` : appel API Géo pour données communales (timeout 5s)
+- +`structurePOIData()` : classification des éléments OSM en 5 catégories
+- +`classifyElement()` : mapping tags OSM → catégorie POI
+- +`estimateNoise()` : estimation bruit depuis proximité routes/voies ferrées
+- +`computeWalkScore()` : score piéton heuristique (1-10)
+- +`buildEnvironmentBlock()` : formatage des données pour le prompt IA
+- Handler : `Promise.all([callClaude(passe1), fetchPOIData, fetchCommuneData])`
+- `buildWritingPrompt()` : nouvelle clé JSON `"environment"` dans la réponse attendue
+- `buildWritingUserPrompt()` : paramètres `poiData`, `communeData` + bloc environnement
+- max_tokens passe 2 : 6000 → 7000
+- Réponse API enrichie : `{ analysis, narrative, poiData, communeData }`
+
+**`etude-marche.html`** :
+- +`renderEnvironmentSection()` : section complète avec bannière commune + texte IA + grille POI + indicateurs
+- +`renderPOIGrid()` : grille 5 colonnes avec icônes FontAwesome, counts et nearest
+- +`renderWalkScoreAndNoise()` : cartes score piéton (coloré) + ambiance sonore
+- `renderStudy()` : nouveaux paramètres `poiData`, `communeData`, section insérée entre Localisation et Atouts
+- CSS : `.commune-banner`, `.poi-grid`, `.poi-card`, `.env-indicators`, `.env-indicator-card` + responsive (768px/480px)
+
+### Fichiers modifiés
+- `api/generate-study.js`
+- `etude-marche.html`
+- `docs/DECISIONS.md` (D049)
+- `docs/API-MAP.md`
+- `docs/CHANGELOG.md`
+
+### Points d'attention
+- Coût : 0€ (APIs publiques gratuites, pas de clé)
+- Si Overpass ou API Géo échoue, l'étude se génère normalement (dégradation gracieuse)
+- Overpass timeout à 8s, bien sous le budget 55s total
+- Rate limit Overpass : ~10 000 req/jour — largement suffisant
+
+### Prochaines étapes
+- Tester sur adresse urbaine (Lyon) et rurale (Creuse)
+- Vérifier l'impression PDF de la nouvelle section
+- Éventuellement : migration vers `data.geopf.fr/geocodage` (remplacement BAN, fin jan 2026)
+
+---
+
 ## Session 2026-03-02k — Phase 2 : Analyse photos par Claude Vision
 
 ### Résumé
