@@ -2293,7 +2293,13 @@
 
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
-            body { padding: 10px; }
+            body {
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: hidden;
+                height: 100vh;
+                height: 100dvh;
+            }
 
             /* --- HEADER : 3 lignes --- */
             .header {
@@ -2369,13 +2375,19 @@
                 flex-direction: row;
                 gap: 0;
                 overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
+                overflow-y: hidden;
                 scroll-snap-type: x mandatory;
                 overscroll-behavior-x: contain;
                 padding: 0;
                 margin: 0;
+                /* Hauteur : tout l'espace entre header et bottom bar */
+                height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
                 height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
-                touch-action: pan-x pan-y;
+            }
+            @supports (height: 100dvh) {
+                .pipeline {
+                    height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
+                }
             }
             .pipeline::-webkit-scrollbar { display: none; }
             .pipeline { scrollbar-width: none; }
@@ -2388,8 +2400,11 @@
                 scroll-snap-align: start;
                 background: var(--m-surface-1, #F8F9FB);
                 border-radius: 0;
-                padding: 8px 12px;
+                padding: 0;
                 overflow-y: auto;
+                overflow-x: hidden;
+                overscroll-behavior-y: contain;
+                -webkit-overflow-scrolling: touch;
                 height: 100%;
                 /* Reset héritages desktop */
                 backdrop-filter: none;
@@ -2397,35 +2412,33 @@
                 box-shadow: none;
             }
 
-            /* Header colonne : image de fond pleine largeur + titre */
+            /* Header colonne : image bord à bord + arrondi haut */
             .column-top {
                 position: sticky;
                 top: 0;
                 z-index: 10;
-                margin: -8px -12px 8px -12px;
-                padding: 8px 12px 0 12px;
+                margin: 0;
+                padding: 0;
                 background: var(--m-surface-1, #F8F9FB);
                 border-radius: 0;
                 flex-shrink: 0;
-                /* Reset héritages desktop */
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
             .column-header {
                 height: 56px;
-                border-radius: 10px;
-                margin-bottom: 6px;
+                border-radius: 0;
+                margin-bottom: 0;
                 background-size: cover;
                 background-position: center;
                 display: flex;
                 align-items: flex-end;
                 overflow: hidden;
-                /* Reset héritages desktop */
                 position: relative;
             }
             .column-label {
                 position: relative;
-                padding: 6px 12px;
+                padding: 6px 14px;
                 font-family: 'Barlow Semi Condensed', sans-serif;
                 font-size: 14px;
                 font-weight: 800;
@@ -2434,7 +2447,6 @@
                 color: white;
                 text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
                 font-style: italic;
-                /* Reset desktop absolute positioning */
                 bottom: auto;
                 left: auto;
                 right: auto;
@@ -2444,7 +2456,7 @@
                 display: flex;
                 align-items: center;
                 gap: 4px;
-                padding: 2px 4px;
+                padding: 4px 14px;
                 font-size: 12px;
                 font-weight: 600;
                 color: var(--m-text-secondary, #4A5568);
@@ -2455,7 +2467,7 @@
                 display: flex;
                 flex-direction: column;
                 gap: 6px;
-                padding: 0 0 12px;
+                padding: 8px 12px 20px;
             }
             .lead-card {
                 padding: 12px 14px;
