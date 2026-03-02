@@ -682,7 +682,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Type de bien *</label>
-                        <select id="studyType">
+                        <select id="studyType" onchange="toggleTerrainField(this.value)">
                             <option value="">Sélectionner...</option>
                             <option value="appartement">Appartement</option>
                             <option value="maison">Maison</option>
@@ -728,7 +728,7 @@
                         <label>Estimation vendeur (€)</label>
                         <input type="number" id="studyBudget" placeholder="280000">
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="terrainGroup" style="display:none">
                         <label>Surface terrain (m²)</label>
                         <input type="number" id="studySurfaceTerrain" placeholder="0">
                     </div>
@@ -916,9 +916,33 @@ function setupAddressAutocomplete() {
     });
 }
 
+// Affiche/masque le champ surface terrain selon le type de bien
+function toggleTerrainField(type) {
+    const group = document.getElementById('terrainGroup');
+    if (group) group.style.display = (type === 'maison' || type === 'terrain') ? '' : 'none';
+}
+
 async function geocodeAddress(address) {
     try {
-        const resp = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(address)}&limit=1`);
+        // Enrichir l'adresse avec le code postal si on le détecte (ex: "Lyon 6e" → ajouter 69006)
+        let query = address;
+        const lyonMatch = address.match(/lyon\s*(\d+)(?:e|ème|er)?/i);
+        if (lyonMatch && !address.match(/\b69\d{3}\b/)) {
+            const arrond = parseInt(lyonMatch[1]);
+            query = address + ' 69' + String(arrond).padStart(3, '0');
+        }
+        const marseilleMatch = address.match(/marseille\s*(\d+)(?:e|ème|er)?/i);
+        if (marseilleMatch && !address.match(/\b13\d{3}\b/)) {
+            const arrond = parseInt(marseilleMatch[1]);
+            query = address + ' 13' + String(arrond).padStart(3, '0');
+        }
+        const parisMatch = address.match(/paris\s*(\d+)(?:e|ème|er)?/i);
+        if (parisMatch && !address.match(/\b75\d{3}\b/)) {
+            const arrond = parseInt(parisMatch[1]);
+            query = address + ' 75' + String(arrond).padStart(3, '0');
+        }
+
+        const resp = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(query)}&limit=1`);
         const data = await resp.json();
         if (data.features && data.features.length > 0) {
             const f = data.features[0];
@@ -1014,7 +1038,8 @@ async function parseAndFillForm(text) {
     }
 
     const parsed = await response.json();
-    const lead = parsed.lead || parsed;
+    const lead = parsed.fields || parsed.lead || parsed;
+    console.log('[EtudeMarche] Parsed lead:', lead);
 
     if (lead.address) {
         document.getElementById('studyAddress').value = lead.address;
@@ -1026,14 +1051,24 @@ async function parseAndFillForm(text) {
             document.getElementById('studyPostalCode').value = geo.postalCode;
         }
     }
-    if (lead.property_type) document.getElementById('studyType').value = lead.property_type;
+    if (lead.property_type) {
+        document.getElementById('studyType').value = lead.property_type;
+        toggleTerrainField(lead.property_type);
+    }
     if (lead.surface) document.getElementById('studySurface').value = lead.surface;
     if (lead.rooms) document.getElementById('studyRooms').value = lead.rooms;
     if (lead.budget) document.getElementById('studyBudget').value = lead.budget;
 
-    // Mettre la transcription brute en description si pas de description structurée
-    if (!document.getElementById('studyDescription').value) {
-        document.getElementById('studyDescription').value = text;
+    // Extraire le DPE depuis la description (parse-lead met "DPE E" dans description)
+    const dpeMatch = (lead.description || '').match(/DPE\s+([A-G])/i) || text.match(/(?:dpe|DPE)\s+(?:en\s+)?([A-Ga-g])/i);
+    if (dpeMatch) {
+        document.getElementById('studyDpe').value = dpeMatch[1].toUpperCase();
+    }
+
+    // Description : texte structuré de parse-lead ou transcription brute
+    const desc = lead.description || text;
+    if (desc && !document.getElementById('studyDescription').value) {
+        document.getElementById('studyDescription').value = desc;
     }
 }
 
