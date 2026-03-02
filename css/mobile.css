@@ -915,6 +915,9 @@ body {
 /* Masquer les éléments desktop sur mobile */
 .m-desktop-only { display: none !important; }
 
+/* Masquer le bouton Todo desktop (todo-widget.js) — remplacé par .m-todo-fab */
+.todo-fab { display: none !important; }
+
 } /* Fin @media (max-width: 768px) */
 
 /* Masquer les éléments mobile-only sur desktop */
