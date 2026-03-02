@@ -2883,9 +2883,8 @@ async function executeStudyGeneration(interviewSummary) {
             interviewSummary: interviewSummary || ''
         };
 
-        // Limiter les données envoyées à l'API (Vercel body ~4.5MB max)
-        // Trier par distance croissante et prendre les plus proches
-        const MAX_DVF_SEND = 50;
+        // Trier par distance croissante et envoyer les 30 plus proches (aligné sur MAX_DVF serveur)
+        const MAX_DVF_SEND = 30;
         const dvfToSend = dvfSales
             .sort((a, b) => a.distance - b.distance)
             .slice(0, MAX_DVF_SEND);
