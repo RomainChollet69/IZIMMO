@@ -48,14 +48,14 @@ IZIMMO/
 │   ├── parse-import-batch.js   # Parsing import Excel/CSV de contacts
 │   ├── generate-message.js     # Génération SMS/WhatsApp/Email contextuel (Claude)
 │   ├── generate-social-post.js # Génération contenu réseaux sociaux (Claude)
-│   ├── parse-workflow-response.js # Parsing réponse vocale aux étapes workflow
+│   ├── inbound-email.js         # Webhook Mailgun : emails portails → visit_requests (Claude Haiku)
 │   ├── analyze-document.js     # Analyse de documents PDF
 │   ├── parse-voice-note.js     # Parsing notes vocales
 │   ├── map-columns.js          # Mapping colonnes pour imports
 │   ├── scrape-listing.js       # Scraping d'annonces immobilières
 │   ├── generate-study.js       # Génération étude de marché IA (2 passes Claude Sonnet, prompt adaptatif densité)
 │   ├── google-auth.js           # OAuth Google Calendar (POST=init nonce, GET=callback tokens)
-│   └── assistant.js             # Assistant unifié (orchestrate, draft_message, calendar CRUD)
+│   └── assistant.js             # Assistant unifié (orchestrate, draft_message, parse_workflow_response, calendar CRUD, visit requests)
 │
 ├── assistant.html              # Assistant organisationnel IA (agenda + messages)
 │
@@ -64,7 +64,8 @@ IZIMMO/
 │   ├── 002_user_integrations.sql # Migration tables user_integrations + oauth_states
 │   ├── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
 │   ├── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
-│   └── 011_sellers_rooms.sql   # ALTER TABLE : ajout champ rooms sur sellers (T1-T5+)
+│   ├── 011_sellers_rooms.sql   # ALTER TABLE : ajout champ rooms sur sellers (T1-T5+)
+│   └── 012_visit_requests.sql # Table visit_requests + colonnes inbound_email sur user_integrations
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
@@ -91,7 +92,7 @@ IZIMMO/
 │   └── upload-dvf-storage.py     # Upload JSON DVF → Supabase Storage
 │
 ├── vercel.json                 # Config Vercel (timeout functions, headers micro)
-├── package.json                # Dépendance unique : @supabase/supabase-js
+├── package.json                # Dépendances : @supabase/supabase-js, busboy
 └── package-lock.json
 ```
 
@@ -383,6 +384,39 @@ scripts/upload-dpe-storage.py → Supabase Storage (bucket dpe-data, public)
   └── Départements > 50 Mo splittés (index.json contient clé "splits")
 ```
 
+### 3.11 Demandes de visite portails (email forwarding)
+
+```
+Agent reçoit un email portail (SeLoger, LeBonCoin, BienIci, PAP...)
+    │
+    ├── Règle de transfert auto (Gmail/Outlook)
+    │
+    ▼
+romain-a1b2@inbound.leon-crm.com (Mailgun Inbound Parse)
+    │
+    ├── POST webhook multipart/form-data
+    │
+    ▼
+POST /api/inbound-email
+  ├── 1. Vérification signature HMAC SHA256 Mailgun
+  ├── 2. Résolution agent : recipient → user_integrations.inbound_email
+  ├── 3. Déduplication : UNIQUE(user_id, email_message_id)
+  ├── 4. Claude Haiku : extraction structurée (nom, tél, email, adresse, portail)
+  ├── 5. Matching sellers par adresse (waterfall : adresse > type+prix)
+  └── 6. INSERT visit_requests (status: pending)
+    │
+    ▼
+visites.html — Bandeau "Nouvelles demandes"
+  ├── Affichage : portail, nom visiteur, téléphone, bien matché
+  ├── Actions : "Planifier la visite" → process_visit_request(accept)
+  │             "Ignorer" → process_visit_request(dismiss)
+  └── Stats par bien dans les accordéons : contacts / traités / visités
+```
+
+**Configuration agent** (parametres.html) :
+1. Adresse inbound générée automatiquement (prénom-token@inbound.leon-crm.com)
+2. L'agent crée une règle de transfert dans sa messagerie
+
 ---
 
 ## 4. Schéma de la base de données
@@ -586,6 +620,46 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `monthly_points`  | INT         | Score du mois en cours (reset au 1er)        |
 | `month_year`      | TEXT        | Mois courant "YYYY-MM" (détection reset)     |
 
+### Table `visit_requests`
+
+| Colonne              | Type          | Description                                          |
+|----------------------|---------------|------------------------------------------------------|
+| `id`                 | UUID (PK)     | Identifiant unique                                   |
+| `user_id`            | UUID (FK)     | Référence `auth.users(id)`                           |
+| `email_message_id`   | TEXT          | ID unique email pour déduplication                   |
+| `email_from`         | TEXT          | Expéditeur (noreply@seloger.com, etc.)               |
+| `email_subject`      | TEXT          | Objet du mail                                        |
+| `email_date`         | TIMESTAMPTZ   | Date de réception                                    |
+| `email_snippet`      | TEXT          | Extrait brut (debug/audit)                           |
+| `portal_name`        | TEXT          | seloger, leboncoin, bienici, pap, etc.               |
+| `visitor_name`       | TEXT          | Nom complet du visiteur                              |
+| `visitor_first_name` | TEXT          | Prénom extrait                                       |
+| `visitor_last_name`  | TEXT          | Nom extrait                                          |
+| `visitor_phone`      | TEXT          | Téléphone du visiteur                                |
+| `visitor_email`      | TEXT          | Email du visiteur                                    |
+| `visitor_message`    | TEXT          | Message accompagnant la demande                      |
+| `property_address`   | TEXT          | Adresse du bien concerné                             |
+| `property_reference` | TEXT          | Référence annonce portail                            |
+| `property_type`      | TEXT          | appartement, maison, etc.                            |
+| `property_price`     | NUMERIC       | Prix du bien                                         |
+| `matched_seller_id`  | UUID (FK)     | Référence `sellers(id)` — matching auto              |
+| `match_confidence`   | TEXT          | high, medium, low, none                              |
+| `status`             | TEXT          | pending, accepted, dismissed                         |
+| `created_visit_id`   | UUID (FK)     | Référence `visits(id)` — visite créée si accepted    |
+| `created_buyer_id`   | UUID (FK)     | Référence `buyers(id)` — acquéreur créé si accepted  |
+| `parsed_data`        | JSONB         | Données brutes Claude pour debug                     |
+
+**Contraintes** : UNIQUE(user_id, email_message_id), CHECK status IN (pending, accepted, dismissed)
+**Index** : (user_id, status), (user_id, matched_seller_id), (user_id, created_at DESC)
+
+### Colonnes ajoutées sur `user_integrations` (012)
+
+| Colonne                    | Type    | Description                            |
+|----------------------------|---------|----------------------------------------|
+| `inbound_email`            | TEXT    | Adresse de transfert unique par agent  |
+| `inbound_email_token`      | TEXT    | Token secret pour validation webhook   |
+| `email_forwarding_active`  | BOOLEAN | Transfert actif ou non                 |
+
 ### Sécurité (RLS)
 
 Toutes les tables ont **Row Level Security activé**. Politique commune :
@@ -617,11 +691,12 @@ Chaque utilisateur ne voit et ne manipule que ses propres données.
 | Font Awesome             | 6.5.1    | Icônes                                 |
 | pdf.js                   | 3.11.174 | Lecture de PDF côté client              |
 
-### Dépendance npm (backend)
+### Dépendances npm (backend)
 
 | Package                  | Version | Usage                                  |
 |--------------------------|---------|----------------------------------------|
 | `@supabase/supabase-js`  | ^2.97.0 | Utilisé par les Vercel Functions (`api/`) |
+| `busboy`                 | ^1.6.0  | Parsing multipart/form-data (Mailgun webhook) |
 
 ### APIs externes
 
@@ -631,7 +706,8 @@ Chaque utilisateur ne voit et ne manipule que ses propres données.
 | **Google OAuth** (via Supabase)  | Authentification utilisateur                     | `login.html`, `js/auth.js`          |
 | **Google Maps**                  | Cartographie (DVF, localisation)                 | `js/maps-config.js`, `dvf.html`     |
 | **OpenAI Whisper**               | Transcription audio → texte (français)           | `api/transcribe.js`                 |
-| **Anthropic Claude**             | Extraction données, génération messages/contenu  | `api/parse-lead.js`, `api/generate-message.js`, `api/generate-social-post.js`, etc. |
+| **Anthropic Claude**             | Extraction données, génération messages/contenu  | `api/parse-lead.js`, `api/generate-message.js`, `api/generate-social-post.js`, `api/inbound-email.js`, etc. |
+| **Mailgun Inbound Parse**        | Réception emails portails transférés (webhook)   | `api/inbound-email.js`              |
 | **api-adresse.data.gouv.fr**     | Géocodage adresses françaises (gratuit)          | `js/supabase-config.js`             |
 | **DVF (data.gouv.fr)**           | Données de ventes immobilières françaises         | `dvf.html`                          |
 | **ADEME (DPE)**                  | Diagnostics de performance énergétique            | `dvf.html`                          |
@@ -642,6 +718,8 @@ Chaque utilisateur ne voit et ne manipule que ses propres données.
 |---------------------|------------------------------------|
 | `OPENAI_API_KEY`    | Transcription Whisper              |
 | `ANTHROPIC_API_KEY` | Génération IA (Claude)             |
+| `MAILGUN_WEBHOOK_SIGNING_KEY` | Validation signature webhook Mailgun |
+| `SUPABASE_SERVICE_ROLE_KEY` | Client admin Supabase (OAuth, visit requests) |
 
 > Les clés Supabase (URL + anon key) sont en dur dans `js/supabase-config.js` — c'est le standard pour les clients publics protégés par RLS.
 

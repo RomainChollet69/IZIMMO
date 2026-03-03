@@ -30,6 +30,9 @@
     "api/scrape-listing.js": {
       "maxDuration": 30
     },
+    "api/inbound-email.js": {
+      "maxDuration": 25
+    },
     "api/generate-study.js": {
       "maxDuration": 300
     }

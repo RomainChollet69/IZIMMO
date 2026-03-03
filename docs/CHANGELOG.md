@@ -4,6 +4,82 @@
 
 ---
 
+## Session 2026-03-02n — Automatisation demandes de visites portails
+
+### Résumé
+Pipeline complet de traitement automatique des demandes de visite reçues par email depuis les portails immobiliers (SeLoger, LeBonCoin, Bien'ici, etc.). L'agent transfère ses emails portails vers une adresse dédiée → Mailgun parse et envoie au webhook → Claude Haiku extrait les données → matching automatique avec les biens en base → stockage dans `visit_requests` → affichage dans `visites.html` avec bandeau pending + stats par bien. Fusion de `parse-workflow-response.js` dans `assistant.js` pour libérer 1 slot Vercel (limite 12/12 Hobby).
+
+### Modifications
+
+**`sql/012_visit_requests.sql`** (NOUVEAU) :
+- Migration table `visit_requests` : stockage des demandes portail parsées (portal, requester_name, requester_email, requester_phone, requested_date, seller_id, status pending/accepted/dismissed)
+- Colonnes ajoutées sur `user_integrations` : `inbound_email`, `inbound_email_token`, `email_forwarding_active`
+
+**`api/inbound-email.js`** (NOUVEAU) :
+- Webhook public Mailgun pour réception des emails portails transférés
+- Auth par signature HMAC SHA256 Mailgun (pas d'auth Supabase)
+- Parsing multipart/form-data via `busboy`
+- Extraction structurée via Claude Haiku (portail, nom, email, téléphone, date souhaitée, adresse du bien)
+- Matching automatique avec `sellers` (par adresse)
+- INSERT dans `visit_requests`
+
+**`api/parse-workflow-response.js`** (SUPPRIMÉ) :
+- Logique fusionnée dans `api/assistant.js` comme action `parse_workflow_response`
+- Libère 1 slot sur la limite 12 serverless functions (Vercel Hobby)
+
+**`api/assistant.js`** (MODIFIÉ) :
+- Nouvelle action `parse_workflow_response` (fusionnée depuis fichier dédié)
+- Nouvelle action `list_visit_requests` : query des demandes pending ou toutes
+- Nouvelle action `process_visit_request` : accept/dismiss une demande, crée visite + optionnel buyer
+
+**`vercel.json`** (MODIFIÉ) :
+- Ajout `api/inbound-email.js` avec `maxDuration: 25`
+- Suppression de `api/parse-workflow-response.js`
+
+**`parametres.html`** (MODIFIÉ) :
+- Nouvelle section "Transfert emails portails"
+- Génération d'adresse email dédiée unique par utilisateur
+- Bouton copie + instructions howto
+
+**`visites.html`** (MODIFIÉ) :
+- Bandeau demandes portails pending (count + action)
+- Stats contacts/traités/visités par bien dans les accordéons
+
+**`index.html`, `acquereurs.html`** (MODIFIÉ — session précédente) :
+- Callers `parse-workflow-response` redirigés vers `assistant.js` action
+
+**`package.json`** (MODIFIÉ) :
+- Ajout dépendance `busboy` pour parsing multipart/form-data
+
+### Fichiers créés
+- `sql/012_visit_requests.sql`
+- `api/inbound-email.js`
+
+### Fichiers modifiés
+- `api/assistant.js`
+- `vercel.json`
+- `parametres.html`
+- `visites.html`
+- `index.html`
+- `acquereurs.html`
+- `package.json`
+
+### Fichiers supprimés
+- `api/parse-workflow-response.js`
+
+### Points d'attention
+- Webhook Mailgun nécessite la variable `MAILGUN_WEBHOOK_SIGNING_KEY` dans Vercel
+- L'adresse email de transfert est générée par utilisateur et stockée dans `user_integrations`
+- Claude Haiku parse les emails bruts — dépend du format des portails (dégradation gracieuse si parsing échoue)
+- Limite Vercel Hobby : 12 serverless functions — on est maintenant à 12/12 (parse-workflow-response supprimé, inbound-email ajouté)
+
+### Prochaines étapes
+- Tester avec de vrais emails de portails (SeLoger, LeBonCoin, Bien'ici)
+- Ajouter notifications push/badge pour les nouvelles demandes
+- Workflow d'acceptation rapide depuis le bandeau visites.html
+
+---
+
 ## Session 2026-03-02m — Fix timeout 504 étude de marché
 
 ### Résumé

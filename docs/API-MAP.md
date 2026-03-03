@@ -277,31 +277,43 @@ Analyse d'une note vocale pour identifier les contacts et les actions.
 
 ---
 
-### POST `/api/parse-workflow-response`
+### ~~POST `/api/parse-workflow-response`~~ — SUPPRIMÉ (2026-03-02)
 
-Analyse de la réponse vocale d'un agent à une étape workflow.
+> **Fusionné dans `/api/assistant` action `parse_workflow_response`** pour libérer 1 slot Vercel (limite 12/12 Hobby).
+> Voir la section `/api/assistant` ci-dessous pour les détails de cette action.
+
+---
+
+### POST `/api/inbound-email`
+
+Webhook Mailgun pour réception et traitement des emails portails immobiliers transférés.
 
 | Champ | Valeur |
 |-------|--------|
-| **Auth** | Bearer token |
-| **Body** | `{ transcription, stepLabel, leadName?, leadStatus?, workflowType?, sortOrder?, recentNotes? }` |
-| **Service externe** | Anthropic Claude Haiku |
-| **Timeout** | 20s |
+| **Auth** | HMAC SHA256 signature Mailgun (header `X-Mailgun-Signature`) — **pas d'auth Supabase** |
+| **Content-Type** | `multipart/form-data` (Mailgun inbound parse) |
+| **Body** | Champs Mailgun : `from`, `subject`, `body-plain`, `recipient`, `timestamp`, `token`, `signature` |
+| **Service externe** | Anthropic Claude Haiku (extraction structurée) + Supabase (matching sellers, insert visit_requests) |
+| **Timeout** | 25s |
+| **Config spéciale** | `bodyParser: false` (parsing via `busboy`) |
+| **Endpoint public** | Oui — authentifié par signature Mailgun, pas de Bearer token |
+
+**Flow** :
+1. Vérification signature HMAC SHA256 Mailgun (`MAILGUN_WEBHOOK_SIGNING_KEY`)
+2. Parsing multipart via `busboy` (extraction champs email)
+3. Identification de l'utilisateur via l'adresse `recipient` → lookup `user_integrations.inbound_email`
+4. Envoi du contenu email à Claude Haiku → extraction JSON (portail, nom, email, téléphone, date souhaitée, adresse du bien)
+5. Matching automatique `sellers` par adresse
+6. INSERT dans `visit_requests` (status: `pending`)
 
 **Réponse** :
 ```json
-{
-  "step_completed": true,
-  "step_in_progress": false,
-  "note_summary": "RDV confirmé pour jeudi 14h",
-  "reminder_date": "2026-03-06",
-  "reminder_reason": "Rappeler après le RDV",
-  "todo_text": null,
-  "leon_response": "Parfait ! Le RDV est calé, on avance bien !"
-}
+{ "success": true, "visit_request_id": "uuid" }
 ```
 
-**Erreurs** : `400`, `401`, `502`, `504`
+**Erreurs** : `400` (signature invalide), `404` (utilisateur non trouvé), `502` (Claude échoue), `500` (erreur serveur)
+
+**Variables d'environnement requises** : `MAILGUN_WEBHOOK_SIGNING_KEY`, `ANTHROPIC_API_KEY`
 
 ---
 
@@ -430,6 +442,13 @@ Endpoint unifié de l'assistant organisationnel. Routage par champ `action`.
 |--------|--------|---------|---------|
 | `orchestrate` | `{ input, context: { today, user_name, contacts_json }, conversation_history }` | Claude Haiku | `{ intent, confidence, params, leon_response }` |
 | `draft_message` | `{ who, who_role, context, tone, channel, slots, user_name }` | Claude Haiku | `{ message, subject, channel }` |
+| `parse_workflow_response` | `{ transcription, stepLabel, leadName?, leadStatus?, workflowType?, sortOrder?, recentNotes? }` | Claude Haiku | `{ step_completed, step_in_progress, note_summary, reminder_date, reminder_reason, todo_text, leon_response }` |
+
+**Actions Visit Requests** :
+| Action | Params | Réponse |
+|--------|--------|---------|
+| `list_visit_requests` | `{ status?: "pending" \| "all" }` | `{ visit_requests: [...] }` |
+| `process_visit_request` | `{ visit_request_id, decision: "accept" \| "dismiss", create_buyer?: boolean }` | `{ success: true, visit_id?, buyer_id? }` |
 
 **Intents orchestrateur** : `find_slots`, `create_event`, `update_event`, `delete_event`, `list_events`, `draft_message`, `find_slots_and_draft`, `confirm_action`, `unknown`
 
@@ -573,7 +592,8 @@ https://maps.googleapis.com/maps/api/js?key={API_KEY}&v=weekly&callback=initMap
 | Variable | Service | Endpoints |
 |----------|---------|-----------|
 | `OPENAI_API_KEY` | OpenAI Whisper | `/api/transcribe` |
-| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/parse-workflow-response`, `/api/scrape-listing`, `/api/assistant`, `/api/generate-study` |
+| `ANTHROPIC_API_KEY` | Anthropic Claude | `/api/parse-lead`, `/api/generate-message`, `/api/generate-social-post`, `/api/parse-import-batch`, `/api/map-columns`, `/api/analyze-document`, `/api/parse-voice-note`, `/api/inbound-email`, `/api/scrape-listing`, `/api/assistant`, `/api/generate-study` |
+| `MAILGUN_WEBHOOK_SIGNING_KEY` | Mailgun (HMAC signature) | `/api/inbound-email` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase (admin) | `/api/google-auth`, `/api/assistant` |
 | `GOOGLE_CLIENT_ID` | Google OAuth | `/api/google-auth`, `/api/assistant` (token refresh) |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth | `/api/google-auth`, `/api/assistant` (token refresh) |

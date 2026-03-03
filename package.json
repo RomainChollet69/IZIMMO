@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/RomainChollet69/IZIMMO#readme",
   "dependencies": {
-    "@supabase/supabase-js": "^2.97.0"
+    "@supabase/supabase-js": "^2.97.0",
+    "busboy": "^1.6.0"
   }
 }

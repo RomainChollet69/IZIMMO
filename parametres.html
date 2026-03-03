@@ -1553,6 +1553,82 @@
         @keyframes fadeOut {
             to { opacity: 0; }
         }
+
+        /* ===== EMAIL FORWARDING SECTION ===== */
+        .email-fwd-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .email-fwd-status.active {
+            background: #E8F5E9;
+            border: 1px solid #C8E6C9;
+        }
+        .email-fwd-status.pending {
+            background: #FFF3E0;
+            border: 1px solid #FFE0B2;
+        }
+        .email-fwd-status-icon { font-size: 20px; }
+        .email-fwd-status-text { flex: 1; }
+        .email-fwd-status-text strong { display: block; font-size: 14px; }
+        .email-fwd-status-text small { color: var(--text-light); font-size: 12px; }
+        .email-fwd-address-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #F5F5F5;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+        .email-fwd-address {
+            flex: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            word-break: break-all;
+        }
+        .email-fwd-copy-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+        .email-fwd-copy-btn:hover { opacity: 0.9; }
+        .email-fwd-howto {
+            background: #FAFAFA;
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+        .email-fwd-howto-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+            margin-bottom: 12px;
+        }
+        .email-fwd-howto ol {
+            margin: 0;
+            padding-left: 20px;
+            font-size: 13px;
+            color: var(--text-light);
+            line-height: 1.8;
+        }
+        .email-fwd-howto ol li { margin-bottom: 4px; }
+        .email-fwd-howto ol strong { color: var(--text-dark); }
     </style>
 </head>
 <body>
@@ -1764,6 +1840,15 @@
                         <span class="save-success" id="calSaveSuccess" style="display:none;">Enregistré</span>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Section Transfert Emails Portails -->
+        <div class="settings-section" id="emailForwardingSection">
+            <h2 class="section-title">Transfert emails portails</h2>
+
+            <div id="emailForwardingZone">
+                <!-- Rempli dynamiquement par loadEmailForwarding() -->
             </div>
         </div>
 
@@ -2066,6 +2151,7 @@
             await loadProfile();
             await loadContacts();
             await loadCalendarIntegration();
+            await loadEmailForwarding();
             await loadGamificationStats(currentUserId);
 
             if ('contacts' in navigator && 'ContactsManager' in window) {
@@ -2291,6 +2377,133 @@
             toast.textContent = message;
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3500);
+        }
+
+        // ===== EMAIL FORWARDING (Portails) =====
+
+        async function loadEmailForwarding() {
+            const zone = document.getElementById('emailForwardingZone');
+            if (!zone) return;
+
+            const { data: integration, error } = await supabaseClient
+                .from('user_integrations')
+                .select('inbound_email, inbound_email_token, email_forwarding_active')
+                .eq('user_id', currentUserId)
+                .maybeSingle();
+
+            if (error) {
+                console.error('[EmailFwd] Erreur chargement:', error);
+                zone.innerHTML = '<p style="color:#999;font-size:13px;">Erreur de chargement.</p>';
+                return;
+            }
+
+            let inboundEmail = integration?.inbound_email;
+
+            // Générer l'adresse si elle n'existe pas encore
+            if (!inboundEmail) {
+                inboundEmail = await generateInboundEmail();
+                if (!inboundEmail) {
+                    zone.innerHTML = '<p style="color:#999;font-size:13px;">Impossible de générer l\'adresse de transfert.</p>';
+                    return;
+                }
+            }
+
+            const isActive = integration?.email_forwarding_active;
+
+            // Stats rapides : compter les visit_requests de l'agent
+            const { count: totalEmails } = await supabaseClient
+                .from('visit_requests')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', currentUserId);
+
+            const statusClass = isActive && totalEmails > 0 ? 'active' : 'pending';
+            const statusIcon = isActive && totalEmails > 0 ? '<i class="fa-solid fa-circle-check" style="color:#2E7D32"></i>' : '<i class="fa-solid fa-hourglass-half" style="color:#E65100"></i>';
+            const statusText = isActive && totalEmails > 0
+                ? `Actif &mdash; ${totalEmails} email${totalEmails > 1 ? 's' : ''} recu${totalEmails > 1 ? 's' : ''}`
+                : 'En attente du premier email';
+
+            zone.innerHTML = `
+                <div class="email-fwd-status ${statusClass}">
+                    <span class="email-fwd-status-icon">${statusIcon}</span>
+                    <div class="email-fwd-status-text">
+                        <strong>${statusText}</strong>
+                        <small>Les demandes de visite des portails apparaitront dans ta page Visites.</small>
+                    </div>
+                </div>
+
+                <div class="email-fwd-address-box">
+                    <span class="email-fwd-address" id="inboundEmailAddr">${escapeHtml(inboundEmail)}</span>
+                    <button class="email-fwd-copy-btn" onclick="copyInboundEmail()">
+                        <i class="fa-solid fa-copy"></i> Copier
+                    </button>
+                </div>
+
+                <div class="email-fwd-howto">
+                    <div class="email-fwd-howto-title">Comment configurer le transfert ?</div>
+                    <ol>
+                        <li><strong>Copie</strong> l'adresse ci-dessus</li>
+                        <li>Dans ta messagerie (Gmail, Outlook...), cree une <strong>regle de transfert automatique</strong> pour les emails de SeLoger, LeBonCoin, BienIci, PAP, etc.</li>
+                        <li>Les demandes de visite apparaitront automatiquement dans ta page <strong><a href="visites.html" style="color:#667eea;">Visites</a></strong> !</li>
+                    </ol>
+                </div>
+            `;
+        }
+
+        async function generateInboundEmail() {
+            // Charger le profil pour le prénom
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('first_name')
+                .eq('id', currentUserId)
+                .maybeSingle();
+
+            const prenom = (profile?.first_name || 'agent')
+                .toLowerCase()
+                .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-z]/g, '');
+
+            const token = crypto.randomUUID().split('-')[0];
+            const inboundEmail = `${prenom}-${token}@inbound.leon-crm.com`;
+
+            const { error } = await supabaseClient
+                .from('user_integrations')
+                .upsert({
+                    user_id: currentUserId,
+                    inbound_email: inboundEmail,
+                    inbound_email_token: token,
+                    email_forwarding_active: true
+                }, { onConflict: 'user_id' });
+
+            if (error) {
+                console.error('[EmailFwd] Erreur sauvegarde adresse:', error);
+                return null;
+            }
+
+            console.log('[EmailFwd] Adresse generee:', inboundEmail);
+            return inboundEmail;
+        }
+
+        function copyInboundEmail() {
+            const addr = document.getElementById('inboundEmailAddr')?.textContent;
+            if (!addr) return;
+            navigator.clipboard.writeText(addr).then(() => {
+                showCalendarToast('Adresse copiee !', 'success');
+            }).catch(() => {
+                // Fallback pour les navigateurs sans clipboard API
+                const input = document.createElement('input');
+                input.value = addr;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showCalendarToast('Adresse copiee !', 'success');
+            });
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
 
         // ===== PROFILE CRUD =====

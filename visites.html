@@ -708,6 +708,164 @@
             transition: opacity 0.3s;
         }
 
+        /* ===== PORTAL REQUESTS BANNER ===== */
+        .portal-banner {
+            max-width: 1200px;
+            margin: 16px auto 0;
+            padding: 0 32px;
+        }
+        .portal-banner-card {
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .portal-banner-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.06), rgba(118, 75, 162, 0.06));
+            cursor: pointer;
+        }
+        .portal-banner-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .portal-banner-count {
+            background: #EF4444;
+            color: white;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .portal-banner-toggle {
+            font-size: 13px;
+            color: #667eea;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+        }
+        .portal-banner-list {
+            display: none;
+        }
+        .portal-banner-card.open .portal-banner-list { display: block; }
+        .portal-request-item {
+            padding: 14px 20px;
+            border-top: 1px solid #F3F4F6;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+        .portal-request-item:hover { background: #FAFBFC; }
+        .portal-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .portal-icon.seloger { background: #E3F2FD; color: #1565C0; }
+        .portal-icon.leboncoin { background: #FFF3E0; color: #E65100; }
+        .portal-icon.bienici { background: #E8F5E9; color: #2E7D32; }
+        .portal-icon.pap { background: #FCE4EC; color: #C62828; }
+        .portal-icon.other { background: #F3E5F5; color: #7B1FA2; }
+        .portal-request-info { flex: 1; min-width: 0; }
+        .portal-request-visitor {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+        .portal-request-visitor span {
+            font-weight: 400;
+            color: var(--text-light);
+            font-size: 13px;
+            margin-left: 6px;
+        }
+        .portal-request-property {
+            font-size: 13px;
+            color: var(--text-light);
+            margin-top: 2px;
+        }
+        .portal-request-property .match-tag {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+        }
+        .match-tag.high { background: #E8F5E9; color: #2E7D32; }
+        .match-tag.medium { background: #FFF8E1; color: #F57F17; }
+        .match-tag.low, .match-tag.none { background: #FFF3E0; color: #E65100; }
+        .portal-request-message {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-top: 4px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 500px;
+        }
+        .portal-request-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .portal-accept-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 7px 14px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .portal-accept-btn:hover { opacity: 0.9; }
+        .portal-dismiss-btn {
+            background: #F3F4F6;
+            color: var(--text-light);
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .portal-dismiss-btn:hover { background: #E5E7EB; color: #C62828; }
+
+        /* ===== ACCORDION PORTAL STATS ===== */
+        .accordion-portal-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .portal-stat-tag {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .portal-stat-tag i { font-size: 10px; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             .m-todo-fab { display: none !important; }
@@ -738,6 +896,11 @@
             .accordion-body-inner { padding: 0 16px 14px; }
             .visit-card { padding: 12px 14px; }
             .modal-card { padding: 20px; width: 95%; }
+            .portal-banner { padding: 0 16px; margin-top: 12px; }
+            .portal-request-item { flex-wrap: wrap; padding: 12px 16px; }
+            .portal-request-actions { width: 100%; margin-top: 8px; }
+            .portal-request-message { max-width: 100%; }
+            .accordion-portal-stats { gap: 6px; }
         }
     </style>
 </head>
@@ -796,6 +959,23 @@
             <div class="stat-label">Retours en attente</div>
         </div>
     </section>
+
+    <!-- ===== PORTAL REQUESTS BANNER ===== -->
+    <div class="portal-banner" id="portalBanner" style="display:none;">
+        <div class="portal-banner-card" id="portalBannerCard">
+            <div class="portal-banner-header" onclick="togglePortalBanner()">
+                <div class="portal-banner-title">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span id="portalBannerTitle">0 nouvelles demandes de visite</span>
+                    <span class="portal-banner-count" id="portalBannerCount">0</span>
+                </div>
+                <button class="portal-banner-toggle" id="portalBannerToggle">Afficher</button>
+            </div>
+            <div class="portal-banner-list" id="portalBannerList">
+                <!-- Rempli dynamiquement -->
+            </div>
+        </div>
+    </div>
 
     <!-- ===== FILTERS ===== -->
     <section class="filters-bar">
@@ -893,6 +1073,8 @@
     let activeSellers = [];
     let openAccordions = new Set();
     let _cachedAgencyName = null;
+    let portalRequests = [];      // Demandes de visite portails (pending)
+    let visitRequestStats = {};   // Stats par seller_id : { contacts, processed }
 
     /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
     async function getAgencyName() {
@@ -1148,6 +1330,17 @@
         const totalVisits = group.visits.length;
         const isOpen = openAccordions.has(sellerId);
 
+        // Portal stats pour ce bien
+        const vrStats = visitRequestStats[sellerId];
+        let portalStatsHtml = '';
+        if (vrStats && vrStats.contacts > 0) {
+            portalStatsHtml = `<div class="accordion-portal-stats">
+                <span class="portal-stat-tag"><i class="fa-solid fa-envelope"></i> ${vrStats.contacts} contact${vrStats.contacts > 1 ? 's' : ''}</span>
+                <span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${vrStats.processed} traite${vrStats.processed > 1 ? 's' : ''}</span>
+                <span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${group.doneCount} visite${group.doneCount > 1 ? 's' : ''}</span>
+            </div>`;
+        }
+
         // Badges
         let badges = `<span class="accordion-badge count">${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`;
         if (group.plannedCount > 0) {
@@ -1183,6 +1376,7 @@
                 <div class="accordion-property-info">
                     <div class="accordion-address">${escapeHtml(address)}</div>
                     <div class="accordion-seller">${escapeHtml(sellerName)}${propertyInfo ? ' — ' + escapeHtml(propertyInfo) : ''}</div>
+                    ${portalStatsHtml}
                 </div>
                 <div class="accordion-badges">${badges}</div>
                 <i class="fa-solid fa-chevron-down accordion-chevron"></i>
@@ -2062,6 +2256,189 @@
 
     let searchDebounce = null;
 
+    // ===== PORTAL REQUESTS (Demandes de visite portails) =====
+
+    const PORTAL_COLORS = {
+        seloger: 'seloger', leboncoin: 'leboncoin', bienici: 'bienici',
+        pap: 'pap', logicimmo: 'other', autre: 'other'
+    };
+    const PORTAL_SHORT = {
+        seloger: 'SL', leboncoin: 'LBC', bienici: 'BI',
+        pap: 'PAP', logicimmo: 'LI', autre: '?'
+    };
+
+    async function loadPortalRequests() {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list_visit_requests', status_filter: 'pending', limit: 20 })
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            portalRequests = data.requests || [];
+        } catch (e) {
+            console.error('[Visites] Portal requests load error:', e);
+        }
+    }
+
+    async function loadVisitRequestStats() {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const { data, error } = await supabaseClient
+            .from('visit_requests')
+            .select('matched_seller_id, status')
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('[Visites] VR stats error:', error);
+            return;
+        }
+
+        visitRequestStats = {};
+        (data || []).forEach(vr => {
+            const sid = vr.matched_seller_id;
+            if (!sid) return;
+            if (!visitRequestStats[sid]) visitRequestStats[sid] = { contacts: 0, processed: 0 };
+            visitRequestStats[sid].contacts++;
+            if (vr.status !== 'pending') visitRequestStats[sid].processed++;
+        });
+    }
+
+    function renderPortalBanner() {
+        const banner = document.getElementById('portalBanner');
+        if (!banner) return;
+
+        if (portalRequests.length === 0) {
+            banner.style.display = 'none';
+            return;
+        }
+
+        banner.style.display = 'block';
+        document.getElementById('portalBannerTitle').textContent =
+            `${portalRequests.length} nouvelle${portalRequests.length > 1 ? 's' : ''} demande${portalRequests.length > 1 ? 's' : ''} de visite`;
+        document.getElementById('portalBannerCount').textContent = portalRequests.length;
+
+        const list = document.getElementById('portalBannerList');
+        list.innerHTML = portalRequests.map(req => {
+            const portal = req.portal_name || 'autre';
+            const colorClass = PORTAL_COLORS[portal] || 'other';
+            const shortLabel = PORTAL_SHORT[portal] || '?';
+            const visitorName = req.visitor_name || 'Visiteur inconnu';
+            const phone = req.visitor_phone || '';
+            const seller = req.sellers;
+            const sellerLabel = seller
+                ? `${seller.address || 'Adresse ?'}`
+                : null;
+            const matchConf = req.match_confidence || 'none';
+            const matchLabel = matchConf === 'high' ? 'Bien matche' : matchConf === 'medium' ? 'Match partiel' : '';
+            const matchTag = matchLabel ? `<span class="match-tag ${matchConf}">${matchLabel}</span>` : '';
+            const noMatchTag = !seller ? '<span class="match-tag none">Aucun bien matche</span>' : '';
+
+            const propertyLine = sellerLabel
+                ? `${escapeHtml(req.property_type || '')} → ${escapeHtml(sellerLabel)} ${matchTag}`
+                : `${escapeHtml(req.property_address || req.property_type || 'Bien non identifie')} ${noMatchTag}`;
+
+            const msgPreview = req.visitor_message
+                ? `<div class="portal-request-message">"${escapeHtml(req.visitor_message.substring(0, 120))}"</div>`
+                : '';
+
+            return `<div class="portal-request-item" data-request-id="${req.id}">
+                <div class="portal-icon ${colorClass}">${shortLabel}</div>
+                <div class="portal-request-info">
+                    <div class="portal-request-visitor">
+                        ${escapeHtml(visitorName)}
+                        <span>${escapeHtml(phone)}</span>
+                    </div>
+                    <div class="portal-request-property">${propertyLine}</div>
+                    ${msgPreview}
+                </div>
+                <div class="portal-request-actions">
+                    <button class="portal-accept-btn" onclick="acceptPortalRequest('${req.id}', ${seller ? `'${seller.id}'` : 'null'})">
+                        <i class="fa-solid fa-calendar-plus"></i> Planifier
+                    </button>
+                    <button class="portal-dismiss-btn" onclick="dismissPortalRequest('${req.id}')">Ignorer</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function togglePortalBanner() {
+        const card = document.getElementById('portalBannerCard');
+        const btn = document.getElementById('portalBannerToggle');
+        card.classList.toggle('open');
+        btn.textContent = card.classList.contains('open') ? 'Masquer' : 'Afficher';
+    }
+
+    async function acceptPortalRequest(requestId, sellerId) {
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'accept',
+                    seller_id: sellerId,
+                    create_buyer: true
+                })
+            });
+
+            if (resp.ok) {
+                showToast('Visite planifiee !');
+                // Retirer du bandeau
+                portalRequests = portalRequests.filter(r => r.id !== requestId);
+                renderPortalBanner();
+                // Recharger les visites
+                allVisits = await loadAllVisits();
+                renderVisitsPage();
+            } else {
+                showToast('Erreur lors de la planification');
+            }
+        } catch (e) {
+            console.error('[Visites] Accept portal request error:', e);
+            showToast('Erreur reseau');
+        }
+    }
+
+    async function dismissPortalRequest(requestId) {
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'dismiss'
+                })
+            });
+
+            if (resp.ok) {
+                showToast('Demande ignoree');
+                portalRequests = portalRequests.filter(r => r.id !== requestId);
+                renderPortalBanner();
+            }
+        } catch (e) {
+            console.error('[Visites] Dismiss error:', e);
+        }
+    }
+
     function setupFilterListeners() {
         document.getElementById('filterStatus').addEventListener('change', () => renderVisitsPage());
         document.getElementById('filterDateFrom').addEventListener('change', () => renderVisitsPage());
@@ -2081,15 +2458,18 @@
         // Charger les données en parallèle
         const [visits, sellers] = await Promise.all([
             loadAllVisits(),
-            loadActiveSellers()
+            loadActiveSellers(),
+            loadPortalRequests(),
+            loadVisitRequestStats()
         ]);
 
         allVisits = visits;
         activeSellers = sellers;
 
-        console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers');
+        console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers,', portalRequests.length, 'portal requests');
 
         renderVisitsPage();
+        renderPortalBanner();
         setupFilterListeners();
     });
     </script>

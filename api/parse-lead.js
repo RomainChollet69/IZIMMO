@@ -47,7 +47,16 @@ Retourne un JSON avec ces champs :
 - "surface": number ou null — surface du bien en m² (nombre pur, sans unité. Ex: 65, 120)
 - "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage", "piscine", "ascenseur"] (UNIQUEMENT celles explicitement mentionnées)
 - "notes": string ou null — informations COMMERCIALES et RELATIONNELLES (voir règles ci-dessous)
-- "status": string ou null — parmi "hot", "warm", "cold", "off_market" (UNIQUEMENT si explicitement mentionné comme "chaud/chaude", "tiède", "froid/froide", "off market/hors mandat")
+- "status": string ou null — parmi ces valeurs exactes :
+  - "hot" (si "chaud/chaude", "urgent", "très intéressé", "prêt à vendre", "RDV" est mentionné)
+  - "warm" (si "tiède", "à suivre", "en réflexion", "moyen" est mentionné)
+  - "cold" (si "froid/froide", "NRP", "injoignable", "long terme" est mentionné)
+  - "off_market" (si "off market", "hors mandat", "visitable" est mentionné)
+  - "competitor" (si "concurrent", "PAP", "particulier à particulier", "autre agence", "déjà en agence" est mentionné)
+  - "mandate" (si "mandat", "signé", "exclusif" est mentionné)
+  - "sold" (si "vendu", "acte signé" est mentionné)
+  - "lost" (si "perdu", "ne vend plus", "abandonné", "refus" est mentionné)
+  - null (si AUCUN indice de statut n'est mentionné)
 - "reminder": string ou null — date de relance au format AAAA-MM-JJ (si mentionnée)
 
 RÉPARTITION DESCRIPTION vs NOTES — TRÈS IMPORTANT :
@@ -80,6 +89,9 @@ Dictée : "Maison 5 pièces avec jardin et garage, rénové récemment, recomman
 
 Dictée : "Appartement rez-de-chaussée vue sur parc pas de vis-à-vis DPE C, il est pressé car divorce"
 → property_type: "appartement", description: "RDC, vue sur parc, sans vis-à-vis, DPE C", notes: "Pressé, contexte de divorce."
+
+Dictée : "Appartement 75m2 trois chambres à Villeurbanne, c'est du particulier à particulier, trouvé en pige"
+→ property_type: "appartement", surface: 75, description: "3 chambres", address: "Villeurbanne", source: "pige", status: "competitor", notes: null
 
 Règles :
 - NE METS JAMAIS dans notes des infos qui décrivent le bien (étage, chambres, orientation, état, DPE...)

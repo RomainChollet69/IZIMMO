@@ -6540,10 +6540,11 @@
                 const leadName = buyerData ? `${buyerData.first_name || ''} ${buyerData.last_name || ''}`.trim() : '';
                 const notes = currentNotes ? currentNotes.slice(0, 3).map(n => n.content) : [];
 
-                const resp = await fetch('/api/parse-workflow-response', {
+                const resp = await fetch('/api/assistant', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
                     body: JSON.stringify({
+                        action: 'parse_workflow_response',
                         transcription,
                         stepLabel: step.step_label,
                         leadName,

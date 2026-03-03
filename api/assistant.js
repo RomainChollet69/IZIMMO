@@ -43,6 +43,9 @@ export default async function handler(req, res) {
             case 'draft_message':
                 return await handleDraftMessage(req, res, params);
 
+            case 'parse_workflow_response':
+                return await handleParseWorkflowResponse(res, params);
+
             // --- Actions Calendar ---
             case 'list_events':
             case 'find_slots':
@@ -50,6 +53,12 @@ export default async function handler(req, res) {
             case 'update_event':
             case 'delete_event':
                 return await handleCalendarAction(res, user, action, params);
+
+            // --- Actions Visit Requests (portails) ---
+            case 'list_visit_requests':
+                return await handleListVisitRequests(res, user, params);
+            case 'process_visit_request':
+                return await handleProcessVisitRequest(res, user, params);
 
             default:
                 return res.status(400).json({ error: `Action inconnue: ${action}` });
@@ -846,4 +855,232 @@ HISTORIQUE DE CONVERSATION RÉCENT (pour le contexte multi-turn) :
 
 CONTACTS CRM DE L'AGENT (pour matcher les noms — limité aux 50 plus récents, format: prénom nom, téléphone) :
 ${contactsJson}`;
+}
+
+// =================================================================
+// PARSE WORKFLOW RESPONSE — Analyse réponse vocale workflow
+// (Fusionné depuis api/parse-workflow-response.js)
+// =================================================================
+
+async function handleParseWorkflowResponse(res, params) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
+
+    const { transcription, stepLabel, leadName, leadStatus, workflowType, sortOrder, recentNotes } = params;
+    if (!transcription || !stepLabel) return res.status(400).json({ error: 'Missing required fields' });
+
+    const notesContext = recentNotes && recentNotes.length > 0
+        ? recentNotes.slice(0, 3).map(n => `- ${n}`).join('\n')
+        : 'Aucune note récente.';
+
+    const systemPrompt = `Tu es Léon, l'assistant CRM d'un agent immobilier.
+
+CONTEXTE :
+- Question posée à l'agent : "${stepLabel}"
+- Lead concerné : ${leadName || 'inconnu'}
+- Statut actuel : ${leadStatus || 'inconnu'}
+- Workflow en cours : ${workflowType || 'inconnu'}, étape #${sortOrder || '?'}
+- Notes récentes :
+${notesContext}
+
+RÉPONSE TRANSCRITE DE L'AGENT :
+"${transcription}"
+
+Analyse la réponse et retourne UNIQUEMENT un objet JSON valide :
+{
+  "step_completed": true | false,
+  "step_in_progress": true | false,
+  "note_summary": "résumé factuel de ce que l'agent a dit (1-2 phrases max)",
+  "reminder_date": "YYYY-MM-DD" | null,
+  "reminder_reason": "raison du rappel" | null,
+  "todo_text": "tâche à créer" | null,
+  "leon_response": "ce que Léon devrait répondre (encourageant, utile, 1-2 phrases)"
+}
+
+Règles :
+- Si l'agent dit que c'est fait → step_completed = true
+- Si l'agent dit "en cours", "bientôt", "pas encore" → step_in_progress = true, step_completed = false
+- Si l'agent mentionne une date ou un délai → extraire reminder_date (format YYYY-MM-DD)
+- Si l'agent mentionne une action à faire → extraire todo_text
+- Toujours remplir note_summary, même si step_completed = true
+- leon_response doit être encourageant et utile, jamais autoritaire
+- Retourne UNIQUEMENT le JSON, sans markdown, sans commentaire`;
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 20000);
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-haiku-4-5-20251001',
+                max_tokens: 512,
+                messages: [{ role: 'user', content: systemPrompt }]
+            }),
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            console.error('[Assistant] Workflow parse Anthropic error:', response.status, errBody);
+            return res.status(502).json({ error: 'Parsing failed' });
+        }
+
+        const result = await response.json();
+        const text = result.content?.[0]?.text || '';
+
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch (e) {
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                parsed = JSON.parse(jsonMatch[0]);
+            } else {
+                console.error('[Assistant] Failed to parse workflow response:', text);
+                return res.status(502).json({ error: 'Invalid AI response format' });
+            }
+        }
+
+        return res.status(200).json(parsed);
+    } catch (err) {
+        if (err.name === 'AbortError') return res.status(504).json({ error: 'Parsing timeout' });
+        console.error('[Assistant] Parse-workflow error:', err);
+        return res.status(500).json({ error: 'Internal error: ' + err.message });
+    }
+}
+
+// =================================================================
+// VISIT REQUESTS — Gestion des demandes de visite portails
+// =================================================================
+
+async function handleListVisitRequests(res, user, params) {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { status_filter, limit: reqLimit } = params;
+    const statusFilter = status_filter || 'pending';
+    const limitVal = Math.min(reqLimit || 50, 100);
+
+    const query = supabaseAdmin
+        .from('visit_requests')
+        .select('*, sellers:matched_seller_id(id, first_name, last_name, address, property_type, budget)')
+        .eq('user_id', user.id);
+
+    if (statusFilter !== 'all') {
+        query.eq('status', statusFilter);
+    }
+
+    const { data, error } = await query
+        .order('email_date', { ascending: false })
+        .limit(limitVal);
+
+    if (error) {
+        console.error('[Assistant] List visit requests error:', error);
+        return res.status(500).json({ error: 'Erreur chargement demandes' });
+    }
+
+    return res.status(200).json({ requests: data || [] });
+}
+
+async function handleProcessVisitRequest(res, user, params) {
+    const supabaseAdmin = getSupabaseAdmin();
+    const { request_id, decision, seller_id, create_buyer, visit_date, visit_time } = params;
+
+    if (!request_id || !decision) {
+        return res.status(400).json({ error: 'request_id et decision requis' });
+    }
+
+    // Charger la demande
+    const { data: vr, error: vrError } = await supabaseAdmin
+        .from('visit_requests')
+        .select('*')
+        .eq('id', request_id)
+        .eq('user_id', user.id)
+        .single();
+
+    if (vrError || !vr) {
+        return res.status(404).json({ error: 'Demande non trouvée' });
+    }
+
+    if (decision === 'dismiss') {
+        await supabaseAdmin.from('visit_requests')
+            .update({ status: 'dismissed', updated_at: new Date().toISOString() })
+            .eq('id', request_id);
+        return res.status(200).json({ dismissed: true });
+    }
+
+    if (decision === 'accept') {
+        const finalSellerId = seller_id || vr.matched_seller_id;
+
+        // Créer un buyer si demandé
+        let buyerId = null;
+        if (create_buyer && (vr.visitor_name || vr.visitor_phone)) {
+            const buyerData = {
+                user_id: user.id,
+                first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
+                last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
+                phone: vr.visitor_phone || null,
+                email: vr.visitor_email || null,
+                source: 'site_annonce',
+                status: 'nouveau',
+                contact_date: new Date().toISOString().split('T')[0],
+                notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+            };
+            const { data: buyer, error: buyerErr } = await supabaseAdmin
+                .from('buyers')
+                .insert([buyerData])
+                .select();
+            if (!buyerErr && buyer?.[0]) {
+                buyerId = buyer[0].id;
+            }
+        }
+
+        // Créer la visite
+        const visitData = {
+            user_id: user.id,
+            seller_id: finalSellerId || null,
+            buyer_id: buyerId || null,
+            buyer_name: vr.visitor_name || 'Visiteur portail',
+            visitor_phone: vr.visitor_phone || null,
+            visitor_email: vr.visitor_email || null,
+            visit_date: visit_date || new Date().toISOString().split('T')[0],
+            visit_time: visit_time || null,
+            status: 'planifiee',
+            notes: `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`
+        };
+
+        const { data: visit, error: visitErr } = await supabaseAdmin
+            .from('visits')
+            .insert([visitData])
+            .select();
+
+        if (visitErr) {
+            console.error('[Assistant] Create visit error:', visitErr);
+            return res.status(500).json({ error: 'Erreur création visite' });
+        }
+
+        // MAJ visit_request
+        await supabaseAdmin.from('visit_requests')
+            .update({
+                status: 'accepted',
+                created_visit_id: visit[0].id,
+                created_buyer_id: buyerId,
+                matched_seller_id: finalSellerId,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', request_id);
+
+        return res.status(200).json({
+            accepted: true,
+            visit: visit[0],
+            buyer_id: buyerId
+        });
+    }
+
+    return res.status(400).json({ error: 'decision doit être accept ou dismiss' });
 }
