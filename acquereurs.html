@@ -4144,6 +4144,93 @@
                 await loadMatchingVisits(editId);
                 cancelMatchVisitForm();
                 showMatchToast('Visite planifiée');
+
+                // Sync Google Calendar (non-bloquant)
+                const buyer = buyers.find(b => b.id === buyerId);
+                const seller = sellerId ? (matchSellers || []).find(s => s.id === sellerId) : null;
+                syncVisitToCalendar(created, seller, buyer);
+            }
+        }
+
+        /**
+         * Sync une visite vers Google Calendar (fire-and-forget).
+         * Ne bloque pas la création de visite si le Calendar échoue.
+         */
+        const VISIT_DEFAULT_START = '10:00';
+        const VISIT_DURATION_MIN = 30;
+
+        async function syncVisitToCalendar(visit, seller, buyer) {
+            try {
+                // Titre : "Visite Lyon 6ème — Jean Dupont"
+                const buyerName = buyer
+                    ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim()
+                    : (visit.buyer_name || 'Acquéreur');
+                const city = seller?.address ? (extractCity(seller.address) || '') : (seller?.city || '');
+                const title = `Visite${city ? ' ' + city : ''} — ${buyerName}`;
+
+                // Date et heures
+                const date = visit.visit_date;
+                const startTime = visit.visit_time
+                    ? visit.visit_time.substring(0, 5)
+                    : VISIT_DEFAULT_START;
+                const [h, m] = startTime.split(':').map(Number);
+                const endMin = h * 60 + m + VISIT_DURATION_MIN;
+                const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+
+                // Location = adresse du bien
+                const location = seller?.address || '';
+
+                // Description = coordonnées acquéreur + vendeur + notes
+                const descParts = [];
+                descParts.push(`Acquéreur : ${buyerName}`);
+                if (buyer?.phone) descParts.push(`Tél : ${buyer.phone}`);
+                if (buyer?.email) descParts.push(`Email : ${buyer.email}`);
+                if (seller) {
+                    const sellerName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
+                    if (sellerName) descParts.push(`\nVendeur : ${sellerName}`);
+                    if (seller.phone) descParts.push(`Tél vendeur : ${seller.phone}`);
+                }
+                if (visit.notes) descParts.push(`\nNotes : ${visit.notes}`);
+                const description = descParts.join('\n');
+
+                const headers = await getAuthHeaders();
+                const resp = await fetch('/api/assistant', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        action: 'create_event',
+                        title, date,
+                        start_time: startTime,
+                        end_time: endTime,
+                        location, description
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    if (err.error === 'calendar_not_connected') {
+                        console.log('[CalendarSync] Calendar non connecté, skip');
+                        return;
+                    }
+                    console.warn('[CalendarSync] Échec sync:', err.error || resp.status);
+                    showMatchToast('Agenda non synchronisé');
+                    return;
+                }
+
+                const data = await resp.json();
+                if (data.event?.id) {
+                    // Stocker l'event ID sur la visite pour future sync
+                    const userId = await getCurrentUserId();
+                    if (userId) {
+                        await supabaseClient.from('visits')
+                            .update({ google_event_id: data.event.id })
+                            .eq('id', visit.id)
+                            .eq('user_id', userId);
+                    }
+                    showMatchToast('Visite ajoutée au calendrier ✓');
+                }
+            } catch (err) {
+                console.error('[CalendarSync] Erreur:', err);
             }
         }
 
