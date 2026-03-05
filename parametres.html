@@ -1575,6 +1575,56 @@
         .email-fwd-status-text { flex: 1; }
         .email-fwd-status-text strong { display: block; font-size: 14px; }
         .email-fwd-status-text small { color: var(--text-light); font-size: 12px; }
+        /* Bandeau confirmation transfert Gmail */
+        .email-fwd-confirm-banner {
+            display: flex;
+            gap: 12px;
+            padding: 16px;
+            background: #E3F2FD;
+            border: 1px solid #90CAF9;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .email-fwd-confirm-icon {
+            font-size: 24px;
+            color: #1565C0;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .email-fwd-confirm-content { flex: 1; }
+        .email-fwd-confirm-content strong {
+            display: block;
+            font-size: 14px;
+            color: #1565C0;
+            margin-bottom: 4px;
+        }
+        .email-fwd-confirm-content p {
+            font-size: 13px;
+            color: #37474F;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .email-fwd-confirm-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #1565C0;
+            color: white;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .email-fwd-confirm-link:hover { background: #0D47A1; }
+        .email-fwd-confirm-content small {
+            display: block;
+            margin-top: 8px;
+            color: var(--text-light);
+            font-size: 11px;
+        }
+
         .email-fwd-address-box {
             display: flex;
             align-items: center;
@@ -2387,7 +2437,7 @@
 
             const { data: integration, error } = await supabaseClient
                 .from('user_integrations')
-                .select('inbound_email, inbound_email_token, email_forwarding_active')
+                .select('inbound_email, inbound_email_token, email_forwarding_active, forwarding_confirmation_link, forwarding_confirmation_date')
                 .eq('user_id', currentUserId)
                 .maybeSingle();
 
@@ -2422,6 +2472,23 @@
                 ? `Actif &mdash; ${totalEmails} email${totalEmails > 1 ? 's' : ''} recu${totalEmails > 1 ? 's' : ''}`
                 : 'En attente du premier email';
 
+            // Bandeau de confirmation de transfert Gmail/Outlook
+            const confirmLink = integration?.forwarding_confirmation_link;
+            const confirmDate = integration?.forwarding_confirmation_date;
+            const confirmBanner = confirmLink ? `
+                <div class="email-fwd-confirm-banner">
+                    <div class="email-fwd-confirm-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                    <div class="email-fwd-confirm-content">
+                        <strong>Confirmation de transfert requise</strong>
+                        <p>Gmail a envoye un email de confirmation. Clique sur le lien ci-dessous pour valider le transfert automatique :</p>
+                        <a href="${escapeHtml(confirmLink)}" target="_blank" rel="noopener" class="email-fwd-confirm-link">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i> Confirmer le transfert
+                        </a>
+                        <small>Recu le ${confirmDate ? new Date(confirmDate).toLocaleString('fr-FR') : '?'}</small>
+                    </div>
+                </div>
+            ` : '';
+
             zone.innerHTML = `
                 <div class="email-fwd-status ${statusClass}">
                     <span class="email-fwd-status-icon">${statusIcon}</span>
@@ -2430,6 +2497,8 @@
                         <small>Les demandes de visite des portails apparaitront dans ta page Visites.</small>
                     </div>
                 </div>
+
+                ${confirmBanner}
 
                 <div class="email-fwd-address-box">
                     <span class="email-fwd-address" id="inboundEmailAddr">${escapeHtml(inboundEmail)}</span>
@@ -2442,7 +2511,9 @@
                     <div class="email-fwd-howto-title">Comment configurer le transfert ?</div>
                     <ol>
                         <li><strong>Copie</strong> l'adresse ci-dessus</li>
-                        <li>Dans ta messagerie (Gmail, Outlook...), cree une <strong>regle de transfert automatique</strong> pour les emails de SeLoger, LeBonCoin, BienIci, PAP, etc.</li>
+                        <li>Dans ta messagerie (Gmail, Outlook...), ajoute cette adresse comme <strong>adresse de transfert</strong> dans les parametres</li>
+                        <li>Gmail enverra un email de confirmation — <strong>le lien apparaitra ici automatiquement</strong></li>
+                        <li>Clique sur le lien pour valider, puis cree une <strong>regle de transfert automatique</strong> pour les emails de SeLoger, LeBonCoin, BienIci, PAP, etc.</li>
                         <li>Les demandes de visite apparaitront automatiquement dans ta page <strong><a href="visites.html" style="color:#667eea;">Visites</a></strong> !</li>
                     </ol>
                 </div>

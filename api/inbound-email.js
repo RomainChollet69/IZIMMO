@@ -50,7 +50,16 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: 'Unknown recipient, ignored' });
         }
 
-        // 4. Déduplication par email_message_id
+        // 4. Intercepter les emails de confirmation de transfert (Gmail, Outlook)
+        const sender = fields.sender || fields.from || '';
+        const subject = fields.subject || '';
+        const confirmResult = await handleForwardingConfirmation(agent.user_id, sender, subject, fields);
+        if (confirmResult) {
+            console.log(`[InboundEmail] Confirmation transfert interceptée pour agent ${agent.user_id}`);
+            return res.status(200).json({ message: 'Forwarding confirmation captured' });
+        }
+
+        // 5. Déduplication par email_message_id
         const messageId = fields['Message-Id'] || fields['message-id'] || `auto-${Date.now()}`;
         const isDuplicate = await checkDuplicate(agent.user_id, messageId);
         if (isDuplicate) {
@@ -58,10 +67,8 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: 'Already processed' });
         }
 
-        // 5. Parser le contenu avec Claude Haiku
+        // 6. Parser le contenu avec Claude Haiku
         const emailBody = fields['body-plain'] || fields['body-html'] || '';
-        const subject = fields.subject || '';
-        const sender = fields.sender || fields.from || '';
 
         const parsed = await parseEmailWithClaude(emailBody, subject, sender);
         if (!parsed || !parsed.is_visit_request) {
@@ -69,10 +76,10 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: 'Not a visit request, ignored' });
         }
 
-        // 6. Matcher avec les sellers existants de l'agent
+        // 7. Matcher avec les sellers existants de l'agent
         const matchResult = await matchSeller(agent.user_id, parsed);
 
-        // 7. Insérer dans visit_requests
+        // 8. Insérer dans visit_requests
         const supabaseAdmin = getSupabaseAdmin();
         const emailDate = fields.timestamp
             ? new Date(parseInt(fields.timestamp) * 1000).toISOString()
@@ -218,6 +225,77 @@ async function checkDuplicate(userId, messageId) {
         .limit(1);
 
     return data && data.length > 0;
+}
+
+// =================================================================
+// Interception des emails de confirmation de transfert (Gmail, Outlook)
+// =================================================================
+
+// Patterns d'expéditeurs de confirmation connus
+const CONFIRMATION_SENDERS = [
+    'forwarding-noreply@google.com',     // Gmail
+    'no-reply@microsoft.com',            // Outlook/365
+    'postmaster@outlook.com'             // Outlook legacy
+];
+
+async function handleForwardingConfirmation(userId, sender, subject, fields) {
+    // Vérifier si c'est un email de confirmation de transfert
+    const senderLower = sender.toLowerCase();
+    const isConfirmation = CONFIRMATION_SENDERS.some(s => senderLower.includes(s))
+        && /confirm|transfert|forwarding|vérif/i.test(subject);
+
+    if (!isConfirmation) return false;
+
+    // Extraire le lien de confirmation depuis le body HTML ou plain
+    const body = fields['body-html'] || fields['body-plain'] || '';
+    const confirmLink = extractConfirmationLink(body);
+
+    if (!confirmLink) {
+        console.warn('[InboundEmail] Email de confirmation détecté mais aucun lien trouvé');
+        return false;
+    }
+
+    // Sauvegarder le lien dans user_integrations
+    const supabaseAdmin = getSupabaseAdmin();
+    const { error } = await supabaseAdmin
+        .from('user_integrations')
+        .update({
+            forwarding_confirmation_link: confirmLink,
+            forwarding_confirmation_date: new Date().toISOString()
+        })
+        .eq('user_id', userId);
+
+    if (error) {
+        console.error('[InboundEmail] Erreur sauvegarde lien confirmation:', error);
+        return false;
+    }
+
+    return true;
+}
+
+function extractConfirmationLink(html) {
+    // Gmail : lien de confirmation contient "mail.google.com/mail" ou "google.com/...confirm"
+    // Pattern 1 : href="https://...google.com/.../ConfirmForwarding..."
+    const googleMatch = html.match(/href="(https?:\/\/[^"]*(?:ConfirmForwarding|confirm)[^"]*)"/i);
+    if (googleMatch) return googleMatch[1];
+
+    // Pattern 2 : lien mail.google.com générique
+    const gmailMatch = html.match(/href="(https?:\/\/mail\.google\.com\/mail\/[^"]*)"/i);
+    if (gmailMatch) return gmailMatch[1];
+
+    // Pattern 3 : Outlook — lien Microsoft de confirmation
+    const outlookMatch = html.match(/href="(https?:\/\/[^"]*(?:microsoft|outlook)[^"]*(?:confirm|verify)[^"]*)"/i);
+    if (outlookMatch) return outlookMatch[1];
+
+    // Pattern 4 : fallback — premier lien HTTP qui contient "confirm" ou "verify"
+    const genericMatch = html.match(/href="(https?:\/\/[^"]*(?:confirm|verify|forwarding)[^"]*)"/i);
+    if (genericMatch) return genericMatch[1];
+
+    // Pattern 5 : lien en texte brut (pas de HTML)
+    const plainMatch = html.match(/(https?:\/\/\S*(?:confirm|verify|forwarding)\S*)/i);
+    if (plainMatch) return plainMatch[1];
+
+    return null;
 }
 
 // =================================================================
