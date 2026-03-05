@@ -2463,7 +2463,7 @@
                 .replace(/[^a-z]/g, '');
 
             const token = crypto.randomUUID().split('-')[0];
-            const inboundEmail = `${prenom}-${token}@inbound.leon-crm.com`;
+            const inboundEmail = `${prenom}-${token}@inbound.avecleon.fr`;
 
             const { error } = await supabaseClient
                 .from('user_integrations')

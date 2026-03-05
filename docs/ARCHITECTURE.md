@@ -392,7 +392,7 @@ Agent reçoit un email portail (SeLoger, LeBonCoin, BienIci, PAP...)
     ├── Règle de transfert auto (Gmail/Outlook)
     │
     ▼
-romain-a1b2@inbound.leon-crm.com (Mailgun Inbound Parse)
+romain-a1b2@inbound.avecleon.fr (Mailgun Inbound Parse)
     │
     ├── POST webhook multipart/form-data
     │
@@ -414,7 +414,7 @@ visites.html — Bandeau "Nouvelles demandes"
 ```
 
 **Configuration agent** (parametres.html) :
-1. Adresse inbound générée automatiquement (prénom-token@inbound.leon-crm.com)
+1. Adresse inbound générée automatiquement (prénom-token@inbound.avecleon.fr)
 2. L'agent crée une règle de transfert dans sa messagerie
 
 ---
