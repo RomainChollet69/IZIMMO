@@ -435,14 +435,14 @@
 
         /* ===== PIPELINE ===== */
         .pipeline {
-            display: flex;
-            gap: 24px;
+            display: grid;
+            grid-template-columns: repeat(8, minmax(240px, 1fr));
+            gap: 28px;
             overflow-x: auto;
-            overscroll-behavior: contain;
-            padding: 0 28px 24px 28px;
+            overscroll-behavior: none;
+            padding: 0 28px 28px 28px;
             height: calc(100vh - 230px);
             cursor: grab;
-            -webkit-overflow-scrolling: touch;
         }
         .pipeline.grabbing { cursor: grabbing; }
 
@@ -451,8 +451,6 @@
         .pipeline::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.25); }
 
         .column {
-            min-width: 280px;
-            flex: 0 0 280px;
             display: flex;
             flex-direction: column;
             background: rgba(255, 255, 255, 0.75);
