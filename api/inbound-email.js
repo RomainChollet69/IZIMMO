@@ -251,8 +251,10 @@ async function handleForwardingConfirmation(userId, sender, subject, fields) {
     const confirmLink = extractConfirmationLink(body);
 
     if (!confirmLink) {
-        console.warn('[InboundEmail] Email de confirmation détecté mais aucun lien trouvé');
-        return false;
+        // Log le body pour debug — les liens Gmail peuvent avoir un format inattendu
+        console.warn('[InboundEmail] Email de confirmation détecté mais aucun lien trouvé. Body (500 chars):', body.substring(0, 500));
+        // Même sans lien, on return true pour éviter d'envoyer ça à Claude (gaspillage)
+        return true;
     }
 
     // Sauvegarder le lien dans user_integrations
@@ -274,26 +276,44 @@ async function handleForwardingConfirmation(userId, sender, subject, fields) {
 }
 
 function extractConfirmationLink(html) {
-    // Gmail : lien de confirmation contient "mail.google.com/mail" ou "google.com/...confirm"
-    // Pattern 1 : href="https://...google.com/.../ConfirmForwarding..."
-    const googleMatch = html.match(/href="(https?:\/\/[^"]*(?:ConfirmForwarding|confirm)[^"]*)"/i);
-    if (googleMatch) return googleMatch[1];
+    // Décoder les entités HTML (&amp; → &, etc.) pour normaliser les liens
+    const decoded = html.replace(/&amp;/g, '&').replace(/&#x3D;/g, '=').replace(/&#61;/g, '=');
 
-    // Pattern 2 : lien mail.google.com générique
-    const gmailMatch = html.match(/href="(https?:\/\/mail\.google\.com\/mail\/[^"]*)"/i);
-    if (gmailMatch) return gmailMatch[1];
+    // Extraire TOUS les liens href du HTML
+    const allHrefs = [];
+    const hrefRegex = /href=["']([^"']+)["']/gi;
+    let m;
+    while ((m = hrefRegex.exec(decoded)) !== null) {
+        allHrefs.push(m[1]);
+    }
 
-    // Pattern 3 : Outlook — lien Microsoft de confirmation
-    const outlookMatch = html.match(/href="(https?:\/\/[^"]*(?:microsoft|outlook)[^"]*(?:confirm|verify)[^"]*)"/i);
-    if (outlookMatch) return outlookMatch[1];
+    // Aussi chercher les URLs en texte brut (pas dans des href)
+    const plainUrls = decoded.match(/https?:\/\/[^\s<>"']+/gi) || [];
+    const allLinks = [...allHrefs, ...plainUrls];
 
-    // Pattern 4 : fallback — premier lien HTTP qui contient "confirm" ou "verify"
-    const genericMatch = html.match(/href="(https?:\/\/[^"]*(?:confirm|verify|forwarding)[^"]*)"/i);
-    if (genericMatch) return genericMatch[1];
+    // Priorité 1 : lien Google contenant "ConfirmForwarding" ou "confirm"
+    const googleConfirm = allLinks.find(l => /google\.com/i.test(l) && /confirm/i.test(l));
+    if (googleConfirm) return googleConfirm;
 
-    // Pattern 5 : lien en texte brut (pas de HTML)
-    const plainMatch = html.match(/(https?:\/\/\S*(?:confirm|verify|forwarding)\S*)/i);
-    if (plainMatch) return plainMatch[1];
+    // Priorité 2 : lien mail.google.com (page Gmail)
+    const gmailLink = allLinks.find(l => /mail\.google\.com/i.test(l));
+    if (gmailLink) return gmailLink;
+
+    // Priorité 3 : lien Microsoft/Outlook de confirmation
+    const msLink = allLinks.find(l => /(?:microsoft|outlook)\.com/i.test(l) && /(?:confirm|verify)/i.test(l));
+    if (msLink) return msLink;
+
+    // Priorité 4 : tout lien contenant "confirm" ou "verify"
+    const confirmLink = allLinks.find(l => /(?:confirm|verify)/i.test(l) && /^https?:\/\//i.test(l));
+    if (confirmLink) return confirmLink;
+
+    // Priorité 5 : premier lien HTTP (hors images, CSS, trackers courants)
+    const firstUseful = allLinks.find(l =>
+        /^https?:\/\//i.test(l)
+        && !/\.(png|jpg|gif|css|ico)/i.test(l)
+        && !/tracking|pixel|beacon|unsubscribe/i.test(l)
+    );
+    if (firstUseful) return firstUseful;
 
     return null;
 }
