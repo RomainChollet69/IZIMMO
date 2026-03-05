@@ -4,6 +4,22 @@
 
 ---
 
+## Session 2026-03-05
+
+### Modifications
+- `api/parse-lead.js` : Fix extraction vocale — ajout des 8 statuts valides (était limité à 4 : hot/warm/cold/off_market). "Particulier à particulier" mappe maintenant vers `competitor`. Ajout d'un exemple explicite surface + PAP pour guider Haiku.
+
+### Fichiers créés/modifiés
+- `api/parse-lead.js`
+
+### Points d'attention / bugs connus
+- WiFi public (aéroport) cause `ERR_CERT_AUTHORITY_INVALID` sur toutes les requêtes HTTPS — pas un bug code, problème réseau
+
+### Prochaines étapes prioritaires
+- Push groupé avec les prochaines modifs (économie builds Vercel)
+
+---
+
 ## Session 2026-03-02n — Automatisation demandes de visites portails
 
 ### Résumé

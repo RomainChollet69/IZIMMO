@@ -754,6 +754,81 @@
         .column[data-status="achete_ailleurs"] .lead-card { border-left-color: #F59E0B; }
         .column[data-status="abandon"] .lead-card { border-left-color: #EF5350; }
 
+        /* Couleurs colonnes type de bien */
+        .column[data-status="studio_t1"] .lead-card { border-left-color: #42A5F5; }
+        .column[data-status="t2"] .lead-card { border-left-color: #7C4DFF; }
+        .column[data-status="t3"] .lead-card { border-left-color: #26A69A; }
+        .column[data-status="t4_plus"] .lead-card { border-left-color: #FF7043; }
+        .column[data-status="maison_small"] .lead-card { border-left-color: #66BB6A; }
+        .column[data-status="maison_big"] .lead-card { border-left-color: #AB47BC; }
+        .column[data-status="autre"] .lead-card { border-left-color: #78909C; }
+
+        /* Headers type de bien — gradient par défaut (pas d'image) */
+        .column-header.header-studio_t1 { background: linear-gradient(135deg, #42A5F5, #1E88E5); }
+        .column-header.header-t2 { background: linear-gradient(135deg, #7C4DFF, #651FFF); }
+        .column-header.header-t3 { background: linear-gradient(135deg, #26A69A, #00897B); }
+        .column-header.header-t4_plus { background: linear-gradient(135deg, #FF7043, #F4511E); }
+        .column-header.header-maison_small { background: linear-gradient(135deg, #66BB6A, #43A047); }
+        .column-header.header-maison_big { background: linear-gradient(135deg, #AB47BC, #8E24AA); }
+        .column-header.header-autre { background: linear-gradient(135deg, #78909C, #546E7A); }
+
+        /* Toggle vue pipeline */
+        .view-toggle {
+            display: flex;
+            background: #F1F5F9;
+            border-radius: 8px;
+            padding: 3px;
+            gap: 2px;
+            margin-left: 12px;
+            flex-shrink: 0;
+        }
+        .view-toggle-btn {
+            padding: 6px 14px;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #64748B;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .view-toggle-btn.active {
+            background: white;
+            color: #1E293B;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            font-weight: 600;
+        }
+        .view-toggle-btn:hover:not(.active) {
+            color: #334155;
+        }
+
+        /* Titre de colonne éditable */
+        .column-label-editable {
+            cursor: pointer;
+            border-bottom: 1px dashed rgba(255,255,255,0.4);
+        }
+        .column-label-editable:hover {
+            border-bottom-color: rgba(255,255,255,0.8);
+        }
+        .column-label-input {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 4px;
+            color: white;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-style: italic;
+            padding: 2px 6px;
+            width: 100%;
+            outline: none;
+        }
+
         .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
 
         .card-compact .card-name { font-size: 15px; margin-bottom: 4px; }
@@ -2879,6 +2954,10 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
+        <div class="view-toggle" id="viewToggle">
+            <button class="view-toggle-btn active" data-view="status">Par étape</button>
+            <button class="view-toggle-btn" data-view="property_type">Par type de bien</button>
+        </div>
         <button class="add-btn" id="addBuyerBtn">+ Lead</button>
     </div>
 
@@ -3380,6 +3459,65 @@
     <button id="leonFab" class="leon-fab" style="display:none" onclick="reopenLeonPopup()"><img src="img/Leon.png" alt="Léon" class="leon-avatar leon-avatar-fab"></button>
 
     <script>
+        // ===== DOUBLE VUE PIPELINE =====
+        const STATUS_COLUMNS = [
+            { key: 'nouveau', label: 'NOUVEAUX', title: 'Premier contact', icon: '🆕', color: '#42A5F5' },
+            { key: 'actif', label: 'RECHERCHE ACTIVE', title: 'Critères définis, envoi de biens', icon: '🔍', color: '#AB47BC' },
+            { key: 'achete_avec_moi', label: 'ACHETÉS AVEC MOI 🎉', title: 'Mes transactions', icon: '🎉', color: '#66BB6A' },
+            { key: 'achete_ailleurs', label: 'ACHETÉS AILLEURS 🔄', title: 'Ont trouvé sans moi', icon: '🔄', color: '#F59E0B' },
+            { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350' }
+        ];
+
+        const PROPERTY_COLUMNS = [
+            { key: 'studio_t1', label: 'STUDIO / T1', title: 'Produits d\'investissement', icon: '🏢', color: '#42A5F5' },
+            { key: 't2', label: 'T2', title: 'Appartements 2 pièces', icon: '🏢', color: '#7C4DFF' },
+            { key: 't3', label: 'T3', title: 'Appartements 3 pièces', icon: '🏢', color: '#26A69A' },
+            { key: 't4_plus', label: 'T4 ET PLUS', title: 'Grands appartements', icon: '🏢', color: '#FF7043' },
+            { key: 'maison_small', label: 'MAISONS < 500K', title: 'Maisons budget modéré', icon: '🏡', color: '#66BB6A' },
+            { key: 'maison_big', label: 'MAISONS ≥ 500K', title: 'Maisons haut de gamme', icon: '🏡', color: '#AB47BC' },
+            { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C' }
+        ];
+
+        let currentPipelineView = localStorage.getItem('leon_buyer_pipeline_view') || 'status';
+
+        /** Détermine la colonne "type de bien" d'un acquéreur selon ses critères */
+        function getBuyerPropertyColumn(buyer) {
+            const type = (buyer.property_type || '').toLowerCase();
+            const rooms = (buyer.rooms || '').toUpperCase();
+            const budget = parseFloat(buyer.budget_max) || 0;
+
+            if (type === 'appartement' || type === 'appartement_ou_maison') {
+                if (rooms === 'T1') return 'studio_t1';
+                if (rooms === 'T2') return 't2';
+                if (rooms === 'T3') return 't3';
+                if (rooms === 'T4' || rooms === 'T5+') return 't4_plus';
+                if (type === 'appartement') return 'autre';
+            }
+            if (type === 'maison' || (type === 'appartement_ou_maison' && !rooms)) {
+                return budget >= 500000 ? 'maison_big' : 'maison_small';
+            }
+            return 'autre';
+        }
+
+        /** Retourne les colonnes actives selon la vue courante */
+        function getActiveColumns() {
+            return currentPipelineView === 'property_type' ? PROPERTY_COLUMNS : STATUS_COLUMNS;
+        }
+
+        /** Retourne les labels custom depuis localStorage */
+        function getCustomLabels() {
+            try {
+                return JSON.parse(localStorage.getItem('leon_buyer_column_labels') || '{}');
+            } catch { return {}; }
+        }
+
+        /** Sauvegarde un label custom */
+        function saveCustomLabel(key, label) {
+            const labels = getCustomLabels();
+            labels[key] = label;
+            localStorage.setItem('leon_buyer_column_labels', JSON.stringify(labels));
+        }
+
         // ===== DONNÉES =====
         let buyers = [];
         let currentLinks = [];
@@ -4658,9 +4796,15 @@
         }
 
         function updateMobileTabCounts() {
-            BUYER_TABS.forEach(tab => {
-                const count = buyers.filter(b => b.status === tab.status).length;
-                const btn = document.querySelector(`.mobile-tab[data-status="${tab.status}"] .tab-count`);
+            const columns = getActiveColumns();
+            columns.forEach(col => {
+                let count;
+                if (currentPipelineView === 'property_type') {
+                    count = buyers.filter(b => getBuyerPropertyColumn(b) === col.key).length;
+                } else {
+                    count = buyers.filter(b => b.status === col.key).length;
+                }
+                const btn = document.querySelector(`.mobile-tab[data-status="${col.key}"] .tab-count`);
                 if (btn) btn.textContent = `(${count})`;
             });
         }
@@ -4702,10 +4846,12 @@
             buyer.position = 0;
             await updateBuyer(buyerId, { status: newStatus, position: 0 });
             renderBuyers();
-            // Renuméroter la colonne cible
-            const targetContainer = document.getElementById(newStatus + '-container');
-            if (targetContainer) await updatePositions(targetContainer, newStatus);
-            setMobileTab(newStatus);
+            // Renuméroter la colonne cible (seulement en vue status)
+            if (currentPipelineView === 'status') {
+                const targetContainer = document.getElementById(newStatus + '-container');
+                if (targetContainer) await updatePositions(targetContainer, newStatus);
+                setMobileTab(newStatus);
+            }
         }
 
         // ===== AUTH HELPER =====
@@ -4798,25 +4944,153 @@
             return true;
         }
 
+        // ===== SWITCH VUE PIPELINE =====
+        /**
+         * Bascule entre la vue "par étape" (status) et "par type de bien" (property_type).
+         * Régénère dynamiquement les colonnes du pipeline et les tabs mobiles.
+         */
+        function switchPipelineView(view) {
+            currentPipelineView = view;
+            localStorage.setItem('leon_buyer_pipeline_view', view);
+
+            // MAJ toggle buttons
+            document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+
+            const columns = getActiveColumns();
+            const customLabels = getCustomLabels();
+            const pipeline = document.querySelector('.pipeline');
+            if (!pipeline) return;
+
+            // Régénérer les colonnes HTML
+            pipeline.innerHTML = columns.map(col => {
+                const displayLabel = customLabels[col.key] || col.label;
+                return `
+                <div class="column" data-status="${col.key}">
+                    <div class="column-top">
+                        <div class="column-header header-${col.key}">
+                            <div class="column-label column-label-editable" data-col-key="${col.key}">${displayLabel}</div>
+                        </div>
+                        <div class="column-title">${col.title}</div>
+                        <div class="column-count"><span>📋</span><span class="count">0</span></div>
+                    </div>
+                    <div class="cards-container" id="${col.key}-container"></div>
+                </div>`;
+            }).join('');
+
+            // Régénérer les tabs mobiles
+            const tabsContainer = document.getElementById('mobileTabs');
+            if (tabsContainer) {
+                tabsContainer.innerHTML = columns.map((col, i) => {
+                    const displayLabel = customLabels[col.key] || col.label;
+                    const shortLabel = displayLabel.length > 15 ? displayLabel.substring(0, 15) + '…' : displayLabel;
+                    return `<button class="mobile-tab${i === 0 ? ' active' : ''}" data-status="${col.key}">${col.icon} ${shortLabel} <span class="tab-count">(0)</span></button>`;
+                }).join('');
+
+                // Réattacher les handlers de clic sur les tabs
+                tabsContainer.querySelectorAll('.mobile-tab').forEach(tab => {
+                    tab.addEventListener('click', () => setMobileTab(tab.dataset.status));
+                });
+            }
+
+            // Réattacher le drag-and-drop seulement en vue status
+            if (view === 'status') {
+                setupDragAndDrop();
+            }
+
+            // Réattacher l'édition inline des titres
+            setupColumnLabelEditing();
+
+            // Réattacher le grab & scroll horizontal
+            setupPipelineGrab();
+
+            // Rendre les buyers
+            renderBuyers();
+
+            // Activer le bon tab mobile
+            const firstKey = columns[0]?.key;
+            if (firstKey && isMobile()) setMobileTab(firstKey);
+        }
+
+        /** Permet l'édition inline des titres de colonnes par double-clic */
+        function setupColumnLabelEditing() {
+            document.querySelectorAll('.column-label-editable').forEach(label => {
+                label.addEventListener('dblclick', (e) => {
+                    e.stopPropagation();
+                    const key = label.dataset.colKey;
+                    const currentText = label.textContent;
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'column-label-input';
+                    input.value = currentText;
+                    label.replaceWith(input);
+                    input.focus();
+                    input.select();
+
+                    const finishEdit = () => {
+                        const newText = input.value.trim().toUpperCase() || currentText;
+                        saveCustomLabel(key, newText);
+                        const newLabel = document.createElement('div');
+                        newLabel.className = 'column-label column-label-editable';
+                        newLabel.dataset.colKey = key;
+                        newLabel.textContent = newText;
+                        input.replaceWith(newLabel);
+                        // Réattacher le double-clic sur le nouveau label
+                        setupColumnLabelEditing();
+                    };
+
+                    input.addEventListener('blur', finishEdit);
+                    input.addEventListener('keydown', (ev) => {
+                        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+                        if (ev.key === 'Escape') { input.value = currentText; input.blur(); }
+                    });
+                });
+            });
+        }
+
+        /** Réattache le grab & scroll horizontal sur le pipeline */
+        function setupPipelineGrab() {
+            const pipelineEl = document.querySelector('.pipeline');
+            if (!pipelineEl) return;
+            let isGrabbing = false;
+            let grabStartX = 0;
+            let grabScrollLeft = 0;
+
+            pipelineEl.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.lead-card, button, a, input, select, textarea, .modal')) return;
+                isGrabbing = true;
+                pipelineEl.classList.add('grabbing');
+                grabStartX = e.pageX - pipelineEl.offsetLeft;
+                grabScrollLeft = pipelineEl.scrollLeft;
+                e.preventDefault();
+            });
+            pipelineEl.addEventListener('mousemove', (e) => {
+                if (!isGrabbing) return;
+                e.preventDefault();
+                const x = e.pageX - pipelineEl.offsetLeft;
+                pipelineEl.scrollLeft = grabScrollLeft - (x - grabStartX);
+            });
+            const stopGrab = () => { isGrabbing = false; pipelineEl.classList.remove('grabbing'); };
+            pipelineEl.addEventListener('mouseup', stopGrab);
+            pipelineEl.addEventListener('mouseleave', stopGrab);
+        }
+
         // ===== RENDU =====
         function renderBuyers() {
-            const containers = {
-                nouveau: document.getElementById('nouveau-container'),
-                actif: document.getElementById('actif-container'),
-                achete_avec_moi: document.getElementById('achete_avec_moi-container'),
-                achete_ailleurs: document.getElementById('achete_ailleurs-container'),
-                abandon: document.getElementById('abandon-container')
-            };
+            const columns = getActiveColumns();
+            const containers = {};
+            columns.forEach(col => {
+                containers[col.key] = document.getElementById(col.key + '-container');
+            });
 
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
-            // Affichage conditionnel des fiches d'exemple
-            if (buyers.length === 0 || localStorage.getItem('force_demo_cards') === 'true') {
-                // Afficher le bandeau d'encouragement
+            // Affichage conditionnel des fiches d'exemple (seulement en vue status)
+            if (currentPipelineView === 'status' && (buyers.length === 0 || localStorage.getItem('force_demo_cards') === 'true')) {
                 const banner = document.getElementById('welcomeBanner');
                 if (banner) banner.style.display = 'flex';
 
-                // Injecter les fiches exemple
                 EXAMPLE_BUYERS.forEach(columnData => {
                     const container = containers[columnData.column];
                     if (container) {
@@ -4826,15 +5100,22 @@
                     }
                 });
             } else {
-                // Cacher le bandeau
                 const banner = document.getElementById('welcomeBanner');
                 if (banner) banner.style.display = 'none';
 
-                // Afficher les vraies fiches
                 buyers.forEach(buyer => {
                     const card = createBuyerCard(buyer);
-                    if (containers[buyer.status]) {
-                        containers[buyer.status].appendChild(card);
+                    // En vue status : placer par status. En vue type de bien : placer par critères
+                    const colKey = currentPipelineView === 'property_type'
+                        ? getBuyerPropertyColumn(buyer)
+                        : buyer.status;
+                    if (containers[colKey]) {
+                        // En vue type de bien, désactiver le drag
+                        if (currentPipelineView === 'property_type') {
+                            card.setAttribute('draggable', 'false');
+                            card.style.cursor = 'pointer';
+                        }
+                        containers[colKey].appendChild(card);
                     }
                 });
             }
@@ -5102,17 +5383,20 @@
 
         function updateCounts() {
             const searchActive = document.getElementById('bottomSearchInput') && document.getElementById('bottomSearchInput').value.trim() !== '';
-            const statuses = ['nouveau', 'actif', 'achete_avec_moi', 'achete_ailleurs', 'abandon'];
-            statuses.forEach(status => {
+            const columns = getActiveColumns();
+
+            columns.forEach(col => {
                 let count;
                 if (searchActive) {
-                    const container = document.getElementById(status + '-container');
+                    const container = document.getElementById(col.key + '-container');
                     count = container ? container.querySelectorAll('.lead-card:not([style*="display: none"])').length : 0;
+                } else if (currentPipelineView === 'property_type') {
+                    count = buyers.filter(b => getBuyerPropertyColumn(b) === col.key).length;
                 } else {
-                    count = buyers.filter(b => b.status === status).length;
+                    count = buyers.filter(b => b.status === col.key).length;
                 }
-                const col = document.querySelector(`.column[data-status="${status}"] .count`);
-                if (col) col.textContent = count;
+                const colEl = document.querySelector(`.column[data-status="${col.key}"] .count`);
+                if (colEl) colEl.textContent = count;
             });
             updateAlertCounter();
             updateMobileTabCounts();
@@ -6741,7 +7025,11 @@
             }, 3500);
         }
 
-        function setupDragAndDrop() {
+        // Listeners document-level du drag (attachés une seule fois)
+        let _dragListenersAttached = false;
+        function ensureDragDocumentListeners() {
+            if (_dragListenersAttached) return;
+            _dragListenersAttached = true;
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
                     draggedCard = e.target;
@@ -6754,13 +7042,16 @@
                     }
                 }
             });
-
             document.addEventListener('dragend', e => {
                 if (e.target.classList.contains('lead-card')) {
                     e.target.classList.remove('dragging');
                 }
                 clearDropIndicators();
             });
+        }
+
+        function setupDragAndDrop() {
+            ensureDragDocumentListeners();
 
             // Écouter dragover/drop sur toute la colonne (pas seulement le cards-container)
             document.querySelectorAll('.column').forEach(column => {
@@ -7350,6 +7641,14 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
+            // Initialiser la vue pipeline (status ou property_type)
+            switchPipelineView(currentPipelineView);
+
+            // Handler toggle vue
+            document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', () => switchPipelineView(btn.dataset.view));
+            });
+
             loadBuyers().then(() => {
                 const params = new URLSearchParams(window.location.search);
                 const openLeadId = params.get('openLead');
@@ -7360,7 +7659,6 @@
                 // Compute match counts in background, then re-render
                 computeBuyerMatchCounts().then(() => renderBuyers()).catch(() => {});
             });
-            setupDragAndDrop();
             setupSearchToolbar();
             injectExportToUserDropdown();
             initMobileTabs();
@@ -7428,40 +7726,7 @@
                 if (e.target === document.getElementById('modal')) closeModal();
             });
 
-            // Clic alertes
-            // Grab & drag horizontal du pipeline
-            const pipelineEl = document.querySelector('.pipeline');
-            if (pipelineEl) {
-                let isGrabbing = false;
-                let grabStartX = 0;
-                let grabScrollLeft = 0;
-
-                pipelineEl.addEventListener('mousedown', (e) => {
-                    if (e.target.closest('.lead-card, button, a, input, select, textarea, .modal')) return;
-                    isGrabbing = true;
-                    pipelineEl.classList.add('grabbing');
-                    grabStartX = e.pageX - pipelineEl.offsetLeft;
-                    grabScrollLeft = pipelineEl.scrollLeft;
-                    e.preventDefault();
-                });
-
-                pipelineEl.addEventListener('mousemove', (e) => {
-                    if (!isGrabbing) return;
-                    e.preventDefault();
-                    const x = e.pageX - pipelineEl.offsetLeft;
-                    pipelineEl.scrollLeft = grabScrollLeft - (x - grabStartX) * 1.5;
-                });
-
-                pipelineEl.addEventListener('mouseup', () => {
-                    isGrabbing = false;
-                    pipelineEl.classList.remove('grabbing');
-                });
-
-                pipelineEl.addEventListener('mouseleave', () => {
-                    isGrabbing = false;
-                    pipelineEl.classList.remove('grabbing');
-                });
-            }
+            // Grab & scroll horizontal géré par setupPipelineGrab() dans switchPipelineView()
 
             // Alert counter click handled by relance-widget.js
 
