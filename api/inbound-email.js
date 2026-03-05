@@ -231,10 +231,16 @@ async function parseEmailWithClaude(body, subject, sender) {
         return null;
     }
 
-    const prompt = `Tu analyses un email de notification d'un portail immobilier français.
-L'email a été transféré par un agent immobilier.
+    const prompt = `Tu analyses un email transféré (forwarded) par un agent immobilier.
+L'email ORIGINAL provient d'un portail immobilier français (SeLoger, LeBonCoin, Bien'ici, PAP, Logic-Immo, Figaro Immo, MeilleursAgents, etc.).
 
-EXPÉDITEUR : ${sender}
+IMPORTANT : L'email a été transféré, donc :
+- L'objet peut commencer par "Fwd:", "Tr:", "Re:" — IGNORE ces préfixes
+- Le contenu peut contenir des en-têtes de transfert ("De:", "Envoyé:", "---------- Forwarded message ----------")
+- Concentre-toi sur le CONTENU ORIGINAL du portail, pas sur les métadonnées de transfert
+- Un "Nouveau message" ou "Nouvelle demande" d'un portail EST une demande de contact/visite
+
+EXPÉDITEUR ORIGINAL OU TRANSFÉRÉ : ${sender}
 OBJET : ${subject}
 
 CONTENU :
@@ -243,7 +249,7 @@ ${body.substring(0, 5000)}
 Extrais les informations et retourne UNIQUEMENT un JSON valide :
 {
   "is_visit_request": true | false,
-  "visitor_name": "nom complet du visiteur" | null,
+  "visitor_name": "nom complet du visiteur/demandeur" | null,
   "visitor_first_name": "prénom" | null,
   "visitor_last_name": "nom de famille" | null,
   "visitor_phone": "téléphone au format 06 12 34 56 78" | null,
@@ -253,12 +259,14 @@ Extrais les informations et retourne UNIQUEMENT un JSON valide :
   "property_reference": "référence annonce" | null,
   "property_type": "appartement | maison | terrain | commerce" | null,
   "property_price": 350000 | null,
-  "portal_name": "seloger | leboncoin | bienici | pap | logicimmo | autre" | null
+  "portal_name": "seloger | leboncoin | bienici | pap | logicimmo | meilleursagents | autre" | null
 }
 
 RÈGLES :
-- Si ce n'est PAS une demande de visite (newsletter, stats, confirmation, pub) → { "is_visit_request": false }
-- Détecte les portails connus : SeLoger, LeBonCoin, Bien'ici, PAP, Logic-Immo, Figaro Immo
+- is_visit_request = true si c'est un message d'un portail concernant un bien (demande de visite, demande d'info, nouveau message, prise de contact)
+- is_visit_request = false UNIQUEMENT pour les newsletters, rapports de stats, confirmations de publication, pubs
+- En cas de doute, mets is_visit_request = true (mieux vaut un faux positif qu'un faux négatif)
+- Détecte le portail depuis l'objet, l'expéditeur ou le contenu
 - Le téléphone doit être au format français (06/07) avec espaces
 - property_price en nombre entier sans symbole
 - Retourne UNIQUEMENT le JSON, sans markdown`;
