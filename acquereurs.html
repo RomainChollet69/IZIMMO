@@ -772,23 +772,29 @@
         .column-header.header-maison_big { background: linear-gradient(135deg, #AB47BC, #8E24AA); }
         .column-header.header-autre { background: linear-gradient(135deg, #78909C, #546E7A); }
 
-        /* Toggle vue pipeline */
+        /* Toggle vue pipeline (dans la bottom bar) */
+        .bottom-view-toggle {
+            position: absolute;
+            left: 170px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
         .view-toggle {
             display: flex;
             background: #F1F5F9;
             border-radius: 8px;
             padding: 3px;
             gap: 2px;
-            margin-left: 12px;
             flex-shrink: 0;
         }
         .view-toggle-btn {
-            padding: 6px 14px;
+            padding: 6px 12px;
             border: none;
             background: transparent;
             border-radius: 6px;
             font-family: 'Inter', sans-serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             color: #64748B;
             cursor: pointer;
@@ -804,30 +810,121 @@
         .view-toggle-btn:hover:not(.active) {
             color: #334155;
         }
-
-        /* Titre de colonne éditable */
-        .column-label-editable {
+        .bottom-settings-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: #F1F5F9;
+            border-radius: 8px;
             cursor: pointer;
-            border-bottom: 1px dashed rgba(255,255,255,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748B;
+            font-size: 14px;
+            transition: all 0.2s;
         }
-        .column-label-editable:hover {
-            border-bottom-color: rgba(255,255,255,0.8);
+        .bottom-settings-btn:hover {
+            background: #E2E8F0;
+            color: #334155;
         }
-        .column-label-input {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.6);
-            border-radius: 4px;
-            color: white;
+        @media (max-width: 768px) {
+            .bottom-view-toggle { display: none; }
+        }
+
+        /* Modal personnalisation colonnes */
+        .col-settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .col-settings-overlay.active { display: flex; }
+        .col-settings-modal {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            padding: 24px;
+            max-width: 440px;
+            width: 92%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .col-settings-title {
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-size: 18px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-style: italic;
-            padding: 2px 6px;
-            width: 100%;
-            outline: none;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 6px;
         }
+        .col-settings-subtitle {
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 16px;
+        }
+        .col-settings-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .col-settings-color {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .col-settings-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            color: #1E293B;
+            transition: border-color 0.2s;
+        }
+        .col-settings-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .col-settings-default {
+            font-size: 11px;
+            color: #94A3B8;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+        .col-settings-default:hover { color: #667eea; }
+        .col-settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 18px;
+        }
+        .col-settings-actions button {
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .col-settings-cancel {
+            background: #F1F5F9;
+            border: none;
+            color: #64748B;
+        }
+        .col-settings-cancel:hover { background: #E2E8F0; }
+        .col-settings-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        .col-settings-save:hover { opacity: 0.9; }
 
         .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
 
@@ -2954,10 +3051,6 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
-        <div class="view-toggle" id="viewToggle">
-            <button class="view-toggle-btn active" data-view="status">Par étape</button>
-            <button class="view-toggle-btn" data-view="property_type">Par type de bien</button>
-        </div>
         <button class="add-btn" id="addBuyerBtn">+ Lead</button>
     </div>
 
@@ -4970,7 +5063,7 @@
                 <div class="column" data-status="${col.key}">
                     <div class="column-top">
                         <div class="column-header header-${col.key}">
-                            <div class="column-label column-label-editable" data-col-key="${col.key}">${displayLabel}</div>
+                            <div class="column-label">${displayLabel}</div>
                         </div>
                         <div class="column-title">${col.title}</div>
                         <div class="column-count"><span>📋</span><span class="count">0</span></div>
@@ -4999,9 +5092,6 @@
                 setupDragAndDrop();
             }
 
-            // Réattacher l'édition inline des titres
-            setupColumnLabelEditing();
-
             // Réattacher le grab & scroll horizontal
             setupPipelineGrab();
 
@@ -5013,40 +5103,55 @@
             if (firstKey && isMobile()) setMobileTab(firstKey);
         }
 
-        /** Permet l'édition inline des titres de colonnes par double-clic */
-        function setupColumnLabelEditing() {
-            document.querySelectorAll('.column-label-editable').forEach(label => {
-                label.addEventListener('dblclick', (e) => {
-                    e.stopPropagation();
-                    const key = label.dataset.colKey;
-                    const currentText = label.textContent;
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.className = 'column-label-input';
-                    input.value = currentText;
-                    label.replaceWith(input);
-                    input.focus();
-                    input.select();
+        /** Ouvre la modal de personnalisation des titres de colonnes */
+        function openColumnSettings() {
+            const columns = getActiveColumns();
+            const customLabels = getCustomLabels();
+            const container = document.getElementById('colSettingsRows');
+            container.innerHTML = columns.map(col => {
+                const currentLabel = customLabels[col.key] || col.label;
+                return `
+                    <div class="col-settings-row">
+                        <div class="col-settings-color" style="background:${col.color}"></div>
+                        <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${col.label}" value="${currentLabel}">
+                        <span class="col-settings-default" title="Remettre le titre par défaut" data-col-key="${col.key}">reset</span>
+                    </div>`;
+            }).join('');
 
-                    const finishEdit = () => {
-                        const newText = input.value.trim().toUpperCase() || currentText;
-                        saveCustomLabel(key, newText);
-                        const newLabel = document.createElement('div');
-                        newLabel.className = 'column-label column-label-editable';
-                        newLabel.dataset.colKey = key;
-                        newLabel.textContent = newText;
-                        input.replaceWith(newLabel);
-                        // Réattacher le double-clic sur le nouveau label
-                        setupColumnLabelEditing();
-                    };
-
-                    input.addEventListener('blur', finishEdit);
-                    input.addEventListener('keydown', (ev) => {
-                        if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
-                        if (ev.key === 'Escape') { input.value = currentText; input.blur(); }
-                    });
+            // Reset buttons
+            container.querySelectorAll('.col-settings-default').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const key = btn.dataset.colKey;
+                    const input = container.querySelector(`.col-settings-input[data-col-key="${key}"]`);
+                    if (input) input.value = input.dataset.default;
                 });
             });
+
+            document.getElementById('colSettingsOverlay').classList.add('active');
+        }
+
+        function closeColumnSettings() {
+            document.getElementById('colSettingsOverlay').classList.remove('active');
+        }
+
+        function saveColumnSettings() {
+            const inputs = document.querySelectorAll('#colSettingsRows .col-settings-input');
+            inputs.forEach(input => {
+                const key = input.dataset.colKey;
+                const val = input.value.trim().toUpperCase();
+                const def = input.dataset.default;
+                if (val && val !== def) {
+                    saveCustomLabel(key, val);
+                } else {
+                    // Supprimer le custom label si c'est le défaut
+                    const labels = getCustomLabels();
+                    delete labels[key];
+                    localStorage.setItem('leon_buyer_column_labels', JSON.stringify(labels));
+                }
+            });
+            closeColumnSettings();
+            // Ré-appliquer les labels dans le pipeline
+            switchPipelineView(currentPipelineView);
         }
 
         /** Réattache le grab & scroll horizontal sur le pipeline */
@@ -7644,9 +7749,17 @@
             // Initialiser la vue pipeline (status ou property_type)
             switchPipelineView(currentPipelineView);
 
-            // Handler toggle vue
+            // Handler toggle vue (bottom bar)
             document.querySelectorAll('.view-toggle-btn').forEach(btn => {
                 btn.addEventListener('click', () => switchPipelineView(btn.dataset.view));
+            });
+
+            // Handler modal paramètres colonnes
+            document.getElementById('columnSettingsBtn').addEventListener('click', openColumnSettings);
+            document.getElementById('colSettingsCancel').addEventListener('click', closeColumnSettings);
+            document.getElementById('colSettingsSave').addEventListener('click', saveColumnSettings);
+            document.getElementById('colSettingsOverlay').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeColumnSettings();
             });
 
             loadBuyers().then(() => {
@@ -7934,6 +8047,19 @@
     <script src="js/relance-widget.js"></script>
     <script src="js/todo-widget.js"></script>
 
+    <!-- Modal Personnalisation Colonnes -->
+    <div class="col-settings-overlay" id="colSettingsOverlay">
+        <div class="col-settings-modal">
+            <div class="col-settings-title">Personnaliser les colonnes</div>
+            <div class="col-settings-subtitle">Modifiez les titres affichés dans votre pipeline.</div>
+            <div id="colSettingsRows"></div>
+            <div class="col-settings-actions">
+                <button type="button" class="col-settings-cancel" id="colSettingsCancel">Annuler</button>
+                <button type="button" class="col-settings-save" id="colSettingsSave">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Desktop Bottom Bar -->
     <div class="desktop-bottom-bar">
         <div class="desktop-bottom-bar-inner">
@@ -7943,6 +8069,16 @@
                 <span>Visites</span>
                 <span class="bottom-visites-count" id="visitsFabCount" style="display:none">0</span>
             </a>
+            <!-- Toggle vue pipeline + paramètres colonnes -->
+            <div class="bottom-view-toggle">
+                <div class="view-toggle" id="viewToggle">
+                    <button class="view-toggle-btn active" data-view="status">Par étape</button>
+                    <button class="view-toggle-btn" data-view="property_type">Par type de bien</button>
+                </div>
+                <button type="button" class="bottom-settings-btn" id="columnSettingsBtn" title="Personnaliser les colonnes">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
             <!-- Micro central — hero -->
             <button type="button" class="bottom-micro-btn" onclick="openMicroModal()" title="Dicter un lead">
                 <i class="fa-solid fa-microphone"></i>
