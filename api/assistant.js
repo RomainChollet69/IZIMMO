@@ -1040,18 +1040,17 @@ async function handleProcessVisitRequest(res, user, params) {
             }
         }
 
-        // Créer la visite
+        // Créer la visite (table visits n'a pas visitor_phone/visitor_email — infos dans notes)
+        const contactInfo = [vr.visitor_phone, vr.visitor_email].filter(Boolean).join(' / ');
         const visitData = {
             user_id: user.id,
             seller_id: finalSellerId || null,
             buyer_id: buyerId || null,
             buyer_name: vr.visitor_name || 'Visiteur portail',
-            visitor_phone: vr.visitor_phone || null,
-            visitor_email: vr.visitor_email || null,
             visit_date: visit_date || new Date().toISOString().split('T')[0],
             visit_time: visit_time || null,
             status: 'planifiee',
-            notes: `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`
+            notes: `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${contactInfo ? '\nContact : ' + contactInfo : ''}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`
         };
 
         const { data: visit, error: visitErr } = await supabaseAdmin
