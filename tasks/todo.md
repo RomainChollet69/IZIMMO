@@ -27,7 +27,7 @@ _(rien en cours)_
 - [ ] Vérifier que l'import CSV acquéreurs fonctionne (jamais confirmé)
 
 ### Debug cleanup
-- [ ] Retirer les console.log de debug visites (index.html + acquereurs.html)
+- [x] Retirer les console.log de debug (index.html + acquereurs.html) — fait
 
 ### DVF
 - [ ] Tester la page DVF sur mobile (responsive 375px) — responsive revu mais pas testé en conditions réelles
@@ -40,9 +40,8 @@ _(rien en cours)_
 - [ ] Envisager la refonte card deck pour le pipeline acquéreurs mobile
 
 ### Migrations SQL en attente
-- [ ] `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS appointment_date DATE` (005)
-- [ ] `ALTER TABLE sellers ADD COLUMN rdv_done BOOLEAN DEFAULT false`
-- [ ] `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
+- [x] Migration 005 sellers (appointment_date, rdv_done, contact2_*) — exécutée
+- [x] Migration 006 visits (feedback_rating, price_perception, buyer_decision, etc.) — exécutée
 
 ### Nettoyage
 - [ ] Nettoyer requête `gamification_profiles` dans parametres.html (table probablement inutilisée)

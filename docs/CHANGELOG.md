@@ -4,6 +4,71 @@
 
 ---
 
+## Session 2026-03-06 (suite) — Assistant vocal : détection visites, agenda, commandes Léon, guide vocal, import CSV
+
+### Résumé
+Session de développement dense sur micro.html. Ajout de la détection automatique de visites et rendez-vous dans les dictées vocales, routing des commandes Léon ("Dis Léon, propose 3 créneaux"), fuzzy matching client-side pour éviter les doublons, import CSV acquéreurs, page guide vocal, et correction de bugs critiques (création lead vendeur depuis micro, formulaire pipeline silencieux).
+
+### Modifications
+
+**`micro.html`** :
+- `isLeonCommand(text)` : détecte les commandes "Dis Léon / propose / trouve / quels créneaux..." pour séparer notes CRM et commandes IA
+- `handleLeonCommand(text)` : orchestre → exécute l'intent (find_slots, list_events, draft_message)
+- `executeFindSlotsIntent()` : appel find_slots API → prend 3 créneaux → draft_message optionnel
+- `showLeonCmdResult()` : bulle Léon avec créneaux + message copiable
+- `resolveUnmatchedLocally()` : fuzzy matching client-side (score ≥ 3 = match) pour corriger les oublis de Haiku
+- `toggleLinkSearch()` / `searchLeadForLink()` / `linkNoteToExistingLead()` : fallback manuel "Ce contact existe déjà ?"
+- `visit_detected` : carte verte dans confirmation pour créer une visite + sync Google Calendar
+- `agenda_event` : carte bleue pour RDV non-visite → Google Calendar
+- `syncVisitToCalendarFromMicro()` et `createCalendarEventFromMicro()` : sync calendrier depuis micro
+- `cachedHeaders` : variable module-level pour réutiliser les auth headers dans le handler confirm
+- `leon_onboarded_v2` : clé bumped pour forcer le ré-affichage de l'onboarding
+- `leonCmdZone` : zone d'affichage des réponses commandes Léon avec bouton fermer
+- Bouton "?" dans le header → lien vers `aide-vocale.html`
+- **FIX** : `createNewLeadFromMicro` — ajout des champs manquants `annexes: []`, `links: []`, `link_previews: {}`, `commission_rate: 4` (l'insert sellers échouait silencieusement sans eux)
+
+**`api/parse-voice-note.js`** :
+- Ajout des champs `visit_detected` et `agenda_event` dans le prompt Claude
+- Règles claires : visit_detected = visite de bien uniquement, agenda_event = tous autres RDV
+
+**`index.html`** :
+- Suppression auto-appel `maybeShowBriefing()` au chargement (accessible via bouton uniquement)
+- Suppression console.log de debug : `[loadSellers]`, `Dictée transcrite:`, `Champs extraits:`, `[Onboarding]`, `[MsgIA]`, `[Visits]`
+- **FIX** : `handleFormSubmit` wrappé dans try/catch → les exceptions silencieuses (bouton "Créer le Lead" ne faisait rien) sont maintenant visibles via alert
+
+**`acquereurs.html`** :
+- Suppression console.log de debug : `[Visits] Buyer-side query:`, `[Visits] First visit seller_id:`, `Dictée transcrite:`, `Champs extraits:`, `[MsgIA]`
+- Ajout bouton "CSV" dans le header
+- Modal import CSV complet : drag & drop, preview tableau, mapping colonnes, insert Supabase
+- Gestion des virgules dans les champs CSV (quoted fields)
+
+**`js/mobile-nav.js`** :
+- Ajout "Guide vocal" (→ `aide-vocale.html`) dans le menu "Plus..."
+
+**`aide-vocale.html`** (nouveau) :
+- Page de référence listant tous les cas d'usage vocaux : notes, création contact, visites, agenda, commandes Léon
+- Design mobile-first, gradient header, exemples cliquables
+
+### Migrations SQL exécutées
+- **005** : `ALTER TABLE sellers ADD COLUMN IF NOT EXISTS appointment_date DATE, rdv_done BOOLEAN DEFAULT false, contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
+- **006** : `ALTER TABLE visits ADD COLUMN IF NOT EXISTS feedback_rating TEXT, price_perception TEXT, buyer_decision TEXT, positive_points TEXT, negative_points TEXT, neighborhood_feel TEXT, google_event_id TEXT`
+
+### Bugs corrigés
+- **micro.html createNewLeadFromMicro** : insert `sellers` échouait silencieusement (manque `annexes`, `links`, `link_previews`, `commission_rate`)
+- **index.html handleFormSubmit** : exceptions JS silencieuses → bouton "Créer le Lead" ne faisait rien → try/catch ajouté
+- **Doublons contacts** : `resolveUnmatchedLocally()` + fallback manuel
+
+### Points d'attention
+- Bug "Créer le Lead" pipeline : try/catch ajouté mais cause racine à confirmer en prod (exception non encore observée)
+- Import CSV acquéreurs : testé en revue de code, pas encore validé en conditions réelles avec des données
+
+### Prochaines étapes prioritaires
+1. Tester "Créer le Lead" en prod → lire le message d'erreur révélé par le try/catch
+2. Valider import CSV acquéreurs avec les 24 contacts réels
+3. Tester la détection visite vocale de bout en bout (dictée → carte verte → visite créée + Calendar)
+
+---
+
 ## Session 2026-03-06 — Simplification produit & onboarding vocal
 
 ### Résumé

@@ -66,3 +66,11 @@
 ### L013 — `const` hoisting et temporal dead zone (2026-03-01)
 **Erreur** : Utilisation de `matchCount` avant sa déclaration `const` dans `createSellerCard()`. ReferenceError silencieuse qui crashait le rendu de TOUTES les cartes avec relance, faisant "disparaître" les leads du pipeline.
 **Règle** : Ne jamais référencer une variable `const`/`let` avant sa déclaration dans le même scope. En cas de doute, utiliser la source de données directement (`sellerMatchCounts[seller.id] || 0`) plutôt qu'une variable intermédiaire. Une erreur dans une fonction de rendu de carte crash TOUTES les cartes, pas juste une.
+
+### L014 — Champs manquants dans l'insert Supabase → échec silencieux (2026-03-06)
+**Erreur** : `createNewLeadFromMicro()` dans micro.html n'incluait pas `annexes`, `links`, `link_previews`, `commission_rate` dans l'objet insert. La table `sellers` les attend. L'insert échouait silencieusement (ou avec une erreur Supabase non propagée) — aucun message visible pour l'utilisateur.
+**Règle** : Quand on écrit une nouvelle fonction d'insertion dans une table existante, toujours vérifier le schéma complet de la table et comparer avec le formulaire principal qui insère dans la même table. Tout champ NOT NULL ou avec DEFAULT non trivial doit être inclus. Utiliser `createSeller()` / `createBuyer()` mutualisés plutôt que des inserts ad hoc.
+
+### L015 — Async event listeners : les exceptions JS sont silencieuses (2026-03-06)
+**Erreur** : `handleFormSubmit` est une `async function` appelée via `addEventListener('click', handleFormSubmit)`. Si une exception JS est levée dans la fonction (null reference, etc.), le bouton semble "ne rien faire" — aucun message d'erreur visible, pas d'alerte, rien dans l'UI.
+**Règle** : Toute `async function` appelée depuis un event listener doit avoir un `try/catch` global qui surface les exceptions via `alert()` ou un message d'erreur visible. Les `console.error` seuls sont insuffisants car inaccessibles sur mobile. Pattern minimal : `try { ... } catch(e) { alert('Erreur : ' + e.message); console.error('[Module] Exception:', e); }`
