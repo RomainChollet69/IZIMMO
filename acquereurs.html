@@ -2292,13 +2292,16 @@
             .mobile-move-btn { display: inline-flex !important; }
             .cards-container { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 20px; }
 
-            /* --- MODALE : pleine largeur --- */
+            /* --- MODALE : pleine largeur, au-dessus des FABs et bottom nav --- */
+            .modal { z-index: 10000; }
             .modal.active { padding: 0; align-items: flex-end; }
 
             .modal-content {
                 max-width: 100%;
                 width: 100%;
-                max-height: 90vh;
+                /* Laisser de la place pour la bottom nav + safe area */
+                max-height: calc(88vh - var(--m-bottom-bar-h, 60px) - env(safe-area-inset-bottom, 0px));
+                overflow-y: auto;
                 border-radius: 16px 16px 0 0;
                 padding: 24px 16px;
                 margin: 0;
