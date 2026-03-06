@@ -1,5 +1,5 @@
 <!--
-  Léon — Micro / Enregistrement vocal (micro.html)
+  Léon — Assistant Vocal (micro.html)
   Interface d'enregistrement audio avec transcription vocale.
   Version mobile optimisée. Auth requise (js/auth.js)
 -->
@@ -8,9 +8,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Léon. — Micro</title>
+    <title>Léon. — Vocal</title>
     <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
-    <meta property="og:title" content="Léon. — Micro">
+    <meta property="og:title" content="Léon. — Vocal">
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -908,6 +908,117 @@
         color: #64748B;
     }
     .in-iframe .mic-btn-wrap { order: 0; }
+
+        /* ===== ONBOARDING OVERLAY ===== */
+        .onboarding-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(36, 59, 83, 0.88);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            animation: ob-fadein 0.4s ease;
+        }
+
+        @keyframes ob-fadein {
+            from { opacity: 0; transform: scale(0.97); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .onboarding-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px 24px 24px;
+            max-width: 360px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+        }
+
+        .onboarding-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: block;
+            object-fit: cover;
+        }
+
+        .onboarding-greeting {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 700;
+            font-size: 26px;
+            color: #243B53;
+            margin-bottom: 8px;
+        }
+
+        .onboarding-tagline {
+            font-size: 15px;
+            color: #4A5568;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .onboarding-example {
+            background: #F0FDF4;
+            border: 1px solid #BBF7D0;
+            border-radius: 16px;
+            padding: 14px 16px;
+            margin-bottom: 24px;
+            text-align: left;
+        }
+
+        .onboarding-example-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #16A34A;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .onboarding-example-text {
+            font-size: 14px;
+            color: #374151;
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .onboarding-cta {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: transform 0.15s;
+        }
+
+        .onboarding-cta:active { transform: scale(0.97); }
+
+        .onboarding-skip {
+            margin-top: 14px;
+            font-size: 13px;
+            color: #9CA3AF;
+            cursor: pointer;
+            background: none;
+            border: none;
+            text-decoration: underline;
+            display: block;
+            width: 100%;
+        }
     .in-iframe .mic-btn {
         width: 180px;
         height: 180px;
@@ -942,7 +1053,7 @@
                     <i class="fa-solid fa-share-nodes"></i> Social
                 </a>
                 <a href="micro.html" class="nav-tab active">
-                    <i class="fa-solid fa-microphone"></i> Micro
+                    <i class="fa-solid fa-microphone"></i> Vocal
                 </a>
             </nav>
             <div class="header-actions">
@@ -959,6 +1070,23 @@
         <div class="user-mobile">
             <span class="user-firstname" id="userFirstname"></span>
             <div id="userAvatarMobile"></div>
+        </div>
+    </div>
+
+    <!-- Onboarding overlay (première connexion, affiché une seule fois) -->
+    <div class="onboarding-overlay" id="onboardingOverlay" style="display:none;">
+        <div class="onboarding-card">
+            <img src="img/Leon.png" alt="Léon" class="onboarding-avatar" onerror="this.style.display='none'">
+            <div class="onboarding-greeting">Bonjour <span id="onboardingFirstname"></span> 👋</div>
+            <p class="onboarding-tagline">Je suis Léon, votre assistant immobilier.<br>Parlez-moi, je m'occupe du reste.</p>
+            <div class="onboarding-example">
+                <div class="onboarding-example-label">💡 Essayez de dire :</div>
+                <div class="onboarding-example-text">"M. Martin veut vendre son T4 à Lyon 3e, il m'a appelé ce matin via SeLoger"</div>
+            </div>
+            <button class="onboarding-cta" id="onboardingCtaBtn">
+                <i class="fa-solid fa-microphone"></i> Essayer maintenant
+            </button>
+            <button class="onboarding-skip" id="onboardingSkipBtn">Passer pour l'instant</button>
         </div>
     </div>
 
@@ -1152,6 +1280,26 @@
                 silenceThreshold: 0.01,
                 onStateChange: handleRecorderState
             });
+
+            // Onboarding première connexion (une seule fois via localStorage)
+            const ONBOARDING_KEY = 'leon_onboarded_v1';
+            if (!localStorage.getItem(ONBOARDING_KEY)) {
+                const overlay = document.getElementById('onboardingOverlay');
+                document.getElementById('onboardingFirstname').textContent = firstName;
+                overlay.style.display = 'flex';
+
+                function dismissOnboarding(triggerMic) {
+                    localStorage.setItem(ONBOARDING_KEY, '1');
+                    overlay.style.opacity = '0';
+                    overlay.style.transition = 'opacity 0.3s';
+                    setTimeout(() => { overlay.style.display = 'none'; }, 300);
+                    // Activer le micro automatiquement si CTA cliqué
+                    if (triggerMic) setTimeout(() => micBtn.click(), 450);
+                }
+
+                document.getElementById('onboardingCtaBtn').addEventListener('click', () => dismissOnboarding(true));
+                document.getElementById('onboardingSkipBtn').addEventListener('click', () => dismissOnboarding(false));
+            }
         }
 
         function handleRecorderState(state, msg) {
