@@ -2338,10 +2338,21 @@
                     ${vd.notes ? `<div class="visit-detected-notes">${escHtml(vd.notes)}</div>` : ''}
                 </div>`;
                 visitBlock.style.display = '';
-                // Stocker les IDs pour le confirm
+                // Stocker les IDs — peuvent être vides si l'IA ne les a pas remplis
                 visitBlock.dataset.sellerLeadId = vd.seller_lead_id || '';
                 visitBlock.dataset.buyerLeadId = vd.buyer_lead_id || '';
                 visitBlock.dataset.visitType = vd.type || 'effectuee';
+
+                // Cross-référencer contacts_matched pour remplir les IDs manquants
+                // (l'IA met souvent le contact en contacts_matched mais oublie visit_detected.buyer/seller_lead_id)
+                for (const match of (result.contacts_matched || [])) {
+                    if (match.lead_type === 'buyer' && !visitBlock.dataset.buyerLeadId) {
+                        visitBlock.dataset.buyerLeadId = match.lead_id;
+                    }
+                    if (match.lead_type === 'seller' && !visitBlock.dataset.sellerLeadId) {
+                        visitBlock.dataset.sellerLeadId = match.lead_id;
+                    }
+                }
             } else {
                 visitBlock.innerHTML = '';
                 visitBlock.style.display = 'none';
