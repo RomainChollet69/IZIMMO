@@ -4,6 +4,62 @@
 
 ---
 
+## Session 2026-03-06 — Simplification produit & onboarding vocal
+
+### Résumé
+Session stratégique + exécution. Repositionnement de Léon en "assistant vocal" (vs CRM data). Analyse concurrentielle (Cadastre.com, Cityscoring). Nettoyage du produit : archivage des pages obsolètes, suppression gamification, simplification navigation. Onboarding première connexion sur micro.html.
+
+### Décisions stratégiques
+- **Positionnement** : Léon est un assistant IA vocal, pas un outil data (Cadastre.com fait ça mieux)
+- **Cible confirmée** : mandataires indépendants (IAD, SAFTI, Optimhome)
+- **Prix cible** : 19€/mois (pas 10€)
+- **Pages gelées** : social.html, dvf.html, etude-marche.html (plus développées jusqu'à traction)
+- **Mobile** : home.html redirige vers micro.html (point d'entrée vocal)
+
+### Modifications
+
+**Archivage dans `_archive/`** :
+- `leon.html` → concept absorbé dans home.html
+- `assistant.html` → fonctionnalité à intégrer dans micro.html
+- `pipeline-acquereurs.html` → deprecated
+- `bonmatin.html` → page blague (temporairement restaurée)
+- `reset-password.html` → inutilisé (auth Google uniquement)
+- `js/gamification.js` → supprimé de toutes les pages
+
+**`home.html`** :
+- Tuile "Mon Guide" (→ leon.html) supprimée
+- Tuile "Assistant agenda" → "Assistant vocal" (→ micro.html)
+- Redirection automatique vers micro.html sur mobile (≤768px)
+
+**`js/mobile-nav.js`** :
+- leon.html et assistant.html retirés du menu "Plus"
+- Menu "Plus" : Visites | Social | Paramètres
+
+**`parametres.html`** :
+- Lien "Assistant (beta)" supprimé
+
+**`micro.html`** :
+- Renommé "Micro" → "Vocal" (title, og:title, nav desktop)
+- Onboarding overlay première connexion : avatar Léon + greeting + exemple + CTA "Essayer maintenant" (active le micro automatiquement) + "Passer pour l'instant"
+- Stocké dans localStorage('leon_onboarded_v1')
+
+### Fichiers modifiés
+- `home.html`, `js/mobile-nav.js`, `parametres.html`, `micro.html`
+- `acquereurs.html`, `dvf.html`, `etude-marche.html`, `index.html`, `social.html`, `tutoriels.html`, `visites.html` (suppression gamification)
+- `_archive/` (créé)
+
+### Points d'attention
+- `parametres.html` contient encore une requête vers `gamification_profiles` — à nettoyer
+- `bonmatin.html` restauré temporairement — à rearchiver quand l'utilisateur le demande
+- L'onboarding micro.html utilise localStorage → ne fonctionne pas en navigation privée entre sessions
+
+### Prochaines étapes prioritaires
+1. Perfectionner micro.html : gérer tous les cas vocaux (agenda Google Calendar, visites, rappels)
+2. Nettoyer la requête `gamification_profiles` dans parametres.html
+3. Tester l'onboarding sur mobile iOS/Android en conditions réelles
+
+---
+
 ## Session 2026-03-05
 
 ### Modifications

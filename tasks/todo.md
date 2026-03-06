@@ -45,9 +45,15 @@ _(rien en cours)_
 - [ ] `ALTER TABLE sellers ADD COLUMN contact2_name TEXT, contact2_phone TEXT, contact2_email TEXT`
 
 ### Nettoyage
-- [ ] Nettoyer `pipeline-acquereurs.html` (fichier deprecated)
-- [ ] Supprimer `reset-password.html` (inutilisé — auth Google uniquement)
+- [ ] Nettoyer requête `gamification_profiles` dans parametres.html (table probablement inutilisée)
+- [ ] Archiver bonmatin.html quand l'utilisateur le demande
 - [ ] Mettre en place le logging structuré par module (`[DVF]`, `[Pipeline]`, `[Auth]`, `[Workflow]`)
+
+### Assistant Vocal (micro.html) — Prochaines étapes
+- [ ] Gérer les cas vocaux agenda : "planifie une visite vendredi 14h avec M. Dupont" → Google Calendar + CRM
+- [ ] Gérer les cas vocaux visites : "visite faite ce matin chez Dupont" → table visits
+- [ ] Gérer les cas vocaux rappels : "relance M. Martin dans 10 jours" → reminder_date
+- [ ] Tester l'onboarding sur mobile iOS/Android en conditions réelles
 
 ## Terminé
 
@@ -82,3 +88,8 @@ _(rien en cours)_
 - [x] Upload DPE vers Supabase Storage (97 fichiers, 1.34 Go)
 - [x] Support fichiers DPE splittés (59, 75)
 - [x] En-têtes documentation sur tous les fichiers HTML/JS
+- [x] Simplification produit : archivage pages obsolètes (leon, assistant, bonmatin, pipeline-acquereurs, reset-password)
+- [x] Suppression js/gamification.js de toutes les pages
+- [x] home.html : redirection mobile → micro.html, nettoyage tuiles
+- [x] micro.html : renommage Micro → Vocal, onboarding première connexion
+- [x] mobile-nav.js : nettoyage menu Plus (suppression pages archivées)

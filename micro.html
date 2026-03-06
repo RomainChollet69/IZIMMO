@@ -703,6 +703,49 @@
             font-weight: 600; color: #065F46;
         }
 
+        /* Lead créé — success screen riche */
+        .lead-success-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px 24px;
+            max-width: 340px;
+            width: 90%;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            text-align: center;
+            display: none;
+        }
+        .lead-success-card.visible { display: block; }
+        .lead-success-name {
+            font-size: 22px; font-weight: 700; color: #1a1a2e;
+            margin: 12px 0 4px;
+        }
+        .lead-success-meta {
+            font-size: 14px; color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .lead-success-meta span {
+            display: inline-block; margin: 2px 4px;
+            background: #f1f5f9; border-radius: 20px;
+            padding: 2px 10px; font-size: 13px;
+        }
+        .lead-success-actions {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .lead-success-view-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; border: none;
+            border-radius: 12px; padding: 14px;
+            font-size: 15px; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .lead-success-new-btn {
+            background: #f8fafc; color: #475569;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px; padding: 12px;
+            font-size: 14px; font-weight: 500; cursor: pointer;
+        }
+
         /* ===== HISTORY ===== */
         .history-zone {
             width: 100%;
@@ -1081,7 +1124,7 @@
             <p class="onboarding-tagline">Je suis Léon, votre assistant immobilier.<br>Parlez-moi, je m'occupe du reste.</p>
             <div class="onboarding-example">
                 <div class="onboarding-example-label">💡 Essayez de dire :</div>
-                <div class="onboarding-example-text">"M. Martin veut vendre son T4 à Lyon 3e, il m'a appelé ce matin via SeLoger"</div>
+                <div class="onboarding-example-text">"M. Martin m'a appelé ce matin pour vendre son appartement à Lyon 2ème, rue des Remparts d'Ainay, un T4 de 75m². J'ai rendez-vous avec lui demain à 14h."</div>
             </div>
             <button class="onboarding-cta" id="onboardingCtaBtn">
                 <i class="fa-solid fa-microphone"></i> Essayer maintenant
@@ -1210,8 +1253,25 @@
 
     <!-- Overlay succès -->
     <div class="success-overlay" id="successOverlay">
-        <div class="success-check"><i class="fa-solid fa-check"></i></div>
-        <p class="success-text" id="successText">Notes enregistrées !</p>
+        <!-- State A : succès simple (notes enregistrées) -->
+        <div id="successSimple">
+            <div class="success-check"><i class="fa-solid fa-check"></i></div>
+            <p class="success-text" id="successText">Notes enregistrées !</p>
+        </div>
+        <!-- State B : lead créé — résumé riche -->
+        <div class="lead-success-card" id="leadSuccessCard">
+            <div class="success-check" style="margin: 0 auto;"><i class="fa-solid fa-check"></i></div>
+            <div class="lead-success-name" id="leadSuccessName"></div>
+            <div class="lead-success-meta" id="leadSuccessMeta"></div>
+            <div class="lead-success-actions">
+                <button class="lead-success-view-btn" id="leadSuccessViewBtn">
+                    <i class="fa-solid fa-arrow-right"></i> Voir la fiche
+                </button>
+                <button class="lead-success-new-btn" id="leadSuccessNewBtn">
+                    Nouvelle dictée
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="js/mobile-nav.js"></script>
@@ -1910,17 +1970,42 @@
                     window.parent.postMessage({ type: 'lead-created', leadType: selectedType }, '*');
                 }
 
-                // Succès
-                successText.textContent = `${firstName} ${lastName} créé(e) !`;
-                successOverlay.classList.add('visible');
-                setTimeout(() => {
+                // Succès — afficher le résumé riche avec lien vers la fiche
+                const pipelinePage = selectedType === 'buyer' ? 'acquereurs.html' : 'index.html';
+                const leadUrl = `${pipelinePage}?openLead=${newLead.id}`;
+
+                // Remplir le résumé
+                document.getElementById('leadSuccessName').textContent = `${firstName} ${lastName}`;
+                const metaParts = [];
+                metaParts.push(selectedType === 'buyer' ? 'Acquéreur' : 'Vendeur');
+                if (contact.property_type) metaParts.push(contact.property_type);
+                if (contact.address || contact.sector) metaParts.push(contact.address || contact.sector);
+                if (contact.budget || contact.budget_max) {
+                    const b = parseInt(contact.budget || contact.budget_max);
+                    if (!isNaN(b)) metaParts.push(`${Math.round(b/1000)}k€`);
+                }
+                document.getElementById('leadSuccessMeta').innerHTML =
+                    metaParts.map(p => `<span>${p}</span>`).join('');
+
+                // Configurer les boutons
+                function dismissLeadSuccess(goToLead) {
                     successOverlay.classList.remove('visible');
+                    document.getElementById('leadSuccessCard').classList.remove('visible');
+                    document.getElementById('successSimple').style.display = '';
                     hideAllZones();
                     setMicState('idle');
                     currentResult = null;
                     allLeads = null;
                     window._pendingNewLeads = null;
-                }, 1600);
+                    if (goToLead) window.location.href = leadUrl;
+                }
+                document.getElementById('leadSuccessViewBtn').onclick = () => dismissLeadSuccess(true);
+                document.getElementById('leadSuccessNewBtn').onclick = () => dismissLeadSuccess(false);
+
+                // Afficher le success card riche
+                document.getElementById('successSimple').style.display = 'none';
+                document.getElementById('leadSuccessCard').classList.add('visible');
+                successOverlay.classList.add('visible');
             } catch (err) {
                 console.error('[Micro] Erreur création lead:', err);
                 showError('Erreur lors de la création : ' + err.message);

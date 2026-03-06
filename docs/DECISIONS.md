@@ -1051,3 +1051,40 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **APIs utilisées** :
 - `https://overpass-api.de/api/interpreter` : POIs OpenStreetMap (commerces, transport, écoles, santé, parcs, routes/rail pour bruit)
 - `https://geo.api.gouv.fr/communes` : nom, code INSEE, population, département, région
+
+---
+
+## D051 — Repositionnement Léon : assistant vocal, pas outil de data
+
+**Date** : 2026-03-06
+**Statut** : Actif
+
+**Contexte** : Analyse stratégique déclenchée par un retour utilisateur réel ("c'est très très cool mais ça va faire beaucoup pour quelqu'un qui arrive demain"). L'analyse concurrentielle a révélé que Cadastre.com et Cityscoring proposent déjà des outils de data (DVF, DPE, scoring quartier, et même CRM en cours d'intégration pour Cityscoring). Léon s'était dispersé sur trop de surfaces : cockpit Léon, assistant agenda, pipeline, social, DVF/DPE, études de marché.
+
+**Décision** : Repositionner Léon autour d'un concept unique et différenciant : **"Léon fait les choses à ta place"** (vs "Léon te montre des données"). Le cœur du produit devient la dictée vocale dans `micro.html`. Réorganisation en 3 surfaces :
+- **Core** : micro.html (voix → action CRM), pipeline vendeurs, pipeline acquéreurs
+- **Frozen** : DVF, DPE, études de marché, social (existants mais non prioritaires)
+- **Archivé** : leon.html, assistant.html, pipeline-acquereurs.html, reset-password.html, bonmatin.html → `_archive/`
+
+**Pourquoi** :
+- Cadastre.com et Cityscoring dominent la data immobilière — se battre sur ce terrain est perdant
+- La dictée vocale est une vraie différenciation : aucun CRM réseau (IADS, SAFTI) ne propose ça
+- La complexité produit (13 pages actives) est une friction pour l'acquisition — un nouvel utilisateur doit comprendre le produit en 30 secondes
+- La cible mandataires indépendants (IAD, SAFTI, Optimhome) a un CRM réseau imposé — Léon doit être un **complément d'action** rapide, pas un CRM de plus
+- L'onboarding vocal sur micro.html réduit le "time to first value" à 1 interaction
+
+**Cible** : Mandataires indépendants, ~10€/mois. Léon comme assistant de terrain — voix → lead créé en 10 secondes.
+
+**Alternatives rejetées** :
+- **Continuer l'expansion** (plus de features, plus de pages) : la complexité nuisait déjà à l'adoption
+- **Pivoter vers la data** : terrain occupé par des acteurs établis avec bien plus de données
+- **Supprimer DVF/études** : ces outils ont une vraie valeur — mieux vaut les geler que les supprimer
+
+**Conséquences** :
+- `home.html` redirige les mobiles vers `micro.html` (mobile redirect script)
+- `micro.html` renommé "Vocal" dans tous les headers/titres
+- `js/mobile-nav.js` : suppression des liens vers les pages archivées
+- Onboarding overlay sur `micro.html` pour la première connexion (`leon_onboarded_v1` en localStorage)
+- `js/gamification.js` supprimé de toutes les pages (feature non-core)
+- `parametres.html` : suppression du lien vers assistant.html
+
