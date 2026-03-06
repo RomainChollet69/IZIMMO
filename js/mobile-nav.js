@@ -22,10 +22,8 @@
     ];
 
     const MORE_ITEMS = [
-        { href: 'leon.html',      icon: 'fa-solid fa-compass',        label: 'Mon Guide' },
-        { href: 'visites.html',   icon: 'fa-solid fa-calendar-check', label: 'Visites' },
+        { href: 'visites.html',    icon: 'fa-solid fa-calendar-check', label: 'Visites' },
         { href: 'social.html',     icon: 'fa-solid fa-share-nodes',    label: 'Social' },
-        { href: 'assistant.html',  icon: 'fa-solid fa-robot',          label: 'Assistant' },
         { href: 'parametres.html', icon: 'fa-solid fa-gear',           label: 'Paramètres' },
     ];
 
@@ -107,7 +105,7 @@
         }, 300);
     }
 
-    // --- Bouton Todo flottant (image todo.svg) ---
+    // --- Bouton Todo flottant (image todo.svg) — toujours à gauche ---
     const todoBtn = document.createElement('button');
     todoBtn.className = 'm-todo-fab';
     todoBtn.setAttribute('type', 'button');
@@ -120,6 +118,39 @@
         if (window.todoToggle) window.todoToggle();
     });
     document.body.appendChild(todoBtn);
+
+    // --- FABs pipeline : bouton "+" et screenshot (index.html & acquereurs.html uniquement) ---
+    const isPipelinePage = (path === 'index.html' || path === 'acquereurs.html');
+    const isAcquereurs = (path === 'acquereurs.html');
+
+    if (isPipelinePage) {
+        // Bouton "+" flottant en bas à droite
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'm-pipeline-fab';
+        plusBtn.setAttribute('type', 'button');
+        plusBtn.setAttribute('title', 'Nouvelle lead');
+        plusBtn.innerHTML = `<img src="img/boutonplus.svg" alt="Nouvelle lead">`;
+        plusBtn.addEventListener('click', function () {
+            const targetId = isAcquereurs ? 'addBuyerBtn' : 'addLeadBtn';
+            const btn = document.getElementById(targetId);
+            if (btn) btn.click();
+        });
+        document.body.appendChild(plusBtn);
+    }
+
+    if (isAcquereurs) {
+        // Bouton screenshot/import à gauche du bouton "+"
+        const screenshotBtn = document.createElement('button');
+        screenshotBtn.className = 'm-screenshot-fab';
+        screenshotBtn.setAttribute('type', 'button');
+        screenshotBtn.setAttribute('title', 'Importer une capture d\'écran');
+        screenshotBtn.innerHTML = `<img src="img/screenshot.svg" alt="Import screenshot">`;
+        screenshotBtn.addEventListener('click', function () {
+            const btn = document.getElementById('importScreenshotBtn');
+            if (btn) btn.click();
+        });
+        document.body.appendChild(screenshotBtn);
+    }
 
     // Masquer l'ancienne bottom bar si elle existe encore (transition progressive)
     const oldNav = document.querySelector('.mobile-bottom-bar');

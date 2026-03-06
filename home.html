@@ -23,7 +23,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script src="js/gamification.js"></script>
+    <script>
+        // Redirection mobile vers micro.html — point d'entrée vocal sur mobile
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            window.location.replace('micro.html');
+        }
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -596,12 +601,12 @@
                 <div class="tile-label">Community<br>management</div>
             </a>
 
-            <!-- 6. Assistant agenda -->
-            <a href="assistant.html" class="tile tile-assistant">
+            <!-- 6. Assistant vocal -->
+            <a href="micro.html" class="tile tile-assistant">
                 <div class="tile-icon-area">
-                    <i class="fa-solid fa-calendar-check tile-fa-icon"></i>
+                    <i class="fa-solid fa-microphone tile-fa-icon"></i>
                 </div>
-                <div class="tile-label">Assistant<br>agenda</div>
+                <div class="tile-label">Assistant<br>vocal</div>
             </a>
 
             <!-- 7. Paramètres -->
@@ -620,13 +625,6 @@
                 <div class="tile-label">Tutoriels</div>
             </a>
 
-            <!-- 9. Mon Guide Léon -->
-            <a href="leon.html" class="tile tile-guide">
-                <div class="tile-icon-area">
-                    <i class="fa-solid fa-compass tile-fa-icon"></i>
-                </div>
-                <div class="tile-label">Mon<br>Guide</div>
-            </a>
 
         </div>
     </div>

@@ -748,11 +748,11 @@ body {
     width: 100%;
 }
 
-/* Bouton Todo flottant (image todo.svg) */
+/* Bouton Todo flottant (image todo.svg) — positionné à gauche */
 .m-todo-fab {
     position: fixed;
     bottom: calc(var(--m-bottom-bar-h) + 12px + env(safe-area-inset-bottom, 0px));
-    right: 12px;
+    left: 12px;
     width: 40px;
     height: 40px;
     padding: 0;
@@ -791,6 +791,66 @@ body {
 }
 .m-todo-fab .m-todo-badge.visible {
     display: flex;
+}
+
+/* ============================================================
+   FAB PIPELINE — Bouton "+" et screenshot (pipelines uniquement)
+   ============================================================ */
+
+/* Animation pulse douce pour attirer l'attention */
+@keyframes m-fab-pulse {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.m-pipeline-fab {
+    position: fixed;
+    bottom: calc(var(--m-bottom-bar-h) + 12px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    z-index: 9000;
+    -webkit-tap-highlight-color: transparent;
+    animation: m-fab-pulse 2.8s ease-in-out infinite;
+    filter: drop-shadow(0 4px 10px rgba(102, 126, 234, 0.4));
+}
+.m-pipeline-fab img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.m-pipeline-fab:active {
+    animation: none;
+    transform: scale(0.9);
+}
+
+.m-screenshot-fab {
+    position: fixed;
+    bottom: calc(var(--m-bottom-bar-h) + 14px + env(safe-area-inset-bottom, 0px));
+    right: calc(12px + 48px + 10px);
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    z-index: 9000;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+    filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.2));
+}
+.m-screenshot-fab img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+.m-screenshot-fab:active {
+    transform: scale(0.9);
 }
 
 /* ============================================================
@@ -931,5 +991,7 @@ body {
     .m-header { display: none !important; }
     .m-action-sheet-overlay { display: none !important; }
     .m-todo-fab { display: none !important; }
+    .m-pipeline-fab { display: none !important; }
+    .m-screenshot-fab { display: none !important; }
     .m-search-overlay { display: none !important; }
 }
