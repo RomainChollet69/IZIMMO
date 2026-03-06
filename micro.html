@@ -1878,11 +1878,15 @@
         // Détecte si la transcription est une commande adressée à Léon
         // plutôt qu'une note CRM à enregistrer
         function isLeonCommand(text) {
-            const t = text.toLowerCase().trim();
-            // Trigger explicite "Dis Léon" / "Léon"
-            if (/^(dis\s+)?l[eé]on[\s,!]/i.test(t)) return true;
+            // Normaliser les accents pour gérer les variantes de transcription
+            // ("Léon", "Leon", "léon" → "leon")
+            const t = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            // Trigger explicite "Dis Léon" / "Léon" / "Leon"
+            if (/^(dis\s+)?leon[\s,!?]/.test(t)) return true;
             // Demandes de créneaux / agenda
-            if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+cr[eé]neaux|quand\s+(suis-je|êtes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/i.test(t)) return true;
+            if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+creneaux|quand\s+(suis-je|etes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/.test(t)) return true;
+            // Requêtes DVF / prix marché
+            if (/^(a\s+combien|quel\s+(est\s+le\s+)?prix|combien\s+(se\s+sont\s+vendus?|vaut|coute)|les\s+ventes?|des\s+comparables?)/.test(t)) return true;
             return false;
         }
 
