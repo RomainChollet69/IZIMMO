@@ -3813,6 +3813,11 @@
                     <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
                 </button>
 
+                <!-- Bouton Import CSV vendeurs -->
+                <button class="export-btn" id="importSellerCsvBtn" title="Importer vendeurs depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
+                    <i class="fa-solid fa-file-csv"></i> CSV
+                </button>
+
                 <!-- Bouton Exporter -->
                 <div class="export-wrapper">
                     <button class="export-btn" id="exportBtn">
@@ -10946,6 +10951,46 @@
         </div>
     </div>
 
+    <!-- Modale Import CSV Vendeurs -->
+    <div class="modal" id="importSellerCsvModal">
+        <div class="modal-content" style="max-width:680px">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Importer vendeurs depuis CSV</h2>
+                    <p style="font-size:13px;color:#9CA3AF;margin:4px 0 0;">Colonnes attendues : Nom, Prénom, Téléphone, Email, Source, Adresse, Type de bien, Budget, Note</p>
+                </div>
+                <button class="close-btn" id="closeSellerCsvModalBtn">&times;</button>
+            </div>
+            <div id="sellerCsvDropZone" style="border:2px dashed #d1d5db;border-radius:12px;padding:32px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all 0.2s">
+                <div style="font-size:32px;margin-bottom:8px">📄</div>
+                <div style="font-weight:600;color:#374151;margin-bottom:4px">Glissez votre fichier CSV ici</div>
+                <div style="font-size:13px;color:#9ca3af;margin-bottom:12px">ou</div>
+                <button type="button" id="sellerCsvFilePickerBtn" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:Inter,sans-serif">Choisir un fichier</button>
+                <input type="file" id="sellerCsvFileInput" accept=".csv,text/csv" style="display:none">
+            </div>
+            <div id="sellerCsvPreviewSection" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <span id="sellerCsvPreviewCount" style="font-size:14px;font-weight:600;color:#374151"></span>
+                    <button type="button" id="sellerCsvResetBtn" style="font-size:12px;color:#9ca3af;background:none;border:none;cursor:pointer">Changer de fichier</button>
+                </div>
+                <div style="overflow-x:auto;max-height:280px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px">
+                    <table id="sellerCsvPreviewTable" style="width:100%;border-collapse:collapse;font-size:12px">
+                        <thead style="position:sticky;top:0;background:#f9fafb"><tr id="sellerCsvPreviewHeader"></tr></thead>
+                        <tbody id="sellerCsvPreviewBody"></tbody>
+                    </table>
+                </div>
+                <div id="sellerCsvImportActions" style="display:flex;gap:10px;justify-content:flex-end">
+                    <button type="button" id="sellerCsvCancelBtn" style="padding:10px 20px;border:1px solid #d1d5db;border-radius:10px;background:white;font-size:14px;cursor:pointer;font-family:Inter,sans-serif">Annuler</button>
+                    <button type="button" id="sellerCsvConfirmBtn" style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Importer</button>
+                </div>
+                <div id="sellerCsvImportProgress" style="display:none;text-align:center;padding:16px">
+                    <div class="spinner" style="margin:0 auto 8px"></div>
+                    <div id="sellerCsvProgressText" style="font-size:14px;color:#6b7280">Import en cours...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modale Micro (iframe) -->
     <div class="micro-modal-overlay" id="microModalOverlay">
         <div class="micro-modal">
@@ -10984,5 +11029,171 @@
     </script>
 
     <script src="js/mobile-nav.js"></script>
+
+    <script>
+        // ===== IMPORT CSV VENDEURS =====
+        let parsedSellerCsvRows = [];
+
+        document.getElementById('importSellerCsvBtn').addEventListener('click', () => openSellerCsvModal());
+        document.getElementById('closeSellerCsvModalBtn').addEventListener('click', () => closeSellerCsvModal());
+        document.getElementById('sellerCsvCancelBtn').addEventListener('click', () => closeSellerCsvModal());
+        document.getElementById('sellerCsvResetBtn').addEventListener('click', () => resetSellerCsvModal());
+        document.getElementById('sellerCsvFilePickerBtn').addEventListener('click', () => document.getElementById('sellerCsvFileInput').click());
+        document.getElementById('sellerCsvFileInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) handleSellerCsvFile(e.target.files[0]);
+        });
+        document.getElementById('sellerCsvConfirmBtn').addEventListener('click', () => confirmSellerCsvImport());
+
+        const sellerCsvDropZone = document.getElementById('sellerCsvDropZone');
+        sellerCsvDropZone.addEventListener('dragover', (e) => { e.preventDefault(); sellerCsvDropZone.style.borderColor = '#667eea'; sellerCsvDropZone.style.background = '#f0f0ff'; });
+        sellerCsvDropZone.addEventListener('dragleave', () => { sellerCsvDropZone.style.borderColor = '#d1d5db'; sellerCsvDropZone.style.background = ''; });
+        sellerCsvDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            sellerCsvDropZone.style.borderColor = '#d1d5db';
+            sellerCsvDropZone.style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file) handleSellerCsvFile(file);
+        });
+
+        function openSellerCsvModal() {
+            resetSellerCsvModal();
+            document.getElementById('importSellerCsvModal').classList.add('active');
+        }
+
+        function closeSellerCsvModal() {
+            document.getElementById('importSellerCsvModal').classList.remove('active');
+        }
+
+        function resetSellerCsvModal() {
+            parsedSellerCsvRows = [];
+            document.getElementById('sellerCsvDropZone').style.display = '';
+            document.getElementById('sellerCsvPreviewSection').style.display = 'none';
+            document.getElementById('sellerCsvImportActions').style.display = 'flex';
+            document.getElementById('sellerCsvImportProgress').style.display = 'none';
+            document.getElementById('sellerCsvFileInput').value = '';
+        }
+
+        function handleSellerCsvFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => parseSellerCsvContent(e.target.result);
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseSellerCsvContent(text) {
+            text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = text.split('\n').filter(l => l.trim());
+            let headerIdx = lines.findIndex(l => /nom/i.test(l.split(',')[0]));
+            if (headerIdx === -1) headerIdx = 0;
+            const headers = parseSellerCSVLine(lines[headerIdx]).map(h => h.trim().toLowerCase());
+            const dataLines = lines.slice(headerIdx + 1);
+            parsedSellerCsvRows = dataLines
+                .map(line => {
+                    const vals = parseSellerCSVLine(line);
+                    const row = {};
+                    headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
+                    return row;
+                })
+                .filter(row => row['nom'] || row['prénom'] || row['prenom']);
+            if (parsedSellerCsvRows.length === 0) { alert('Aucune ligne valide trouvée dans le CSV.'); return; }
+            renderSellerCsvPreview(parsedSellerCsvRows);
+        }
+
+        function parseSellerCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') { inQuotes = !inQuotes; }
+                else if (ch === ',' && !inQuotes) { result.push(current); current = ''; }
+                else { current += ch; }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function renderSellerCsvPreview(rows) {
+            document.getElementById('sellerCsvDropZone').style.display = 'none';
+            document.getElementById('sellerCsvPreviewSection').style.display = '';
+            document.getElementById('sellerCsvPreviewCount').textContent = `${rows.length} vendeur${rows.length > 1 ? 's' : ''} détecté${rows.length > 1 ? 's' : ''}`;
+            const PREVIEW_COLS = ['nom', 'prénom', 'téléphone', 'source', 'adresse', 'budget'];
+            const headers = Object.keys(rows[0]);
+            const colsToShow = PREVIEW_COLS.filter(c => headers.some(h => h === c));
+            document.getElementById('sellerCsvPreviewHeader').innerHTML = colsToShow.map(c =>
+                `<th style="padding:8px 10px;text-align:left;font-size:11px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap">${c}</th>`).join('');
+            document.getElementById('sellerCsvPreviewBody').innerHTML = rows.map((row, i) => {
+                const bg = i % 2 === 0 ? 'white' : '#f9fafb';
+                const cells = colsToShow.map(c => {
+                    const key = Object.keys(row).find(k => k === c) || '';
+                    return `<td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#374151">${escHtml(row[key] || '')}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${cells}</tr>`;
+            }).join('');
+        }
+
+        function csvRowToSeller(row) {
+            const get = (...keys) => {
+                for (const k of keys) {
+                    const found = Object.keys(row).find(h =>
+                        h.toLowerCase().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a') ===
+                        k.toLowerCase().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a'));
+                    if (found && row[found] && row[found] !== '/') return row[found];
+                }
+                return null;
+            };
+            const sourceRaw = (get('source') || '').toLowerCase();
+            const SOURCE_MAP = { 'boitage': 'boitage', 'recommandation': 'recommandation', 'pige': 'pige', 'siteimmo': 'siteimmo', 'efficity': 'efficity', 'internet': 'internet', 'ancien_client': 'ancien_client', 'acquereur': 'acquereur' };
+            const source = Object.keys(SOURCE_MAP).find(k => sourceRaw.includes(k)) || 'autre';
+            return {
+                seller: {
+                    last_name: get('nom') || null,
+                    first_name: get('prénom', 'prenom') || null,
+                    phone: get('téléphone', 'telephone', 'tel') || null,
+                    email: get('email', 'e-mail', 'mail') || null,
+                    source,
+                    address: get('adresse') || null,
+                    property_type: get('type de bien', 'type bien', 'bien') || null,
+                    budget: get('budget', 'prix') || null,
+                    status: 'hot',
+                    date: new Date().toISOString().split('T')[0],
+                    annexes: [],
+                    links: [],
+                    link_previews: {},
+                    commission_rate: 4
+                },
+                note: get('note') || null
+            };
+        }
+
+        async function confirmSellerCsvImport() {
+            if (!parsedSellerCsvRows.length) return;
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            document.getElementById('sellerCsvImportActions').style.display = 'none';
+            document.getElementById('sellerCsvImportProgress').style.display = '';
+            let imported = 0, errors = 0;
+            const total = parsedSellerCsvRows.length;
+            for (let i = 0; i < parsedSellerCsvRows.length; i++) {
+                document.getElementById('sellerCsvProgressText').textContent = `Import en cours... ${i + 1}/${total}`;
+                try {
+                    const { seller, note } = csvRowToSeller(parsedSellerCsvRows[i]);
+                    seller.user_id = userId;
+                    const { data, error } = await supabaseClient.from('sellers').insert([seller]).select();
+                    if (error) { console.error('[CSV Import Sellers] Erreur:', error, seller); errors++; continue; }
+                    if (note && data?.[0]?.id) {
+                        await supabaseClient.from('lead_notes').insert({ user_id: userId, seller_id: data[0].id, content: note });
+                    }
+                    imported++;
+                } catch (err) {
+                    console.error('[CSV Import Sellers] Erreur ligne', i, err);
+                    errors++;
+                }
+            }
+            document.getElementById('sellerCsvProgressText').textContent =
+                `✓ ${imported} vendeur${imported > 1 ? 's' : ''} importé${imported > 1 ? 's' : ''}${errors > 0 ? ` (${errors} erreur${errors > 1 ? 's' : ''})` : ''}`;
+            await loadSellers();
+            setTimeout(() => closeSellerCsvModal(), 1800);
+        }
+    </script>
 </body>
 </html>
