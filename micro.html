@@ -2280,13 +2280,16 @@
             const hasMatches = result.contacts_matched && result.contacts_matched.length > 0;
             const hasAmbiguous = result.ambiguous_contacts && result.ambiguous_contacts.length > 0;
             const hasUnmatched = result.unmatched_contacts && result.unmatched_contacts.length > 0;
+            // Afficher la confirmation si contacts matchés OU si visite/agenda détecté
+            // (les IDs de visite seront patchés depuis les nouveaux contacts lors du confirm)
+            const hasVisitOrAgenda = !!(result.visit_detected?.date || result.agenda_event?.date);
 
-            if (hasMatches) showConfirmation(result);
+            if (hasMatches || hasVisitOrAgenda) showConfirmation(result);
             if (hasAmbiguous) showAmbiguous(result.ambiguous_contacts);
             // Toujours afficher les contacts non-trouvés (création de lead)
             // même s'il y a des matches existants à côté
             if (hasUnmatched) showNoMatch(result.unmatched_contacts);
-            if (!hasMatches && !hasAmbiguous && !hasUnmatched) showNoMatch(['(aucun contact identifié)']);
+            if (!hasMatches && !hasAmbiguous && !hasUnmatched && !hasVisitOrAgenda) showNoMatch(['(aucun contact identifié)']);
         }
 
         // ===== CONFIRMATION =====
@@ -2318,7 +2321,8 @@
             // Bloc visite détectée (optionnel)
             const visitBlock = document.getElementById('visitDetectedBlock');
             const vd = result.visit_detected;
-            if (vd && (vd.seller_lead_id || vd.buyer_lead_id)) {
+            if (vd && vd.date) {
+                // Afficher dès qu'il y a une date — les IDs seront patchés depuis les nouveaux contacts
                 const typeLabel = vd.type === 'planifiee' ? '📅 Visite planifiée' : '🏠 Visite effectuée';
                 const dateStr = vd.date || new Date().toISOString().split('T')[0];
                 visitBlock.innerHTML = `
