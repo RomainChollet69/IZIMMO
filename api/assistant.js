@@ -726,7 +726,9 @@ INTENTIONS POSSIBLES :
 6. "draft_message" — Rédiger un message pour quelqu'un (sans lien avec l'agenda)
 7. "find_slots_and_draft" — Trouver des créneaux ET rédiger un message proposant ces créneaux
 8. "confirm_action" — L'agent confirme une action proposée ("oui", "ok", "c'est bon")
-9. "unknown" — Intention non reconnue, demander une précision
+9. "dvf_query" — Rechercher des ventes immobilières comparables (prix au m², mutations DVF)
+   Déclencheurs : "à combien se sont vendus", "quel est le prix au m²", "combien vaut", "les ventes de", "des comparables", "une estimation", "le marché"
+10. "unknown" — Intention non reconnue, demander une précision
 
 RÈGLE DE CONFIRMATION :
 - Pour create_event, update_event, delete_event : TOUJOURS ajouter "needs_confirmation": true dans params
@@ -791,6 +793,26 @@ Pour update_event / delete_event avec ambiguïté :
   "disambiguation_query": { "date_from": "YYYY-MM-DD", "date_to": "YYYY-MM-DD" },
   "original_request": "description de ce que l'agent veut faire"
 }
+
+Pour dvf_query :
+{
+  "address": "164 rue Joliot Curie",
+  "city": "Tassin-la-Demi-Lune",
+  "property_type": "appartement" | "maison" | "terrain" | null,
+  "rooms": 3,
+  "surface_min": null,
+  "surface_max": null,
+  "radius_m": 500
+}
+Règles dvf_query :
+- Extraire l'adresse et la ville séparément
+- Si l'agent mentionne un nombre de pièces (T3, 3 pièces, F4...) → mettre dans "rooms", laisser surface_min/max à null (le frontend calcule la surface)
+- Si l'agent mentionne une surface ("70m²", "environ 80m²") → mettre dans surface_min/surface_max, laisser rooms à null
+- Si aucun filtre → property_type seul suffit
+- "appartement", "appart", "studio" → "appartement"
+- "maison", "villa", "pavillon" → "maison"
+- "terrain", "lot" → "terrain"
+- radius_m par défaut : 500 (augmenter à 1000 si l'adresse est imprécise, ex: juste une ville)
 
 RÈGLES D'EXTRACTION :
 

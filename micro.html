@@ -641,6 +641,40 @@
         .link-result-type.buyer { background: #dbeafe; color: #1e40af; }
         .link-no-result { padding: 10px 12px; font-size: 13px; color: #94a3b8; }
 
+        /* ===== DVF ZONE ===== */
+        .dvf-zone { display: none; width: 100%; margin-top: 12px; background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(102,126,234,0.12); border: 1.5px solid #e0e7ff; overflow: hidden; }
+        .dvf-zone-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px 12px; border-bottom: 1px solid #f1f5f9; }
+        .dvf-zone-icon { font-size: 18px; }
+        .dvf-zone-title { font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; }
+        .dvf-zone-close { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 0 4px; line-height: 1; }
+        .dvf-loading { padding: 24px 16px; text-align: center; font-size: 13px; color: #94a3b8; }
+        .dvf-error { padding: 16px; font-size: 13px; color: #991b1b; }
+        .dvf-query-label { display: flex; align-items: center; gap: 8px; padding: 12px 16px 0; font-size: 13px; color: #64748b; }
+        .dvf-query-icon { font-size: 16px; }
+        .dvf-no-result { padding: 20px 16px; text-align: center; font-size: 13px; color: #94a3b8; }
+        .dvf-summary { padding: 10px 16px 6px; }
+        .dvf-summary-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #667eea; margin-bottom: 4px; }
+        .dvf-summary-stats { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #374151; }
+        .dvf-sep { color: #cbd5e1; }
+        .dvf-cards-list { padding: 6px 12px 12px; display: flex; flex-direction: column; gap: 8px; }
+        .dvf-sale-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 12px 14px; }
+        .dvf-sale-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .dvf-sale-date { font-size: 11px; color: #94a3b8; font-weight: 600; }
+        .dvf-sale-dist { font-size: 11px; color: #94a3b8; }
+        .dvf-sale-middle { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .dvf-sale-type { font-size: 12px; background: #ede9fe; color: #5b21b6; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+        .dvf-sale-surface { font-size: 13px; font-weight: 700; color: #374151; }
+        .dvf-sale-price { display: flex; align-items: baseline; gap: 8px; }
+        .dvf-sale-total { font-size: 16px; font-weight: 800; color: #1a1a2e; }
+        .dvf-sale-ppm2 { font-size: 12px; color: #667eea; font-weight: 600; background: #eef2ff; padding: 2px 8px; border-radius: 10px; }
+        .dvf-secondary-wrap { margin: 0 12px 12px; border: 1px dashed #cbd5e1; border-radius: 12px; overflow: hidden; }
+        .dvf-secondary-toggle { padding: 10px 14px; font-size: 12px; color: #64748b; cursor: pointer; list-style: none; font-weight: 600; background: #f8fafc; }
+        .dvf-secondary-toggle::-webkit-details-marker { display: none; }
+        .dvf-secondary-toggle::before { content: '▶ '; font-size: 10px; }
+        details[open] .dvf-secondary-toggle::before { content: '▼ '; }
+        .dvf-cards-secondary { padding: 6px 2px 2px; }
+        .dvf-cards-secondary .dvf-sale-card { background: white; opacity: 0.85; }
+
         /* ===== ERROR ===== */
         .error-zone { display: none; width: 100%; margin-top: 12px; }
         .error-zone.visible { display: block; }
@@ -1298,6 +1332,16 @@
                 </div>
             </div>
 
+            <!-- Résultats DVF — ventes comparables -->
+            <div class="dvf-zone" id="dvfZone">
+                <div class="dvf-zone-header">
+                    <span class="dvf-zone-icon">🏠</span>
+                    <span class="dvf-zone-title">Ventes comparables</span>
+                    <button class="dvf-zone-close" id="dvfZoneClose">&times;</button>
+                </div>
+                <div id="dvfResultBody"></div>
+            </div>
+
             <!-- Erreur -->
             <div class="error-zone" id="errorZone">
                 <div class="error-card">
@@ -1483,6 +1527,7 @@
             ambiguousZone.classList.remove('visible');
             noMatchZone.classList.remove('visible');
             errorZone.classList.remove('visible');
+            document.getElementById('dvfZone').style.display = 'none';
         }
 
         // Retour à l'état initial (bouton Réessayer)
@@ -1624,6 +1669,210 @@
             return matched.length === 0 ? leads.slice(0, 50) : matched;
         }
 
+        // ===== DVF — Ventes comparables =====
+
+        const DVF_TYPE_MAP = { 'appartement': 1, 'maison': 2, 'terrain': 3 };
+        const DVF_TYPE_LABELS_MICRO = { 1: 'Appartement', 2: 'Maison', 3: 'Terrain', 4: 'Local pro' };
+        // Surface estimée par nombre de pièces (T1…T6+)
+        const DVF_ROOMS_SURFACE = {
+            1: { min: 15,  max: 30  },
+            2: { min: 30,  max: 55  },
+            3: { min: 50,  max: 80  },
+            4: { min: 75,  max: 110 },
+            5: { min: 100, max: 140 },
+            6: { min: 130, max: null }
+        };
+        let dvfIndexCache = null;
+        const dvfDeptCache = {};
+
+        function dvfHaversine(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        async function dvfLoadIndex() {
+            if (dvfIndexCache) return dvfIndexCache;
+            const resp = await fetch(DVF_STORAGE_URL + '/index.json');
+            if (!resp.ok) throw new Error('Index DVF inaccessible');
+            dvfIndexCache = await resp.json();
+            return dvfIndexCache;
+        }
+
+        function dvfFindDepts(lat, lng, radiusM) {
+            if (!dvfIndexCache) return [];
+            const degLat = radiusM / 111320;
+            const degLng = radiusM / (111320 * Math.cos(lat * Math.PI / 180));
+            const minLat = lat - degLat, maxLat = lat + degLat;
+            const minLng = lng - degLng, maxLng = lng + degLng;
+            return Object.entries(dvfIndexCache)
+                .filter(([, info]) => {
+                    const [bMinLng, bMinLat, bMaxLng, bMaxLat] = info.bbox;
+                    return maxLng >= bMinLng && minLng <= bMaxLng && maxLat >= bMinLat && minLat <= bMaxLat;
+                })
+                .map(([dept]) => dept);
+        }
+
+        async function dvfLoadDept(dept) {
+            if (dvfDeptCache[dept]) return dvfDeptCache[dept];
+            const resp = await fetch(DVF_STORAGE_URL + '/' + dept + '.json');
+            if (!resp.ok) throw new Error('Fichier département ' + dept + ' inaccessible');
+            const json = await resp.json();
+            dvfDeptCache[dept] = json.data;
+            return json.data;
+        }
+
+        async function geocodeAddressDvf(address) {
+            // Nominatim OpenStreetMap — sans clé API, gratuit
+            const q = encodeURIComponent(address);
+            const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=fr&accept-language=fr`;
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('Erreur géocodage (' + resp.status + ')');
+            const data = await resp.json();
+            if (!data || data.length === 0) throw new Error('Adresse introuvable : ' + address);
+            return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+        }
+
+        async function searchDvfSales(lat, lng, typeCode, radiusM) {
+            // row format: [date_int, price, type_code, surf_bati, surf_terrain, lng, lat]
+            await dvfLoadIndex();
+            const depts = dvfFindDepts(lat, lng, radiusM);
+            if (depts.length === 0) return [];
+            await Promise.all(depts.filter(d => !dvfDeptCache[d]).map(d => dvfLoadDept(d)));
+            const sales = [];
+            for (const dept of depts) {
+                for (const row of dvfDeptCache[dept]) {
+                    if (typeCode && row[2] !== typeCode) continue;
+                    const dist = dvfHaversine(lat, lng, row[6], row[5]);
+                    if (dist > radiusM) continue;
+                    const ds = String(row[0]);
+                    sales.push({
+                        date: `${ds.slice(0,4)}-${ds.slice(4,6)}-${ds.slice(6,8)}`,
+                        price: row[1],
+                        type: DVF_TYPE_LABELS_MICRO[row[2]] || 'Autre',
+                        surface: row[3],
+                        dist: Math.round(dist)
+                    });
+                }
+            }
+            return sales.sort((a, b) => b.date.localeCompare(a.date));
+        }
+
+        function dvfFormatDate(dateStr) {
+            const [y, m] = dateStr.split('-');
+            const months = ['jan.', 'fév.', 'mar.', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sep.', 'oct.', 'nov.', 'déc.'];
+            return `${months[parseInt(m) - 1]} ${y}`;
+        }
+
+        function dvfRenderCard(s) {
+            const ppm2 = s.surface > 0 ? Math.round(s.price / s.surface) : null;
+            return `<div class="dvf-sale-card">
+                <div class="dvf-sale-top">
+                    <span class="dvf-sale-date">${dvfFormatDate(s.date)}</span>
+                    <span class="dvf-sale-dist">📍 ${s.dist} m</span>
+                </div>
+                <div class="dvf-sale-middle">
+                    <span class="dvf-sale-type">${escHtml(s.type)}</span>
+                    <span class="dvf-sale-surface">${s.surface} m²</span>
+                </div>
+                <div class="dvf-sale-price">
+                    <span class="dvf-sale-total">${s.price.toLocaleString('fr-FR')} €</span>
+                    ${ppm2 ? `<span class="dvf-sale-ppm2">${ppm2.toLocaleString('fr-FR')} €/m²</span>` : ''}
+                </div>
+            </div>`;
+        }
+
+        function dvfShowResults(body, address, params, mainSales, complementSales, surfMin, surfMax) {
+            const typeLabel = params.property_type
+                ? params.property_type.charAt(0).toUpperCase() + params.property_type.slice(1) + 's'
+                : 'Biens';
+            const surfLabel = (surfMin || surfMax)
+                ? ` · ${surfMin || '?'}–${surfMax || '∞'} m²`
+                : '';
+
+            let html = `<div class="dvf-query-label">
+                <span class="dvf-query-icon">📍</span>
+                <span>${escHtml(address)}</span>
+            </div>`;
+
+            if (mainSales.length === 0) {
+                html += `<div class="dvf-no-result">Aucune vente trouvée dans un rayon de ${params.radius_m || 500} m.</div>`;
+            } else {
+                const avgPrice = Math.round(mainSales.reduce((s, v) => s + v.price, 0) / mainSales.length);
+                const withSurf = mainSales.filter(s => s.surface > 0);
+                const avgPpm2 = withSurf.length > 0
+                    ? Math.round(withSurf.reduce((s, v) => s + v.price / v.surface, 0) / withSurf.length)
+                    : null;
+
+                html += `<div class="dvf-summary">
+                    <div class="dvf-summary-label">${mainSales.length} vente${mainSales.length > 1 ? 's' : ''} — ${typeLabel}${surfLabel}</div>
+                    <div class="dvf-summary-stats">
+                        <span>Moy. <strong>${avgPrice.toLocaleString('fr-FR')} €</strong></span>
+                        ${avgPpm2 ? `<span class="dvf-sep">·</span><span><strong>${avgPpm2.toLocaleString('fr-FR')} €/m²</strong></span>` : ''}
+                    </div>
+                </div>
+                <div class="dvf-cards-list">${mainSales.slice(0, 12).map(dvfRenderCard).join('')}</div>`;
+            }
+
+            // Complément : même type, taille différente
+            if (complementSales.length > 0) {
+                html += `<details class="dvf-secondary-wrap">
+                    <summary class="dvf-secondary-toggle">Voir aussi — autres tailles (${complementSales.length} vente${complementSales.length > 1 ? 's' : ''})</summary>
+                    <div class="dvf-cards-list dvf-cards-secondary">
+                        ${complementSales.slice(0, 8).map(dvfRenderCard).join('')}
+                    </div>
+                </details>`;
+            }
+
+            body.innerHTML = html;
+        }
+
+        async function executeDvfQueryIntent(orch) {
+            const p = orch.params || {};
+            const dvfZone = document.getElementById('dvfZone');
+            const dvfBody = document.getElementById('dvfResultBody');
+            dvfZone.style.display = 'block';
+            dvfBody.innerHTML = '<div class="dvf-loading"><span class="spinner" style="display:inline-block;margin-right:8px"></span>Chargement des données de ventes...</div>';
+            scrollToResult(dvfZone);
+
+            try {
+                // Construire l'adresse complète pour le géocodage
+                const address = [p.address, p.city].filter(Boolean).join(', ') || p.city || p.address;
+                if (!address) throw new Error('Aucune adresse détectée dans la demande');
+
+                const geo = await geocodeAddressDvf(address + ', France');
+                const radiusM = p.radius_m || 500;
+                const typeCode = p.property_type ? (DVF_TYPE_MAP[p.property_type.toLowerCase()] || null) : null;
+
+                // Surface : depuis nb_pièces ou explicit
+                let surfMin = p.surface_min || null;
+                let surfMax = p.surface_max || null;
+                if (!surfMin && !surfMax && p.rooms) {
+                    const rng = DVF_ROOMS_SURFACE[p.rooms];
+                    if (rng) { surfMin = rng.min; surfMax = rng.max; }
+                }
+
+                const allSales = await searchDvfSales(geo.lat, geo.lng, typeCode, radiusM);
+                console.log(`[Micro:DVF] ${allSales.length} ventes chargées dans ${radiusM}m autour de ${address}`);
+
+                // Segmenter : principal (surface match) vs complément
+                const mainSales = allSales.filter(s => {
+                    if (!surfMin && !surfMax) return true;
+                    if (surfMin && s.surface < surfMin) return false;
+                    if (surfMax && s.surface > surfMax) return false;
+                    return true;
+                });
+                const complementSales = allSales.filter(s => !mainSales.includes(s));
+
+                dvfShowResults(dvfBody, address, p, mainSales, complementSales, surfMin, surfMax);
+            } catch (err) {
+                console.error('[Micro:DVF] Erreur:', err);
+                dvfBody.innerHTML = `<div class="dvf-error">⚠️ ${escHtml(err.message)}</div>`;
+            }
+        }
+
         // ===== COMMANDES LÉON (agenda, créneaux) =====
 
         // Détecte si la transcription est une commande adressée à Léon
@@ -1640,6 +1889,10 @@
         const leonCmdZone = document.getElementById('leonCmdZone');
         document.getElementById('leonCmdClose').addEventListener('click', () => {
             leonCmdZone.classList.remove('visible');
+            setMicState('idle');
+        });
+        document.getElementById('dvfZoneClose').addEventListener('click', () => {
+            document.getElementById('dvfZone').style.display = 'none';
             setMicState('idle');
         });
         document.getElementById('leonCmdCopyBtn').addEventListener('click', () => {
@@ -1680,6 +1933,8 @@
                     await executeFindSlotsIntent(orch, headers, today);
                 } else if (orch.intent === 'list_events') {
                     await executeListEventsIntent(orch, headers);
+                } else if (orch.intent === 'dvf_query') {
+                    await executeDvfQueryIntent(orch);
                 } else {
                     showLeonCmdResult({ response: orch.leon_response || "Je n'ai pas compris. Peux-tu reformuler ?" });
                 }
