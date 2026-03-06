@@ -5235,7 +5235,6 @@
                 .eq('user_id', userId)
                 .order('visit_date', { ascending: false });
 
-            console.log('[Visits] Seller-side query:', { sellerId, userId, results: data?.length, error });
             if (error) { console.error('[Visits] Load error:', error); container.innerHTML = ''; return; }
             currentMatchVisits = data || [];
             renderMatchingVisits();
@@ -6331,7 +6330,6 @@
                 .order('created_at', { ascending: false });
             if (error) { console.error('[loadSellers] Erreur chargement:', error); return; }
             sellers = data || [];
-            console.log('[loadSellers] Chargé', sellers.length, 'sellers. Statuts:', [...new Set(sellers.map(s => s.status))].join(', '));
             try { await loadVisitCounts(); } catch(e) { console.error('[loadSellers] loadVisitCounts error:', e); }
             try { await loadNotePreviews(); } catch(e) { console.error('[loadSellers] loadNotePreviews error:', e); }
             try { await loadFileCounts(); } catch(e) { console.error('[loadSellers] loadFileCounts error:', e); }
@@ -8158,7 +8156,6 @@
             try {
                 const text = await sellerRecorder.record(stream);
                 if (text && text.trim()) {
-                    console.log('Dictée transcrite:', text.trim());
                     await parseSellerDictation(text.trim(), btn, status);
                 }
             } catch (err) {
@@ -8183,7 +8180,6 @@
 
                 if (!resp.ok) throw new Error('Erreur analyse');
                 const { fields } = await resp.json();
-                console.log('Champs extraits par Claude:', fields);
 
                 // Map fields — ONLY fill if value is not null
                 // Check if separate name fields are visible
@@ -8734,7 +8730,6 @@
                 // Reset onboarding flag si tous les leads sont supprimés
                 if (sellers.length === 0) {
                     localStorage.removeItem('onboarding_pipeline_done');
-                    console.log('[Onboarding] Flag reset - no leads remaining');
                 }
             }
         }
@@ -9350,7 +9345,6 @@
                         dismissLeonPopup();
                         alert('Formulaire retour visite — bientôt disponible !');
                     } else {
-                        console.log('AI action not yet implemented:', action);
                         dismissLeonPopup();
                     }
                 });
@@ -10493,9 +10487,6 @@
                         if (clearBtn) clearBtn.style.display = '';
                     }
                     history.replaceState(null, '', window.location.pathname);
-                } else {
-                    // Briefing du matin (non-bloquant, après chargement)
-                    maybeShowBriefing().catch(() => {});
                 }
             }).catch(err => {
                 console.error('[Pipeline] Erreur chargement sellers:', err);
@@ -10805,14 +10796,12 @@
             const agencyName = await getAgencyName();
 
             try {
-                console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'seller' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
                     body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'seller', agentName, agencyName, tone })
                 });
                 const data = await resp.json().catch(() => ({}));
-                console.log('[MsgIA] Response:', resp.status, data);
                 if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur');
 
                 output.value = data.message;

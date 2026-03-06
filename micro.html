@@ -601,6 +601,45 @@
         }
         .create-lead-confirm:hover { opacity: 0.9; }
         .create-lead-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+        .visit-detected-card { background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+        .visit-detected-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #166534; cursor: pointer; }
+        .visit-detected-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #16a34a; }
+        .visit-detected-fields { display: flex; gap: 8px; margin-top: 8px; }
+        .visit-detected-fields input { flex: 1; border: 1px solid #bbf7d0; border-radius: 8px; padding: 6px 10px; font-size: 13px; background: white; }
+        .visit-detected-notes { font-size: 12px; color: #15803d; margin-top: 6px; font-style: italic; }
+        .agenda-detected-card { background: #eff6ff; border: 1.5px solid #93c5fd; border-radius: 12px; padding: 12px 14px; margin-top: 10px; }
+
+        /* ===== LÉON CMD ZONE ===== */
+        .leon-cmd-zone { display: none; width: 100%; margin-top: 12px; }
+        .leon-cmd-zone.visible { display: block; }
+        .leon-cmd-card { background: white; border-radius: 20px; box-shadow: 0 4px 24px rgba(102,126,234,0.15); border: 1.5px solid #e0e7ff; overflow: hidden; }
+        .leon-cmd-header { display: flex; align-items: center; gap: 8px; padding: 14px 16px 10px; border-bottom: 1px solid #f1f5f9; }
+        .leon-cmd-avatar { font-size: 18px; }
+        .leon-cmd-title { font-size: 14px; font-weight: 700; color: #1a1a2e; flex: 1; }
+        .leon-cmd-close { background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer; padding: 0 4px; line-height: 1; }
+        .leon-cmd-response { padding: 14px 16px; font-size: 14px; color: #374151; line-height: 1.6; min-height: 40px; }
+        .leon-cmd-slots { padding: 0 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+        .leon-cmd-slot { background: #f0f0ff; border: 1.5px solid #c7d2fe; border-radius: 12px; padding: 10px 14px; }
+        .leon-cmd-slot-day { font-size: 13px; font-weight: 700; color: #4338ca; }
+        .leon-cmd-slot-time { font-size: 12px; color: #6366f1; margin-top: 2px; }
+        .leon-cmd-message-wrap { padding: 12px 16px 16px; border-top: 1px solid #f1f5f9; }
+        .leon-cmd-message-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .leon-cmd-message-text { width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: Inter, sans-serif; line-height: 1.5; color: #374151; resize: vertical; }
+        .leon-cmd-copy-btn { margin-top: 8px; width: 100%; padding: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .leon-cmd-thinking { padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #6b7280; }
+        .link-existing-btn { background: none; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 8px 14px; font-size: 12px; color: #64748b; cursor: pointer; width: 100%; margin-top: 8px; font-family: 'Inter', sans-serif; }
+        .link-existing-btn:hover { background: #f8fafc; }
+        .link-existing-wrap { margin-top: 8px; }
+        .link-existing-input { width: 100%; box-sizing: border-box; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none; font-family: 'Inter', sans-serif; }
+        .link-existing-input:focus { border-color: #667eea; }
+        .link-existing-results { margin-top: 4px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+        .link-result-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; font-size: 14px; cursor: pointer; background: white; }
+        .link-result-item:hover { background: #f8fafc; }
+        .link-result-item + .link-result-item { border-top: 1px solid #f1f5f9; }
+        .link-result-type { font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+        .link-result-type.seller { background: #fef3c7; color: #92400e; }
+        .link-result-type.buyer { background: #dbeafe; color: #1e40af; }
+        .link-no-result { padding: 10px 12px; font-size: 13px; color: #94a3b8; }
 
         /* ===== ERROR ===== */
         .error-zone { display: none; width: 100%; margin-top: 12px; }
@@ -1100,6 +1139,7 @@
                 </a>
             </nav>
             <div class="header-actions">
+                <a href="aide-vocale.html" title="Guide des commandes vocales" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:#f1f5f9;color:#64748b;text-decoration:none;font-size:14px;font-weight:700;flex-shrink:0">?</a>
                 <div id="userProfile"></div>
             </div>
         </div>
@@ -1223,6 +1263,8 @@
                     </div>
                     <div class="confirmation-action" id="confirmationAction"></div>
                     <div id="confirmationMatches"></div>
+                    <div id="visitDetectedBlock" style="display:none"></div>
+                    <div id="agendaEventBlock" style="display:none"></div>
                     <div class="confirmation-footer">
                         <button class="btn-confirm primary" id="confirmBtn">Confirmer</button>
                         <button class="btn-confirm secondary" id="editBtn">Modifier</button>
@@ -1235,6 +1277,26 @@
 
             <!-- Aucun match -->
             <div class="no-match-zone" id="noMatchZone"></div>
+
+            <!-- Réponse Léon (commandes : créneaux, agenda...) -->
+            <div class="leon-cmd-zone" id="leonCmdZone">
+                <div class="leon-cmd-card">
+                    <div class="leon-cmd-header">
+                        <span class="leon-cmd-avatar">🟣</span>
+                        <span class="leon-cmd-title">Léon</span>
+                        <button class="leon-cmd-close" id="leonCmdClose">&times;</button>
+                    </div>
+                    <div class="leon-cmd-response" id="leonCmdResponse"></div>
+                    <div class="leon-cmd-slots" id="leonCmdSlots"></div>
+                    <div class="leon-cmd-message-wrap" id="leonCmdMessageWrap" style="display:none">
+                        <div class="leon-cmd-message-label">Message prêt à envoyer</div>
+                        <textarea class="leon-cmd-message-text" id="leonCmdMessageText" rows="5"></textarea>
+                        <button class="leon-cmd-copy-btn" id="leonCmdCopyBtn">
+                            <i class="fa-solid fa-copy"></i> Copier
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Erreur -->
             <div class="error-zone" id="errorZone">
@@ -1286,6 +1348,7 @@
         let allLeads = null;
         let history = [];
         let userId = null;
+        let cachedHeaders = null; // Headers auth réutilisés pour le calendrier
 
         // ===== DOM =====
         const micZone = document.getElementById('micZone');
@@ -1342,7 +1405,7 @@
             });
 
             // Onboarding première connexion (une seule fois via localStorage)
-            const ONBOARDING_KEY = 'leon_onboarded_v1';
+            const ONBOARDING_KEY = 'leon_onboarded_v2';
             if (!localStorage.getItem(ONBOARDING_KEY)) {
                 const overlay = document.getElementById('onboardingOverlay');
                 document.getElementById('onboardingFirstname').textContent = firstName;
@@ -1459,7 +1522,13 @@
 
                 currentTranscription = text.trim();
                 showTranscription(currentTranscription);
-                await analyseTranscription(currentTranscription);
+
+                // Routing : commande Léon vs note CRM
+                if (isLeonCommand(currentTranscription)) {
+                    await handleLeonCommand(currentTranscription);
+                } else {
+                    await analyseTranscription(currentTranscription);
+                }
             } catch (err) {
                 setMicState('idle');
                 if (err.message) showError(err.message);
@@ -1555,6 +1624,346 @@
             return matched.length === 0 ? leads.slice(0, 50) : matched;
         }
 
+        // ===== COMMANDES LÉON (agenda, créneaux) =====
+
+        // Détecte si la transcription est une commande adressée à Léon
+        // plutôt qu'une note CRM à enregistrer
+        function isLeonCommand(text) {
+            const t = text.toLowerCase().trim();
+            // Trigger explicite "Dis Léon" / "Léon"
+            if (/^(dis\s+)?l[eé]on[\s,!]/i.test(t)) return true;
+            // Demandes de créneaux / agenda
+            if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+cr[eé]neaux|quand\s+(suis-je|êtes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/i.test(t)) return true;
+            return false;
+        }
+
+        const leonCmdZone = document.getElementById('leonCmdZone');
+        document.getElementById('leonCmdClose').addEventListener('click', () => {
+            leonCmdZone.classList.remove('visible');
+            setMicState('idle');
+        });
+        document.getElementById('leonCmdCopyBtn').addEventListener('click', () => {
+            const text = document.getElementById('leonCmdMessageText').value;
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('leonCmdCopyBtn');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+                setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copier'; }, 1800);
+            });
+        });
+
+        async function handleLeonCommand(text) {
+            setMicState('analysing');
+            analysingZone.classList.add('visible');
+            leonCmdZone.classList.remove('visible');
+
+            try {
+                const leads = await loadUserLeads();
+                const contacts_json = JSON.stringify(
+                    leads.slice(0, 100).map(l => ({ id: l.id, type: l.type, name: `${l.first_name || ''} ${l.last_name || ''}`.trim() }))
+                );
+                const headers = cachedHeaders || (cachedHeaders = await getAuthHeaders());
+                const today = new Date().toISOString().split('T')[0];
+
+                // 1. Comprendre l'intention
+                const orchResp = await fetch('/api/assistant', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({ action: 'orchestrate', input: text, context: { today, contacts_json } })
+                });
+                if (!orchResp.ok) throw new Error('Erreur orchestration');
+                const orch = await orchResp.json();
+
+                analysingZone.classList.remove('visible');
+                setMicState('idle');
+
+                // 2. Exécuter l'intention
+                if (orch.intent === 'find_slots' || orch.intent === 'find_slots_and_draft') {
+                    await executeFindSlotsIntent(orch, headers, today);
+                } else if (orch.intent === 'list_events') {
+                    await executeListEventsIntent(orch, headers);
+                } else {
+                    showLeonCmdResult({ response: orch.leon_response || "Je n'ai pas compris. Peux-tu reformuler ?" });
+                }
+            } catch (err) {
+                analysingZone.classList.remove('visible');
+                setMicState('idle');
+                console.error('[Micro] handleLeonCommand error:', err);
+                showLeonCmdResult({ response: "Désolé, je n'ai pas pu traiter ta demande. Vérifie que ton agenda Google est connecté." });
+            }
+        }
+
+        async function executeFindSlotsIntent(orch, headers, today) {
+            const p = orch.params || {};
+            const dateFrom = p.date_range?.from || today;
+            const rawTo = p.date_range?.to;
+            const dateTo = rawTo || (() => {
+                const d = new Date(today); d.setDate(d.getDate() + 14);
+                return d.toISOString().split('T')[0];
+            })();
+
+            const slotsResp = await fetch('/api/assistant', {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    action: 'find_slots',
+                    date_from: dateFrom, date_to: dateTo,
+                    slot_type: p.slot_type || null,
+                    duration_minutes: p.duration_minutes || 30
+                })
+            });
+            if (!slotsResp.ok) throw new Error('Erreur find_slots');
+            const slotsData = await slotsResp.json();
+            const slots = (slotsData.slots || []).slice(0, 3);
+
+            if (slots.length === 0) {
+                showLeonCmdResult({ response: "Aucun créneau disponible sur cette période. Vérifie ton agenda Google ou élargis la plage de dates." });
+                return;
+            }
+
+            // Rédiger le message si demandé
+            let message = null;
+            if (orch.intent === 'find_slots_and_draft' && p.who) {
+                const msgResp = await fetch('/api/assistant', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({
+                        action: 'draft_message',
+                        who: p.who,
+                        who_role: p.who_role || 'contact',
+                        context: p.context || 'proposition de créneaux de visite',
+                        tone: p.message_tone || 'professionnel',
+                        channel: p.message_channel || 'sms',
+                        slots
+                    })
+                });
+                if (msgResp.ok) {
+                    const msgData = await msgResp.json();
+                    message = msgData.message || null;
+                }
+            }
+
+            showLeonCmdResult({
+                response: orch.leon_response || `J'ai trouvé ${slots.length} créneau${slots.length > 1 ? 'x' : ''} disponible${slots.length > 1 ? 's' : ''}.`,
+                slots,
+                message
+            });
+        }
+
+        async function executeListEventsIntent(orch, headers) {
+            const p = orch.params || {};
+            const today = new Date().toISOString().split('T')[0];
+            const dateFrom = p.date_range?.from || today;
+            const dateTo = p.date_range?.to || today;
+
+            const evResp = await fetch('/api/assistant', {
+                method: 'POST', headers,
+                body: JSON.stringify({ action: 'list_events', date_from: dateFrom, date_to: dateTo })
+            });
+            if (!evResp.ok) throw new Error('Erreur list_events');
+            const evData = await evResp.json();
+            const events = evData.events || [];
+
+            if (events.length === 0) {
+                showLeonCmdResult({ response: orch.leon_response || `Rien dans ton agenda pour ${p.label || 'cette période'}.` });
+                return;
+            }
+
+            const lines = events.map(e => {
+                const time = e.start ? e.start.substring(11, 16) : '';
+                return `• ${time ? time + ' — ' : ''}${e.summary}`;
+            }).join('\n');
+            showLeonCmdResult({ response: `${orch.leon_response || ''}\n\n${lines}`.trim() });
+        }
+
+        function showLeonCmdResult({ response, slots, message }) {
+            document.getElementById('leonCmdResponse').textContent = response || '';
+
+            const slotsEl = document.getElementById('leonCmdSlots');
+            if (slots && slots.length > 0) {
+                slotsEl.innerHTML = slots.map(s => `
+                    <div class="leon-cmd-slot">
+                        <div class="leon-cmd-slot-day">${escHtml(s.day_label)}</div>
+                        <div class="leon-cmd-slot-time">${s.start} – ${s.end}</div>
+                    </div>`).join('');
+            } else {
+                slotsEl.innerHTML = '';
+            }
+
+            const msgWrap = document.getElementById('leonCmdMessageWrap');
+            const msgText = document.getElementById('leonCmdMessageText');
+            if (message) {
+                msgText.value = message;
+                msgWrap.style.display = '';
+            } else {
+                msgWrap.style.display = 'none';
+            }
+
+            leonCmdZone.classList.add('visible');
+            scrollToResult(leonCmdZone);
+        }
+
+        // ===== CALENDRIER GOOGLE =====
+        const VISIT_DEFAULT_START = '10:00';
+        const VISIT_DURATION_MIN = 30;
+
+        function extractCityFromAddress(address) {
+            if (!address) return null;
+            const cpMatch = address.trim().match(/(\d{5})\s+(.+)$/);
+            if (cpMatch) return cpMatch[2].trim();
+            const commaMatch = address.trim().match(/,\s*([^,]+)$/);
+            if (commaMatch) return commaMatch[1].trim();
+            return address.split(/\s+/).length <= 3 ? address.trim() : null;
+        }
+
+        async function syncVisitToCalendarFromMicro(visit, seller, buyer, headers) {
+            try {
+                const buyerName = buyer
+                    ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim()
+                    : 'Acquéreur';
+                const city = extractCityFromAddress(seller?.address);
+                const title = `Visite${city ? ' ' + city : ''} — ${buyerName}`;
+
+                const date = visit.visit_date;
+                const startTime = visit.visit_time
+                    ? visit.visit_time.substring(0, 5)
+                    : VISIT_DEFAULT_START;
+                const [h, m] = startTime.split(':').map(Number);
+                const endMin = h * 60 + m + VISIT_DURATION_MIN;
+                const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+
+                const descParts = [`Acquéreur : ${buyerName}`];
+                if (buyer?.phone) descParts.push(`Tél : ${buyer.phone}`);
+                if (seller) {
+                    const sellerName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
+                    if (sellerName) descParts.push(`\nVendeur : ${sellerName}`);
+                    if (seller.phone) descParts.push(`Tél vendeur : ${seller.phone}`);
+                    if (seller.address) descParts.push(`Adresse : ${seller.address}`);
+                }
+                if (visit.notes) descParts.push(`\nNotes : ${visit.notes}`);
+
+                const resp = await fetch('/api/assistant', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        action: 'create_event',
+                        title, date,
+                        start_time: startTime,
+                        end_time: endTime,
+                        location: seller?.address || '',
+                        description: descParts.join('\n')
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    if (err.error !== 'calendar_not_connected') {
+                        console.warn('[Micro] Échec sync calendrier:', err.error || resp.status);
+                    }
+                    return;
+                }
+
+                const data = await resp.json();
+                if (data.event?.id) {
+                    // Stocker l'event ID sur la visite
+                    await supabaseClient.from('visits')
+                        .update({ google_event_id: data.event.id })
+                        .eq('id', visit.id);
+                    console.log('[Micro] Visite synchronisée dans Google Calendar');
+                }
+            } catch (err) {
+                console.warn('[Micro] syncVisitToCalendarFromMicro error:', err);
+            }
+        }
+
+        async function createCalendarEventFromMicro(agendaEvent, headers) {
+            // Crée un événement agenda (non-visite) dans Google Calendar
+            try {
+                const date = agendaEvent.date;
+                const startTime = agendaEvent.time || VISIT_DEFAULT_START;
+                const [h, m] = startTime.split(':').map(Number);
+                const durationMin = agendaEvent.duration_min || 60;
+                const endMin = h * 60 + m + durationMin;
+                const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+
+                const resp = await fetch('/api/assistant', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        action: 'create_event',
+                        title: agendaEvent.title,
+                        date, start_time: startTime, end_time: endTime,
+                        location: agendaEvent.location || '',
+                        description: agendaEvent.description || ''
+                    })
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    if (err.error !== 'calendar_not_connected') {
+                        console.warn('[Micro] Échec création événement agenda:', err.error);
+                    }
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                console.warn('[Micro] createCalendarEventFromMicro error:', err);
+                return false;
+            }
+        }
+
+        // ===== RATTRAPAGE CLIENT : matching flou après réponse IA =====
+        // L'IA (Haiku) peut rater un contact existant. On re-vérifie côté client
+        // avant d'afficher, en comparant les noms sur prénom ET nom de famille.
+        function resolveUnmatchedLocally(result, leads) {
+            if (!result.unmatched_contacts?.length || !leads?.length) return result;
+
+            function normalize(str) {
+                return (str || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            }
+
+            const stillUnmatched = [];
+            const promoted = [];
+
+            result.unmatched_contacts.forEach(contact => {
+                const qFirst = normalize(contact.first_name);
+                const qLast = normalize(contact.last_name);
+                if (!qFirst && !qLast) { stillUnmatched.push(contact); return; }
+
+                let bestMatch = null;
+                let bestScore = 0;
+
+                leads.forEach(lead => {
+                    const lFirst = normalize(lead.first_name);
+                    const lLast = normalize(lead.last_name);
+                    let score = 0;
+                    if (qFirst && lFirst === qFirst) score += 2;
+                    else if (qFirst && lFirst.includes(qFirst)) score += 1;
+                    if (qLast && lLast === qLast) score += 2;
+                    else if (qLast && lLast.includes(qLast)) score += 1;
+                    if (score > bestScore) { bestScore = score; bestMatch = lead; }
+                });
+
+                // Score ≥ 3 : au moins un nom exact + l'autre partiel → c'est le même contact
+                if (bestMatch && bestScore >= 3) {
+                    console.log(`[Micro] Rattrapage matching : "${contact.first_name} ${contact.last_name}" → "${bestMatch.first_name} ${bestMatch.last_name}" (score ${bestScore})`);
+                    promoted.push({
+                        lead_id: bestMatch.id,
+                        lead_type: bestMatch.type,
+                        lead_name: `${bestMatch.first_name || ''} ${bestMatch.last_name || ''}`.trim(),
+                        confidence: bestScore >= 4 ? 'high' : 'medium',
+                        note_content: contact.note_content || '',
+                        next_step: contact.next_step || null,
+                        reminder_date: contact.reminder_date || null
+                    });
+                } else {
+                    stillUnmatched.push(contact);
+                }
+            });
+
+            if (promoted.length > 0) {
+                result.contacts_matched = [...(result.contacts_matched || []), ...promoted];
+                result.unmatched_contacts = stillUnmatched;
+            }
+            return result;
+        }
+
         // ===== ANALYSE =====
         const ANALYSIS_TIMEOUT_MS = 25000; // Timeout client pour l'analyse
 
@@ -1570,7 +1979,8 @@
                 const leads = await loadUserLeads();
                 const relevant = preFilterLeads(leads, text);
                 const today = new Date().toISOString().split('T')[0];
-                const headers = await getAuthHeaders();
+                cachedHeaders = await getAuthHeaders();
+                const headers = cachedHeaders;
 
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
@@ -1588,6 +1998,8 @@
                 }
 
                 currentResult = await response.json();
+                // Rattrapage client : matching flou sur les contacts que l'IA n'a pas trouvés
+                currentResult = resolveUnmatchedLocally(currentResult, allLeads);
                 analysingZone.classList.remove('visible');
                 setMicState('idle');
                 micZone.classList.add('compact');
@@ -1647,6 +2059,62 @@
             });
 
             confirmationMatches.innerHTML = html;
+
+            // Bloc visite détectée (optionnel)
+            const visitBlock = document.getElementById('visitDetectedBlock');
+            const vd = result.visit_detected;
+            if (vd && (vd.seller_lead_id || vd.buyer_lead_id)) {
+                const typeLabel = vd.type === 'planifiee' ? '📅 Visite planifiée' : '🏠 Visite effectuée';
+                const dateStr = vd.date || new Date().toISOString().split('T')[0];
+                visitBlock.innerHTML = `
+                <div class="visit-detected-card">
+                    <label class="visit-detected-label">
+                        <input type="checkbox" id="visitDetectedCheck" checked>
+                        <span>${typeLabel}</span>
+                    </label>
+                    <div class="visit-detected-fields">
+                        <input type="date" id="visitDetectedDate" value="${dateStr}">
+                        <input type="time" id="visitDetectedTime" value="${vd.time || ''}">
+                    </div>
+                    ${vd.notes ? `<div class="visit-detected-notes">${escHtml(vd.notes)}</div>` : ''}
+                </div>`;
+                visitBlock.style.display = '';
+                // Stocker les IDs pour le confirm
+                visitBlock.dataset.sellerLeadId = vd.seller_lead_id || '';
+                visitBlock.dataset.buyerLeadId = vd.buyer_lead_id || '';
+                visitBlock.dataset.visitType = vd.type || 'effectuee';
+            } else {
+                visitBlock.innerHTML = '';
+                visitBlock.style.display = 'none';
+            }
+
+            // Bloc agenda (événement non-visite)
+            const agendaBlock = document.getElementById('agendaEventBlock');
+            const ae = result.agenda_event;
+            if (ae && ae.date) {
+                const dateStr = ae.date;
+                agendaBlock.innerHTML = `
+                <div class="agenda-detected-card">
+                    <label class="visit-detected-label" style="color:#1e40af">
+                        <input type="checkbox" id="agendaEventCheck" checked>
+                        <span>🗓️ ${escHtml(ae.title || 'Événement agenda')}</span>
+                    </label>
+                    <div class="visit-detected-fields">
+                        <input type="date" id="agendaEventDate" value="${dateStr}">
+                        <input type="time" id="agendaEventTime" value="${ae.time || ''}">
+                    </div>
+                    ${ae.location ? `<div class="visit-detected-notes" style="color:#1d4ed8">📍 ${escHtml(ae.location)}</div>` : ''}
+                </div>`;
+                agendaBlock.style.display = '';
+                agendaBlock.dataset.agendaTitle = ae.title || '';
+                agendaBlock.dataset.agendaLocation = ae.location || '';
+                agendaBlock.dataset.agendaDescription = ae.description || '';
+                agendaBlock.dataset.agendaDuration = ae.duration_min || 60;
+            } else {
+                agendaBlock.innerHTML = '';
+                agendaBlock.style.display = 'none';
+            }
+
             confirmationZone.classList.add('visible');
             scrollToResult(confirmationZone);
         }
@@ -1707,9 +2175,62 @@
                     saved++;
                 }
 
+                // Créer la visite si détectée et cochée
+                const visitBlock = document.getElementById('visitDetectedBlock');
+                const visitCheck = document.getElementById('visitDetectedCheck');
+                if (visitBlock && visitCheck && visitCheck.checked && (visitBlock.dataset.sellerLeadId || visitBlock.dataset.buyerLeadId)) {
+                    const visitDate = document.getElementById('visitDetectedDate')?.value;
+                    const visitTime = document.getElementById('visitDetectedTime')?.value;
+                    const visitType = visitBlock.dataset.visitType || 'effectuee';
+                    const visit = {
+                        user_id: userId,
+                        seller_id: visitBlock.dataset.sellerLeadId || null,
+                        buyer_id: visitBlock.dataset.buyerLeadId || null,
+                        visit_date: visitDate || new Date().toISOString().split('T')[0],
+                        visit_time: visitTime || null,
+                        status: visitType,
+                        notes: currentResult.visit_detected?.notes || null
+                    };
+                    // Supprimer les champs vides
+                    if (!visit.seller_id) delete visit.seller_id;
+                    if (!visit.buyer_id) delete visit.buyer_id;
+                    const { data: visitData, error: visitError } = await supabaseClient.from('visits').insert([visit]).select();
+                    if (visitError) console.error('[Micro] Erreur création visite:', visitError);
+                    else {
+                        saved++;
+                        // Sync Google Calendar (non-bloquant, visites planifiées seulement)
+                        if (visitType === 'planifiee' && visitData?.[0]) {
+                            const seller = allLeads?.find(l => l.id === visitBlock.dataset.sellerLeadId);
+                            const buyer = allLeads?.find(l => l.id === visitBlock.dataset.buyerLeadId);
+                            syncVisitToCalendarFromMicro(visitData[0], seller, buyer, cachedHeaders).catch(() => {});
+                        }
+                    }
+                }
+
+                // Créer l'événement agenda (non-visite) si coché
+                const agendaBlock = document.getElementById('agendaEventBlock');
+                const agendaCheck = document.getElementById('agendaEventCheck');
+                let agendaCreated = false;
+                if (agendaBlock && agendaCheck && agendaCheck.checked && agendaBlock.dataset.agendaTitle) {
+                    const agendaEvent = {
+                        title: agendaBlock.dataset.agendaTitle,
+                        date: document.getElementById('agendaEventDate')?.value || new Date().toISOString().split('T')[0],
+                        time: document.getElementById('agendaEventTime')?.value || null,
+                        duration_min: parseInt(agendaBlock.dataset.agendaDuration) || 60,
+                        location: agendaBlock.dataset.agendaLocation || null,
+                        description: agendaBlock.dataset.agendaDescription || null
+                    };
+                    agendaCreated = await createCalendarEventFromMicro(agendaEvent, cachedHeaders);
+                }
+
                 addToHistory(currentResult, saved);
 
-                successText.textContent = saved === 1 ? '1 note enregistrée !' : `${saved} notes enregistrées !`;
+                const visitCreated = document.getElementById('visitDetectedCheck')?.checked
+                    && (visitBlock?.dataset.sellerLeadId || visitBlock?.dataset.buyerLeadId);
+                let successMsg = saved === 1 ? '1 note enregistrée !' : `${saved} notes enregistrées !`;
+                if (visitCreated) successMsg = 'Note + visite enregistrées !';
+                if (agendaCreated) successMsg = successMsg.replace(' !', '') + ' + agenda ✓';
+                successText.textContent = successMsg;
                 successOverlay.classList.add('visible');
 
                 setTimeout(() => {
@@ -1858,6 +2379,13 @@
                         <button class="create-lead-confirm" data-idx="${idx}" onclick="createNewLeadFromMicro(${idx})">
                             <i class="fa-solid fa-plus"></i> Créer ${isBuyer ? 'l\'acquéreur' : 'le vendeur'}
                         </button>
+                        <button class="link-existing-btn" onclick="toggleLinkSearch(${idx})">
+                            <i class="fa-solid fa-link"></i> Ce contact existe déjà ?
+                        </button>
+                        <div class="link-existing-wrap" id="linkWrap_${idx}" style="display:none">
+                            <input class="link-existing-input" type="text" placeholder="Rechercher dans mes contacts..." oninput="searchLeadForLink(this, ${idx})" autocomplete="off">
+                            <div class="link-existing-results" id="linkResults_${idx}"></div>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -1883,6 +2411,76 @@
                 ? '<i class="fa-solid fa-plus"></i> Créer l\'acquéreur'
                 : '<i class="fa-solid fa-plus"></i> Créer le vendeur';
             confirmBtn.dataset.selectedType = type;
+        }
+
+        // Toggle du panneau "lier à un contact existant"
+        function toggleLinkSearch(idx) {
+            const wrap = document.getElementById(`linkWrap_${idx}`);
+            if (!wrap) return;
+            const isHidden = wrap.style.display === 'none';
+            wrap.style.display = isHidden ? '' : 'none';
+            if (isHidden) wrap.querySelector('input')?.focus();
+        }
+
+        // Recherche dans les leads existants pour lier une note
+        function searchLeadForLink(input, idx) {
+            const q = input.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const resultsEl = document.getElementById(`linkResults_${idx}`);
+            if (!resultsEl || !allLeads) return;
+
+            if (q.length < 2) { resultsEl.innerHTML = ''; return; }
+
+            const matches = allLeads.filter(l => {
+                const name = `${l.first_name || ''} ${l.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return name.includes(q);
+            }).slice(0, 5);
+
+            if (matches.length === 0) {
+                resultsEl.innerHTML = '<div class="link-no-result">Aucun résultat</div>';
+                return;
+            }
+
+            resultsEl.innerHTML = matches.map(l => {
+                const name = escHtml(`${l.first_name || ''} ${l.last_name || ''}`.trim());
+                const typeLabel = l.type === 'seller' ? 'Vendeur' : 'Acquéreur';
+                return `<div class="link-result-item" onclick="linkNoteToExistingLead('${l.id}', '${l.type}', ${idx})">
+                    <span>${name}</span><span class="link-result-type ${l.type}">${typeLabel}</span>
+                </div>`;
+            }).join('');
+        }
+
+        // Enregistre la note sur un lead existant (correction de matching)
+        async function linkNoteToExistingLead(leadId, leadType, idx) {
+            const contact = window._pendingNewLeads?.[idx];
+            if (!contact || !userId) return;
+            const noteContent = contact.note_content || currentTranscription;
+
+            const card = noMatchZone.querySelector(`.create-lead-card[data-contact-idx="${idx}"]`);
+            if (card) { card.style.opacity = '0.5'; card.style.pointerEvents = 'none'; }
+
+            try {
+                const noteCol = leadType === 'seller' ? 'seller_id' : 'buyer_id';
+                const { error } = await supabaseClient.from('lead_notes').insert({
+                    user_id: userId, [noteCol]: leadId, content: noteContent
+                });
+                if (error) throw error;
+
+                const successOverlay = document.getElementById('successOverlay');
+                document.getElementById('successSimple').style.display = '';
+                document.getElementById('leadSuccessCard').classList.remove('visible');
+                document.getElementById('successText').textContent = 'Note enregistrée !';
+                successOverlay.classList.add('visible');
+                setTimeout(() => {
+                    successOverlay.classList.remove('visible');
+                    hideAllZones();
+                    setMicState('idle');
+                    currentResult = null;
+                }, 2000);
+            } catch (err) {
+                console.error('[Micro] Erreur liaison note existante:', err);
+                if (card) { card.style.opacity = ''; card.style.pointerEvents = ''; }
+                showError('Erreur lors de l\'enregistrement');
+            }
         }
 
         // Création du lead directement depuis micro

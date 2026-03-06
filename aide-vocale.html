@@ -1,0 +1,349 @@
+<!--
+  aide-vocale.html
+  Guide de référence des commandes vocales Léon.
+  Liste tous les cas d'usage : notes CRM, création de leads, visites, agenda, commandes agenda.
+  Page statique, pas d'auth requise, accessible depuis micro.html et le menu Plus.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide vocal Léon</title>
+    <link rel="icon" href="img/F.png">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f8fafc;
+            color: #1a1a2e;
+            min-height: 100vh;
+            padding-bottom: 100px;
+        }
+
+        /* Header */
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px 20px 28px;
+            color: white;
+        }
+        .header-back {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            margin-bottom: 16px;
+        }
+        .header-back:hover { color: white; }
+        .header-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .header-subtitle {
+            font-size: 13px;
+            color: rgba(255,255,255,0.75);
+            margin-top: 4px;
+        }
+
+        /* Layout */
+        .content { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
+
+        /* Section */
+        .section { margin-bottom: 28px; }
+        .section-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #64748b;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Bulle exemple */
+        .example-list { display: flex; flex-direction: column; gap: 8px; }
+        .example {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            border-left: 3px solid transparent;
+        }
+        .example-phrase {
+            font-size: 14px;
+            font-style: italic;
+            color: #1a1a2e;
+            line-height: 1.5;
+            margin-bottom: 6px;
+        }
+        .example-phrase::before { content: '"'; }
+        .example-phrase::after  { content: '"'; }
+        .example-result {
+            font-size: 12px;
+            color: #64748b;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+        }
+        .example-result i { margin-top: 2px; flex-shrink: 0; }
+
+        /* Couleurs par catégorie */
+        .cat-note    { border-left-color: #94a3b8; }
+        .cat-note    .section-title-icon { background: #f1f5f9; color: #475569; }
+        .cat-contact { border-left-color: #60a5fa; }
+        .cat-contact .section-title-icon { background: #dbeafe; color: #1d4ed8; }
+        .cat-visit   { border-left-color: #34d399; }
+        .cat-visit   .section-title-icon { background: #d1fae5; color: #065f46; }
+        .cat-agenda  { border-left-color: #f59e0b; }
+        .cat-agenda  .section-title-icon { background: #fef3c7; color: #92400e; }
+        .cat-leon    { border-left-color: #a78bfa; }
+        .cat-leon    .section-title-icon { background: #ede9fe; color: #5b21b6; }
+
+        /* Badge "Dis Léon" */
+        .leon-trigger {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+        }
+
+        /* Tip box */
+        .tip-box {
+            background: #ede9fe;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 28px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .tip-box-icon { font-size: 20px; flex-shrink: 0; }
+        .tip-box-text { font-size: 13px; color: #4c1d95; line-height: 1.5; }
+        .tip-box-text strong { font-weight: 700; }
+
+        /* CTA micro */
+        .cta-micro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            margin-top: 8px;
+        }
+        .cta-micro-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+        .cta-micro-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            color: #667eea;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="micro.html" class="header-back">
+            <i class="fa-solid fa-arrow-left"></i> Retour à Léon
+        </a>
+        <div class="header-title">Guide vocal Léon</div>
+        <div class="header-subtitle">Tout ce que tu peux lui dire</div>
+    </div>
+
+    <div class="content">
+
+        <div class="tip-box">
+            <div class="tip-box-icon">🎙️</div>
+            <div class="tip-box-text">
+                <strong>Comment ça marche ?</strong><br>
+                Appuie sur le micro et parle naturellement. Léon comprend le contexte, identifie les contacts et enregistre les bonnes informations au bon endroit.
+            </div>
+        </div>
+
+        <!-- NOTES CRM -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-title-icon cat-note"><i class="fa-solid fa-note-sticky"></i></div>
+                Notes & mises à jour
+            </div>
+            <div class="example-list">
+                <div class="example cat-note">
+                    <div class="example-phrase">J'ai appelé M. Dupont ce matin, il est intéressé par le mandat, relance dans 10 jours</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note sur la fiche Dupont + date de relance automatique</div>
+                </div>
+                <div class="example cat-note">
+                    <div class="example-phrase">Estimation envoyée à Mme Martin par email et SMS, elle l'a bien reçue</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note "Estimation envoyée" sur la fiche Martin</div>
+                </div>
+                <div class="example cat-note">
+                    <div class="example-phrase">M. Laurent a signé le mandat ce matin</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note "Mandat signé" sur la fiche Laurent</div>
+                </div>
+                <div class="example cat-note">
+                    <div class="example-phrase">Offre reçue de M. Bernard : 285 000 euros, à transmettre aux vendeurs</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note "Offre reçue 285k€" sur la fiche Bernard</div>
+                </div>
+                <div class="example cat-note">
+                    <div class="example-phrase">Plus de nouvelles de Mme Garnier depuis 3 semaines, lead froide</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note "Lead froide" + suggestion relance</div>
+                </div>
+                <div class="example cat-note">
+                    <div class="example-phrase">Baisse de prix acceptée par M. Rocchi : on passe à 340 000 euros</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note "Baisse de prix" sur la fiche</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRÉER UN CONTACT -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-title-icon cat-contact"><i class="fa-solid fa-user-plus"></i></div>
+                Créer un contact
+            </div>
+            <div class="example-list">
+                <div class="example cat-contact">
+                    <div class="example-phrase">Nouveau vendeur : Jean Martin, 06 12 34 56 78, appartement T4 75m² à Lyon 2ème, rue des Remparts d'Ainay, j'ai rendez-vous demain à 14h</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Fiche vendeur créée avec tous les champs + reminder RDV</div>
+                </div>
+                <div class="example cat-contact">
+                    <div class="example-phrase">Nouvel acquéreur recommandé par Loup Borgna : Sophie Karayannis, 06 31 29 41 54, budget 250 000 euros, cherche T3 à Lyon 7ème, priorité quartier</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Fiche acquéreur avec source recommandation + critères</div>
+                </div>
+                <div class="example cat-contact">
+                    <div class="example-phrase">Pige LeBonCoin : Mme Roche, maison 120m² à Caluire, 06 42 44 01 26, elle cherche à vendre rapidement</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Fiche vendeur source pige + note urgence</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISITES -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-title-icon cat-visit"><i class="fa-solid fa-house-chimney"></i></div>
+                Visites
+            </div>
+            <div class="example-list">
+                <div class="example cat-visit">
+                    <div class="example-phrase">Visite planifiée vendredi 14h avec M. Dupont qui veut visiter la maison de Mme Martin à Saint-Rambert</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Visite créée dans le CRM + ajoutée à Google Calendar</div>
+                </div>
+                <div class="example cat-visit">
+                    <div class="example-phrase">Visite effectuée ce matin chez Dupont, coup de coeur, il veut faire une offre</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Visite marquée effectuée + note retour sur la fiche</div>
+                </div>
+                <div class="example cat-visit">
+                    <div class="example-phrase">Retour de visite Mme Garnier : pas convaincue par le vis-à-vis, elle réfléchit encore</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note feedback sur la fiche Garnier</div>
+                </div>
+                <div class="example cat-visit">
+                    <div class="example-phrase">Visite annulée demain matin, M. Laurent a un empêchement</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Note annulation sur la fiche</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AGENDA & RDV -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-title-icon cat-agenda"><i class="fa-solid fa-calendar"></i></div>
+                Agenda & RDV
+            </div>
+            <div class="example-list">
+                <div class="example cat-agenda">
+                    <div class="example-phrase">RDV signature de mandat lundi 10h avec M. Dupont</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Événement créé dans Google Calendar</div>
+                </div>
+                <div class="example cat-agenda">
+                    <div class="example-phrase">Planifie un appel avec le notaire demain à 9h30</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Événement "Appel notaire" dans l'agenda</div>
+                </div>
+                <div class="example cat-agenda">
+                    <div class="example-phrase">RDV estimation Mme Roche mercredi 14h30, avenue de Saxe Lyon 6ème</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Événement avec lieu dans l'agenda + note sur la fiche</div>
+                </div>
+                <div class="example cat-agenda">
+                    <div class="example-phrase">Réunion agence jeudi matin 9h</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Événement "Réunion agence" dans l'agenda</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMMANDES LÉON -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-title-icon cat-leon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                Commandes Léon
+            </div>
+            <p style="font-size:13px;color:#64748b;margin-bottom:12px">Commence par <strong>"Dis Léon"</strong> pour activer les commandes intelligentes.</p>
+            <div class="example-list">
+                <div class="example cat-leon">
+                    <div class="leon-trigger">Dis Léon</div>
+                    <div class="example-phrase">Propose 3 créneaux de visite pour M. Dupont qui souhaite visiter la maison de Mme Martin à Saint-Rambert</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Consulte ton agenda → 3 créneaux libres + message prêt à envoyer</div>
+                </div>
+                <div class="example cat-leon">
+                    <div class="leon-trigger">Dis Léon</div>
+                    <div class="example-phrase">Qu'est-ce que j'ai demain ?</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Liste tes événements du lendemain</div>
+                </div>
+                <div class="example cat-leon">
+                    <div class="leon-trigger">Dis Léon</div>
+                    <div class="example-phrase">Trouve mes disponibilités cette semaine pour une visite d'une heure</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Créneaux libres de 60min dans la semaine</div>
+                </div>
+                <div class="example cat-leon">
+                    <div class="leon-trigger">Dis Léon</div>
+                    <div class="example-phrase">Propose un déjeuner à mon notaire la semaine prochaine et prépare un message WhatsApp</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Créneaux déjeuner + message WhatsApp rédigé</div>
+                </div>
+                <div class="example cat-leon">
+                    <div class="leon-trigger">Dis Léon</div>
+                    <div class="example-phrase">Propose 3 créneaux lundi ou mardi matin pour une signature</div>
+                    <div class="example-result"><i class="fa-solid fa-check" style="color:#22c55e"></i> Créneaux filtrés sur lundi/mardi matin</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CTA retour -->
+        <div class="cta-micro">
+            <div class="cta-micro-title">Prêt à dicter ?</div>
+            <a href="micro.html" class="cta-micro-btn">
+                <i class="fa-solid fa-microphone"></i> Ouvrir Léon
+            </a>
+        </div>
+
+    </div>
+
+    <script src="js/mobile-nav.js"></script>
+</body>
+</html>

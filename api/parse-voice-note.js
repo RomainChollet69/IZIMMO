@@ -90,8 +90,35 @@ Retourne UNIQUEMENT un JSON valide :
       "reminder_date": "YYYY-MM-DD — date de relance si mentionnée (utiliser la date du jour pour convertir 'demain', 'lundi', etc.), sinon null",
       "note_content": "résumé structuré de toutes les infos dictées à enregistrer comme première note. EXCLUSIONS STRICTES : NE JAMAIS inclure le numéro de téléphone, ni le type de bien, ni la surface, ni le budget, ni le nombre de pièces, ni la source, ni l'adresse — ces infos sont déjà dans les champs structurés ci-dessus"
     }
-  ]
-}`;
+  ],
+  "visit_detected": {
+    "type": "planifiee ou effectuee",
+    "date": "YYYY-MM-DD (utiliser la date du jour pour 'ce matin', 'aujourd'hui', 'demain', 'lundi', etc.), sinon null",
+    "time": "HH:MM (format 24h), sinon null",
+    "seller_lead_id": "uuid du lead vendeur (bien visité) parmi contacts_matched, sinon null",
+    "buyer_lead_id": "uuid du lead acquéreur (visiteur) parmi contacts_matched, sinon null",
+    "notes": "description courte de la visite (ex: 'Très intéressé, coup de coeur', 'Pas convaincu par le jardin')"
+  },
+  "agenda_event": {
+    "title": "titre court de l'événement (ex: 'RDV signature Dupont', 'Appel notaire', 'RDV estimation Martin')",
+    "date": "YYYY-MM-DD (convertir 'demain', 'lundi', etc. avec la date du jour comme référence), sinon null",
+    "time": "HH:MM (format 24h), sinon null",
+    "duration_min": 60,
+    "location": "lieu si mentionné, sinon null",
+    "description": "détails supplémentaires si pertinents"
+  }
+}
+
+IMPORTANT pour visit_detected :
+- N'inclure ce champ QUE si la transcription mentionne explicitement une visite de bien immobilier (mot "visite", "visiter", "fait visiter", "rendez-vous de visite")
+- "planifiee" : visite à venir, "effectuee" : visite déjà passée
+- seller_lead_id et buyer_lead_id font référence aux uuid dans contacts_matched
+- Si visit_detected non pertinent, omettre entièrement ce champ
+
+IMPORTANT pour agenda_event :
+- N'inclure ce champ QUE pour les rendez-vous NON-VISITE : signature de mandat, rendez-vous notaire, appel planifié, réunion, estimation, etc.
+- Ne pas utiliser si visit_detected est déjà présent (une visite est déjà gérée)
+- Si agenda_event non pertinent, omettre entièrement ce champ`;
 
     try {
         const controller = new AbortController();

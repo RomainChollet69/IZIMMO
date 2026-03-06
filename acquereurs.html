@@ -3029,6 +3029,11 @@
                     <i class="fa-solid fa-camera"></i> Import
                 </button>
 
+                <!-- Bouton Import CSV -->
+                <button class="import-screenshot-btn" id="importCsvBtn" title="Importer depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
+                    <i class="fa-solid fa-file-csv"></i> CSV
+                </button>
+
                 <!-- Séparateur -->
                 <div class="header-separator"></div>
 
@@ -3144,6 +3149,50 @@
     </div>
 
     <!-- Modal Import Screenshot/Texte -->
+    <!-- Modal Import CSV bulk -->
+    <div class="modal" id="importCsvModal">
+        <div class="modal-content" style="max-width:680px">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Importer depuis CSV</h2>
+                    <p style="font-size:13px;color:#9CA3AF;margin:4px 0 0;">Colonnes attendues : Nom, Prénom, Téléphone, Budget, Secteur, Surface minimum, Nombre chambres, Extérieur, Lumineux, Parking/Garage, A visité, Note</p>
+                </div>
+                <button class="close-btn" id="closeCsvModalBtn">&times;</button>
+            </div>
+
+            <div id="csvDropZone" style="border:2px dashed #d1d5db;border-radius:12px;padding:32px;text-align:center;margin-bottom:16px;cursor:pointer;transition:all 0.2s">
+                <div style="font-size:32px;margin-bottom:8px">📄</div>
+                <div style="font-weight:600;color:#374151;margin-bottom:4px">Glissez votre fichier CSV ici</div>
+                <div style="font-size:13px;color:#9ca3af;margin-bottom:12px">ou</div>
+                <button type="button" id="csvFilePickerBtn" style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;font-family:Inter,sans-serif">Choisir un fichier</button>
+                <input type="file" id="csvFileInput" accept=".csv,text/csv" style="display:none">
+            </div>
+
+            <div id="csvPreviewSection" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                    <span id="csvPreviewCount" style="font-size:14px;font-weight:600;color:#374151"></span>
+                    <button type="button" id="csvResetBtn" style="font-size:12px;color:#9ca3af;background:none;border:none;cursor:pointer">Changer de fichier</button>
+                </div>
+                <div style="overflow-x:auto;max-height:280px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px">
+                    <table id="csvPreviewTable" style="width:100%;border-collapse:collapse;font-size:12px">
+                        <thead style="position:sticky;top:0;background:#f9fafb">
+                            <tr id="csvPreviewHeader"></tr>
+                        </thead>
+                        <tbody id="csvPreviewBody"></tbody>
+                    </table>
+                </div>
+                <div id="csvImportActions" style="display:flex;gap:10px;justify-content:flex-end">
+                    <button type="button" id="csvCancelBtn" style="padding:10px 20px;border:1px solid #d1d5db;border-radius:10px;background:white;font-size:14px;cursor:pointer;font-family:Inter,sans-serif">Annuler</button>
+                    <button type="button" id="csvConfirmBtn" style="padding:10px 20px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif">Importer</button>
+                </div>
+                <div id="csvImportProgress" style="display:none;text-align:center;padding:16px">
+                    <div class="spinner" style="margin:0 auto 8px"></div>
+                    <div id="csvProgressText" style="font-size:14px;color:#6b7280">Import en cours...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal" id="importModal">
         <div class="modal-content" style="max-width:540px">
             <div class="modal-header">
@@ -4149,8 +4198,6 @@
                 .eq('user_id', userId)
                 .order('visit_date', { ascending: false });
 
-            console.log('[Visits] Buyer-side query:', { buyerId, userId, results: data?.length, error });
-            if (data?.length > 0) console.log('[Visits] First visit seller_id:', data[0].seller_id);
             if (error) { console.error('[Visits] Load error:', error); container.innerHTML = ''; return; }
             currentMatchVisits = data || [];
             renderMatchingVisits();
@@ -5679,7 +5726,6 @@
             try {
                 const text = await buyerRecorder.record(stream);
                 if (text && text.trim()) {
-                    console.log('Dictée transcrite:', text.trim());
                     await parseBuyerDictation(text.trim(), btn, status);
                 }
             } catch (err) {
@@ -5704,7 +5750,6 @@
 
                 if (!resp.ok) throw new Error('Erreur analyse');
                 const { fields } = await resp.json();
-                console.log('Champs extraits par Claude:', fields);
 
                 // Map fields — ONLY fill if value is not null
                 if (fields.first_name) document.getElementById('firstName').value = fields.first_name;
@@ -7939,14 +7984,12 @@
             const agencyName = await getAgencyName();
 
             try {
-                console.log('[MsgIA] Generating:', { channel: currentChannel, scenario, leadType: 'buyer' });
                 const resp = await fetch('/api/generate-message', {
                     method: 'POST',
                     headers: await getAuthHeaders(),
                     body: JSON.stringify({ channel: currentChannel, scenario, leadData, notes, customPrompt, leadType: 'buyer', agentName, agencyName, tone })
                 });
                 const data = await resp.json().catch(() => ({}));
-                console.log('[MsgIA] Response:', resp.status, data);
                 if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur');
 
                 output.value = data.message;
@@ -8130,6 +8173,217 @@
                 if (e.data.leadType === 'buyer' && typeof loadBuyers === 'function') loadBuyers();
             }
         });
+
+        // ===== IMPORT CSV BULK =====
+        let parsedCsvRows = [];
+
+        document.getElementById('importCsvBtn').addEventListener('click', () => openCsvModal());
+        document.getElementById('closeCsvModalBtn').addEventListener('click', () => closeCsvModal());
+        document.getElementById('csvCancelBtn').addEventListener('click', () => closeCsvModal());
+        document.getElementById('csvResetBtn').addEventListener('click', () => resetCsvModal());
+        document.getElementById('csvFilePickerBtn').addEventListener('click', () => document.getElementById('csvFileInput').click());
+        document.getElementById('csvFileInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) handleCsvFile(e.target.files[0]);
+        });
+        document.getElementById('csvConfirmBtn').addEventListener('click', () => confirmCsvImport());
+
+        const csvDropZone = document.getElementById('csvDropZone');
+        csvDropZone.addEventListener('dragover', (e) => { e.preventDefault(); csvDropZone.style.borderColor = '#667eea'; csvDropZone.style.background = '#f0f0ff'; });
+        csvDropZone.addEventListener('dragleave', () => { csvDropZone.style.borderColor = '#d1d5db'; csvDropZone.style.background = ''; });
+        csvDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            csvDropZone.style.borderColor = '#d1d5db';
+            csvDropZone.style.background = '';
+            const file = e.dataTransfer.files[0];
+            if (file) handleCsvFile(file);
+        });
+
+        function openCsvModal() {
+            resetCsvModal();
+            document.getElementById('importCsvModal').classList.add('active');
+        }
+
+        function closeCsvModal() {
+            document.getElementById('importCsvModal').classList.remove('active');
+        }
+
+        function resetCsvModal() {
+            parsedCsvRows = [];
+            document.getElementById('csvDropZone').style.display = '';
+            document.getElementById('csvPreviewSection').style.display = 'none';
+            document.getElementById('csvImportActions').style.display = 'flex';
+            document.getElementById('csvImportProgress').style.display = 'none';
+            document.getElementById('csvFileInput').value = '';
+        }
+
+        function handleCsvFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => parseCsvContent(e.target.result);
+            reader.readAsText(file, 'UTF-8');
+        }
+
+        function parseCsvContent(text) {
+            // Nettoyage BOM et normalisation sauts de ligne
+            text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = text.split('\n').filter(l => l.trim());
+
+            // Trouver la ligne d'en-tête (la première avec "Nom" ou "nom")
+            let headerIdx = lines.findIndex(l => /nom/i.test(l.split(',')[0]));
+            if (headerIdx === -1) headerIdx = 0;
+
+            const headers = parseCSVLine(lines[headerIdx]).map(h => h.trim().toLowerCase());
+            const dataLines = lines.slice(headerIdx + 1);
+
+            parsedCsvRows = dataLines
+                .map(line => {
+                    const vals = parseCSVLine(line);
+                    const row = {};
+                    headers.forEach((h, i) => { row[h] = (vals[i] || '').trim(); });
+                    return row;
+                })
+                .filter(row => row['nom'] || row['prénom'] || row['prenom']); // ignorer lignes vides
+
+            if (parsedCsvRows.length === 0) {
+                alert('Aucune ligne valide trouvée dans le CSV.');
+                return;
+            }
+
+            renderCsvPreview(parsedCsvRows);
+        }
+
+        function parseCSVLine(line) {
+            // Gère les champs entre guillemets contenant des virgules
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            for (let i = 0; i < line.length; i++) {
+                const ch = line[i];
+                if (ch === '"') {
+                    inQuotes = !inQuotes;
+                } else if (ch === ',' && !inQuotes) {
+                    result.push(current);
+                    current = '';
+                } else {
+                    current += ch;
+                }
+            }
+            result.push(current);
+            return result;
+        }
+
+        function renderCsvPreview(rows) {
+            document.getElementById('csvDropZone').style.display = 'none';
+            document.getElementById('csvPreviewSection').style.display = '';
+            document.getElementById('csvPreviewCount').textContent = `${rows.length} acquéreur${rows.length > 1 ? 's' : ''} détecté${rows.length > 1 ? 's' : ''}`;
+
+            const PREVIEW_COLS = ['nom', 'prénom', 'téléphone', 'budget', 'secteur', 'surface minimum'];
+            const headers = Object.keys(rows[0]);
+            const colsToShow = PREVIEW_COLS.filter(c => headers.some(h => h === c));
+
+            const thead = document.getElementById('csvPreviewHeader');
+            thead.innerHTML = colsToShow.map(c => `<th style="padding:8px 10px;text-align:left;font-size:11px;color:#6b7280;font-weight:600;border-bottom:1px solid #e5e7eb;white-space:nowrap">${c}</th>`).join('');
+
+            const tbody = document.getElementById('csvPreviewBody');
+            tbody.innerHTML = rows.map((row, i) => {
+                const bg = i % 2 === 0 ? 'white' : '#f9fafb';
+                const cells = colsToShow.map(c => {
+                    const key = Object.keys(row).find(k => k === c) || '';
+                    return `<td style="padding:7px 10px;border-bottom:1px solid #f3f4f6;color:#374151">${escHtml(row[key] || '')}</td>`;
+                }).join('');
+                return `<tr style="background:${bg}">${cells}</tr>`;
+            }).join('');
+        }
+
+        function csvRowToBuyer(row) {
+            // Mapper les clés peu importe la casse / accents
+            const get = (...keys) => {
+                for (const k of keys) {
+                    const found = Object.keys(row).find(h => h.toLowerCase().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a') === k.toLowerCase().replace(/[éèê]/g,'e').replace(/[àâ]/g,'a'));
+                    if (found && row[found] && row[found] !== '/') return row[found];
+                }
+                return null;
+            };
+
+            // Rooms : 1→T1, 2→T2, etc.
+            const roomsRaw = get('nombre chambres', 'chambres', 'rooms');
+            const roomsNum = parseInt(roomsRaw);
+            const rooms = !isNaN(roomsNum) ? (roomsNum >= 5 ? 'T5+' : `T${roomsNum}`) : null;
+
+            // Critères
+            const criteria = [];
+            if (get('extérieur', 'exterieur') === 'oui') criteria.push('jardin');
+            if (get('lumineux') === 'oui') criteria.push('lumineux');
+            if (get('parking/garage', 'parking') === 'oui') criteria.push('parking');
+
+            // Source / apporteur
+            const referrer = get('a visité', 'a visite', 'apporteur', 'referrer');
+            const source = referrer ? 'recommandation' : null;
+
+            const budget = parseInt(get('budget', 'budget_max'));
+            const surface = parseInt(get('surface minimum', 'surface_min', 'surface'));
+
+            return {
+                buyer: {
+                    last_name: get('nom') || null,
+                    first_name: get('prénom', 'prenom') || null,
+                    phone: get('téléphone', 'telephone', 'tel') || null,
+                    budget_max: !isNaN(budget) ? budget : null,
+                    sector: get('secteur') || null,
+                    surface_min: !isNaN(surface) ? surface : null,
+                    rooms,
+                    criteria: criteria.length > 0 ? criteria.join(',') : null,
+                    source,
+                    referrer_name: source === 'recommandation' ? referrer : null,
+                    status: 'nouveau',
+                    contact_date: new Date().toISOString().split('T')[0]
+                },
+                note: get('note') || null
+            };
+        }
+
+        async function confirmCsvImport() {
+            if (!parsedCsvRows.length) return;
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+
+            document.getElementById('csvImportActions').style.display = 'none';
+            document.getElementById('csvImportProgress').style.display = '';
+
+            let imported = 0;
+            let errors = 0;
+            const total = parsedCsvRows.length;
+
+            for (let i = 0; i < parsedCsvRows.length; i++) {
+                document.getElementById('csvProgressText').textContent = `Import en cours... ${i + 1}/${total}`;
+                try {
+                    const { buyer, note } = csvRowToBuyer(parsedCsvRows[i]);
+                    buyer.user_id = userId;
+
+                    const { data, error } = await supabaseClient.from('buyers').insert([buyer]).select();
+                    if (error) { console.error('[CSV Import] Erreur insertion:', error, buyer); errors++; continue; }
+
+                    // Créer la note si présente
+                    if (note && data?.[0]?.id) {
+                        await supabaseClient.from('lead_notes').insert({
+                            user_id: userId,
+                            buyer_id: data[0].id,
+                            content: note
+                        });
+                    }
+                    imported++;
+                } catch (err) {
+                    console.error('[CSV Import] Erreur ligne', i, err);
+                    errors++;
+                }
+            }
+
+            document.getElementById('csvProgressText').textContent = `✓ ${imported} acquéreur${imported > 1 ? 's' : ''} importé${imported > 1 ? 's' : ''}${errors > 0 ? ` (${errors} erreur${errors > 1 ? 's' : ''})` : ''}`;
+
+            // Recharger la liste puis fermer
+            await loadBuyers();
+            setTimeout(() => closeCsvModal(), 1800);
+        }
+
     </script>
 
     <script src="js/mobile-nav.js"></script>
