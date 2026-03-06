@@ -130,7 +130,7 @@
         plusBtn.className = 'm-pipeline-fab';
         plusBtn.setAttribute('type', 'button');
         plusBtn.setAttribute('title', 'Nouvelle lead');
-        plusBtn.innerHTML = `<img src="img/boutonplus.svg" alt="Nouvelle lead">`;
+        plusBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48"><defs><linearGradient id="fabGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#667eea"/><stop offset="100%" style="stop-color:#764ba2"/></linearGradient></defs><circle cx="24" cy="24" r="24" fill="url(#fabGrad)"/><line x1="24" y1="13" x2="24" y2="35" stroke="white" stroke-width="3.5" stroke-linecap="round"/><line x1="13" y1="24" x2="35" y2="24" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg>`;
         plusBtn.addEventListener('click', function () {
             const targetId = isAcquereurs ? 'addBuyerBtn' : 'addLeadBtn';
             const btn = document.getElementById(targetId);
@@ -145,7 +145,7 @@
         screenshotBtn.className = 'm-screenshot-fab';
         screenshotBtn.setAttribute('type', 'button');
         screenshotBtn.setAttribute('title', 'Importer une capture d\'écran');
-        screenshotBtn.innerHTML = `<img src="img/screenshot.svg" alt="Import screenshot">`;
+        screenshotBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44"><circle cx="22" cy="22" r="22" fill="#ffffff" fill-opacity="0.95"/><rect x="10" y="15" width="24" height="18" rx="3" fill="none" stroke="#667eea" stroke-width="2"/><circle cx="22" cy="24" r="5" fill="none" stroke="#667eea" stroke-width="2"/><path d="M18 15 l1.5-3 h5 l1.5 3" fill="none" stroke="#667eea" stroke-width="2" stroke-linejoin="round"/><circle cx="33" cy="19" r="1.5" fill="#667eea"/></svg>`;
         screenshotBtn.addEventListener('click', function () {
             const btn = document.getElementById('importScreenshotBtn');
             if (btn) btn.click();
