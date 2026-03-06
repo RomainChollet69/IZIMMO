@@ -1,0 +1,1053 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon Matin™ — Un mot doux chaque matin au réveil</title>
+    <meta name="description" content="L'application n°1 de mots doux personnalisés livrés chaque matin. Réveillez-vous avec le sourire.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --sunrise: #FF6B35;
+            --warmth: #FF8C42;
+            --love: #E84393;
+            --soft-pink: #FD79A8;
+            --gold: #FDCB6E;
+            --dark: #2D3436;
+            --light: #FFF9F0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            background: var(--light);
+            overflow-x: hidden;
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #FF6B35 0%, #E84393 50%, #A29BFE 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 50%, rgba(253, 203, 110, 0.3) 0%, transparent 50%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -30px); }
+        }
+
+        .hero-content { position: relative; z-index: 1; max-width: 700px; }
+
+        .hero .emoji-sun {
+            font-size: 5rem;
+            display: block;
+            margin-bottom: 1rem;
+            animation: sunrise 3s ease-out forwards;
+        }
+
+        @keyframes sunrise {
+            0% { transform: translateY(60px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            color: white;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 2px 20px rgba(0,0,0,0.15);
+            line-height: 1.1;
+        }
+
+        .hero h1 span {
+            font-style: italic;
+            color: var(--gold);
+        }
+
+        .hero .tagline {
+            font-size: 1.4rem;
+            color: rgba(255,255,255,0.95);
+            margin-bottom: 2rem;
+            font-weight: 400;
+        }
+
+        .hero .badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+        }
+
+        .cta-btn {
+            display: inline-block;
+            background: white;
+            color: var(--love);
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        /* SOCIAL PROOF */
+        .social-proof {
+            padding: 3rem 2rem;
+            text-align: center;
+            background: white;
+        }
+
+        .social-proof .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat h3 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--sunrise), var(--love));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat p {
+            font-size: 0.9rem;
+            color: #636E72;
+            margin-top: 0.3rem;
+        }
+
+        /* FEATURES */
+        .features {
+            padding: 5rem 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .features h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover { transform: translateY(-5px); }
+
+        .feature-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: #636E72;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* COMMENT CA MARCHE */
+        .how-it-works {
+            background: linear-gradient(180deg, #FFF9F0 0%, #FFE8D6 100%);
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .step {
+            flex: 1;
+            min-width: 220px;
+            max-width: 280px;
+        }
+
+        .step .number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--sunrise), var(--love));
+            color: white;
+            font-weight: 800;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+
+        .step h3 { margin-bottom: 0.5rem; }
+        .step p { color: #636E72; font-size: 0.9rem; line-height: 1.5; }
+
+        /* NOTIFICATION PREVIEW */
+        .preview-section {
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .preview-section h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .preview-section .subtitle {
+            color: #636E72;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .phone-mockup {
+            max-width: 350px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            border-radius: 40px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+
+        .phone-screen {
+            background: linear-gradient(180deg, #2D3436 0%, #636E72 100%);
+            border-radius: 25px;
+            padding: 2rem 1rem;
+            min-height: 300px;
+        }
+
+        .phone-time {
+            color: white;
+            font-size: 3rem;
+            font-weight: 200;
+            margin-bottom: 1.5rem;
+        }
+
+        .phone-date {
+            color: rgba(255,255,255,0.6);
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .notification {
+            background: rgba(255,255,255,0.95);
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.8rem;
+            text-align: left;
+            animation: slideIn 1s ease-out;
+        }
+
+        @keyframes slideIn {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .notification .app-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--sunrise), var(--love));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .notification .notif-content h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .notification .notif-content p {
+            font-size: 0.8rem;
+            color: #636E72;
+            line-height: 1.4;
+        }
+
+        .notification .notif-time {
+            font-size: 0.7rem;
+            color: #B2BEC3;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+
+        /* TEMOIGNAGES */
+        .testimonials {
+            background: white;
+            padding: 5rem 2rem;
+            text-align: center;
+        }
+
+        .testimonials h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .testimonial {
+            background: var(--light);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: left;
+        }
+
+        .testimonial .stars { color: var(--gold); font-size: 1.2rem; margin-bottom: 0.8rem; }
+        .testimonial .text { font-style: italic; color: #636E72; line-height: 1.6; margin-bottom: 1rem; }
+        .testimonial .author { font-weight: 700; font-size: 0.9rem; }
+        .testimonial .role { color: #B2BEC3; font-size: 0.8rem; }
+
+        /* PRICING */
+        .pricing {
+            padding: 5rem 2rem;
+            text-align: center;
+            background: linear-gradient(180deg, var(--light) 0%, #FFE8D6 100%);
+        }
+
+        .pricing h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .pricing .subtitle {
+            color: #636E72;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            align-items: start;
+        }
+
+        .plan {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .plan:hover { transform: translateY(-5px); }
+
+        .plan.featured {
+            border: 3px solid var(--love);
+            transform: scale(1.05);
+            box-shadow: 0 10px 40px rgba(232, 67, 147, 0.2);
+        }
+
+        .plan.featured:hover { transform: scale(1.05) translateY(-5px); }
+
+        .plan .popular-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--sunrise), var(--love));
+            color: white;
+            padding: 0.3rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .plan .plan-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .plan h3 { font-size: 1.4rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .plan .plan-desc { color: #636E72; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+        .plan .price {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.2rem;
+        }
+
+        .plan .price span {
+            font-size: 1rem;
+            font-weight: 400;
+            color: #636E72;
+        }
+
+        .plan .price-note {
+            font-size: 0.8rem;
+            color: #B2BEC3;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan ul {
+            list-style: none;
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+
+        .plan ul li {
+            padding: 0.5rem 0;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .plan ul li::before {
+            content: '✓';
+            color: var(--love);
+            font-weight: 700;
+        }
+
+        .plan .plan-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .plan .plan-btn.primary {
+            background: linear-gradient(135deg, var(--sunrise), var(--love));
+            color: white;
+        }
+
+        .plan .plan-btn.secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid #DFE6E9;
+        }
+
+        .plan .plan-btn:hover { transform: scale(1.03); }
+
+        /* CONDITIONS */
+        .conditions {
+            padding: 4rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .conditions h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .conditions-list {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+
+        .condition-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #F0F0F0;
+            align-items: flex-start;
+        }
+
+        .condition-item:last-child { border: none; }
+
+        .condition-item .cond-icon { font-size: 1.5rem; flex-shrink: 0; }
+        .condition-item h4 { font-weight: 700; margin-bottom: 0.2rem; font-size: 0.95rem; }
+        .condition-item p { color: #636E72; font-size: 0.9rem; line-height: 1.5; }
+
+        /* FAQ */
+        .faq {
+            padding: 5rem 2rem;
+            background: white;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid #F0F0F0;
+            padding: 1.5rem 0;
+        }
+
+        .faq-item h3 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-item h3::after { content: '+'; font-size: 1.5rem; color: var(--love); }
+        .faq-item.open h3::after { content: '−'; }
+
+        .faq-item .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+
+        .faq-item.open .answer {
+            max-height: 300px;
+            padding-top: 1rem;
+        }
+
+        .faq-item .answer p {
+            color: #636E72;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* FOOTER CTA */
+        .final-cta {
+            background: linear-gradient(135deg, #FF6B35 0%, #E84393 50%, #A29BFE 100%);
+            padding: 5rem 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .final-cta h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .final-cta p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .final-cta .countdown {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* FOOTER */
+        footer {
+            background: var(--dark);
+            color: rgba(255,255,255,0.5);
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.8rem;
+        }
+
+        footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero .tagline { font-size: 1.1rem; }
+            .stat h3 { font-size: 1.8rem; }
+            .features h2, .how-it-works h2, .pricing h2, .testimonials h2, .faq h2 { font-size: 1.8rem; }
+            .plan.featured { transform: scale(1); }
+            .plan.featured:hover { transform: translateY(-5px); }
+            .phone-mockup { max-width: 280px; }
+            .pricing-grid { grid-template-columns: 1fr; max-width: 400px; margin: 0 auto; }
+        }
+
+        /* ANIMATIONS ON SCROLL */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Easter egg */
+        .secret-msg {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .secret-msg.show { display: flex; }
+
+        .secret-inner {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .secret-inner .heart { font-size: 4rem; margin-bottom: 1rem; }
+        .secret-inner h2 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 1rem; }
+        .secret-inner p { color: #636E72; line-height: 1.6; margin-bottom: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-content">
+            <span class="emoji-sun">🌅</span>
+            <div class="badge">✨ +2 847 couples heureux chaque matin</div>
+            <h1>Bon Matin<span>™</span></h1>
+            <p class="tagline">Un mot doux personnalisé livré chaque matin sur votre téléphone.<br>Parce que l'amour, ça s'entretient. Dès le réveil.</p>
+            <a href="#pricing" class="cta-btn">Découvrir les offres →</a>
+        </div>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <section class="social-proof">
+        <div class="stats">
+            <div class="stat">
+                <h3>2 847</h3>
+                <p>Couples abonnés</p>
+            </div>
+            <div class="stat">
+                <h3>98,7%</h3>
+                <p>Taux de sourire au réveil</p>
+            </div>
+            <div class="stat">
+                <h3>4.9/5</h3>
+                <p>Note moyenne</p>
+            </div>
+            <div class="stat">
+                <h3>0</h3>
+                <p>Ruptures depuis le lancement</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features">
+        <h2 class="fade-in">Pourquoi Bon Matin™ ?</h2>
+        <div class="features-grid">
+            <div class="feature-card fade-in">
+                <div class="icon">💌</div>
+                <h3>Messages artisanaux</h3>
+                <p>Chaque mot doux est rédigé à la main par un poète certifié en amour. Aucune IA, aucun copier-coller. Du 100% fait-main avec le cœur.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon">⏰</div>
+                <h3>Livraison avant le café</h3>
+                <p>Notre algorithme détecte votre heure de réveil habituelle et envoie le mot doux 3 minutes avant. Technologie brevetée "Pre-Coffee Love™".</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon">🎯</div>
+                <h3>Ultra-personnalisé</h3>
+                <p>Notre IA sentimentale analyse 47 paramètres de votre couple pour des messages qui touchent en plein cœur. Taux de "awww" garanti.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon">📊</div>
+                <h3>Dashboard Amour</h3>
+                <p>Suivez en temps réel le KPI le plus important : le bonheur de votre moitié. Graphiques de sourires, analytics de câlins, ROI sentimental.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon">🛡️</div>
+                <h3>Anti-oubli garanti</h3>
+                <p>Plus jamais de "t'as oublié de me dire un truc mignon ce matin". Notre système ne prend JAMAIS de vacances. Contrairement à vous.</p>
+            </div>
+            <div class="feature-card fade-in">
+                <div class="icon">🌍</div>
+                <h3>Multi-fuseaux horaires</h3>
+                <p>Votre chéri(e) est en voyage ? On gère. Le mot doux arrive à l'heure locale. On a même un mode "décalage horaire émotionnel".</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMMENT CA MARCHE -->
+    <section class="how-it-works">
+        <h2 class="fade-in">Comment ça marche ?</h2>
+        <div class="steps">
+            <div class="step fade-in">
+                <div class="number">1</div>
+                <h3>Inscrivez-vous</h3>
+                <p>Renseignez le prénom de votre moitié, vos petits surnoms, et 3 anecdotes mignonnes de votre couple.</p>
+            </div>
+            <div class="step fade-in">
+                <div class="number">2</div>
+                <h3>On rédige</h3>
+                <p>Notre équipe de 12 poètes (et un chat, pour la relecture) rédige votre mot doux quotidien sur-mesure.</p>
+            </div>
+            <div class="step fade-in">
+                <div class="number">3</div>
+                <h3>Elle sourit</h3>
+                <p>Chaque matin, une notification fait apparaître le plus beau sourire du monde sur le visage de votre partenaire.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PREVIEW NOTIFICATION -->
+    <section class="preview-section">
+        <h2 class="fade-in">Aperçu d'une notification</h2>
+        <p class="subtitle fade-in">Voici ce que voit votre moitié chaque matin</p>
+        <div class="phone-mockup fade-in">
+            <div class="phone-screen">
+                <div class="phone-time">07:42</div>
+                <div class="phone-date">Jeudi 6 mars</div>
+                <div class="notification">
+                    <div class="app-icon">🌅</div>
+                    <div class="notif-content">
+                        <h4>Bon Matin™</h4>
+                        <p>Si chaque matin le soleil se lève, c'est parce qu'il a entendu dire que tu allais ouvrir les yeux. Et franchement, je le comprends. 💛</p>
+                    </div>
+                    <span class="notif-time">now</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TEMOIGNAGES -->
+    <section class="testimonials">
+        <h2 class="fade-in">Ce qu'en disent nos abonnés</h2>
+        <div class="testimonial-grid">
+            <div class="testimonial fade-in">
+                <div class="stars">★★★★★</div>
+                <p class="text">"Mon copain m'envoie des mots doux chaque matin depuis un mois. Je pensais que c'était lui. C'était Bon Matin™. Je suis à la fois impressionnée et légèrement vexée."</p>
+                <p class="author">Marie-Charlotte, 28 ans</p>
+                <p class="role">Abonnée malgré elle</p>
+            </div>
+            <div class="testimonial fade-in">
+                <div class="stars">★★★★★</div>
+                <p class="text">"Depuis que j'utilise Bon Matin™, ma copine me regarde avec des yeux de biche dès 7h du mat'. Le ROI sentimental est absolument délirant. Merci Romain."</p>
+                <p class="author">Thomas, 31 ans</p>
+                <p class="role">Membre Premium depuis 6 mois</p>
+            </div>
+            <div class="testimonial fade-in">
+                <div class="stars">★★★★★</div>
+                <p class="text">"J'ai pris l'abonnement Éternel. Ma femme pense que je suis devenu romantique. En vrai c'est juste que j'ai automatisé. Mais chuuut."</p>
+                <p class="author">Julien, 34 ans</p>
+                <p class="role">Abonné Éternel & fier</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="pricing" id="pricing">
+        <h2 class="fade-in">Nos offres</h2>
+        <p class="subtitle fade-in">Investissez dans ce qui compte vraiment. L'amour. Et les notifications.</p>
+
+        <div class="pricing-grid">
+            <!-- FREE -->
+            <div class="plan fade-in">
+                <div class="plan-icon">🌱</div>
+                <h3>Découverte</h3>
+                <p class="plan-desc">Pour les curieux du cœur</p>
+                <div class="price">0€ <span>/ mois</span></div>
+                <p class="price-note">Gratuit pendant 30 jours</p>
+                <ul>
+                    <li>1 mot doux par matin</li>
+                    <li>Messages génériques (pas personnalisés)</li>
+                    <li>Livraison entre 6h et 10h (on choisit pas)</li>
+                    <li>Publicité discrète en bas du message *</li>
+                    <li>Support par pigeon voyageur</li>
+                </ul>
+                <button class="plan-btn secondary" onclick="showSecret()">Offre actuelle ✓</button>
+            </div>
+
+            <!-- PREMIUM -->
+            <div class="plan featured fade-in">
+                <div class="popular-badge">❤️ LE PLUS POPULAIRE</div>
+                <div class="plan-icon">💎</div>
+                <h3>Premium</h3>
+                <p class="plan-desc">Pour les romantiques sérieux</p>
+                <div class="price">9,99€ <span>/ mois</span></div>
+                <p class="price-note">Soit 0,33€ par sourire matinal</p>
+                <ul>
+                    <li>1 mot doux personnalisé par matin</li>
+                    <li>Heure de livraison au choix</li>
+                    <li>Surnoms personnalisés intégrés</li>
+                    <li>3 emojis bonus par message</li>
+                    <li>Dashboard Amour basique</li>
+                    <li>Sans publicité</li>
+                    <li>Support par SMS doux</li>
+                </ul>
+                <button class="plan-btn primary" onclick="showSecret()">Choisir Premium →</button>
+            </div>
+
+            <!-- ETERNEL -->
+            <div class="plan fade-in">
+                <div class="plan-icon">👑</div>
+                <h3>Éternel</h3>
+                <p class="plan-desc">L'amour n'a pas de prix. Enfin presque.</p>
+                <div class="price">29,99€ <span>/ mois</span></div>
+                <p class="price-note">Engagement à vie **</p>
+                <ul>
+                    <li>Tout le Premium, évidemment</li>
+                    <li>2 messages/jour (matin + bonne nuit)</li>
+                    <li>Poème surprise le dimanche</li>
+                    <li>Message d'anniversaire épique</li>
+                    <li>Dashboard Amour avancé + analytics</li>
+                    <li>Mode "dispute" : message de réconciliation express</li>
+                    <li>Concierge sentimental dédié 24/7</li>
+                    <li>Accès au Discord VIP des romantiques</li>
+                </ul>
+                <button class="plan-btn secondary" onclick="showSecret()">Devenir Éternel →</button>
+            </div>
+        </div>
+
+        <p style="margin-top: 2rem; font-size: 0.75rem; color: #B2BEC3; max-width: 600px; margin-left: auto; margin-right: auto;">
+            * La publicité consiste en un petit "Envoyé avec ❤️ via Bon Matin™" en bas du message. Oui, c'est un peu la honte.<br>
+            ** L'engagement "à vie" correspond à la durée de votre couple. En cas de rupture, nous proposons un message de reconquête à 4,99€ en supplément.
+        </p>
+    </section>
+
+    <!-- CONDITIONS -->
+    <section class="conditions">
+        <h2 class="fade-in">Conditions Générales d'Amour (CGA)</h2>
+        <div class="conditions-list fade-in">
+            <div class="condition-item">
+                <span class="cond-icon">📋</span>
+                <div>
+                    <h4>Engagement minimum</h4>
+                    <p>Aucun engagement minimum. Par contre, votre partenaire risque de devenir accro et de ne plus accepter un matin sans mot doux. Nous déclinons toute responsabilité en cas de dépendance affective.</p>
+                </div>
+            </div>
+            <div class="condition-item">
+                <span class="cond-icon">🔄</span>
+                <div>
+                    <h4>Résiliation</h4>
+                    <p>Résiliable à tout moment. Un message de rupture émotionnel sera envoyé à votre partenaire pour l'informer que les mots doux s'arrêtent. Prévoyez des mouchoirs.</p>
+                </div>
+            </div>
+            <div class="condition-item">
+                <span class="cond-icon">💔</span>
+                <div>
+                    <h4>Garantie "Sourire ou Remboursé"</h4>
+                    <p>Si votre partenaire ne sourit pas au moins 1 fois sur 30 messages, remboursement intégral. Il faudra fournir une preuve vidéo du non-sourire (oui, on sait, c'est compliqué).</p>
+                </div>
+            </div>
+            <div class="condition-item">
+                <span class="cond-icon">🚫</span>
+                <div>
+                    <h4>Clause d'exclusivité</h4>
+                    <p>L'abonnement est strictement limité à UN(E) partenaire. Toute tentative d'utilisation multi-partenaires entraîne une suspension immédiate et une notification à TOUS les partenaires concernés.</p>
+                </div>
+            </div>
+            <div class="condition-item">
+                <span class="cond-icon">🐱</span>
+                <div>
+                    <h4>Le chat relecteur</h4>
+                    <p>Marcel, notre chat relecteur officiel, se réserve le droit de marcher sur le clavier et d'ajouter "miaou" à la fin de certains messages. C'est un feature, pas un bug.</p>
+                </div>
+            </div>
+            <div class="condition-item">
+                <span class="cond-icon">⚖️</span>
+                <div>
+                    <h4>Juridiction</h4>
+                    <p>Tout litige sera réglé par un duel de déclarations d'amour devant un jury de couples mariés depuis plus de 50 ans. Leur décision est définitive et adorable.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="faq">
+        <h2 class="fade-in">Questions fréquentes</h2>
+
+        <div class="faq-item fade-in">
+            <h3>Est-ce que c'est vraiment un humain qui écrit les messages ?</h3>
+            <div class="answer">
+                <p>Absolument. Notre fondateur, Romain, se lève chaque matin à 4h37 pour rédiger personnellement chaque mot doux. Il est alimenté par le café, l'amour, et une quantité déraisonnable de croissants. Son taux de romantisme sanguin est médicalement inexplicable.</p>
+            </div>
+        </div>
+
+        <div class="faq-item fade-in">
+            <h3>Et si mon/ma partenaire découvre que j'utilise l'app ?</h3>
+            <div class="answer">
+                <p>Nous avons un protocole "Opération Camouflage". L'app apparaît sous le nom "Calculatrice Pro" sur votre téléphone. En cas de flag, notre équipe juridique vous fournit un alibi en béton et un PowerPoint prouvant que vous êtes naturellement romantique.</p>
+            </div>
+        </div>
+
+        <div class="faq-item fade-in">
+            <h3>C'est quoi le mode "Dispute" ?</h3>
+            <div class="answer">
+                <p>En cas de désaccord conjugal, activez le mode Dispute. Un message de réconciliation calibré au nanogramme près sera envoyé dans les 30 secondes. Taux de réussite : 94%. Les 6% restants ont essayé pendant une dispute sur le thermostat. Certaines guerres sont impossibles à gagner.</p>
+            </div>
+        </div>
+
+        <div class="faq-item fade-in">
+            <h3>Pourquoi c'est aussi cher ?</h3>
+            <div class="answer">
+                <p>Comparez : un bouquet de fleurs = 35€ et dure 5 jours. Un resto = 80€ et dure 2h. Bon Matin™ = 9,99€ et dure TOUT LE MOIS. On est littéralement le meilleur investissement sentimental depuis l'invention du "je t'aime".</p>
+            </div>
+        </div>
+
+        <div class="faq-item fade-in">
+            <h3>Est-ce compatible avec les chats / chiens / plantes ?</h3>
+            <div class="answer">
+                <p>Nos messages sont optimisés pour les humains, mais plusieurs utilisateurs rapportent que leur chat ronronne en les lisant par-dessus leur épaule. Coïncidence ? On ne pense pas.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="final-cta">
+        <div class="countdown">⏳ Offre Découverte : encore <span id="days-left">24</span> jours gratuits</div>
+        <h2>Prête à passer Premium ?</h2>
+        <p>Rejoins les 2 847 personnes qui se réveillent chaque matin avec le sourire. Ou continue en gratuit, mais Marcel le chat te jugera.</p>
+        <button class="cta-btn" onclick="showSecret()">S'abonner maintenant →</button>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>Bon Matin™ est une marque déposée de Romain Corp. — Siège social : quelque part où il fait beau.</p>
+        <p style="margin-top: 0.5rem;">© 2026 Bon Matin™ · <a href="#">Mentions légales</a> · <a href="#">Politique de câlins</a> · <a href="#">Plan du site (en forme de cœur)</a></p>
+        <p style="margin-top: 1rem; font-size: 0.7rem; opacity: 0.5;">v3.7.2 — Build avec amour et caféine</p>
+    </footer>
+
+    <!-- EASTER EGG -->
+    <div class="secret-msg" id="secretMsg">
+        <div class="secret-inner">
+            <div class="heart">❤️</div>
+            <h2>Offre spéciale détectée</h2>
+            <p>Après analyse approfondie de ton dossier, il s'avère que tu bénéficies d'un abonnement <strong>Éternel Gratuit À Vie™</strong>.<br><br>Raison : t'es tombée sur le seul mec qui n'a pas besoin d'une app pour penser à toi chaque matin. 😘<br><br><em>— Conditions : valable tant que tu continues à sourire comme ça.</em></p>
+            <button class="cta-btn" onclick="closeSecret()" style="margin-top: 1rem; font-size: 1rem;">J'accepte les conditions ❤️</button>
+        </div>
+    </div>
+
+    <script>
+        // FAQ Accordion
+        document.querySelectorAll('.faq-item h3').forEach(item => {
+            item.addEventListener('click', () => {
+                const parent = item.parentElement;
+                parent.classList.toggle('open');
+            });
+        });
+
+        // Scroll animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        // Countdown — jours restants sur le mois
+        const today = new Date();
+        const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const daysLeft = Math.ceil((endOfMonth - today) / (1000 * 60 * 60 * 24));
+        document.getElementById('days-left').textContent = daysLeft;
+
+        // Easter egg
+        function showSecret() {
+            document.getElementById('secretMsg').classList.add('show');
+        }
+
+        function closeSecret() {
+            document.getElementById('secretMsg').classList.remove('show');
+        }
+
+        // Close on backdrop click
+        document.getElementById('secretMsg').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('secretMsg')) closeSecret();
+        });
+    </script>
+</body>
+</html>
