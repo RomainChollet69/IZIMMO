@@ -2198,11 +2198,16 @@
                     if (visitError) console.error('[Micro] Erreur création visite:', visitError);
                     else {
                         saved++;
-                        // Sync Google Calendar (non-bloquant, visites planifiées seulement)
+                        // Sync Google Calendar (non-bloquant, toujours tentée pour visites planifiées)
                         if (visitType === 'planifiee' && visitData?.[0]) {
-                            const seller = allLeads?.find(l => l.id === visitBlock.dataset.sellerLeadId);
-                            const buyer = allLeads?.find(l => l.id === visitBlock.dataset.buyerLeadId);
-                            syncVisitToCalendarFromMicro(visitData[0], seller, buyer, cachedHeaders).catch(() => {});
+                            const seller = allLeads?.find(l => l.id === visitBlock.dataset.sellerLeadId) || null;
+                            const buyer = allLeads?.find(l => l.id === visitBlock.dataset.buyerLeadId) || null;
+                            const hdrs = cachedHeaders || await getAuthHeaders().catch(() => null);
+                            if (hdrs) {
+                                syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs).catch(e => {
+                                    console.warn('[Micro] Sync calendar échouée:', e);
+                                });
+                            }
                         }
                     }
                 }
@@ -2573,42 +2578,22 @@
                     window.parent.postMessage({ type: 'lead-created', leadType: selectedType }, '*');
                 }
 
-                // Succès — afficher le résumé riche avec lien vers la fiche
+                // Succès — remplacer la carte par un chip "✓ Créé" sans fermer la confirmation
+                // (l'utilisateur peut encore cliquer "Confirmer" pour sauver les notes / visites / agenda)
+                const typeLabel = selectedType === 'buyer' ? 'acquéreur' : 'vendeur';
                 const pipelinePage = selectedType === 'buyer' ? 'acquereurs.html' : 'index.html';
                 const leadUrl = `${pipelinePage}?openLead=${newLead.id}`;
-
-                // Remplir le résumé
-                document.getElementById('leadSuccessName').textContent = `${firstName} ${lastName}`;
-                const metaParts = [];
-                metaParts.push(selectedType === 'buyer' ? 'Acquéreur' : 'Vendeur');
-                if (contact.property_type) metaParts.push(contact.property_type);
-                if (contact.address || contact.sector) metaParts.push(contact.address || contact.sector);
-                if (contact.budget || contact.budget_max) {
-                    const b = parseInt(contact.budget || contact.budget_max);
-                    if (!isNaN(b)) metaParts.push(`${Math.round(b/1000)}k€`);
+                const parentCard = card.closest('.no-match-card');
+                if (parentCard) {
+                    parentCard.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px 4px">
+                            <span style="font-size:20px">✅</span>
+                            <div>
+                                <div style="font-weight:600;color:#166534;font-size:14px">${firstName} ${lastName} créé en tant qu'${typeLabel}</div>
+                                <a href="${leadUrl}" style="font-size:12px;color:#667eea;text-decoration:none">Voir la fiche →</a>
+                            </div>
+                        </div>`;
                 }
-                document.getElementById('leadSuccessMeta').innerHTML =
-                    metaParts.map(p => `<span>${p}</span>`).join('');
-
-                // Configurer les boutons
-                function dismissLeadSuccess(goToLead) {
-                    successOverlay.classList.remove('visible');
-                    document.getElementById('leadSuccessCard').classList.remove('visible');
-                    document.getElementById('successSimple').style.display = '';
-                    hideAllZones();
-                    setMicState('idle');
-                    currentResult = null;
-                    allLeads = null;
-                    window._pendingNewLeads = null;
-                    if (goToLead) window.location.href = leadUrl;
-                }
-                document.getElementById('leadSuccessViewBtn').onclick = () => dismissLeadSuccess(true);
-                document.getElementById('leadSuccessNewBtn').onclick = () => dismissLeadSuccess(false);
-
-                // Afficher le success card riche
-                document.getElementById('successSimple').style.display = 'none';
-                document.getElementById('leadSuccessCard').classList.add('visible');
-                successOverlay.classList.add('visible');
             } catch (err) {
                 console.error('[Micro] Erreur création lead:', err);
                 showError('Erreur lors de la création : ' + err.message);
