@@ -2143,12 +2143,12 @@
 
         // ===== CONFIRM =====
         confirmBtn.addEventListener('click', async () => {
-            if (!currentResult || !currentResult.contacts_matched) return;
+            if (!currentResult) return;
             confirmBtn.disabled = true;
             confirmBtn.innerHTML = '<span class="spinner" style="border-top-color:white;width:16px;height:16px;margin:0"></span>';
 
             try {
-                const matches = currentResult.contacts_matched;
+                const matches = currentResult.contacts_matched || [];
                 let saved = 0;
 
                 for (let i = 0; i < matches.length; i++) {
@@ -2175,9 +2175,35 @@
                     saved++;
                 }
 
+                // ── Créer les nouveaux contacts en attente AVANT la visite ──────────────────
+                const createdNewLeads = [];
+                const pendingLeads = window._pendingNewLeads;
+                if (pendingLeads && pendingLeads.length > 0) {
+                    for (let i = 0; i < pendingLeads.length; i++) {
+                        try {
+                            const result = await createNewLeadFromMicro(i);
+                            if (result) { createdNewLeads.push(result); saved++; }
+                        } catch (e) {
+                            console.error('[Micro] Erreur création contact en attente:', e);
+                        }
+                    }
+                }
+
                 // Créer la visite si détectée et cochée
                 const visitBlock = document.getElementById('visitDetectedBlock');
                 const visitCheck = document.getElementById('visitDetectedCheck');
+
+                // Patcher les IDs visite avec les contacts fraîchement créés
+                if (createdNewLeads.length > 0 && visitBlock) {
+                    for (const { lead, selectedType } of createdNewLeads) {
+                        if (selectedType === 'buyer' && !visitBlock.dataset.buyerLeadId) {
+                            visitBlock.dataset.buyerLeadId = lead.id;
+                        } else if (selectedType === 'seller' && !visitBlock.dataset.sellerLeadId) {
+                            visitBlock.dataset.sellerLeadId = lead.id;
+                        }
+                    }
+                }
+
                 if (visitBlock && visitCheck && visitCheck.checked && (visitBlock.dataset.sellerLeadId || visitBlock.dataset.buyerLeadId)) {
                     const visitDate = document.getElementById('visitDetectedDate')?.value;
                     const visitTime = document.getElementById('visitDetectedTime')?.value;
@@ -2200,8 +2226,13 @@
                         saved++;
                         // Sync Google Calendar (non-bloquant, toujours tentée pour visites planifiées)
                         if (visitType === 'planifiee' && visitData?.[0]) {
-                            const seller = allLeads?.find(l => l.id === visitBlock.dataset.sellerLeadId) || null;
-                            const buyer = allLeads?.find(l => l.id === visitBlock.dataset.buyerLeadId) || null;
+                            // Inclure les leads fraîchement créés pour la sync calendrier
+                            const allKnownLeads = [
+                                ...(allLeads || []),
+                                ...createdNewLeads.map(r => ({ ...r.lead, type: r.selectedType }))
+                            ];
+                            const seller = allKnownLeads.find(l => l.id === visitBlock.dataset.sellerLeadId) || null;
+                            const buyer = allKnownLeads.find(l => l.id === visitBlock.dataset.buyerLeadId) || null;
                             const hdrs = cachedHeaders || await getAuthHeaders().catch(() => null);
                             if (hdrs) {
                                 syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs).catch(e => {
@@ -2230,10 +2261,18 @@
 
                 addToHistory(currentResult, saved);
 
-                const visitCreated = document.getElementById('visitDetectedCheck')?.checked
+                const visitCreated = visitCheck?.checked
                     && (visitBlock?.dataset.sellerLeadId || visitBlock?.dataset.buyerLeadId);
-                let successMsg = saved === 1 ? '1 note enregistrée !' : `${saved} notes enregistrées !`;
-                if (visitCreated) successMsg = 'Note + visite enregistrées !';
+                let successMsg = saved === 1 ? '1 action enregistrée !' : `${saved} actions enregistrées !`;
+                if (createdNewLeads.length > 0 && visitCreated) {
+                    const n = createdNewLeads.length;
+                    successMsg = `${n} contact${n > 1 ? 's' : ''} créé${n > 1 ? 's' : ''} + visite enregistrée !`;
+                } else if (createdNewLeads.length > 0) {
+                    const n = createdNewLeads.length;
+                    successMsg = `${n} contact${n > 1 ? 's' : ''} créé${n > 1 ? 's' : ''} !`;
+                } else if (visitCreated) {
+                    successMsg = 'Note + visite enregistrées !';
+                }
                 if (agendaCreated) successMsg = successMsg.replace(' !', '') + ' + agenda ✓';
                 successText.textContent = successMsg;
                 successOverlay.classList.add('visible');
@@ -2594,6 +2633,8 @@
                             </div>
                         </div>`;
                 }
+                // Retourner le lead créé pour que le flux confirm puisse patcher les IDs visite
+                return { lead: newLead, selectedType };
             } catch (err) {
                 console.error('[Micro] Erreur création lead:', err);
                 showError('Erreur lors de la création : ' + err.message);
