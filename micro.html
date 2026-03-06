@@ -2536,6 +2536,11 @@
 
                 // Champs spécifiques aux vendeurs
                 if (selectedType === 'seller') {
+                    // Champs requis par la table sellers (NOT NULL ou valeurs attendues)
+                    leadData.annexes = [];
+                    leadData.links = [];
+                    leadData.link_previews = {};
+                    leadData.commission_rate = 4;
                     if (contact.source) leadData.source = contact.source;
                     if (contact.referrer_name) leadData.referrer_name = contact.referrer_name;
                     if (contact.budget) leadData.budget = contact.budget;

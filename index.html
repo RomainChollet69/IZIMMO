@@ -8736,6 +8736,7 @@
 
         // ===== SOUMISSION =====
         async function handleFormSubmit() {
+          try {
             const status = document.getElementById('status').value;
             const source = document.getElementById('source').value;
             const date = document.getElementById('date').value;
@@ -8922,6 +8923,10 @@
                     PipelineOnboarding.start();
                 }
             }, 500);
+          } catch(e) {
+            console.error('[LeadForm] Exception handleFormSubmit:', e);
+            alert('Erreur inattendue lors de la création : ' + e.message);
+          }
         }
 
         // ===== COMPETITOR POPUP =====
