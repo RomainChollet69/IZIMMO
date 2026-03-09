@@ -2110,24 +2110,26 @@
                     })
                 });
 
+                console.log('[Micro:Calendar] Request:', { action: 'create_event', title, date, start_time: startTime, end_time: endTime });
                 if (!resp.ok) {
                     const err = await resp.json().catch(() => ({}));
-                    if (err.error !== 'calendar_not_connected') {
-                        console.warn('[Micro] Échec sync calendrier:', err.error || resp.status);
-                    }
+                    console.error('[Micro:Calendar] API error:', resp.status, err);
                     return;
                 }
 
                 const data = await resp.json();
+                console.log('[Micro:Calendar] Response:', data);
                 if (data.event?.id) {
                     // Stocker l'event ID sur la visite
                     await supabaseClient.from('visits')
                         .update({ google_event_id: data.event.id })
                         .eq('id', visit.id);
-                    console.log('[Micro] Visite synchronisée dans Google Calendar');
+                    console.log('[Micro:Calendar] Visite sync OK, event_id:', data.event.id);
+                } else {
+                    console.warn('[Micro:Calendar] Pas d\'event.id dans la réponse');
                 }
             } catch (err) {
-                console.warn('[Micro] syncVisitToCalendarFromMicro error:', err);
+                console.error('[Micro:Calendar] syncVisitToCalendarFromMicro error:', err);
             }
         }
 
@@ -2153,16 +2155,17 @@
                     })
                 });
 
+                console.log('[Micro:Agenda] Request:', { title: agendaEvent.title, date, start_time: startTime, end_time: endTime });
                 if (!resp.ok) {
                     const err = await resp.json().catch(() => ({}));
-                    if (err.error !== 'calendar_not_connected') {
-                        console.warn('[Micro] Échec création événement agenda:', err.error);
-                    }
+                    console.error('[Micro:Agenda] API error:', resp.status, err);
                     return false;
                 }
+                const data = await resp.json();
+                console.log('[Micro:Agenda] Response:', data);
                 return true;
             } catch (err) {
-                console.warn('[Micro] createCalendarEventFromMicro error:', err);
+                console.error('[Micro:Agenda] createCalendarEventFromMicro error:', err);
                 return false;
             }
         }
@@ -2498,8 +2501,8 @@
                     if (visitError) console.error('[Micro] Erreur création visite:', visitError);
                     else {
                         saved++;
-                        // Sync Google Calendar (non-bloquant, toujours tentée pour visites planifiées)
-                        if (visitType === 'planifiee' && visitData?.[0]) {
+                        // Sync Google Calendar (bloquant pour garantir l'exécution)
+                        if (visitData?.[0]) {
                             // Inclure les leads fraîchement créés pour la sync calendrier
                             const allKnownLeads = [
                                 ...(allLeads || []),
@@ -2508,10 +2511,15 @@
                             const seller = allKnownLeads.find(l => l.id === visitBlock.dataset.sellerLeadId) || null;
                             const buyer = allKnownLeads.find(l => l.id === visitBlock.dataset.buyerLeadId) || null;
                             const hdrs = cachedHeaders || await getAuthHeaders().catch(() => null);
+                            console.log('[Micro] Calendar sync:', { visitType, hasHeaders: !!hdrs, sellerId: visitBlock.dataset.sellerLeadId, buyerId: visitBlock.dataset.buyerLeadId });
                             if (hdrs) {
-                                syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs).catch(e => {
-                                    console.warn('[Micro] Sync calendar échouée:', e);
-                                });
+                                try {
+                                    await syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs);
+                                } catch (calErr) {
+                                    console.error('[Micro] Sync calendar échouée:', calErr);
+                                }
+                            } else {
+                                console.warn('[Micro] Pas de headers auth — sync calendar ignorée');
                             }
                         }
                     }
@@ -2547,7 +2555,13 @@
                 } else if (visitCreated) {
                     successMsg = 'Note + visite enregistrées !';
                 }
-                if (agendaCreated) successMsg = successMsg.replace(' !', '') + ' + agenda ✓';
+                // Ajouter un avertissement si le calendrier n'a pas pu être sync
+                const calendarExpected = visitCreated || (agendaCheck?.checked && agendaBlock?.dataset.agendaTitle);
+                if (calendarExpected && !agendaCreated) {
+                    successMsg = successMsg.replace(' !', '') + ' ⚠️ Agenda non synchronisé (reconnecte Google Calendar dans Paramètres)';
+                } else if (agendaCreated) {
+                    successMsg = successMsg.replace(' !', '') + ' + agenda ✓';
+                }
                 successText.textContent = successMsg;
                 successOverlay.classList.add('visible');
 
@@ -2557,7 +2571,7 @@
                     setMicState('idle');
                     currentResult = null;
                     allLeads = null;
-                }, 1600);
+                }, calendarExpected && !agendaCreated ? 3500 : 1600);
             } catch (err) {
                 console.error('Confirm error:', err);
                 showError('Erreur : ' + err.message);

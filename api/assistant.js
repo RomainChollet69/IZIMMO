@@ -274,10 +274,19 @@ async function handleCalendarAction(res, user, action, params) {
         .from('user_integrations')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-    if (intError || !integration || !integration.google_calendar_connected) {
-        return res.status(400).json({ error: 'calendar_not_connected' });
+    if (intError) {
+        console.error('[Assistant:calendar] Erreur requête user_integrations:', intError.message, '| user_id:', user.id);
+        return res.status(400).json({ error: 'calendar_not_connected', detail: 'db_error: ' + intError.message });
+    }
+    if (!integration) {
+        console.warn('[Assistant:calendar] Aucune ligne user_integrations pour user_id:', user.id);
+        return res.status(400).json({ error: 'calendar_not_connected', detail: 'no_integration_row' });
+    }
+    if (!integration.google_calendar_connected) {
+        console.warn('[Assistant:calendar] google_calendar_connected=false pour user_id:', user.id);
+        return res.status(400).json({ error: 'calendar_not_connected', detail: 'not_connected' });
     }
 
     // Renouveler le token si nécessaire
