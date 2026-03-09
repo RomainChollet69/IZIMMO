@@ -2346,18 +2346,21 @@
                 </div>`;
                 visitBlock.style.display = '';
                 // Stocker les IDs — peuvent être vides si l'IA ne les a pas remplis
-                visitBlock.dataset.sellerLeadId = vd.seller_lead_id || '';
-                visitBlock.dataset.buyerLeadId = vd.buyer_lead_id || '';
+                // ⚠️ dataset stocke tout en string : null → "null", undefined → "undefined"
+                visitBlock.dataset.sellerLeadId = vd.seller_lead_id && vd.seller_lead_id !== 'null' ? vd.seller_lead_id : '';
+                visitBlock.dataset.buyerLeadId = vd.buyer_lead_id && vd.buyer_lead_id !== 'null' ? vd.buyer_lead_id : '';
                 visitBlock.dataset.visitType = vd.type || 'effectuee';
 
                 // Cross-référencer contacts_matched pour remplir les IDs manquants
                 // (l'IA met souvent le contact en contacts_matched mais oublie visit_detected.buyer/seller_lead_id)
                 for (const match of (result.contacts_matched || [])) {
+                    const mid = match.lead_id;
+                    if (!mid || mid === 'null') continue; // pas de lead_id valide (contact nouveau)
                     if (match.lead_type === 'buyer' && !visitBlock.dataset.buyerLeadId) {
-                        visitBlock.dataset.buyerLeadId = match.lead_id;
+                        visitBlock.dataset.buyerLeadId = mid;
                     }
                     if (match.lead_type === 'seller' && !visitBlock.dataset.sellerLeadId) {
-                        visitBlock.dataset.sellerLeadId = match.lead_id;
+                        visitBlock.dataset.sellerLeadId = mid;
                     }
                 }
             } else {
@@ -2485,18 +2488,21 @@
                     const visitDate = document.getElementById('visitDetectedDate')?.value;
                     const visitTime = document.getElementById('visitDetectedTime')?.value;
                     const visitType = visitBlock.dataset.visitType || 'effectuee';
+                    // Filtrer les IDs invalides (dataset peut contenir "null", "undefined", "")
+                    const isValidUUID = v => v && v !== 'null' && v !== 'undefined' && v.length > 10;
+                    const sellerId = isValidUUID(visitBlock.dataset.sellerLeadId) ? visitBlock.dataset.sellerLeadId : null;
+                    const buyerId = isValidUUID(visitBlock.dataset.buyerLeadId) ? visitBlock.dataset.buyerLeadId : null;
+
                     const visit = {
                         user_id: userId,
-                        seller_id: visitBlock.dataset.sellerLeadId || null,
-                        buyer_id: visitBlock.dataset.buyerLeadId || null,
                         visit_date: visitDate || new Date().toISOString().split('T')[0],
                         visit_time: visitTime || null,
                         status: visitType,
                         notes: currentResult.visit_detected?.notes || null
                     };
-                    // Supprimer les champs vides
-                    if (!visit.seller_id) delete visit.seller_id;
-                    if (!visit.buyer_id) delete visit.buyer_id;
+                    if (sellerId) visit.seller_id = sellerId;
+                    if (buyerId) visit.buyer_id = buyerId;
+                    console.log('[Micro] Insert visite:', JSON.stringify(visit));
                     const { data: visitData, error: visitError } = await supabaseClient.from('visits').insert([visit]).select();
                     if (visitError) console.error('[Micro] Erreur création visite:', visitError);
                     else {
