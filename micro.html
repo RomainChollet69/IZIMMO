@@ -2125,11 +2125,14 @@
                         .update({ google_event_id: data.event.id })
                         .eq('id', visit.id);
                     console.log('[Micro:Calendar] Visite sync OK, event_id:', data.event.id);
+                    return true;
                 } else {
                     console.warn('[Micro:Calendar] Pas d\'event.id dans la réponse');
+                    return false;
                 }
             } catch (err) {
                 console.error('[Micro:Calendar] syncVisitToCalendarFromMicro error:', err);
+                return false;
             }
         }
 
@@ -2470,8 +2473,8 @@
                 }
 
                 // Créer la visite si détectée et cochée
+                let visitCalendarSynced = false;
                 const visitBlock = document.getElementById('visitDetectedBlock');
-                const visitCheck = document.getElementById('visitDetectedCheck');
 
                 // Patcher les IDs visite avec les contacts fraîchement créés
                 if (createdNewLeads.length > 0 && visitBlock) {
@@ -2520,7 +2523,7 @@
                             console.log('[Micro] Calendar sync:', { visitType, hasHeaders: !!hdrs, sellerId: visitBlock.dataset.sellerLeadId, buyerId: visitBlock.dataset.buyerLeadId });
                             if (hdrs) {
                                 try {
-                                    await syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs);
+                                    visitCalendarSynced = await syncVisitToCalendarFromMicro(visitData[0], seller, buyer, hdrs);
                                 } catch (calErr) {
                                     console.error('[Micro] Sync calendar échouée:', calErr);
                                 }
@@ -2562,10 +2565,11 @@
                     successMsg = 'Note + visite enregistrées !';
                 }
                 // Ajouter un avertissement si le calendrier n'a pas pu être sync
+                const calendarSynced = visitCalendarSynced || agendaCreated;
                 const calendarExpected = visitCreated || (agendaCheck?.checked && agendaBlock?.dataset.agendaTitle);
-                if (calendarExpected && !agendaCreated) {
+                if (calendarExpected && !calendarSynced) {
                     successMsg = successMsg.replace(' !', '') + ' ⚠️ Agenda non synchronisé (reconnecte Google Calendar dans Paramètres)';
-                } else if (agendaCreated) {
+                } else if (calendarSynced) {
                     successMsg = successMsg.replace(' !', '') + ' + agenda ✓';
                 }
                 successText.textContent = successMsg;
