@@ -1728,61 +1728,8 @@
     </div>
 
     <div class="settings-container">
-        <!-- Section Mes Performances (Gamification) -->
-        <div class="settings-section" id="performanceSection">
-            <h2 class="section-title">Mes Performances</h2>
-
-            <div id="perfContent">
-                <div class="perf-stats">
-                    <div class="perf-stat-card gold">
-                        <div class="perf-stat-label">Score total</div>
-                        <div class="perf-stat-value" id="perfTotalPoints">—</div>
-                        <div class="perf-stat-sub" id="perfLevel">—</div>
-                    </div>
-                    <div class="perf-stat-card purple">
-                        <div class="perf-stat-label" id="perfMonthLabel">Ce mois-ci</div>
-                        <div class="perf-stat-value" id="perfMonthlyPoints">—</div>
-                        <div class="perf-stat-sub" id="perfActionsToday">—</div>
-                    </div>
-                    <div class="perf-stat-card grey" id="perfStreakCard">
-                        <div class="perf-stat-label">Streak</div>
-                        <div class="perf-stat-value" id="perfStreak">—</div>
-                        <div class="perf-stat-sub" id="perfStreakRecord">—</div>
-                    </div>
-                </div>
-
-                <div class="perf-bareme-title">Barème des points</div>
-                <div class="perf-bareme-list">
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">🏆 Vente réalisée</span><span class="perf-bareme-pts">+100 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📝 Mandat signé</span><span class="perf-bareme-pts">+50 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">🏠 Workflow terminé</span><span class="perf-bareme-pts">+30 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">👀 Retour de visite</span><span class="perf-bareme-pts">+20 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📅 Visite planifiée</span><span class="perf-bareme-pts">+15 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">👤 Lead créé</span><span class="perf-bareme-pts">+15 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">🔥 Streak du jour</span><span class="perf-bareme-pts">+15 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📱 Post créé</span><span class="perf-bareme-pts">+12 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">✅ Fiche complète</span><span class="perf-bareme-pts">+10 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📞 Relance traitée</span><span class="perf-bareme-pts">+10 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">🎤 Note vocale</span><span class="perf-bareme-pts">+8 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">⚡ Étape workflow</span><span class="perf-bareme-pts">+8 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📤 Post partagé</span><span class="perf-bareme-pts">+8 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📝 Note ajoutée</span><span class="perf-bareme-pts">+5 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">📎 Document ajouté</span><span class="perf-bareme-pts">+5 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">⏰ Relance planifiée</span><span class="perf-bareme-pts">+5 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">↔️ Lead déplacé</span><span class="perf-bareme-pts">+3 pts</span></div>
-                    <div class="perf-bareme-row"><span class="perf-bareme-label">☑️ Todo terminée</span><span class="perf-bareme-pts">+3 pts</span></div>
-                </div>
-
-                <div class="perf-tips">
-                    💡 <strong>10% de chance de BONUS x2</strong> à chaque action !<br>
-                    🔥 <strong>3 actions par jour</strong> = streak activée + 15 pts bonus
-                </div>
-            </div>
-
-            <div id="perfEmpty" class="perf-empty" style="display:none;">
-                Commence à utiliser Léon pour gagner des points !
-            </div>
-        </div>
+        <!-- Section Mes Performances (Gamification) — désactivée -->
+        <!-- Gamification retirée de l'interface (feature gelée) -->
 
         <!-- Section Mon Profil -->
         <div class="settings-section">
@@ -2128,46 +2075,8 @@
             return session.user.id;
         }
 
-        // ===== GAMIFICATION STATS =====
-        const MONTH_NAMES = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-        const LEVEL_NAMES = ['Débutant', 'Actif', 'Confirmé', 'Expert', 'Légende'];
-
-        async function loadGamificationStats(uid) {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('gamification_profiles')
-                    .select('*')
-                    .eq('user_id', uid)
-                    .single();
-
-                if (error || !data) {
-                    document.getElementById('perfContent').style.display = 'none';
-                    document.getElementById('perfEmpty').style.display = 'block';
-                    return;
-                }
-
-                // Score total
-                document.getElementById('perfTotalPoints').textContent = data.total_points.toLocaleString('fr-FR') + ' pts';
-                const level = data.level || 1;
-                document.getElementById('perfLevel').textContent = 'Niveau ' + level + ' — ' + (LEVEL_NAMES[level - 1] || '');
-
-                // Score mensuel
-                const monthlyPts = data.monthly_points || 0;
-                document.getElementById('perfMonthlyPoints').textContent = monthlyPts.toLocaleString('fr-FR') + ' pts';
-                const now = new Date();
-                document.getElementById('perfMonthLabel').textContent = MONTH_NAMES[now.getMonth()] + ' ' + now.getFullYear();
-                document.getElementById('perfActionsToday').textContent = (data.actions_today || 0) + ' actions aujourd\'hui';
-
-                // Streak
-                const streak = data.current_streak || 0;
-                document.getElementById('perfStreak').textContent = streak > 0 ? ('🔥 ' + streak + 'j') : '0j';
-                document.getElementById('perfStreakRecord').textContent = 'Record : ' + (data.longest_streak || 0) + 'j';
-                if (streak > 0) document.getElementById('perfStreakCard').classList.add('active');
-
-            } catch (err) {
-                console.error('[Paramètres] Erreur chargement gamification:', err);
-            }
-        }
+        // ===== GAMIFICATION STATS (désactivé — feature gelée) =====
+        async function loadGamificationStats(uid) { /* no-op */ }
 
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', async () => {
