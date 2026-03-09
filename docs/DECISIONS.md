@@ -1088,3 +1088,39 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - `js/gamification.js` supprimé de toutes les pages (feature non-core)
 - `parametres.html` : suppression du lien vers assistant.html
 
+
+---
+
+## D011 — Requêtes DVF vocales via Nominatim + bucket Supabase
+
+**Date** : 2026-03-09
+**Statut** : Actif
+
+**Contexte** : L'utilisateur veut interroger les données DVF par la voix ("Dis Léon, à combien se sont vendus les T3 à Tassin ?").
+
+**Décision** : Geocoding via Nominatim (OpenStreetMap), données DVF pré-stockées dans un bucket Supabase Storage (`dvf-data`), filtrage côté client par distance (Haversine) et surface.
+
+**Pourquoi** :
+- Nominatim est gratuit et sans API key (vs Google Geocoding payant)
+- Les données DVF sont déjà dans le bucket, pas besoin de requête API externe supplémentaire
+- Le mapping pièces → surface (T3 = 50-80m²) est une approximation raisonnable pour le marché français
+
+**Alternatives rejetées** :
+- Google Geocoding API : payant, nécessite une clé
+- Requête DVF en temps réel via API gouvernementale : lent et rate-limited
+
+---
+
+## D012 — Validation UUID pour dataset HTML
+
+**Date** : 2026-03-09
+**Statut** : Actif
+
+**Contexte** : `element.dataset.someId = null` stocke la string `"null"` (pas `null`), ce qui passe les tests truthy JS et provoque des erreurs 400 Supabase (UUID invalide).
+
+**Décision** : Validation explicite `isValidUUID(v)` avant tout insert Supabase utilisant des IDs provenant de `dataset`.
+
+**Pourquoi** :
+- Le DOM dataset convertit toute valeur en string — piège classique
+- Un simple `|| null` ne suffit pas car `"null"` est truthy
+- Mieux vaut valider à la sortie (avant insert) qu'espérer que l'entrée soit propre

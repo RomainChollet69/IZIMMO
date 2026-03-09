@@ -18,8 +18,8 @@ IZIMMO/
 ├── landing.html                # Page marketing / vitrine (v1, tutoiement)
 ├── landing-v2.html             # Landing page premium Apple-style (v2, vouvoiement, scroll-reveal)
 ├── social.html                 # Moteur de contenu réseaux sociaux
-├── parametres.html             # Page de paramètres utilisateur
-├── micro.html                  # Enregistrement vocal + transcription (voice-first)
+├── parametres.html             # Paramètres utilisateur (profil, Calendar, préférences — gamification retirée)
+├── micro.html                  # Assistant vocal — notes CRM, visites, agenda, commandes Léon, requêtes DVF
 ├── dvf.html                    # Visualiseur données DVF + DPE
 ├── etude-marche.html           # Étude de marché IA — formulaire + interview express + photos + paramètres + génération 2 passes Claude Sonnet + DVF
 ├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
@@ -34,7 +34,7 @@ IZIMMO/
 │   ├── workflows.js            # Définitions workflows + gestion des étapes
 │   ├── relance-widget.js       # Widget flottant des relances (cloche)
 │   ├── todo-widget.js          # Widget to-do avec dictée vocale
-│   ├── gamification.js         # Système de points, streaks, toasts, milestones
+│   ├── gamification.js         # ⚠️ GELÉ — Système de points (retiré de parametres.html)
 │   ├── audio-recorder.js       # Enregistrement micro + détection silence
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA

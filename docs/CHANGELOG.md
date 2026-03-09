@@ -4,6 +4,54 @@
 
 ---
 
+## Session 2026-03-09 — Fixes visites vocales, DVF vocal, Calendar sync, nettoyage
+
+### Résumé
+Corrections critiques sur le flux de création de visite depuis micro.html (confirmBtn), ajout des requêtes DVF vocales ("Dis Léon, à combien se sont vendus les T3 à Tassin ?"), fix sync Google Calendar, normalisation accents pour `isLeonCommand`, et retrait de la section Gamification de parametres.html.
+
+### Modifications
+
+**`micro.html`** :
+- **FIX confirmBtn** : guard `if (!currentResult.contacts_matched)` bloquait quand aucun contact matché → changé en `|| []`
+- **FIX bloc visite** : affiché dès qu'il y a une date (`vd.date`), même si aucun contact matché
+- **FIX IDs visite cross-référencés** : contacts_matched utilisé pour remplir `seller_lead_id`/`buyer_lead_id` manquants dans visit_detected
+- **FIX dataset "null" string** : `dataset.buyerLeadId = null` stocke `"null"` (truthy) → validation UUID explicite avec `isValidUUID()` avant insert Supabase (fix erreur 400)
+- **FIX isLeonCommand** : normalisation NFD + suppression diacritiques pour matcher "Dis Léon" avec accents variables
+- **DVF vocal** : fonctions `geocodeAddressDvf`, `searchDvfSales`, `dvfRenderCard`, `dvfShowResults`, `executeDvfQueryIntent` — geocoding Nominatim + bucket Supabase DVF
+- **Calendar sync** : `await` bloquant au lieu de `.catch()` fire-and-forget + warning visible "⚠️ Agenda non synchronisé" si échec
+- `hideAllZones()` : inclut maintenant `dvfZone`
+
+**`api/assistant.js`** :
+- Intent `dvf_query` ajouté au prompt orchestrateur (adresse, ville, type, pièces, surface, rayon)
+- `handleCalendarAction` : `.single()` → `.maybeSingle()` pour robustesse
+- Logging détaillé sync Calendar (request/response)
+
+**`parametres.html`** :
+- Section "Mes Performances" (gamification) entièrement retirée (HTML + JS)
+- `loadGamificationStats` remplacé par no-op stub
+
+### Bugs corrigés
+- **Erreur 400 création visite** : IDs `"null"` string envoyés comme UUID à Supabase
+- **Bloc visite invisible** : guard trop strict excluait les cas sans contacts matchés
+- **"Dis Léon" non reconnu** : accents non normalisés dans `isLeonCommand`
+- **Calendar sync silencieuse** : erreurs avalées par `.catch()`, maintenant visibles
+
+### Fichiers créés/modifiés
+- `micro.html`
+- `api/assistant.js`
+- `parametres.html`
+
+### Points d'attention
+- **Google Calendar** : le refresh token peut expirer si l'app Google Cloud est en mode "Testing" (7 jours). Vérifier le mode "Production". L'utilisateur doit reconnecter le Calendar depuis Paramètres WAIMMO si `token_refresh_failed`.
+- **DVF vocal** : dépend du bucket Supabase `dvf-data` et du geocoding Nominatim (gratuit, pas d'API key)
+
+### Prochaines étapes prioritaires
+1. Tester DVF vocal en prod après fix isLeonCommand
+2. Reconnecter Google Calendar + vérifier sync visite
+3. Valider le flux complet : dictée → nouveau contact + visite + Calendar
+
+---
+
 ## Session 2026-03-06 (suite) — Assistant vocal : détection visites, agenda, commandes Léon, guide vocal, import CSV
 
 ### Résumé
