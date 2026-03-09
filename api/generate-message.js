@@ -21,8 +21,8 @@ export default async function handler(req, res) {
         : '';
 
     const toneRule = tone === 'tu'
-        ? 'Tutoiement obligatoire (tu/toi/ton/ta).'
-        : 'Vouvoiement OBLIGATOIRE (vous/votre/vos). Registre formel et respectueux. INTERDIT : "Salut", "Hey", "Coucou", "Hello" — commence toujours par "Bonjour" suivi du prénom.';
+        ? 'Tutoiement obligatoire (tu/toi/ton/ta). Utilise le prénom du contact.'
+        : 'Vouvoiement OBLIGATOIRE (vous/votre/vos). Registre formel et respectueux. INTERDIT : "Salut", "Hey", "Coucou", "Hello" — commence par "Bonjour M./Mme [Nom]" (PAS le prénom).';
 
     const channelInstructions = {
         sms: `Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. ${toneRule}`,
@@ -94,9 +94,22 @@ export default async function handler(req, res) {
     const isArgPrix = scenario === 'repositionnement_prix';
     const isRetourVisiteSeller = scenario === 'retour_visite' && leadType !== 'buyer';
     const isRetourVisiteBuyer = scenario === 'retour_visite' && leadType === 'buyer';
+    const isConfirmVisite = scenario === 'confirmation_visite';
 
     let systemPrompt;
-    if (isRetourVisiteBuyer) {
+    if (isConfirmVisite) {
+        systemPrompt = `Tu rédiges un message de confirmation de visite pour un agent immobilier. Écris comme un VRAI agent, pas comme une IA.
+
+Ton et style — CRITIQUE :
+- Message court et professionnel, comme un vrai SMS/WhatsApp de confirmation
+- Confirme le RDV : date, heure, adresse du bien
+- NE MENTIONNE JAMAIS de durée estimée (pas de "prévoyez 30/45 minutes")
+- ${toneRule}
+- ${channelInstructions[channel] || channelInstructions.sms}
+- INTERDIT : "n'hésitez pas", "je me permets de", "je reste à votre disposition"
+${agentSignature ? `- Signe : ${agentSignature}` : ''}
+- Retourne UNIQUEMENT le message, sans explication`;
+    } else if (isRetourVisiteBuyer) {
         systemPrompt = `Tu rédiges un message pour un agent immobilier qui demande à son acquéreur ce qu'il a pensé d'une visite. Tu écris comme un VRAI agent, pas comme une IA.
 
 Ton et style — CRITIQUE :
