@@ -34,12 +34,37 @@ export default async function handler(req, res) {
 
     console.log(`[Transcribe] Audio received: ${audioBuffer.length} bytes, type: ${rawContentType} → ${cleanMime}`);
 
+    // Prompt Whisper : vocabulaire métier immobilier + communes françaises courantes
+    // Ce prompt biaise la transcription vers l'orthographe correcte des noms propres
+    const whisperPrompt = [
+        // Métier immobilier
+        'estimation, mandat, compromis, acte authentique, DPE, diagnostics, honoraires, FAI, net vendeur',
+        // Communes Métropole de Lyon & alentours (noms composés problématiques)
+        'Saint-Cyr-au-Mont-d\'Or, Saint-Didier-au-Mont-d\'Or, Saint-Romain-au-Mont-d\'Or',
+        'Collonges-au-Mont-d\'Or, Couzon-au-Mont-d\'Or, Poleymieux-au-Mont-d\'Or, Curis-au-Mont-d\'Or',
+        'Saint-Germain-au-Mont-d\'Or, Limonest, Lissieu, Chasselay, Civrieux-d\'Azergues',
+        'Charbonnières-les-Bains, La Tour-de-Salvagny, Marcy-l\'Étoile, Francheville',
+        'Tassin-la-Demi-Lune, Écully, Dardilly, Champagne-au-Mont-d\'Or',
+        'Sainte-Foy-lès-Lyon, Oullins, Pierre-Bénite, La Mulatière',
+        'Caluire-et-Cuire, Rillieux-la-Pape, Sathonay-Camp, Sathonay-Village',
+        'Fontaines-sur-Saône, Fontaines-Saint-Martin, Rochetaillée-sur-Saône, Fleurieu-sur-Saône',
+        'Neuville-sur-Saône, Albigny-sur-Saône, Genay, Montanay',
+        'Villeurbanne, Vaulx-en-Velin, Bron, Vénissieux, Saint-Fons, Meyzieu',
+        'Décines-Charpieu, Chassieu, Genas, Saint-Priest, Mions, Corbas',
+        'Craponne, Grigny, Givors, Irigny, Vernaison, Charly, Millery',
+        'Brignais, Chaponost, Messimy, Thurins, Vaugneray, Pollionnay',
+        'Lyon, Villefranche-sur-Saône, L\'Arbresle, Belleville-en-Beaujolais',
+        // Autres départements limitrophes
+        'Bourgoin-Jallieu, Villefontaine, L\'Isle-d\'Abeau, Saint-Étienne, Vienne, Givors'
+    ].join(', ');
+
     // Build FormData for OpenAI Whisper API
     const formData = new FormData();
     const audioBlob = new Blob([audioBuffer], { type: cleanMime });
     formData.append('file', audioBlob, `audio.${ext}`);
     formData.append('model', 'whisper-1');
     formData.append('language', 'fr');
+    formData.append('prompt', whisperPrompt);
 
     try {
         const controller = new AbortController();
@@ -68,7 +93,21 @@ export default async function handler(req, res) {
         }
 
         const result = await response.json();
-        return res.status(200).json({ text: result.text || '' });
+        let text = (result.text || '').trim();
+
+        // Whisper hallucine du texte sur du silence — filtrer les phrases connues
+        const WHISPER_HALLUCINATIONS = [
+            'sous-titres', 'amara.org', 'merci d\'avoir regardé',
+            'thank you for watching', 'subtitles by', 'please subscribe',
+            'soustitres', 'sous titres'
+        ];
+        const textLower = text.toLowerCase();
+        if (WHISPER_HALLUCINATIONS.some(h => textLower.includes(h))) {
+            console.log('[Transcribe] Hallucination Whisper filtrée:', text);
+            text = '';
+        }
+
+        return res.status(200).json({ text });
     } catch (err) {
         if (err.name === 'AbortError') {
             return res.status(504).json({ error: 'Transcription timeout' });
