@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     const channelInstructions = {
         sms: `Message SMS court (max 160 caractères si possible, 300 max). Pas d'objet. Style direct et professionnel. ${toneRule}`,
-        whatsapp: `Message WhatsApp conversationnel mais professionnel. Peut inclure des emojis (modérément). 2-4 phrases max. ${toneRule}`,
+        whatsapp: `Message WhatsApp conversationnel mais professionnel. Pas d'emojis. 2-4 phrases max. ${toneRule}`,
         email: `Email professionnel avec objet. Format:\nObjet : [objet]\n\n[corps du message]\n\nCordialement,\n${agentSignature || '[nom de l\'agent]'}. ${toneRule}`
     };
 
@@ -188,6 +188,7 @@ Règles:
 Style obligatoire :
 - Phrases courtes et directes. Pas de formules creuses ("je me permets de", "n'hésitez pas à", "je reste à votre disposition")
 - Ton naturel, humain, comme un message qu'on enverrait vraiment. Pas de style corporate ou "assistant IA"
+- Pas d'emojis, jamais
 - Pas de mots vides : "exceptionnel", "constructif", "demeurons optimistes", "séduit". Sois concret et factuel
 - ${toneRule}
 - ${channelInstructions[channel] || channelInstructions.sms}
