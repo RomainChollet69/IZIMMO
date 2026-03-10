@@ -23,12 +23,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        // Redirection mobile vers micro.html — point d'entrée vocal sur mobile
-        if (window.matchMedia('(max-width: 768px)').matches) {
-            window.location.replace('micro.html');
-        }
-    </script>
+    <!-- Redirection mobile gérée après auth (dans initWelcome) pour ne pas casser le callback OAuth -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -646,6 +641,12 @@
     (async function initWelcome() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
+
+        // Redirection mobile vers micro.html (après auth pour ne pas casser le callback OAuth)
+        if (window.matchMedia('(max-width: 768px)').matches) {
+            window.location.replace('micro.html');
+            return;
+        }
 
         const meta = session.user.user_metadata || {};
         const fullName = meta.full_name || meta.name || session.user.email.split('@')[0];
