@@ -14,7 +14,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
     }
 
-    const { transcription, leads, today } = req.body || {};
+    const { transcription, leads, today, upcoming_visits } = req.body || {};
     if (!transcription) return res.status(400).json({ error: 'No transcription provided' });
 
     const systemPrompt = `Tu es Léon, l'assistant IA d'un agent immobilier. L'agent vient de te dicter une action qu'il a effectuée ou qu'il doit faire. Ton rôle est de :
@@ -116,6 +116,12 @@ IMPORTANT pour visit_detected :
 - CRUCIAL : si une adresse de bien est mentionnée (ex: "59 avenue Galine"), cherche dans la liste des leads le VENDEUR dont l'adresse correspond (matching flou : "Galine"/"Galline", "avenue"/"av."). Mets ce vendeur dans contacts_matched ET dans seller_lead_id
 - Si visit_detected non pertinent, omettre entièrement ce champ
 
+IMPORTANT — VISITES À VENIR (upcoming_visits) :
+- L'agent peut mentionner "ma visite de demain", "la visite à Lyon 9ème", etc.
+- Cherche dans la liste upcoming_visits ci-dessous pour trouver la visite correspondante (par date, lieu, nom)
+- Si une visite existante correspond, utilise ses seller_id/buyer_id dans contacts_matched et visit_detected
+- C'est CRUCIAL pour les demandes de SMS/message de confirmation : il faut retrouver le bon contact
+
 IMPORTANT pour agenda_event :
 - N'inclure ce champ QUE pour les rendez-vous NON-VISITE : signature de mandat, rendez-vous notaire, appel planifié, réunion, estimation, etc.
 - Ne pas utiliser si visit_detected est déjà présent (une visite est déjà gérée)
@@ -138,7 +144,7 @@ IMPORTANT pour agenda_event :
                 system: systemPrompt,
                 messages: [{
                     role: 'user',
-                    content: `Transcription : "${transcription}"\n\nLeads de l'agent :\n${JSON.stringify(leads)}\n\nDate du jour : ${today}`
+                    content: `Transcription : "${transcription}"\n\nLeads de l'agent :\n${JSON.stringify(leads)}\n\nVisites à venir (7j) :\n${JSON.stringify(upcoming_visits || [])}\n\nDate du jour : ${today}`
                 }]
             }),
             signal: controller.signal

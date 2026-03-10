@@ -1671,6 +1671,49 @@
             }
         }
 
+        async function loadUpcomingVisits(today) {
+            try {
+                const endDate = new Date();
+                endDate.setDate(endDate.getDate() + 7);
+                const endDateStr = endDate.toISOString().split('T')[0];
+
+                const { data, error } = await supabaseClient
+                    .from('visits')
+                    .select('id, visit_date, visit_time, status, notes, seller_id, buyer_id, buyer_name')
+                    .eq('user_id', userId)
+                    .gte('visit_date', today)
+                    .lte('visit_date', endDateStr)
+                    .order('visit_date', { ascending: true })
+                    .limit(20);
+
+                if (error) {
+                    console.error('[Micro] Erreur chargement visites:', error);
+                    return [];
+                }
+
+                // Enrichir avec les noms des leads
+                return (data || []).map(v => {
+                    const seller = allLeads?.find(l => l.id === v.seller_id);
+                    const buyer = allLeads?.find(l => l.id === v.buyer_id);
+                    return {
+                        visit_id: v.id,
+                        date: v.visit_date,
+                        time: v.visit_time,
+                        status: v.status,
+                        notes: v.notes,
+                        seller_id: v.seller_id,
+                        seller_name: seller ? `${seller.first_name || ''} ${seller.last_name || ''}`.trim() : null,
+                        seller_address: seller?.address || null,
+                        buyer_id: v.buyer_id,
+                        buyer_name: buyer ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim() : (v.buyer_name || null)
+                    };
+                });
+            } catch (err) {
+                console.error('[Micro] loadUpcomingVisits error:', err);
+                return [];
+            }
+        }
+
         function preFilterLeads(leads, transcription) {
             // Split sur espaces ET apostrophes pour gérer "d'Elsa", "l'acquéreur", etc.
             const words = transcription.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s''\u2019`]+/).filter(w => w.length > 2);
@@ -2422,12 +2465,15 @@
                 cachedHeaders = await getAuthHeaders();
                 const headers = cachedHeaders;
 
+                // Charger les visites à venir (7 prochains jours) pour le contexte
+                const upcomingVisits = await loadUpcomingVisits(today);
+
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
 
                 const response = await fetch('/api/parse-voice-note', {
                     method: 'POST', headers,
-                    body: JSON.stringify({ transcription: text, leads: relevant, today }),
+                    body: JSON.stringify({ transcription: text, leads: relevant, today, upcoming_visits: upcomingVisits }),
                     signal: controller.signal
                 });
                 clearTimeout(timeout);
