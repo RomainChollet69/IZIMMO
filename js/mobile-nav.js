@@ -14,7 +14,7 @@
         const path = window.location.pathname.split('/').pop() || 'home.html';
 
     const NAV_ITEMS = [
-        { href: 'index.html',      icon: 'fa-solid fa-house',         label: 'Vendeurs',    id: 'index.html' },
+        { href: 'vendeurs.html',      icon: 'fa-solid fa-house',         label: 'Vendeurs',    id: 'vendeurs.html' },
         { href: 'acquereurs.html',  icon: 'fa-solid fa-key',           label: 'Acquéreurs',  id: 'acquereurs.html' },
         { href: 'micro.html',      icon: 'fa-solid fa-microphone',     label: null,          id: 'micro.html', isFab: true },
         { href: 'dvf.html',        icon: 'fa-solid fa-chart-simple',   label: 'Marché',      id: 'dvf.html' },
@@ -120,8 +120,8 @@
     });
     document.body.appendChild(todoBtn);
 
-    // --- FABs pipeline : bouton "+" et screenshot (index.html & acquereurs.html uniquement) ---
-    const isPipelinePage = (path === 'index.html' || path === 'acquereurs.html');
+    // --- FABs pipeline : bouton "+" et screenshot (vendeurs.html & acquereurs.html uniquement) ---
+    const isPipelinePage = (path === 'vendeurs.html' || path === 'acquereurs.html');
     const isAcquereurs = (path === 'acquereurs.html');
 
     if (isPipelinePage) {

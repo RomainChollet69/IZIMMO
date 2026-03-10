@@ -2990,7 +2990,7 @@
 
             <!-- Zone centre : Navigation -->
             <nav class="nav-tabs">
-                <a href="index.html" class="nav-tab">
+                <a href="vendeurs.html" class="nav-tab">
                     <i class="fa-solid fa-house"></i> Vendeurs
                 </a>
                 <a href="acquereurs.html" class="nav-tab active">
@@ -4144,7 +4144,7 @@
             }
 
             const cardClass = 'match-card' + (isRejected ? ' rejected' : '');
-            return '<div class="' + cardClass + '" data-seller-id="' + s.id + '" onclick="window.open(\'index.html\',\'_blank\')">' + actionBtn + visitBtn + photoHtml + '<div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
+            return '<div class="' + cardClass + '" data-seller-id="' + s.id + '" onclick="window.open(\'vendeurs.html\',\'_blank\')">' + actionBtn + visitBtn + photoHtml + '<div class="match-score-circle ' + getScoreClass(m.percent) + '">' + m.percent + '%</div><div class="match-info"><div class="match-name">' + name + offBadge + '</div><div class="match-detail">' + detailParts.join(' · ') + '</div><div class="match-detail-bars">' + barsHTML + '</div></div></div>';
         }
 
         // ===== VISITES DANS MATCHING TAB =====

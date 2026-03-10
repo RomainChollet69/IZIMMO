@@ -501,5 +501,5 @@ const PipelineOnboarding = {
     }
 };
 
-// L'initialisation est maintenant gérée dans index.html après le rendu des sellers
+// L'initialisation est maintenant gérée dans vendeurs.html après le rendu des sellers
 // (voir la fonction computeMatchCounts().then(() => {...}) dans l'initialisation)

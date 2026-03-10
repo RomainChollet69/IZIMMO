@@ -625,7 +625,11 @@
         .leon-cmd-message-wrap { padding: 12px 16px 16px; border-top: 1px solid #f1f5f9; }
         .leon-cmd-message-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .leon-cmd-message-text { width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: Inter, sans-serif; line-height: 1.5; color: #374151; resize: vertical; }
-        .leon-cmd-copy-btn { margin-top: 8px; width: 100%; padding: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .leon-cmd-actions { display: flex; gap: 8px; margin-top: 8px; }
+        .leon-cmd-copy-btn { flex: 1; padding: 10px; background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .leon-cmd-send-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; gap: 6px; color: white; }
+        .leon-cmd-send-sms { background: #3b82f6; }
+        .leon-cmd-send-wa { background: #25d366; }
         .leon-cmd-thinking { padding: 14px 16px; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #6b7280; }
         .link-existing-btn { background: none; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 8px 14px; font-size: 12px; color: #64748b; cursor: pointer; width: 100%; margin-top: 8px; font-family: 'Inter', sans-serif; }
         .link-existing-btn:hover { background: #f8fafc; }
@@ -1156,7 +1160,7 @@
                 <img src="img/Logo_leon.svg" alt="Léon">
             </a>
             <nav class="nav-tabs">
-                <a href="index.html" class="nav-tab">
+                <a href="vendeurs.html" class="nav-tab">
                     <i class="fa-solid fa-house"></i> Vendeurs
                 </a>
                 <a href="acquereurs.html" class="nav-tab">
@@ -1325,9 +1329,17 @@
                     <div class="leon-cmd-message-wrap" id="leonCmdMessageWrap" style="display:none">
                         <div class="leon-cmd-message-label">Message prêt à envoyer</div>
                         <textarea class="leon-cmd-message-text" id="leonCmdMessageText" rows="5"></textarea>
-                        <button class="leon-cmd-copy-btn" id="leonCmdCopyBtn">
-                            <i class="fa-solid fa-copy"></i> Copier
-                        </button>
+                        <div class="leon-cmd-actions" id="leonCmdActions">
+                            <button class="leon-cmd-copy-btn" id="leonCmdCopyBtn">
+                                <i class="fa-solid fa-copy"></i> Copier
+                            </button>
+                            <button class="leon-cmd-send-btn leon-cmd-send-sms" id="leonCmdSendSMS" style="display:none">
+                                <i class="fa-solid fa-comment-sms"></i> SMS
+                            </button>
+                            <button class="leon-cmd-send-btn leon-cmd-send-wa" id="leonCmdSendWA" style="display:none">
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1887,6 +1899,8 @@
             if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+creneaux|quand\s+(suis-je|etes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/.test(t)) return true;
             // Requêtes DVF / prix marché
             if (/^(a\s+combien|quel\s+(est\s+le\s+)?prix|combien\s+(se\s+sont\s+vendus?|vaut|coute)|les\s+ventes?|des\s+comparables?)/.test(t)) return true;
+            // Confirmation de visite
+            if (/envoie?\s+(un\s+)?(message\s+de\s+)?confirmation\s+de\s+visite/.test(t)) return true;
             return false;
         }
 
@@ -1906,6 +1920,12 @@
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
                 setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copier'; }, 1800);
             });
+        });
+        document.getElementById('leonCmdSendSMS').addEventListener('click', () => {
+            openChannelFromLeon(document.getElementById('leonCmdMessageText').value, 'sms');
+        });
+        document.getElementById('leonCmdSendWA').addEventListener('click', () => {
+            openChannelFromLeon(document.getElementById('leonCmdMessageText').value, 'whatsapp');
         });
 
         async function handleLeonCommand(text) {
@@ -1939,6 +1959,8 @@
                     await executeListEventsIntent(orch, headers);
                 } else if (orch.intent === 'dvf_query') {
                     await executeDvfQueryIntent(orch);
+                } else if (orch.intent === 'send_confirmation_visite') {
+                    await executeConfirmVisiteIntent(orch, headers);
                 } else {
                     showLeonCmdResult({ response: orch.leon_response || "Je n'ai pas compris. Peux-tu reformuler ?" });
                 }
@@ -2031,7 +2053,10 @@
             showLeonCmdResult({ response: `${orch.leon_response || ''}\n\n${lines}`.trim() });
         }
 
-        function showLeonCmdResult({ response, slots, message }) {
+        // Stocke le téléphone du contact pour les boutons SMS/WhatsApp
+        let leonCmdContactPhone = null;
+
+        function showLeonCmdResult({ response, slots, message, contactPhone, channel }) {
             document.getElementById('leonCmdResponse').textContent = response || '';
 
             const slotsEl = document.getElementById('leonCmdSlots');
@@ -2047,15 +2072,155 @@
 
             const msgWrap = document.getElementById('leonCmdMessageWrap');
             const msgText = document.getElementById('leonCmdMessageText');
+            const smsBtn = document.getElementById('leonCmdSendSMS');
+            const waBtn = document.getElementById('leonCmdSendWA');
+
             if (message) {
                 msgText.value = message;
                 msgWrap.style.display = '';
+                leonCmdContactPhone = contactPhone || null;
+                // Afficher les boutons d'envoi si on a un téléphone
+                smsBtn.style.display = leonCmdContactPhone ? '' : 'none';
+                waBtn.style.display = leonCmdContactPhone ? '' : 'none';
+                // Ouvrir automatiquement l'app demandée
+                if (leonCmdContactPhone && channel) {
+                    setTimeout(() => openChannelFromLeon(message, channel), 300);
+                }
             } else {
                 msgWrap.style.display = 'none';
+                smsBtn.style.display = 'none';
+                waBtn.style.display = 'none';
             }
 
             leonCmdZone.classList.add('visible');
             scrollToResult(leonCmdZone);
+        }
+
+        function openChannelFromLeon(message, channel) {
+            const phone = (leonCmdContactPhone || '').replace(/\s/g, '');
+            if (!phone) return;
+            if (channel === 'sms') {
+                window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_blank');
+            } else if (channel === 'whatsapp') {
+                let waPhone = phone;
+                if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
+                window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
+            }
+        }
+
+        // ===== CONFIRMATION VISITE VOCALE =====
+
+        async function executeConfirmVisiteIntent(orch, headers) {
+            const p = orch.params || {};
+            const contactId = p.contact_id || null;
+            const contactName = p.contact_name || '';
+            const channel = p.channel || 'sms';
+
+            // 1. Trouver le contact
+            const leads = await loadUserLeads();
+            let contact = contactId ? leads.find(l => l.id === contactId) : null;
+            if (!contact && contactName) {
+                const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const searchName = norm(contactName);
+                contact = leads.find(l => {
+                    const full = norm(`${l.first_name || ''} ${l.last_name || ''}`);
+                    return full.includes(searchName) || searchName.includes(norm(l.last_name));
+                });
+            }
+            if (!contact) {
+                showLeonCmdResult({ response: `Je n'ai pas trouvé de contact "${contactName}" dans tes leads.` });
+                return;
+            }
+
+            // 2. Trouver la prochaine visite de ce contact
+            const today = new Date().toISOString().split('T')[0];
+            let visitQuery;
+            if (contact.type === 'buyer') {
+                visitQuery = supabaseClient.from('visits')
+                    .select('*, sellers(*)')
+                    .eq('buyer_id', contact.id)
+                    .gte('visit_date', today)
+                    .order('visit_date', { ascending: true })
+                    .limit(1);
+            } else {
+                visitQuery = supabaseClient.from('visits')
+                    .select('*, buyers(*)')
+                    .eq('seller_id', contact.id)
+                    .gte('visit_date', today)
+                    .order('visit_date', { ascending: true })
+                    .limit(1);
+            }
+            const { data: visits, error: visitErr } = await visitQuery;
+            if (visitErr) console.error('[Micro:ConfirmVisite] Erreur query visits:', visitErr);
+
+            if (!visits || visits.length === 0) {
+                showLeonCmdResult({ response: `Aucune visite prochaine trouvée pour ${contactName}.` });
+                return;
+            }
+
+            const visit = visits[0];
+            const seller = contact.type === 'buyer' ? visit.sellers : contact;
+            const buyer = contact.type === 'buyer' ? contact : visit.buyers;
+
+            // 3. Construire les données pour generate-message
+            const visitDate = visit.visit_date;
+            const visitTime = visit.visit_time ? visit.visit_time.substring(0, 5) : null;
+            const address = seller?.address || '';
+            const city = extractCityFromAddress(address);
+
+            const dateLabel = visitDate === today
+                ? 'ce jour'
+                : new Date(visitDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            const customPrompt = `La visite est prévue ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
+
+            const leadData = {
+                first_name: buyer?.first_name || '',
+                last_name: buyer?.last_name || '',
+                phone: buyer?.phone || '',
+                address: address
+            };
+
+            // 4. Récupérer le profil agent (nom depuis session, agency depuis profiles)
+            const { data: { session: sess } } = await supabaseClient.auth.getSession();
+            const meta = sess?.user?.user_metadata || {};
+            const agentName = meta.full_name || meta.name || '';
+            const { data: profile } = await supabaseClient.from('profiles')
+                .select('agency_name')
+                .eq('id', userId)
+                .maybeSingle();
+            const agencyName = profile?.agency_name || '';
+            const tone = 'vous'; // Confirmation de visite = vouvoiement par défaut
+
+            // 5. Appeler generate-message
+            try {
+                const resp = await fetch('/api/generate-message', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({
+                        channel,
+                        scenario: 'confirmation_visite',
+                        leadData,
+                        notes: [],
+                        customPrompt,
+                        leadType: 'buyer',
+                        agentName,
+                        agencyName,
+                        tone
+                    })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur génération');
+
+                const phone = buyer?.phone || contact.phone || '';
+                showLeonCmdResult({
+                    response: orch.leon_response || `Message de confirmation de visite pour ${contactName} :`,
+                    message: data.message,
+                    contactPhone: phone,
+                    channel
+                });
+            } catch (err) {
+                console.error('[Micro:ConfirmVisite] Erreur génération:', err);
+                showLeonCmdResult({ response: `Erreur lors de la génération du message : ${err.message}` });
+            }
         }
 
         // ===== CALENDRIER GOOGLE =====
@@ -2918,7 +3083,7 @@
                 // Succès — remplacer la carte par un chip "✓ Créé" sans fermer la confirmation
                 // (l'utilisateur peut encore cliquer "Confirmer" pour sauver les notes / visites / agenda)
                 const typeLabel = selectedType === 'buyer' ? 'acquéreur' : 'vendeur';
-                const pipelinePage = selectedType === 'buyer' ? 'acquereurs.html' : 'index.html';
+                const pipelinePage = selectedType === 'buyer' ? 'acquereurs.html' : 'vendeurs.html';
                 const leadUrl = `${pipelinePage}?openLead=${newLead.id}`;
                 const parentCard = card.closest('.no-match-card');
                 if (parentCard) {

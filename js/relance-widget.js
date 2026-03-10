@@ -546,7 +546,7 @@
                 dateClass = 'upcoming';
             }
 
-            const page = item.leadType === 'seller' ? 'index.html' : 'acquereurs.html';
+            const page = item.leadType === 'seller' ? 'vendeurs.html' : 'acquereurs.html';
 
             html += `<div class="relance-item" data-id="${item.id}" data-type="${item.leadType}" onclick="window.relanceWidget.goToLead('${item.id}', '${item.leadType}')">
                 ${typeBadge}
@@ -661,10 +661,10 @@
         snooze: snoozeRelance,
         dismiss: dismissRelance,
         goToLead: function (id, leadType) {
-            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
-            const targetPage = leadType === 'seller' ? 'index.html' : 'acquereurs.html';
+            const currentPage = window.location.pathname.split('/').pop() || 'vendeurs.html';
+            const targetPage = leadType === 'seller' ? 'vendeurs.html' : 'acquereurs.html';
 
-            if (currentPage === targetPage || currentPage === '' && targetPage === 'index.html') {
+            if (currentPage === targetPage || currentPage === '' && targetPage === 'vendeurs.html') {
                 // Same page: close panel and open the lead modal
                 closePanel();
                 if (leadType === 'seller' && typeof editSeller === 'function') {

@@ -503,7 +503,7 @@
 
             <!-- Zone centre : Navigation -->
             <nav class="nav-tabs">
-                <a href="index.html" class="nav-tab">
+                <a href="vendeurs.html" class="nav-tab">
                     <i class="fa-solid fa-house"></i> Vendeurs
                 </a>
                 <a href="acquereurs.html" class="nav-tab">
@@ -562,7 +562,7 @@
         <div class="tiles-grid">
 
             <!-- 1. Pipeline vendeurs -->
-            <a href="index.html" class="tile tile-vendeurs">
+            <a href="vendeurs.html" class="tile tile-vendeurs">
                 <div class="tile-icon-area">
                     <img src="img/Leon.png" alt="" class="tile-illustration">
                 </div>
@@ -671,7 +671,7 @@
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && this.value.trim()) {
                 const query = encodeURIComponent(this.value.trim());
-                window.location.href = 'index.html?search=' + query;
+                window.location.href = 'vendeurs.html?search=' + query;
             }
         });
     })();
