@@ -2270,6 +2270,16 @@
                 if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur génération');
 
                 const phone = buyer?.phone || contact.phone || '';
+                if (!phone) {
+                    const who = contact.type === 'buyer' ? "l'acquéreur" : 'le vendeur';
+                    showLeonCmdResult({
+                        response: `Impossible d'envoyer le ${channel === 'sms' ? 'SMS' : 'message'} : ${who} ${contactName} n'a pas de numéro de téléphone sur sa fiche.`,
+                        message: data.message,
+                        contactPhone: '',
+                        channel
+                    });
+                    return;
+                }
                 showLeonCmdResult({
                     response: orch.leon_response || `Message de confirmation de visite pour ${contactName} :`,
                     message: data.message,
