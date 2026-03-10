@@ -113,6 +113,7 @@ IMPORTANT pour visit_detected :
 - N'inclure ce champ QUE si la transcription mentionne explicitement une visite de bien immobilier (mot "visite", "visiter", "fait visiter", "rendez-vous de visite")
 - "planifiee" : visite à venir, "effectuee" : visite déjà passée
 - seller_lead_id et buyer_lead_id font référence aux uuid dans contacts_matched
+- CRUCIAL : si une adresse de bien est mentionnée (ex: "59 avenue Galine"), cherche dans la liste des leads le VENDEUR dont l'adresse correspond (matching flou : "Galine"/"Galline", "avenue"/"av."). Mets ce vendeur dans contacts_matched ET dans seller_lead_id
 - Si visit_detected non pertinent, omettre entièrement ce champ
 
 IMPORTANT pour agenda_event :

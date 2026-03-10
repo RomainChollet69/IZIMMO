@@ -1676,7 +1676,17 @@
             const words = transcription.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').split(/[\s''\u2019`]+/).filter(w => w.length > 2);
             const matched = leads.filter(lead => {
                 const fullName = `${lead.first_name || ''} ${lead.last_name || ''}`.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return words.some(word => fullName.includes(word));
+                const nameMatch = words.some(word => fullName.includes(word));
+                if (nameMatch) return true;
+                // Matcher aussi par adresse du bien (vendeurs) — ex: "59 avenue Galine" → Villalba
+                if (lead.address) {
+                    const addr = lead.address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    const addrWords = addr.split(/\s+/).filter(w => w.length > 2);
+                    const commonWords = addrWords.filter(aw => words.some(tw => tw.includes(aw) || aw.includes(tw)));
+                    // Au moins 2 mots en commun (ex: "avenue" + "galine") pour éviter les faux positifs
+                    if (commonWords.length >= 2) return true;
+                }
+                return false;
             });
             return matched.length === 0 ? leads.slice(0, 50) : matched;
         }
