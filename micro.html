@@ -555,8 +555,8 @@
             border: 1px solid rgba(102,126,234,0.25);
             border-radius: 12px; padding: 16px 18px; text-align: center;
         }
-        .no-match-text { font-size: 13px; color: #5B21B6; margin-bottom: 10px; }
-        .no-match-names { font-weight: 600; }
+        .no-match-text { font-size: 15px; color: #5B21B6; margin-bottom: 10px; }
+        .no-match-names { font-weight: 800; font-size: 18px; font-family: 'Barlow Semi Condensed', sans-serif; color: #243B53; }
 
         /* Carte de création de lead depuis micro */
         .create-lead-card {
@@ -577,7 +577,7 @@
         .create-lead-tag.type-seller { background: #FEF3C7; color: #92400E; }
         .create-lead-tag.budget { background: #D1FAE5; color: #065F46; }
         .create-lead-tag.property { background: #EDE9FE; color: #5B21B6; }
-        .create-lead-tag.sector { background: #FEE2E2; color: #991B1B; }
+        .create-lead-tag.sector { background: #DBEAFE; color: #1E40AF; }
         .create-lead-tag.criteria { background: #F3F4F6; color: #374151; }
         .create-lead-note {
             font-size: 13px; color: #475569; line-height: 1.5;
@@ -593,7 +593,7 @@
             font-family: 'Inter', sans-serif; transition: all 0.15s;
         }
         .create-lead-type-btn:hover { border-color: #94A3B8; }
-        .create-lead-type-btn.selected-buyer { border-color: #3B82F6; background: #EFF6FF; color: #1E40AF; }
+        .create-lead-type-btn.selected-buyer { border-color: #10B981; background: #ECFDF5; color: #065F46; }
         .create-lead-type-btn.selected-seller { border-color: #F59E0B; background: #FFFBEB; color: #92400E; }
         .create-lead-confirm {
             width: 100%; padding: 12px; border: none; border-radius: 10px;
@@ -1000,11 +1000,12 @@
         padding-bottom: 0 !important;
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         min-height: 100vh;
         overflow-x: hidden;
+        overflow-y: auto;
     }
-    .in-iframe .micro-page { padding: 0 24px; }
+    .in-iframe .micro-page { padding: 24px 24px 32px; }
     /* Réordonner : texte au-dessus, micro en dessous */
     .in-iframe .mic-zone {
         padding-top: 0;
