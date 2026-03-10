@@ -3168,13 +3168,17 @@
                 const leadUrl = `${pipelinePage}?openLead=${newLead.id}`;
                 const parentCard = card.closest('.no-match-card');
                 if (parentCard) {
+                    parentCard.style.background = 'linear-gradient(135deg, rgba(102,126,234,0.06) 0%, rgba(118,75,162,0.06) 100%)';
+                    parentCard.style.border = '1px solid rgba(102,126,234,0.15)';
+                    parentCard.style.padding = '24px 20px';
                     parentCard.innerHTML = `
-                        <div style="display:flex;align-items:center;gap:10px;padding:10px 4px">
-                            <span style="font-size:20px">✅</span>
-                            <div>
-                                <div style="font-weight:600;color:#166534;font-size:14px">${firstName} ${lastName} créé en tant qu'${typeLabel}</div>
-                                <a href="${leadUrl}" style="font-size:12px;color:#667eea;text-decoration:none">Voir la fiche →</a>
+                        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center">
+                            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#34D399,#10B981);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(16,185,129,0.3);animation:success-pop 0.4s ease-out">
+                                <i class="fa-solid fa-check" style="color:white;font-size:24px"></i>
                             </div>
+                            <div style="font-weight:800;color:#1a1a2e;font-size:18px;font-family:'Barlow Semi Condensed',sans-serif;margin-top:4px">${typeLabel.charAt(0).toUpperCase() + typeLabel.slice(1)} créé avec succès !</div>
+                            <div style="font-size:14px;color:#64748b"><strong>${firstName} ${lastName}</strong> a bien été ajouté comme ${typeLabel}.</div>
+                            <a href="${leadUrl}" style="display:inline-flex;align-items:center;gap:8px;margin-top:8px;padding:10px 28px;border-radius:25px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;text-decoration:none;font-weight:600;font-size:14px;box-shadow:0 4px 16px rgba(102,126,234,0.35);transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">Voir la fiche <i class="fa-solid fa-arrow-right"></i></a>
                         </div>`;
                 }
                 // Retourner le lead créé pour que le flux confirm puisse patcher les IDs visite
