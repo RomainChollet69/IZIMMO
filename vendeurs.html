@@ -9006,6 +9006,78 @@
         }
 
         // ===== DRAG & DROP =====
+
+        // Fonction appelée par touch-drag-drop.js (polyfill tactile iPad/mobile)
+        window.onCardDropped = async function(container, clientY) {
+            // Sync avec touch-drag-drop.js qui set window.draggedCard
+            if (!draggedCard && window.draggedCard) draggedCard = window.draggedCard;
+            clearDropIndicators();
+            if (!draggedCard) return;
+
+            const sellerId = draggedCard.dataset.id;
+            const newStatus = container.closest('.column').dataset.status;
+            const seller = sellers.find(s => s.id === sellerId);
+            if (!seller) return;
+
+            const oldStatus = seller.status;
+            const position = getDropPosition(container, clientY);
+
+            if (oldStatus === newStatus) {
+                if (position.before) {
+                    container.insertBefore(draggedCard, position.before);
+                } else {
+                    container.appendChild(draggedCard);
+                }
+                await updatePositions(container, newStatus);
+            } else {
+                const updated = await updateSeller(sellerId, { status: newStatus });
+                if (updated) {
+                    const idx = sellers.findIndex(s => s.id === sellerId);
+                    if (idx !== -1) sellers[idx] = updated;
+                    awardPoints('move_stage', { lead_id: sellerId, lead_type: 'seller', from: oldStatus, to: newStatus });
+                } else {
+                    seller.status = newStatus;
+                }
+                await loadVisitCounts();
+                renderSellers();
+                const newCard = container.querySelector(`.lead-card[data-id="${sellerId}"]`);
+                if (newCard && position.before && container.contains(position.before)) {
+                    container.insertBefore(newCard, position.before);
+                }
+                await updatePositions(container, newStatus);
+                const oldContainer = document.getElementById(oldStatus + '-container');
+                if (oldContainer) await updatePositions(oldContainer, oldStatus);
+
+                const fresh = sellers.find(s => s.id === sellerId);
+                if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
+                    editSeller(sellerId, 'mandate');
+                }
+                if (newStatus === 'mandate') {
+                    showMatchNotification(sellerId);
+                }
+                if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
+                    showCompetitorPopup(sellerId);
+                }
+
+                try {
+                    const wfUserId = await getCurrentUserId();
+                    if (wfUserId) {
+                        const triggeredWorkflow = await onLeadStatusChange(supabaseClient, wfUserId, sellerId, 'seller', oldStatus, newStatus);
+                        if (newStatus === 'mandate' && triggeredWorkflow) {
+                            showWorkflowCelebration('mandate_signed');
+                            awardPoints('lead_to_mandate', { lead_id: sellerId });
+                        }
+                        if (newStatus === 'sold') {
+                            showWorkflowCelebration('sold');
+                            awardPoints('lead_to_sold', { lead_id: sellerId });
+                        }
+                    }
+                } catch (err) {
+                    console.error('Workflow trigger error:', err);
+                }
+            }
+        };
+
         function getDropPosition(container, mouseY) {
             const cards = [...container.querySelectorAll('.lead-card:not(.dragging)')];
             for (let i = 0; i < cards.length; i++) {
@@ -9859,84 +9931,9 @@
             });
 
             document.querySelectorAll('.cards-container').forEach(container => {
-
                 container.addEventListener('drop', async e => {
                     e.preventDefault();
-                    clearDropIndicators();
-                    if (!draggedCard) return;
-
-                    const sellerId = draggedCard.dataset.id;
-                    const newStatus = container.closest('.column').dataset.status;
-                    const seller = sellers.find(s => s.id === sellerId);
-                    if (!seller) return;
-
-                    const oldStatus = seller.status;
-                    const position = getDropPosition(container, e.clientY);
-
-                    if (oldStatus === newStatus) {
-                        // Réordonnement dans la même colonne
-                        if (position.before) {
-                            container.insertBefore(draggedCard, position.before);
-                        } else {
-                            container.appendChild(draggedCard);
-                        }
-                        await updatePositions(container, newStatus);
-                    } else {
-                        // Déplacement entre colonnes
-                        const updated = await updateSeller(sellerId, { status: newStatus });
-                        if (updated) {
-                            const idx = sellers.findIndex(s => s.id === sellerId);
-                            if (idx !== -1) sellers[idx] = updated;
-                            awardPoints('move_stage', { lead_id: sellerId, lead_type: 'seller', from: oldStatus, to: newStatus });
-                        } else {
-                            seller.status = newStatus;
-                        }
-                        await loadVisitCounts();
-                        renderSellers();
-                        // Insérer à la bonne position dans la nouvelle colonne
-                        const newCard = container.querySelector(`.lead-card[data-id="${sellerId}"]`);
-                        if (newCard && position.before && container.contains(position.before)) {
-                            container.insertBefore(newCard, position.before);
-                        }
-                        await updatePositions(container, newStatus);
-                        // Renuméroter l'ancienne colonne aussi
-                        const oldContainer = document.getElementById(oldStatus + '-container');
-                        if (oldContainer) await updatePositions(oldContainer, oldStatus);
-
-                        // Auto-ouverture modale mandat UNIQUEMENT si première fois
-                        const fresh = sellers.find(s => s.id === sellerId);
-                        if (newStatus === 'mandate' && fresh && !fresh.mandate_start_date) {
-                            editSeller(sellerId, 'mandate');
-                        }
-                        // Notification matching au passage en mandat
-                        if (newStatus === 'mandate') {
-                            showMatchNotification(sellerId);
-                        }
-                        // Auto-ouverture popup concurrent UNIQUEMENT si pas encore de lien
-                        if (newStatus === 'competitor' && fresh && !fresh.competitor_url) {
-                            showCompetitorPopup(sellerId);
-                        }
-
-                        // === WORKFLOWS LÉON ===
-                        try {
-                            const wfUserId = await getCurrentUserId();
-                            if (wfUserId) {
-                                const triggeredWorkflow = await onLeadStatusChange(supabaseClient, wfUserId, sellerId, 'seller', oldStatus, newStatus);
-                                // Célébration au passage en mandat
-                                if (newStatus === 'mandate' && triggeredWorkflow) {
-                                    showWorkflowCelebration('mandate_signed');
-                                    awardPoints('lead_to_mandate', { lead_id: sellerId });
-                                }
-                                // Célébration au passage en vendu
-                                if (newStatus === 'sold') {
-                                    showWorkflowCelebration('sold');
-                                    awardPoints('lead_to_sold', { lead_id: sellerId });
-                                }
-                            }
-                        } catch (err) {
-                            console.error('Workflow trigger error:', err);
-                        }
-                    }
+                    await window.onCardDropped(container, e.clientY);
                 });
             });
         }
@@ -11030,6 +11027,7 @@
         });
     </script>
 
+    <script src="js/touch-drag-drop.js"></script>
     <script src="js/mobile-nav.js"></script>
 
     <script>

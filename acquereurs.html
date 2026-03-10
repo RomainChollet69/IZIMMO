@@ -6728,6 +6728,56 @@
         }
 
         // ===== DRAG & DROP =====
+
+        // Fonction appelée par touch-drag-drop.js (polyfill tactile iPad/mobile)
+        window.onCardDropped = async function(container, clientY) {
+            // Sync avec touch-drag-drop.js qui set window.draggedCard
+            if (!draggedCard && window.draggedCard) draggedCard = window.draggedCard;
+            clearDropIndicators();
+            if (!draggedCard) return;
+
+            const buyerId = draggedCard.dataset.id;
+            const newStatus = container.closest('.column').dataset.status;
+            const buyer = buyers.find(b => b.id === buyerId);
+            if (!buyer) return;
+
+            const oldStatus = buyer.status;
+            const position = getDropPosition(container, clientY);
+
+            if (oldStatus === newStatus) {
+                if (position.before) {
+                    container.insertBefore(draggedCard, position.before);
+                } else {
+                    container.appendChild(draggedCard);
+                }
+                await updatePositions(container, newStatus);
+            } else {
+                buyer.status = newStatus;
+                await updateBuyer(buyerId, { status: newStatus });
+                awardPoints('move_stage', { lead_id: buyerId, lead_type: 'buyer', from: oldStatus, to: newStatus });
+                renderBuyers();
+                const newCard = container.querySelector(`.lead-card[data-id="${buyerId}"]`);
+                if (newCard && position.before && container.contains(position.before)) {
+                    container.insertBefore(newCard, position.before);
+                }
+                await updatePositions(container, newStatus);
+                const oldContainer = document.getElementById(oldStatus + '-container');
+                if (oldContainer) await updatePositions(oldContainer, oldStatus);
+
+                try {
+                    const wfUserId = await getCurrentUserId();
+                    if (wfUserId) {
+                        await onLeadStatusChange(supabaseClient, wfUserId, buyerId, 'buyer', oldStatus, newStatus);
+                        if (newStatus === 'achete_avec_moi') {
+                            showWorkflowCelebration('bought_with_me');
+                        }
+                    }
+                } catch (err) {
+                    console.error('Workflow trigger error:', err);
+                }
+            }
+        };
+
         function getDropPosition(container, mouseY) {
             const cards = [...container.querySelectorAll('.lead-card:not(.dragging)')];
             for (let i = 0; i < cards.length; i++) {
@@ -7254,54 +7304,7 @@
 
                 container.addEventListener('drop', async e => {
                     e.preventDefault();
-                    clearDropIndicators();
-                    if (!draggedCard) return;
-
-                    const buyerId = draggedCard.dataset.id;
-                    const newStatus = container.closest('.column').dataset.status;
-                    const buyer = buyers.find(b => b.id === buyerId);
-                    if (!buyer) return;
-
-                    const oldStatus = buyer.status;
-                    const position = getDropPosition(container, e.clientY);
-
-                    if (oldStatus === newStatus) {
-                        // Réordonnement dans la même colonne
-                        if (position.before) {
-                            container.insertBefore(draggedCard, position.before);
-                        } else {
-                            container.appendChild(draggedCard);
-                        }
-                        await updatePositions(container, newStatus);
-                    } else {
-                        // Déplacement entre colonnes
-                        buyer.status = newStatus;
-                        await updateBuyer(buyerId, { status: newStatus });
-                        awardPoints('move_stage', { lead_id: buyerId, lead_type: 'buyer', from: oldStatus, to: newStatus });
-                        renderBuyers();
-                        // Insérer à la bonne position
-                        const newCard = container.querySelector(`.lead-card[data-id="${buyerId}"]`);
-                        if (newCard && position.before && container.contains(position.before)) {
-                            container.insertBefore(newCard, position.before);
-                        }
-                        await updatePositions(container, newStatus);
-                        const oldContainer = document.getElementById(oldStatus + '-container');
-                        if (oldContainer) await updatePositions(oldContainer, oldStatus);
-
-                        // === WORKFLOWS LÉON ===
-                        try {
-                            const wfUserId = await getCurrentUserId();
-                            if (wfUserId) {
-                                await onLeadStatusChange(supabaseClient, wfUserId, buyerId, 'buyer', oldStatus, newStatus);
-                                // Célébration au passage en "Acheté avec moi"
-                                if (newStatus === 'achete_avec_moi') {
-                                    showWorkflowCelebration('bought_with_me');
-                                }
-                            }
-                        } catch (err) {
-                            console.error('Workflow trigger error:', err);
-                        }
-                    }
+                    await window.onCardDropped(container, e.clientY);
                 });
             });
         }
@@ -8393,6 +8396,7 @@
 
     </script>
 
+    <script src="js/touch-drag-drop.js"></script>
     <script src="js/mobile-nav.js"></script>
 </body>
 </html>

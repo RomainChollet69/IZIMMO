@@ -4,10 +4,124 @@
 
 ---
 
-## Session 2026-03-09 — Fixes visites vocales, DVF vocal, Calendar sync, nettoyage
+## Session 2026-03-10 (3) — Touch drag & drop iPad
 
 ### Résumé
-Corrections critiques sur le flux de création de visite depuis micro.html (confirmBtn), ajout des requêtes DVF vocales ("Dis Léon, à combien se sont vendus les T3 à Tassin ?"), fix sync Google Calendar, normalisation accents pour `isLeonCommand`, et retrait de la section Gamification de parametres.html.
+Le drag & drop des pipelines (vendeurs + acquéreurs) ne fonctionnait pas sur iPad car l'API HTML5 Drag and Drop n'est pas supportée sur les appareils tactiles. Ajout d'un polyfill tactile avec `touchstart`/`touchmove`/`touchend`.
+
+### Modifications
+
+**`js/touch-drag-drop.js`** (nouveau) :
+- Module partagé qui simule le drag & drop via événements tactiles
+- Long press (200ms) pour distinguer du scroll
+- Ghost visuel qui suit le doigt (clone avec rotation + ombre)
+- Réutilise les fonctions existantes (`getDropPosition`, `showDropIndicator`, `clearDropIndicators`)
+- Limité aux tablettes (>= 768px) — pas activé sur smartphone
+- Feedback haptique si supporté
+
+**`vendeurs.html`** :
+- Extraction de la logique drop dans `window.onCardDropped()` (appelée par le touch handler ET le drop natif)
+- Inclusion de `js/touch-drag-drop.js`
+
+**`acquereurs.html`** :
+- Même refactoring : extraction dans `window.onCardDropped()` + inclusion du script
+
+### Fichiers créés/modifiés
+- js/touch-drag-drop.js (nouveau)
+- vendeurs.html
+- acquereurs.html
+
+### Points d'attention
+- Le drag & drop natif (souris/desktop) n'est pas impacté
+- Sur smartphone le module ne s'initialise pas (pas de listeners attachés)
+- La variable `draggedCard` est `let` (scope script) dans les pages — `onCardDropped` synchronise depuis `window.draggedCard` défini par le module tactile
+
+---
+
+## Session 2026-03-10 (2) — Fix redirection home + auth mobile
+
+### Résumé
+Correction de la boucle de redirection `index.html` → `home.html` qui empêchait l'accès au pipeline vendeurs, et fix de l'authentification mobile (callback OAuth redirigé vers micro.html au lieu de home.html sur mobile).
+
+### Modifications
+
+**`index.html` → `vendeurs.html`** :
+- Renommage du fichier pour éviter le conflit avec la règle Vercel `/` → `/home`
+- Le pipeline vendeurs est maintenant accessible via `vendeurs.html`
+
+**`vercel.json`** :
+- Ajout rewrite `/` → `/home.html` pour que la racine pointe sur la page d'accueil
+
+**`home.html`** :
+- Tous les liens `index.html` → `vendeurs.html`
+
+**`login.html`** :
+- Détection mobile : après auth, redirection vers `micro.html` au lieu de `home.html`
+
+**`js/mobile-nav.js`** :
+- Tous les liens `index.html` → `vendeurs.html`
+
+**Toutes les pages** (acquereurs, social, visites, tutoriels, parametres, dvf, etude-marche, micro) :
+- MAJ liens navigation `index.html` → `vendeurs.html`
+
+### Fichiers créés/modifiés
+- `vendeurs.html` (ex `index.html`)
+- `vercel.json`
+- `home.html`
+- `login.html`
+- `js/mobile-nav.js`
+- `js/onboarding.js`
+- `js/relance-widget.js`
+- `acquereurs.html`, `social.html`, `visites.html`, `tutoriels.html`, `parametres.html`, `dvf.html`, `etude-marche.html`, `micro.html`
+
+### Points d'attention / bugs connus
+- Vérifier que les bookmarks utilisateur vers `index.html` fonctionnent (la rewrite Vercel devrait couvrir)
+
+### Prochaines étapes prioritaires
+- Tester le flux complet login → home → pipeline sur mobile réel
+- Vérifier que le callback OAuth Google fonctionne sur toutes les pages
+
+---
+
+## Session 2026-03-10 — FABs pipeline mobile (bouton "+", import screenshot)
+
+### Résumé
+Ajout de boutons flottants (FAB) sur les pipelines en version mobile : bouton "+" pour créer une nouvelle lead (vendeurs + acquéreurs), et bouton screenshot/import (acquéreurs uniquement). Le bouton todo existant est déplacé à gauche pour laisser la place.
+
+### Modifications
+
+**`css/mobile.css`** :
+- `.m-todo-fab` : repositionné de `right: 12px` à `left: 12px`
+- Ajout `.m-pipeline-fab` : bouton "+" (48×48px, bottom-right, animation `m-fab-pulse` scale 1→1.1→1 sur 2.8s)
+- Ajout `.m-screenshot-fab` : bouton screenshot (44×44px, à gauche du "+")
+- Ajout `@keyframes m-fab-pulse` pour l'animation douce
+- Masquage des deux nouveaux FABs sur desktop (min-width: 769px)
+
+**`js/mobile-nav.js`** :
+- Détection page pipeline (`vendeurs.html` / `acquereurs.html`)
+- Injection du bouton "+" qui déclenche `addLeadBtn` (vendeurs) ou `addBuyerBtn` (acquéreurs)
+- Injection du bouton screenshot sur acquéreurs qui déclenche `importScreenshotBtn`
+- SVG inline pour les deux boutons (gradient Léon pour "+", appareil photo pour screenshot)
+- MAJ nav items : `index.html` → `vendeurs.html`, refonte `MORE_ITEMS`
+
+### Fichiers créés/modifiés
+- `css/mobile.css`
+- `js/mobile-nav.js`
+
+### Points d'attention / bugs connus
+- Les images `img/boutonplus.svg` et `img/screenshot.svg` ne sont plus utilisées (SVG inline dans le JS)
+- Vérifier le rendu sur iPhone SE (petits écrans) — les deux FABs pourraient se chevaucher avec la nav
+
+### Prochaines étapes prioritaires
+- Tester sur mobile réel les interactions FAB → modale d'ajout
+- Vérifier que l'animation pulse n'est pas trop agressive sur la batterie
+
+---
+
+## Session 2026-03-09 — Fixes visites vocales, DVF vocal, Calendar sync, confirmation visite vocale
+
+### Résumé
+Corrections critiques sur le flux de création de visite depuis micro.html (confirmBtn), ajout des requêtes DVF vocales, fix sync Google Calendar, normalisation accents pour `isLeonCommand`, retrait Gamification, **fix vouvoiement confirmation visite** (M./Mme [Nom] + pas de durée), **"ce jour" si visite aujourd'hui**, et **nouvelle commande vocale "Dis Léon envoie une confirmation de visite à Mme X par SMS/WhatsApp"** qui génère le message et ouvre l'app.
 
 ### Modifications
 
@@ -19,10 +133,20 @@ Corrections critiques sur le flux de création de visite depuis micro.html (conf
 - **FIX isLeonCommand** : normalisation NFD + suppression diacritiques pour matcher "Dis Léon" avec accents variables
 - **DVF vocal** : fonctions `geocodeAddressDvf`, `searchDvfSales`, `dvfRenderCard`, `dvfShowResults`, `executeDvfQueryIntent` — geocoding Nominatim + bucket Supabase DVF
 - **Calendar sync** : `await` bloquant au lieu de `.catch()` fire-and-forget + warning visible "⚠️ Agenda non synchronisé" si échec
+- **FIX "Agenda non synchronisé" false positive** : `visitCalendarSynced` variable pour tracker le succès de sync visite, séparé de `agendaCreated`
+- **Confirmation visite vocale** : `executeConfirmVisiteIntent()` — cherche le contact + prochaine visite en BDD, génère le message via `/api/generate-message`, ouvre SMS/WhatsApp automatiquement
+- **Boutons SMS/WhatsApp** dans la zone léon-cmd pour envoyer directement le message généré
+- `isLeonCommand` : ajout trigger "envoie confirmation de visite"
 - `hideAllZones()` : inclut maintenant `dvfZone`
+
+**`api/generate-message.js`** :
+- **FIX vouvoiement confirmation visite** : `toneRule` utilise "Bonjour M./Mme [Nom]" (PAS le prénom)
+- **FIX pas de durée** : prompt dédié `isConfirmVisite` avec "NE MENTIONNE JAMAIS de durée estimée"
+- **"Ce jour"** : date serveur injectée dans le prompt, instruction d'utiliser "ce jour" si visite = aujourd'hui
 
 **`api/assistant.js`** :
 - Intent `dvf_query` ajouté au prompt orchestrateur (adresse, ville, type, pièces, surface, rayon)
+- Intent `send_confirmation_visite` ajouté (contact_name, contact_id, channel)
 - `handleCalendarAction` : `.single()` → `.maybeSingle()` pour robustesse
 - Logging détaillé sync Calendar (request/response)
 
@@ -35,20 +159,26 @@ Corrections critiques sur le flux de création de visite depuis micro.html (conf
 - **Bloc visite invisible** : guard trop strict excluait les cas sans contacts matchés
 - **"Dis Léon" non reconnu** : accents non normalisés dans `isLeonCommand`
 - **Calendar sync silencieuse** : erreurs avalées par `.catch()`, maintenant visibles
+- **"Agenda non synchronisé" false positive mobile** : visitCalendarSynced pas tracké
+- **Vouvoiement avec prénom** : confirmation visite disait "Bonjour Alexis" au lieu de "Bonjour M. Untel"
+- **Durée dans confirmation** : "prévoyez 45 minutes" supprimé via prompt dédié
 
 ### Fichiers créés/modifiés
 - `micro.html`
 - `api/assistant.js`
+- `api/generate-message.js`
 - `parametres.html`
 
 ### Points d'attention
 - **Google Calendar** : le refresh token peut expirer si l'app Google Cloud est en mode "Testing" (7 jours). Vérifier le mode "Production". L'utilisateur doit reconnecter le Calendar depuis Paramètres WAIMMO si `token_refresh_failed`.
 - **DVF vocal** : dépend du bucket Supabase `dvf-data` et du geocoding Nominatim (gratuit, pas d'API key)
+- **Confirmation visite vocale** : vouvoiement forcé par défaut (pas de popup tu/vous dans le flux vocal)
 
 ### Prochaines étapes prioritaires
-1. Tester DVF vocal en prod après fix isLeonCommand
-2. Reconnecter Google Calendar + vérifier sync visite
-3. Valider le flux complet : dictée → nouveau contact + visite + Calendar
+1. Tester confirmation visite vocale : "Dis Léon envoie une confirmation de visite à Mme X par SMS"
+2. Tester DVF vocal en prod après fix isLeonCommand
+3. Reconnecter Google Calendar + vérifier sync visite mobile
+4. Valider le flux complet : dictée → nouveau contact + visite + Calendar
 
 ---
 

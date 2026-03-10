@@ -39,6 +39,7 @@ IZIMMO/
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
 │   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
+│   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
 │   └── maps-config.js          # Clé API Google Maps
 │
 ├── api/                        # Vercel Serverless Functions

@@ -1124,3 +1124,67 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Le DOM dataset convertit toute valeur en string — piège classique
 - Un simple `|| null` ne suffit pas car `"null"` est truthy
 - Mieux vaut valider à la sortie (avant insert) qu'espérer que l'entrée soit propre
+
+---
+
+## D054 — Touch drag & drop via polyfill tactile (pas de lib externe)
+
+**Date** : 2026-03-10
+**Statut** : Actif
+
+**Contexte** : Le drag & drop HTML5 natif ne fonctionne pas sur iPad/tablettes tactiles. Les conseillers testant Léon sur iPad ne pouvaient pas déplacer les cartes entre colonnes.
+
+**Décision** : Polyfill maison (`js/touch-drag-drop.js`) avec `touchstart`/`touchmove`/`touchend`, limité aux tablettes (>= 768px).
+
+**Pourquoi** :
+- Pas de dépendance externe (cohérent avec D001 — vanilla JS)
+- Le code réutilise les fonctions existantes (`getDropPosition`, `showDropIndicator`)
+- Long press (200ms) pour ne pas interférer avec le scroll
+- Pas besoin sur smartphone (écran trop petit pour le Kanban multi-colonnes)
+
+**Alternatives rejetées** :
+- **mobile-drag-drop (polyfill CDN)** : Dépendance externe, comportement moins contrôlable
+- **Sortable.js** : Librairie lourde, remplacerait tout le système DnD existant
+- **Activation sur tous les écrans tactiles** : Inutile sur smartphone, risque de conflits avec le scroll
+
+---
+
+## D053 — FABs pipeline injectés via mobile-nav.js (pas dans le HTML des pages)
+
+**Date** : 2026-03-10
+**Statut** : Actif
+
+**Contexte** : Les pipelines vendeurs/acquéreurs n'avaient aucun bouton "+" visible en mobile pour ajouter une lead. Il fallait aussi un bouton import screenshot sur le pipeline acquéreurs.
+
+**Décision** : Injecter les FABs via `mobile-nav.js` (createElement + click delegation vers les boutons existants), avec SVG inline. Le bouton todo passe à gauche, les FABs pipeline à droite.
+
+**Pourquoi** :
+- Zéro modification dans `vendeurs.html` / `acquereurs.html` — tout est centralisé dans `mobile-nav.js`
+- Les boutons existants (`addLeadBtn`, `addBuyerBtn`, `importScreenshotBtn`) sont déjà câblés — on délègue le click
+- SVG inline évite des requêtes HTTP supplémentaires et permet le gradient Léon
+- L'animation pulse CSS est légère (pas de JS, pas de timer)
+
+**Alternatives rejetées** :
+- **Modifier chaque HTML** : Duplication, maintenance plus lourde
+- **Image PNG/SVG externe** : Requête HTTP supplémentaire, moins de contrôle sur le style
+
+---
+
+## D052 — Confirmation visite vocale via orchestrateur + generate-message
+
+**Date** : 2026-03-09
+**Statut** : Actif
+
+**Contexte** : L'utilisateur veut pouvoir dire "Dis Léon envoie un message de confirmation de visite à Mme X par SMS" et que le message soit généré puis l'app SMS/WhatsApp ouverte automatiquement.
+
+**Décision** : Nouvel intent `send_confirmation_visite` dans l'orchestrateur (`api/assistant.js`) + handler dédié dans `micro.html` qui cherche la prochaine visite du contact, génère le message via `/api/generate-message` (scenario `confirmation_visite`), et ouvre l'app canal demandée.
+
+**Pourquoi** :
+- Réutilise l'infra existante (orchestrateur IA + generate-message API) plutôt que de créer un nouveau flux
+- L'orchestrateur identifie le contact + canal, le handler frontend se charge de la logique métier (trouver la visite, composer le contexte)
+- Le vouvoiement est forcé par défaut pour les confirmations (professionnel), sans popup tu/vous
+- "ce jour" au lieu de la date quand visite = aujourd'hui (instruction côté API avec date serveur)
+
+**Alternatives rejetées** :
+- **Tout dans l'orchestrateur** : Aurait nécessité de passer les visites dans le contexte → trop lourd
+- **Popup tu/vous** : Interrompt le flux vocal → forcer le vouvoiement (approprié pour une confirmation)
