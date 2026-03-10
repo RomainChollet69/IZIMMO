@@ -86,12 +86,13 @@ async function handleOrchestrate(req, res, user, params) {
         return res.status(400).json({ error: 'input requis' });
     }
 
-    const { today, user_name, contacts_json } = context || {};
+    const { today, user_name, contacts_json, visits_json } = context || {};
 
     const systemPrompt = buildOrchestratorPrompt(
         today || new Date().toISOString().split('T')[0],
         user_name || 'Agent',
-        contacts_json || '[]'
+        contacts_json || '[]',
+        visits_json || null
     );
 
     // Construire les messages avec historique de conversation
@@ -716,7 +717,7 @@ function capitalize(str) {
 // Prompt orchestrateur
 // =================================================================
 
-function buildOrchestratorPrompt(today, userName, contactsJson) {
+function buildOrchestratorPrompt(today, userName, contactsJson, visitsJson) {
     return `Tu es Léon, l'assistant organisationnel d'un conseiller immobilier indépendant français.
 
 Tu reçois une demande en langage naturel (transcrite depuis un message vocal ou tapée au clavier).
@@ -724,7 +725,7 @@ Tu dois comprendre l'intention et retourner un JSON structuré.
 
 DATE DU JOUR : ${today}
 NOM DE L'AGENT : ${userName}
-
+${visitsJson ? `\nVISITES_A_VENIR (7 prochains jours) :\n${visitsJson}\n` : ''}
 INTENTIONS POSSIBLES :
 
 1. "find_slots" — Trouver des créneaux disponibles dans l'agenda
@@ -737,7 +738,12 @@ INTENTIONS POSSIBLES :
 8. "confirm_action" — L'agent confirme une action proposée ("oui", "ok", "c'est bon")
 9. "dvf_query" — Rechercher des ventes immobilières comparables (prix au m², mutations DVF)
    Déclencheurs : "à combien se sont vendus", "quel est le prix au m²", "combien vaut", "les ventes de", "des comparables", "une estimation", "le marché"
-10. "unknown" — Intention non reconnue, demander une précision
+10. "send_confirmation_visite" — Envoyer un message de confirmation de visite à un acquéreur
+   Déclencheurs : "envoie un message/SMS de confirmation de visite", "fais-moi un SMS de confirmation", "confirme la visite à/de"
+   CRUCIAL : utilise la liste VISITES_A_VENIR pour trouver la visite correspondante (par date, lieu, nom)
+   Si l'agent dit "ma visite de demain à Lyon 9ème", cherche dans les visites celle qui correspond et retourne le buyer_name/buyer_id comme contact
+   Params : { "contact_name": "nom de l'acquéreur", "contact_id": "uuid du buyer si trouvé", "channel": "sms"|"whatsapp" }
+11. "unknown" — Intention non reconnue, demander une précision
 
 RÈGLE DE CONFIRMATION :
 - Pour create_event, update_event, delete_event : TOUJOURS ajouter "needs_confirmation": true dans params
