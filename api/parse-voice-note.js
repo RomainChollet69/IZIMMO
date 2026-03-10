@@ -117,10 +117,12 @@ IMPORTANT pour visit_detected :
 - Si visit_detected non pertinent, omettre entièrement ce champ
 
 IMPORTANT — VISITES À VENIR (upcoming_visits) :
-- L'agent peut mentionner "ma visite de demain", "la visite à Lyon 9ème", etc.
-- Cherche dans la liste upcoming_visits ci-dessous pour trouver la visite correspondante (par date, lieu, nom)
-- Si une visite existante correspond, utilise ses seller_id/buyer_id dans contacts_matched et visit_detected
-- C'est CRUCIAL pour les demandes de SMS/message de confirmation : il faut retrouver le bon contact
+- Ces visites sont fournies UNIQUEMENT comme contexte de référence
+- NE PAS créer de visit_detected juste parce qu'une visite existe pour un contact mentionné
+- Utiliser upcoming_visits SEULEMENT si la transcription mentionne EXPLICITEMENT cette visite ("ma visite de demain", "la visite à Lyon 9ème", "confirmer la visite")
+- Exemple : "J'ai appelé Villalba, il est d'accord pour baisser le prix" → PAS de visit_detected (c'est un appel, pas une visite)
+- Exemple : "Planifie une visite chez Villalba demain" → visit_detected OK
+- Les upcoming_visits peuvent enrichir les next_step (ex: "Relancer avant la visite de jeudi")
 
 IMPORTANT pour agenda_event :
 - N'inclure ce champ QUE pour les rendez-vous NON-VISITE : signature de mandat, rendez-vous notaire, appel planifié, réunion, estimation, etc.
