@@ -2618,9 +2618,13 @@
                     const noteContent = (editArea && editArea.value.trim()) || match.note_content;
 
                     const noteCol = match.lead_type === 'seller' ? 'seller_id' : 'buyer_id';
-                    await supabaseClient.from('lead_notes').insert({
+                    const { error: noteErr } = await supabaseClient.from('lead_notes').insert({
                         user_id: userId, [noteCol]: match.lead_id, content: noteContent
                     });
+                    if (noteErr) {
+                        console.error('[Micro] Erreur insert note:', noteErr, { lead_id: match.lead_id });
+                        continue;
+                    }
 
                     const dateInput = confirmationMatches.querySelector(`input[type="date"][data-index="${i}"]`);
                     const reminderDate = dateInput ? dateInput.value : match.reminder_date;
@@ -3073,6 +3077,8 @@
                 const { data, error } = await supabaseClient.from(table).insert([leadData]).select();
                 if (error) throw new Error(error.message);
                 const newLead = data[0];
+                // Mettre à jour le cache pour que la prochaine dictée trouve ce lead
+                if (newLead && allLeads) allLeads.push({ id: newLead.id, type: selectedType, first_name: firstName, last_name: lastName, phone: leadData.phone || null, address: leadData.address || null, sector: leadData.city || null });
                 if (window.awardPoints) window.awardPoints('create_lead', { lead_id: newLead?.id, lead_type: selectedType });
 
                 // Ajouter la transcription comme première note
@@ -3235,6 +3241,9 @@
         window.resetToIdle = resetToIdle;
         window.selectLeadType = selectLeadType;
         window.createNewLeadFromMicro = createNewLeadFromMicro;
+        window.toggleLinkSearch = toggleLinkSearch;
+        window.searchLeadForLink = searchLeadForLink;
+        window.linkNoteToExistingLead = linkNoteToExistingLead;
 
         // ===== START =====
         init();
