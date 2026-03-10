@@ -96,9 +96,13 @@ export default async function handler(req, res) {
     const isRetourVisiteBuyer = scenario === 'retour_visite' && leadType === 'buyer';
     const isConfirmVisite = scenario === 'confirmation_visite';
 
+    const todayISO = new Date().toISOString().split('T')[0]; // YYYY-MM-DD côté serveur
+
     let systemPrompt;
     if (isConfirmVisite) {
         systemPrompt = `Tu rédiges un message de confirmation de visite pour un agent immobilier. Écris comme un VRAI agent, pas comme une IA.
+
+Date du jour : ${todayISO}. Si la date de visite correspond à aujourd'hui, écris "ce jour" au lieu de la date complète (ex: "la visite prévue ce jour à 14h").
 
 Ton et style — CRITIQUE :
 - Message court et professionnel, comme un vrai SMS/WhatsApp de confirmation
@@ -110,17 +114,31 @@ Ton et style — CRITIQUE :
 ${agentSignature ? `- Signe : ${agentSignature}` : ''}
 - Retourne UNIQUEMENT le message, sans explication`;
     } else if (isRetourVisiteBuyer) {
-        systemPrompt = `Tu rédiges un message pour un agent immobilier qui demande à son acquéreur ce qu'il a pensé d'une visite. Tu écris comme un VRAI agent, pas comme une IA.
+        systemPrompt = `Tu rédiges un message pour un agent immobilier qui revient vers son acquéreur après une visite. Tu écris comme un VRAI agent, pas comme une IA.
 
 Ton et style — CRITIQUE :
-- Message court, naturel, comme un vrai SMS/WhatsApp entre pro et client
-- Tu demandes simplement son ressenti, son avis, s'il se projette
-- INTERDIT : "retour constructif", "n'hésitez pas", "je reste à votre disposition", "je me permets de"
+- Message COURT et PROFESSIONNEL. Vouvoiement obligatoire
+- Structure type : "Je reviens vers vous suite à la visite de [jour/date]. Qu'en avez-vous pensé et où en êtes-vous de votre réflexion ?"
+- Pas de question type "vous vous projetez ?", "la visite vous a plu ?" — trop familier
+- Pas d'emojis, jamais
+- INTERDIT : "retour constructif", "n'hésitez pas", "je reste à votre disposition", "je me permets de", "j'espère que"
 - ${toneRule}
 - ${channelInstructions[channel] || channelInstructions.sms}
-- Mentionne le bien visité (ville, type) naturellement dans le message
-- Utilise le prénom de l'acquéreur
+- Formule de politesse sobre : "Bien cordialement" (pas "Belle journée", "Au plaisir")
+- Utilise M./Mme + nom de famille, pas le prénom
 ${agentSignature ? `- Signe : ${agentSignature}` : ''}
+
+Exemple de message parfait :
+"Bonjour M. Dupont,
+
+Je reviens vers vous suite à la visite de samedi.
+Qu'en avez-vous pensé et où en êtes-vous de votre réflexion ?
+
+Bien cordialement
+
+Romain Chollet
+Efficity"
+
 - Retourne UNIQUEMENT le message, sans explication`;
     } else if (isRetourVisiteSeller) {
         systemPrompt = `Tu es un agent immobilier qui écrit un message à son vendeur pour lui faire un retour de visite. Tu écris comme un VRAI agent, pas comme une IA.
