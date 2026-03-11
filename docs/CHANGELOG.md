@@ -4,6 +4,29 @@
 
 ---
 
+## Session 2026-03-11 — Fix bug critique : transition onboarding → pipeline
+
+### Résumé
+Après la création du premier lead via l'onboarding vocal, la page restait bloquée sur l'écran micro sans jamais afficher les colonnes du pipeline.
+
+### Cause racine
+Dans `saveOnboardingLead()`, si `loadSellers()` lançait une exception (via `renderSellers()`), `hideOnboarding()` n'était jamais appelé car le `await` dans le setTimeout async avalait l'erreur silencieusement (cf. leçon L015). De plus, le `PipelineOnboarding` (tour guidé) n'était jamais déclenché après la transition car le `return` au DOMContentLoaded empêchait son lancement.
+
+### Modifications
+
+**`vendeurs.html`** :
+- `saveOnboardingLead()` : wrap `loadSellers()` dans try/catch pour que `hideOnboarding()` soit TOUJOURS appelé
+- Ajout du déclenchement de `PipelineOnboarding.start()` après la transition (setTimeout 500ms)
+
+### Fichiers modifiés
+- vendeurs.html (lignes ~10787-10801)
+
+### Points d'attention
+- Si `loadSellers()` échoue, le pipeline sera vide mais visible — l'utilisateur peut recharger la page
+- Le tour guidé se lancera correctement après création du 1er lead (conditions : 1-2 leads + cartes exemples)
+
+---
+
 ## Session 2026-03-10 (4) — Colonnes pipeline personnalisables (Niveau 1)
 
 ### Résumé

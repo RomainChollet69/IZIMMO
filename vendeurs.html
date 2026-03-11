@@ -10785,8 +10785,19 @@
 
                 // Reload and transition to pipeline
                 setTimeout(async () => {
-                    await loadSellers();
+                    try {
+                        await loadSellers();
+                    } catch (e) {
+                        console.error('[Onboarding] Erreur rechargement sellers:', e);
+                    }
                     hideOnboarding();
+
+                    // Lancer le tour guidé après la transition (premier lead créé)
+                    setTimeout(() => {
+                        if (typeof PipelineOnboarding !== 'undefined' && PipelineOnboarding.shouldStart()) {
+                            PipelineOnboarding.start();
+                        }
+                    }, 500);
                 }, 2000);
 
             } catch (err) {
