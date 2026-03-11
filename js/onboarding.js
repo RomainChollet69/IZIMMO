@@ -63,10 +63,23 @@ const PipelineOnboarding = {
         this.tooltip.id = 'onboarding-tooltip';
         document.body.appendChild(this.tooltip);
 
+        // Forcer la disparition de l'écran onboarding (filet de sécurité)
+        const onboardingScreen = document.getElementById('onboardingScreen');
+        if (onboardingScreen) {
+            onboardingScreen.style.display = 'none';
+            onboardingScreen.classList.add('hidden');
+        }
+
         // Cacher le bandeau de bienvenue
         const welcomeBanner = document.getElementById('welcomeBanner');
         if (welcomeBanner) {
             welcomeBanner.style.display = 'none';
+        }
+
+        // S'assurer que le pipeline est visible
+        const pipeline = document.querySelector('.pipeline');
+        if (pipeline) {
+            pipeline.style.display = '';
         }
 
         // Fade in overlay

@@ -2836,6 +2836,7 @@
         }
 
         /* Onboarding */
+        .onboarding-screen.hidden { display: none !important; }
         .onboarding-screen {
             display: flex;
             flex-direction: column;
@@ -10574,11 +10575,15 @@
         function showOnboarding() {
             document.querySelector('.pipeline').style.display = 'none';
             document.getElementById('mobileTabs').style.display = 'none';
-            document.getElementById('onboardingScreen').style.display = 'flex';
+            const screen = document.getElementById('onboardingScreen');
+            screen.classList.remove('hidden');
+            screen.style.display = 'flex';
         }
 
         function hideOnboarding() {
-            document.getElementById('onboardingScreen').style.display = 'none';
+            const screen = document.getElementById('onboardingScreen');
+            screen.style.display = 'none';
+            screen.classList.add('hidden'); // !important en CSS = garanti
             document.querySelector('.pipeline').style.display = '';
             document.getElementById('mobileTabs').style.display = '';
         }
