@@ -2099,12 +2099,15 @@
                 msgText.value = message;
                 msgWrap.style.display = '';
                 leonCmdContactPhone = contactPhone || null;
-                // Afficher les boutons d'envoi si on a un téléphone
-                smsBtn.style.display = leonCmdContactPhone ? '' : 'none';
-                waBtn.style.display = leonCmdContactPhone ? '' : 'none';
+                const hasPhone = leonCmdContactPhone && leonCmdContactPhone.trim().length > 0;
+                // SMS : uniquement avec numéro. WhatsApp : toujours (peut envoyer sur un groupe)
+                smsBtn.style.display = hasPhone ? '' : 'none';
+                waBtn.style.display = '';
                 // Ouvrir automatiquement l'app demandée
-                if (leonCmdContactPhone && channel) {
-                    setTimeout(() => openChannelFromLeon(message, channel), 300);
+                if (hasPhone && channel === 'sms') {
+                    setTimeout(() => openChannelFromLeon(message, 'sms'), 300);
+                } else if (channel === 'whatsapp' && hasPhone) {
+                    setTimeout(() => openChannelFromLeon(message, 'whatsapp'), 300);
                 }
             } else {
                 msgWrap.style.display = 'none';
@@ -2118,13 +2121,18 @@
 
         function openChannelFromLeon(message, channel) {
             const phone = (leonCmdContactPhone || '').replace(/\s/g, '');
-            if (!phone) return;
             if (channel === 'sms') {
+                if (!phone) return;
                 window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_blank');
             } else if (channel === 'whatsapp') {
-                let waPhone = phone;
-                if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
-                window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
+                if (phone) {
+                    let waPhone = phone;
+                    if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
+                    window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`, '_blank');
+                } else {
+                    // Sans numéro : ouvre WhatsApp avec le message, l'utilisateur choisit le destinataire/groupe
+                    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                }
             }
         }
 
@@ -2135,6 +2143,7 @@
             const contactId = p.contact_id || null;
             const contactName = p.contact_name || '';
             const channel = p.channel || 'sms';
+            const recipient = p.recipient || 'buyer'; // 'buyer' ou 'seller'
 
             // 1. Trouver le contact
             const leads = await loadUserLeads();
@@ -2182,11 +2191,13 @@
             const seller = contact.type === 'buyer' ? visit.sellers : contact;
             const buyer = contact.type === 'buyer' ? contact : visit.buyers;
 
-            // 3. Construire les données pour generate-message
+            // 3. Déterminer le destinataire du message (buyer ou seller)
+            const target = recipient === 'seller' ? seller : buyer;
+            const targetType = recipient === 'seller' ? 'seller' : 'buyer';
+
             const visitDate = visit.visit_date;
             const visitTime = visit.visit_time ? visit.visit_time.substring(0, 5) : null;
             const address = seller?.address || '';
-            const city = extractCityFromAddress(address);
 
             const dateLabel = visitDate === today
                 ? 'ce jour'
@@ -2194,13 +2205,14 @@
             const customPrompt = `La visite est prévue ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
 
             const leadData = {
-                first_name: buyer?.first_name || '',
-                last_name: buyer?.last_name || '',
-                phone: buyer?.phone || '',
+                first_name: target?.first_name || '',
+                last_name: target?.last_name || '',
+                phone: target?.phone || '',
                 address: address
             };
+            const targetName = `${target?.first_name || ''} ${target?.last_name || ''}`.trim() || contactName;
 
-            // 4. Récupérer le profil agent (nom depuis session, agency depuis profiles)
+            // 4. Récupérer le profil agent
             const { data: { session: sess } } = await supabaseClient.auth.getSession();
             const meta = sess?.user?.user_metadata || {};
             const agentName = meta.full_name || meta.name || '';
@@ -2209,7 +2221,7 @@
                 .eq('id', userId)
                 .maybeSingle();
             const agencyName = profile?.agency_name || '';
-            const tone = 'vous'; // Confirmation de visite = vouvoiement par défaut
+            const tone = 'vous';
 
             // 5. Appeler generate-message
             try {
@@ -2221,7 +2233,7 @@
                         leadData,
                         notes: [],
                         customPrompt,
-                        leadType: 'buyer',
+                        leadType: targetType,
                         agentName,
                         agencyName,
                         tone
@@ -2230,11 +2242,13 @@
                 const data = await resp.json().catch(() => ({}));
                 if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur génération');
 
-                const phone = buyer?.phone || contact.phone || '';
-                if (!phone) {
-                    const who = contact.type === 'buyer' ? "l'acquéreur" : 'le vendeur';
+                const phone = target?.phone || '';
+                // WhatsApp sans numéro : on affiche quand même le bouton (l'utilisateur choisit le groupe)
+                const hasPhone = phone && phone.trim().length > 0;
+                if (!hasPhone && channel === 'sms') {
+                    const who = targetType === 'buyer' ? "l'acquéreur" : 'le vendeur';
                     showLeonCmdResult({
-                        response: `Impossible d'envoyer le ${channel === 'sms' ? 'SMS' : 'message'} : ${who} ${contactName} n'a pas de numéro de téléphone sur sa fiche.`,
+                        response: `Pas de numéro pour ${who} ${targetName}. Tu peux copier le message ou l'envoyer via WhatsApp.`,
                         message: data.message,
                         contactPhone: '',
                         channel
@@ -2242,7 +2256,7 @@
                     return;
                 }
                 showLeonCmdResult({
-                    response: orch.leon_response || `Message de confirmation de visite pour ${contactName} :`,
+                    response: orch.leon_response || `Message de confirmation de visite pour ${targetName} :`,
                     message: data.message,
                     contactPhone: phone,
                     channel

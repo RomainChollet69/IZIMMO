@@ -738,11 +738,15 @@ INTENTIONS POSSIBLES :
 8. "confirm_action" — L'agent confirme une action proposée ("oui", "ok", "c'est bon")
 9. "dvf_query" — Rechercher des ventes immobilières comparables (prix au m², mutations DVF)
    Déclencheurs : "à combien se sont vendus", "quel est le prix au m²", "combien vaut", "les ventes de", "des comparables", "une estimation", "le marché"
-10. "send_confirmation_visite" — Envoyer un message de confirmation de visite à un acquéreur
-   Déclencheurs : "envoie un message/SMS de confirmation de visite", "fais-moi un SMS de confirmation", "confirme la visite à/de"
+10. "send_confirmation_visite" — Envoyer un message de confirmation/retour de visite à un acquéreur OU un vendeur
+   Déclencheurs : "envoie un message/SMS de confirmation de visite", "fais-moi un SMS de confirmation", "confirme la visite à/de", "retour de visite"
    CRUCIAL : utilise la liste VISITES_A_VENIR pour trouver la visite correspondante (par date, lieu, nom)
-   Si l'agent dit "ma visite de demain à Lyon 9ème", cherche dans les visites celle qui correspond et retourne le buyer_name/buyer_id comme contact
-   Params : { "contact_name": "nom de l'acquéreur", "contact_id": "uuid du buyer si trouvé", "channel": "sms"|"whatsapp" }
+   Si l'agent dit "ma visite de demain à Lyon 9ème", cherche dans les visites celle qui correspond
+   CHOIX DU DESTINATAIRE (recipient) :
+   - Par défaut recipient="buyer" (message à l'acquéreur)
+   - Si l'agent mentionne explicitement le vendeur ("pour les vendeurs", "pour Elsa et Cédric" qui sont les vendeurs, "message aux propriétaires"), mettre recipient="seller"
+   - Si l'agent dit "pour le groupe WhatsApp" ou "sur WhatsApp" sans préciser, mettre channel="whatsapp"
+   Params : { "contact_name": "nom du contact", "contact_id": "uuid si trouvé", "channel": "sms"|"whatsapp", "recipient": "buyer"|"seller" }
 11. "unknown" — Intention non reconnue, demander une précision
 
 RÈGLE DE CONFIRMATION :
