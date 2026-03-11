@@ -3691,22 +3691,12 @@
         function updateBuyerStatusSelect() {
             const select = document.getElementById('status');
             const currentValue = select.value;
-            const baseOptions = [
-                { value: 'nouveau', label: '🆕 Nouveaux Acquéreurs' },
-                { value: 'actif', label: '🔍 En Recherche Active' },
-                { value: 'achete_avec_moi', label: '🎉 Achetés avec moi' },
-                { value: 'achete_ailleurs', label: '🔄 Achetés ailleurs' },
-                { value: 'abandon', label: '❌ Plus en recherche' }
-            ];
             const allCols = getAllBuyerColumns('status');
+            let html = '';
             allCols.forEach(col => {
-                if (col.key.startsWith('custom_')) {
-                    baseOptions.push({ value: col.key, label: `${col.icon} ${col.label}` });
-                }
+                html += `<option value="${col.key}">${escapeHtml(col.icon + ' ' + col.label)}</option>`;
             });
-            select.innerHTML = baseOptions.map(o =>
-                `<option value="${o.value}">${escapeHtml(o.label)}</option>`
-            ).join('');
+            select.innerHTML = html;
             select.value = currentValue;
         }
 
