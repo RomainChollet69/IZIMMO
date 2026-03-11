@@ -11,8 +11,8 @@ IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
 ├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée
-├── index.html                  # Pipeline Vendeurs — Kanban 8 colonnes desktop + Card Deck mobile + recherche (table `sellers`)
-├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5 colonnes + recherche (table `buyers`)
+├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes personnalisables + Card Deck mobile + recherche (table `sellers`)
+├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth (redirige vers home.html)
 ├── landing.html                # Page marketing / vitrine (v1, tutoiement)
@@ -40,6 +40,7 @@ IZIMMO/
 │   ├── social.js               # Logique calendrier social + IA
 │   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
 │   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
+│   ├── pipeline-config.js      # Personnalisation colonnes pipeline (renommer, masquer, réordonner) — Supabase JSONB
 │   └── maps-config.js          # Clé API Google Maps
 │
 ├── api/                        # Vercel Serverless Functions
@@ -66,7 +67,8 @@ IZIMMO/
 │   ├── 009_gamification.sql    # Migration tables gamification_log + gamification_profiles
 │   ├── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
 │   ├── 011_sellers_rooms.sql   # ALTER TABLE : ajout champ rooms sur sellers (T1-T5+)
-│   └── 012_visit_requests.sql # Table visit_requests + colonnes inbound_email sur user_integrations
+│   ├── 012_visit_requests.sql # Table visit_requests + colonnes inbound_email sur user_integrations
+│   └── 014_pipeline_configs.sql # Table pipeline_configs — config JSONB colonnes personnalisables
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel

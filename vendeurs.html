@@ -23,6 +23,7 @@
     <!-- Redirect mobile supprimé : le pipeline vendeur est l'expérience mobile principale -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js?v=250225"></script>
+    <script src="js/pipeline-config.js?v=250310"></script>
     <script src="js/workflows.js?v=250225"></script>
     <script src="js/auth.js?v=250225"></script>
     <script src="js/audio-recorder.js?v=250225"></script>
@@ -435,7 +436,7 @@
         /* ===== PIPELINE ===== */
         .pipeline {
             display: grid;
-            grid-template-columns: repeat(8, minmax(300px, 1fr));
+            grid-template-columns: repeat(var(--pipeline-cols, 8), minmax(300px, 1fr));
             gap: 28px;
             overflow-x: auto;
             overscroll-behavior: none;
@@ -502,6 +503,185 @@
         .column-header.header-competitor { background-image: url('img/concurrence.png'); }
         .column-header.header-sold { background-image: url('img/vendu_fond_carte_pipe_vente.png'); }
         .column-header.header-lost { background-image: url('img/perdu_fond_carte_pipe_vente.png'); }
+
+        /* ===== BOUTON PERSONNALISATION PIPELINE ===== */
+        .pipeline-settings-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            border: 1px solid #E2E8F0;
+            background: white;
+            color: #64748B;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .pipeline-settings-btn:hover {
+            background: #F1F5F9;
+            color: #334155;
+            border-color: #CBD5E1;
+        }
+
+        /* ===== MODALE PERSONNALISATION COLONNES ===== */
+        .col-settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .col-settings-overlay.active { display: flex; }
+
+        .col-settings-modal {
+            background: white;
+            border-radius: 20px;
+            width: 480px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        .col-settings-header {
+            padding: 24px 24px 16px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .col-settings-header h3 {
+            margin: 0 0 4px;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #1E293B;
+        }
+        .col-settings-header p {
+            margin: 0;
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        .col-settings-list {
+            padding: 8px 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .col-settings-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 8px;
+            border-radius: 10px;
+            transition: background 0.15s;
+            cursor: grab;
+        }
+        .col-settings-item:active { cursor: grabbing; }
+        .col-settings-item.dragging-row {
+            opacity: 0.4;
+            background: #F8FAFC;
+        }
+        .col-settings-item.drag-over-row {
+            border-top: 2px solid #667eea;
+        }
+        .col-settings-item.hidden-col {
+            opacity: 0.45;
+        }
+
+        .col-drag-handle {
+            color: #CBD5E1;
+            cursor: grab;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .col-color-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .col-settings-item input[type="text"] {
+            flex: 1;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #334155;
+            min-width: 0;
+        }
+        .col-settings-item input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        .col-vis-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .col-vis-btn:hover { background: #F1F5F9; }
+        .col-reset-btn {
+            font-size: 12px;
+            color: #94A3B8;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .col-reset-btn:hover { color: #667eea; background: #F1F5F9; }
+
+        .col-settings-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #F1F5F9;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .col-settings-footer button {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .col-settings-cancel {
+            background: #F1F5F9;
+            color: #64748B;
+        }
+        .col-settings-cancel:hover { background: #E2E8F0; }
+        .col-settings-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .col-settings-save:hover { opacity: 0.9; }
+        .col-settings-error {
+            color: #EF4444;
+            font-size: 13px;
+            padding: 0 24px 8px;
+            display: none;
+        }
 
         .column-label {
             position: absolute;
@@ -3862,19 +4042,11 @@
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
         <button class="add-btn" id="addLeadBtn">+ Lead</button>
+        <button class="pipeline-settings-btn" id="pipelineSettingsBtn" title="Personnaliser les colonnes"><i class="fa-solid fa-gear"></i></button>
     </div>
 
-    <!-- Mobile Tab Bar (card deck) -->
-    <div class="mobile-tabs" id="mobileTabs">
-        <button class="mobile-tab active" data-status="hot" data-color="#FF6B6B">🔥 Chaudes <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="warm" data-color="#FFA726">🟠 Tièdes <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="cold" data-color="#42A5F5">🔵 Froides <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="off_market" data-color="#9B59B6">🔒 Off Market <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="mandate" data-color="#66BB6A">📋 Mandats <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="competitor" data-color="#78909C">🏢 Concurrents <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="sold" data-color="#AB47BC">✅ Vendus <span class="tab-count">(0)</span></button>
-        <button class="mobile-tab" data-status="lost" data-color="#BDBDBD">❌ Perdus <span class="tab-count">(0)</span></button>
-    </div>
+    <!-- Mobile Tab Bar (card deck) — généré dynamiquement par renderSellerPipeline() -->
+    <div class="mobile-tabs" id="mobileTabs"></div>
 
     <!-- Mobile Card Deck (visible uniquement sur mobile, remplace le pipeline Kanban) -->
     <div class="mobile-card-deck" id="mobileCardDeck">
@@ -3919,103 +4091,8 @@
         </div>
     </div>
 
-    <div class="pipeline">
-        <!-- Colonne Hot -->
-        <div class="column" data-status="hot">
-            <div class="column-top">
-                <div class="column-header header-hot">
-                    <div class="column-label">LEADS CHAUDES</div>
-                </div>
-                <div class="column-title">Prospects prêts à - 30 Jours</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="hot-container"></div>
-        </div>
-
-        <!-- Colonne Warm -->
-        <div class="column" data-status="warm">
-            <div class="column-top">
-                <div class="column-header header-warm">
-                    <div class="column-label">LEADS TIÈDES</div>
-                </div>
-                <div class="column-title">Prospects prêts entre 30 et 60 jours</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="warm-container"></div>
-        </div>
-
-        <!-- Colonne Cold -->
-        <div class="column" data-status="cold">
-            <div class="column-top">
-                <div class="column-header header-cold">
-                    <div class="column-label">LEADS FROIDES</div>
-                </div>
-                <div class="column-title">Prospects à 60 Jours et +</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="cold-container"></div>
-        </div>
-
-        <!-- Colonne Off Market -->
-        <div class="column" data-status="off_market">
-            <div class="column-top">
-                <div class="column-header header-off_market">
-                    <div class="column-label">🔒 OFF MARKET</div>
-                </div>
-                <div class="column-title">Biens visitables hors mandats</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="off_market-container"></div>
-        </div>
-
-        <!-- Colonne Sous Mandats -->
-        <div class="column" data-status="mandate">
-            <div class="column-top">
-                <div class="column-header header-mandate">
-                    <div class="column-label">SOUS MANDATS</div>
-                </div>
-                <div class="column-title">Mandats signés</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="mandate-container"></div>
-        </div>
-
-        <!-- Colonne Concurrents / PAP -->
-        <div class="column" data-status="competitor">
-            <div class="column-top">
-                <div class="column-header header-competitor">
-                    <div class="column-label">🏢 CONCURRENTS / PAP</div>
-                </div>
-                <div class="column-title">Biens chez la concurrence</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="competitor-container"></div>
-        </div>
-
-        <!-- Colonne Vendus -->
-        <div class="column" data-status="sold">
-            <div class="column-top">
-                <div class="column-header header-sold">
-                    <div class="column-label">VENDUS</div>
-                </div>
-                <div class="column-title">Biens vendus 🎉</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="sold-container"></div>
-        </div>
-
-        <!-- Colonne Perdus -->
-        <div class="column" data-status="lost">
-            <div class="column-top">
-                <div class="column-header header-lost">
-                    <div class="column-label">PERDUS</div>
-                </div>
-                <div class="column-title">Leads perdus / Abandonnés</div>
-                <div class="column-count"><span>📋</span><span class="count">0</span></div>
-            </div>
-            <div class="cards-container" id="lost-container"></div>
-        </div>
-    </div>
+    <!-- Pipeline Kanban — généré dynamiquement par renderSellerPipeline() -->
+    <div class="pipeline" id="pipelineContainer"></div>
 
     <!-- Onboarding screen (0 leads) -->
     <div class="onboarding-screen" id="onboardingScreen" style="display:none;">
@@ -5722,17 +5799,31 @@
             showMatchToast('Retour enregistré');
         }
 
-        // ===== MOBILE TABS =====
-        const SELLER_TABS = [
-            { status: 'hot', icon: '🔥', label: 'Chaudes' },
-            { status: 'warm', icon: '🟠', label: 'Tièdes' },
-            { status: 'cold', icon: '🔵', label: 'Froides' },
-            { status: 'off_market', icon: '🔒', label: 'Off Market' },
-            { status: 'mandate', icon: '📋', label: 'Mandats' },
-            { status: 'competitor', icon: '🏢', label: 'Concurrents / PAP' },
-            { status: 'sold', icon: '✅', label: 'Vendus' },
-            { status: 'lost', icon: '❌', label: 'Perdus' }
-        ];
+        // ===== COLONNES PIPELINE (source de vérité unifiée) =====
+        const SELLER_COLUMNS = PipelineConfig.DEFAULT_SELLER_COLUMNS;
+
+        // Descriptions des colonnes (affichées sous le header)
+        const SELLER_COLUMN_TITLES = {
+            hot: 'Prospects prêts à - 30 Jours',
+            warm: 'Prospects prêts entre 30 et 60 jours',
+            cold: 'Prospects à 60 Jours et +',
+            off_market: 'Biens visitables hors mandats',
+            mandate: 'Mandats signés',
+            competitor: 'Biens chez la concurrence',
+            sold: 'Biens vendus',
+            lost: 'Leads perdus / Abandonnés'
+        };
+
+        // Colonnes visibles (chargées au init, mises à jour par la personnalisation)
+        let effectiveSellerColumns = SELLER_COLUMNS.map(c => ({ ...c, visible: true }));
+        // Toutes les colonnes (y compris masquées) — pour le move popup
+        let allSellerColumns = effectiveSellerColumns;
+
+        // Compat : SELLER_TABS et COLUMN_COLORS dérivent de SELLER_COLUMNS
+        const SELLER_TABS = SELLER_COLUMNS.map(c => ({ status: c.key, icon: c.icon, label: c.label }));
+        const COLUMN_COLORS = {};
+        SELLER_COLUMNS.forEach(c => { COLUMN_COLORS[c.key] = c.color; });
+
         let mobileActiveTab = localStorage.getItem('leon_mobile_tab_sellers') || 'hot';
 
         function isMobile() { return window.innerWidth <= 768; }
@@ -5740,18 +5831,247 @@
         const DAYS_AUTO_REMINDER_AFTER_RDV = 15; // Délai auto-relance après RDV vendeur (jours)
 
         // ===== MOBILE CARD DECK STATE =====
-        const COLUMN_COLORS = {
-            hot: '#FF6B6B',
-            warm: '#FFA726',
-            cold: '#42A5F5',
-            off_market: '#9B59B6',
-            mandate: '#66BB6A',
-            competitor: '#78909C',
-            sold: '#AB47BC',
-            lost: '#BDBDBD'
-        };
         let mobileDeckIndex = 0;
         const MOBILE_DECK_STATE_KEY = 'leon_mobile_deck_state';
+
+        // ===== RENDU DYNAMIQUE DU PIPELINE =====
+        /**
+         * Génère le HTML des colonnes pipeline et des mobile tabs
+         * depuis les colonnes effectives (visibles uniquement).
+         */
+        function renderSellerPipeline() {
+            const visibleCols = effectiveSellerColumns.filter(c => c.visible);
+            const pipeline = document.getElementById('pipelineContainer');
+            const mobileTabs = document.getElementById('mobileTabs');
+
+            // Générer les colonnes desktop
+            pipeline.innerHTML = visibleCols.map(col => {
+                const title = SELLER_COLUMN_TITLES[col.key] || '';
+                return `<div class="column" data-status="${col.key}">
+                    <div class="column-top">
+                        <div class="column-header header-${col.key}" style="background-image: url('${col.headerImage || ''}')">
+                            <div class="column-label">${escapeHtml(col.label)}</div>
+                        </div>
+                        <div class="column-title">${escapeHtml(title)}</div>
+                        <div class="column-count"><span>📋</span><span class="count">0</span></div>
+                    </div>
+                    <div class="cards-container" id="${col.key}-container"></div>
+                </div>`;
+            }).join('');
+
+            // Mettre à jour le nombre de colonnes CSS
+            pipeline.style.setProperty('--pipeline-cols', visibleCols.length);
+
+            // Générer les mobile tabs
+            mobileTabs.innerHTML = visibleCols.map((col, i) => {
+                const isActive = col.key === mobileActiveTab;
+                return `<button class="mobile-tab${isActive ? ' active' : ''}" data-status="${col.key}" data-color="${col.color}">${col.icon} ${escapeHtml(col.label)} <span class="tab-count">(0)</span></button>`;
+            }).join('');
+
+            // Ré-attacher les handlers mobile tabs
+            document.querySelectorAll('.mobile-tab').forEach(tab => {
+                tab.addEventListener('click', () => setMobileTab(tab.dataset.status));
+            });
+
+            // Ré-attacher les handlers drag-and-drop desktop
+            reattachDragDropHandlers();
+
+            // Si le tab actif n'est plus visible, basculer sur le premier
+            if (!visibleCols.some(c => c.key === mobileActiveTab)) {
+                mobileActiveTab = visibleCols[0]?.key || 'hot';
+                localStorage.setItem('leon_mobile_tab_sellers', mobileActiveTab);
+            }
+        }
+
+        /** Ré-attache les handlers drag-and-drop sur les nouvelles colonnes */
+        function reattachDragDropHandlers() {
+            document.querySelectorAll('.column').forEach(column => {
+                column.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (!draggedCard) return;
+                    const container = column.querySelector('.cards-container');
+                    if (!container) return;
+                    const position = getDropPosition(container, e.clientY);
+                    showDropIndicator(container, position);
+                });
+                column.addEventListener('dragleave', e => {
+                    if (!column.contains(e.relatedTarget)) clearDropIndicators();
+                });
+                // Drop sur la colonne → déléguer au cards-container
+                column.addEventListener('drop', e => {
+                    const container = column.querySelector('.cards-container');
+                    if (container && !container.contains(e.target)) {
+                        const dropEvent = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer, clientX: e.clientX, clientY: e.clientY });
+                        e.preventDefault();
+                        container.dispatchEvent(dropEvent);
+                    }
+                });
+            });
+
+            document.querySelectorAll('.cards-container').forEach(container => {
+                container.addEventListener('drop', async e => {
+                    e.preventDefault();
+                    await window.onCardDropped(container, e.clientY);
+                });
+            });
+        }
+
+        /** Charge la config pipeline depuis Supabase et génère le rendu */
+        async function initSellerPipeline() {
+            try {
+                await PipelineConfig.load('sellers');
+                const all = PipelineConfig.getEffectiveColumns('sellers');
+                allSellerColumns = all;
+                effectiveSellerColumns = all;
+                renderSellerPipeline();
+            } catch (e) {
+                console.error('[Pipeline] Erreur chargement config:', e);
+                // Fallback : colonnes par défaut
+                renderSellerPipeline();
+            }
+        }
+
+        // ===== MODALE PERSONNALISATION COLONNES =====
+        let colSettingsDragItem = null;
+
+        function openColumnSettings() {
+            const list = document.getElementById('colSettingsList');
+            const defaults = PipelineConfig.getDefaults('sellers');
+            const defaultsByKey = {};
+            defaults.forEach(d => { defaultsByKey[d.key] = d; });
+
+            // Utiliser les colonnes effectives (toutes, pas juste visibles)
+            const columns = allSellerColumns;
+
+            list.innerHTML = columns.map((col, i) => {
+                const def = defaultsByKey[col.key] || col;
+                const isVisible = col.visible !== false;
+                return `<div class="col-settings-item${isVisible ? '' : ' hidden-col'}" data-key="${col.key}" data-index="${i}" draggable="true">
+                    <span class="col-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                    <span class="col-color-dot" style="background:${col.color}"></span>
+                    <input type="text" value="${escapeHtml(col.label)}" data-default="${escapeHtml(def.label)}" />
+                    <button class="col-vis-btn" data-visible="${isVisible}" title="${isVisible ? 'Masquer' : 'Afficher'}">${isVisible ? '👁️' : '👁️‍🗨️'}</button>
+                    <button class="col-reset-btn" title="Réinitialiser le nom">reset</button>
+                </div>`;
+            }).join('');
+
+            // Drag-and-drop pour réordonner les lignes
+            list.querySelectorAll('.col-settings-item').forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    colSettingsDragItem = item;
+                    item.classList.add('dragging-row');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging-row');
+                    list.querySelectorAll('.drag-over-row').forEach(el => el.classList.remove('drag-over-row'));
+                    colSettingsDragItem = null;
+                });
+                item.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (colSettingsDragItem && colSettingsDragItem !== item) {
+                        item.classList.add('drag-over-row');
+                    }
+                });
+                item.addEventListener('dragleave', () => {
+                    item.classList.remove('drag-over-row');
+                });
+                item.addEventListener('drop', e => {
+                    e.preventDefault();
+                    item.classList.remove('drag-over-row');
+                    if (colSettingsDragItem && colSettingsDragItem !== item) {
+                        list.insertBefore(colSettingsDragItem, item);
+                    }
+                });
+            });
+
+            // Toggle visibilité
+            list.querySelectorAll('.col-vis-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isVisible = btn.dataset.visible === 'true';
+                    btn.dataset.visible = !isVisible;
+                    btn.textContent = !isVisible ? '👁️' : '👁️‍🗨️';
+                    btn.title = !isVisible ? 'Masquer' : 'Afficher';
+                    btn.closest('.col-settings-item').classList.toggle('hidden-col', isVisible);
+                });
+            });
+
+            // Reset label
+            list.querySelectorAll('.col-reset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = btn.closest('.col-settings-item').querySelector('input');
+                    input.value = input.dataset.default;
+                });
+            });
+
+            document.getElementById('colSettingsError').style.display = 'none';
+            document.getElementById('colSettingsOverlay').classList.add('active');
+        }
+
+        function closeColumnSettings() {
+            document.getElementById('colSettingsOverlay').classList.remove('active');
+        }
+
+        async function saveColumnSettings() {
+            const list = document.getElementById('colSettingsList');
+            const items = list.querySelectorAll('.col-settings-item');
+            const MIN_VISIBLE_COLS = 2;
+
+            // Construire la config
+            const columns = [];
+            let visibleCount = 0;
+            items.forEach(item => {
+                const key = item.dataset.key;
+                const input = item.querySelector('input');
+                const visBtn = item.querySelector('.col-vis-btn');
+                const isVisible = visBtn.dataset.visible === 'true';
+                const label = input.value.trim();
+                const defaultLabel = input.dataset.default;
+
+                if (isVisible) visibleCount++;
+
+                columns.push({
+                    key: key,
+                    label: label !== defaultLabel ? label : null,
+                    visible: isVisible
+                });
+            });
+
+            // Validation : minimum 2 colonnes visibles
+            if (visibleCount < MIN_VISIBLE_COLS) {
+                document.getElementById('colSettingsError').style.display = 'block';
+                return;
+            }
+
+            const config = { columns };
+            await PipelineConfig.save('sellers', config);
+
+            // Recharger les colonnes effectives
+            const all = PipelineConfig.getEffectiveColumns('sellers');
+            allSellerColumns = all;
+            effectiveSellerColumns = all;
+
+            // Re-générer le pipeline et re-rendre les cartes
+            renderSellerPipeline();
+            renderSellers();
+
+            // Si on est en mobile, réinitialiser le tab actif
+            if (isMobile()) {
+                setMobileTab(mobileActiveTab);
+                renderMobileCardDeck();
+            }
+
+            closeColumnSettings();
+        }
+
+        function initColumnSettings() {
+            document.getElementById('pipelineSettingsBtn').addEventListener('click', openColumnSettings);
+            document.getElementById('colSettingsCancel').addEventListener('click', closeColumnSettings);
+            document.getElementById('colSettingsSave').addEventListener('click', saveColumnSettings);
+            document.getElementById('colSettingsOverlay').addEventListener('click', e => {
+                if (e.target === e.currentTarget) closeColumnSettings();
+            });
+        }
 
         function setMobileTab(status) {
             mobileActiveTab = status;
@@ -5781,17 +6101,15 @@
         }
 
         function updateMobileTabCounts() {
-            SELLER_TABS.forEach(tab => {
-                const count = sellers.filter(s => s.status === tab.status).length;
-                const el = document.querySelector(`.mobile-tab[data-status="${tab.status}"] .tab-count`);
+            effectiveSellerColumns.filter(c => c.visible).forEach(col => {
+                const count = sellers.filter(s => s.status === col.key).length;
+                const el = document.querySelector(`.mobile-tab[data-status="${col.key}"] .tab-count`);
                 if (el) el.textContent = `(${count})`;
             });
         }
 
         function initMobileTabs() {
-            document.querySelectorAll('.mobile-tab').forEach(tab => {
-                tab.addEventListener('click', () => setMobileTab(tab.dataset.status));
-            });
+            // Les handlers click sur les tabs sont attachés dans renderSellerPipeline()
 
             // Mobile card deck : init swipe + restore state (pas de swipe entre colonnes)
             if (isMobile()) {
@@ -5811,9 +6129,10 @@
             const seller = sellers.find(s => s.id === sellerId);
             if (!seller) return;
             const options = document.getElementById('movePopupOptions');
-            options.innerHTML = SELLER_TABS
-                .filter(t => t.status !== seller.status)
-                .map(t => `<button class="move-popup-option" onclick="moveSeller('${sellerId}','${t.status}')">${t.icon} ${t.label}</button>`)
+            // Montrer TOUTES les colonnes (y compris masquées) pour ne pas piéger de leads
+            options.innerHTML = allSellerColumns
+                .filter(c => c.key !== seller.status)
+                .map(c => `<button class="move-popup-option" onclick="moveSeller('${sellerId}','${c.key}')">${c.icon} ${escapeHtml(c.label)}</button>`)
                 .join('');
             document.getElementById('movePopup').classList.add('active');
         }
@@ -7236,16 +7555,11 @@
                 }
             }
 
-            const containers = {
-                hot: document.getElementById('hot-container'),
-                warm: document.getElementById('warm-container'),
-                cold: document.getElementById('cold-container'),
-                off_market: document.getElementById('off_market-container'),
-                mandate: document.getElementById('mandate-container'),
-                competitor: document.getElementById('competitor-container'),
-                sold: document.getElementById('sold-container'),
-                lost: document.getElementById('lost-container')
-            };
+            // Containers dynamiques basés sur les colonnes visibles
+            const containers = {};
+            effectiveSellerColumns.filter(c => c.visible).forEach(col => {
+                containers[col.key] = document.getElementById(col.key + '-container');
+            });
 
             Object.values(containers).forEach(c => { if (c) c.innerHTML = ''; });
 
@@ -7645,7 +7959,7 @@
 
         function updateCounts() {
             const searchActive = document.getElementById('bottomSearchInput') && document.getElementById('bottomSearchInput').value.trim() !== '';
-            const statuses = ['hot', 'warm', 'cold', 'off_market', 'mandate', 'competitor', 'sold', 'lost'];
+            const statuses = effectiveSellerColumns.filter(c => c.visible).map(c => c.key);
             statuses.forEach(status => {
                 let count;
                 if (searchActive) {
@@ -9882,6 +10196,7 @@
         }
 
         function setupDragAndDrop() {
+            // Handlers globaux (dragstart / dragend) — une seule fois sur document
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
                     draggedCard = e.target;
@@ -9903,39 +10218,8 @@
                 clearDropIndicators();
             });
 
-            // Écouter dragover/drop sur toute la colonne (pas seulement le cards-container)
-            document.querySelectorAll('.column').forEach(column => {
-                column.addEventListener('dragover', e => {
-                    e.preventDefault();
-                    if (!draggedCard) return;
-                    const container = column.querySelector('.cards-container');
-                    if (!container) return;
-                    const position = getDropPosition(container, e.clientY);
-                    showDropIndicator(container, position);
-                });
-                column.addEventListener('dragleave', e => {
-                    if (!column.contains(e.relatedTarget)) {
-                        clearDropIndicators();
-                    }
-                });
-                // Drop sur toute la colonne → déléguer au cards-container
-                column.addEventListener('drop', e => {
-                    const container = column.querySelector('.cards-container');
-                    if (container && !container.contains(e.target)) {
-                        // Le drop a eu lieu sur la colonne mais hors du container → simuler le drop dedans
-                        const dropEvent = new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: e.dataTransfer, clientX: e.clientX, clientY: e.clientY });
-                        e.preventDefault();
-                        container.dispatchEvent(dropEvent);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.cards-container').forEach(container => {
-                container.addEventListener('drop', async e => {
-                    e.preventDefault();
-                    await window.onCardDropped(container, e.clientY);
-                });
-            });
+            // Les handlers par colonne (dragover, dragleave, drop) sont attachés
+            // dans reattachDragDropHandlers(), appelé par renderSellerPipeline()
         }
 
         // ===== EXPORT CSV =====
@@ -10459,7 +10743,8 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
-            loadSellers().then(async () => {
+            // Générer le pipeline dynamique AVANT de charger les sellers
+            initSellerPipeline().then(() => loadSellers()).then(async () => {
                 console.log('[Pipeline] Sellers chargés:', sellers.length, 'isMobile:', isMobile());
 
                 // Forcer le rendu mobile card deck après chargement des sellers
@@ -10507,6 +10792,7 @@
             setupSearchToolbar();
             injectExportToUserDropdown();
             initMobileTabs();
+            initColumnSettings();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupFullNameAutocomplete('fullName', 'phone', 'email');
             setupAddressAutocomplete('address');
@@ -10912,6 +11198,22 @@
             <div class="move-popup-title">📂 Déplacer vers...</div>
             <div class="move-popup-options" id="movePopupOptions"></div>
             <button class="move-popup-cancel" id="movePopupCancel">Annuler</button>
+        </div>
+    </div>
+
+    <!-- Modale personnalisation colonnes pipeline -->
+    <div class="col-settings-overlay" id="colSettingsOverlay">
+        <div class="col-settings-modal">
+            <div class="col-settings-header">
+                <h3>Personnaliser les colonnes</h3>
+                <p>Renommez, masquez ou réorganisez vos colonnes.</p>
+            </div>
+            <div class="col-settings-list" id="colSettingsList"></div>
+            <div class="col-settings-error" id="colSettingsError">Minimum 2 colonnes doivent rester visibles.</div>
+            <div class="col-settings-footer">
+                <button class="col-settings-cancel" id="colSettingsCancel">Annuler</button>
+                <button class="col-settings-save" id="colSettingsSave">Enregistrer</button>
+            </div>
         </div>
     </div>
 

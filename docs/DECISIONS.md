@@ -1149,6 +1149,29 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 
 ---
 
+## D055 — Colonnes pipeline personnalisables : JSONB Supabase (pas extension du schéma sellers/buyers)
+
+**Date** : 2026-03-10
+**Statut** : Actif
+
+**Contexte** : Les conseillers veulent pouvoir renommer, masquer et réordonner les colonnes de leurs pipelines vendeurs et acquéreurs. Les colonnes étaient hardcodées en HTML et JS.
+
+**Décision** : Stocker la config d'affichage (labels, visibilité, ordre) dans une table `pipeline_configs` avec un champ JSONB, sans modifier les tables `sellers`/`buyers`. Module partagé `js/pipeline-config.js` qui charge/sauvegarde/fusionne config user + defaults.
+
+**Pourquoi** :
+- Zéro migration sur les tables métier — le champ `status` garde les mêmes valeurs
+- JSONB flexible : forward-compatible pour le Niveau 2 (colonnes 100% custom)
+- Module partagé réutilisable par les deux pipelines (vendeurs + acquéreurs)
+- Config persiste cross-device (Supabase, pas localStorage)
+- Fallback gracieux : si Supabase échoue, colonnes par défaut affichées
+
+**Alternatives rejetées** :
+- **localStorage** : Pas cross-device, perte de config si cache vidé
+- **Colonnes dans user_integrations** : Couplage avec Google Calendar, pas extensible
+- **Colonnes dynamiques en BDD (Niveau 2)** : Trop ambitieux pour le premier itération, risque de complexité prématurée
+
+---
+
 ## D053 — FABs pipeline injectés via mobile-nav.js (pas dans le HTML des pages)
 
 **Date** : 2026-03-10

@@ -4,6 +4,58 @@
 
 ---
 
+## Session 2026-03-10 (4) — Colonnes pipeline personnalisables (Niveau 1)
+
+### Résumé
+Les conseillers peuvent désormais renommer, masquer et réordonner les colonnes de leurs pipelines vendeurs et acquéreurs. La config est stockée dans Supabase (table `pipeline_configs`, JSONB) et persiste cross-device.
+
+### Modifications
+
+**`sql/014_pipeline_configs.sql`** (nouveau) :
+- Table `pipeline_configs` avec JSONB `config`, contrainte UNIQUE(user_id, pipeline)
+- RLS policy, trigger `updated_at`, index sur `user_id`
+
+**`js/pipeline-config.js`** (nouveau) :
+- Module partagé IIFE exposé sur `window.PipelineConfig`
+- Constantes par défaut : SELLER_COLUMNS (8), BUYER_STATUS_COLUMNS (5), BUYER_PROPERTY_COLUMNS (7)
+- Fonctions : `load()`, `save()` (debounce 300ms), `getEffectiveColumns()`, `getVisibleColumns()`, `getAllColumns()`
+- Migration one-shot : `migrateBuyerLocalStorageLabels()` (localStorage → Supabase)
+
+**`vendeurs.html`** :
+- Pipeline dynamifié : HTML statique (8 colonnes) remplacé par rendu JS (`renderSellerPipeline()`)
+- Constante unifiée `SELLER_COLUMNS` (fusionne SELLER_TABS + COLUMN_COLORS + header images)
+- CSS grid `repeat(var(--pipeline-cols, 8), ...)` (dynamique)
+- Modale de personnalisation : renommer (input), masquer (toggle oeil), réordonner (drag handles)
+- `openMovePopup()` affiche TOUTES les colonnes (y compris masquées)
+- Bouton gear dans la search bar
+
+**`acquereurs.html`** :
+- Import `pipeline-config.js`, constantes dérivées de PipelineConfig
+- `getCustomLabels()` / `saveCustomLabel()` supprimés (remplacés par PipelineConfig)
+- `BUYER_TABS` dérivé dynamiquement
+- Modale enrichie : drag handles + toggle visibilité (en plus du rename existant)
+- `openMovePopup()` utilise `getAllBuyerColumns()` (toutes colonnes)
+- Init asynchrone : charge la config Supabase avant le premier rendu
+
+### Fichiers créés/modifiés
+- sql/014_pipeline_configs.sql (nouveau)
+- js/pipeline-config.js (nouveau)
+- vendeurs.html (modifié)
+- acquereurs.html (modifié)
+- docs/ARCHITECTURE.md (mis à jour)
+- docs/DECISIONS.md (D055 ajoutée)
+
+### Points d'attention / bugs connus
+- **Migration SQL requise** : Exécuter `sql/014_pipeline_configs.sql` dans Supabase SQL Editor avant déploiement
+- Le move popup affiche intentionnellement toutes les colonnes (y compris masquées) pour éviter de piéger des leads
+- Minimum 2 colonnes visibles obligatoire (validation côté client)
+
+### Prochaines étapes prioritaires
+- Tester en production après migration SQL
+- Envisager Niveau 2 (colonnes 100% custom) si retour utilisateur le justifie
+
+---
+
 ## Session 2026-03-10 (3) — Touch drag & drop iPad
 
 ### Résumé

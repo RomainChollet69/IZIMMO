@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="css/mobile.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
+    <script src="js/pipeline-config.js?v=250310"></script>
     <script src="js/workflows.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/audio-recorder.js"></script>
@@ -869,7 +870,35 @@
             align-items: center;
             gap: 10px;
             margin-bottom: 10px;
+            padding: 6px 4px;
+            border-radius: 8px;
+            cursor: grab;
+            transition: opacity 0.15s;
         }
+        .col-settings-row:active { cursor: grabbing; }
+        .col-settings-row.hidden-col { opacity: 0.45; }
+        .col-settings-row.drag-over-row { border-top: 2px solid #667eea; }
+        .col-drag-handle {
+            color: #CBD5E1;
+            cursor: grab;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .col-vis-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+        .col-vis-btn:hover { background: #F1F5F9; }
         .col-settings-color {
             width: 14px;
             height: 14px;
@@ -3605,25 +3634,14 @@
 
     <script>
         // ===== DOUBLE VUE PIPELINE =====
-        const STATUS_COLUMNS = [
-            { key: 'nouveau', label: 'NOUVEAUX', title: 'Premier contact', icon: '🆕', color: '#42A5F5' },
-            { key: 'actif', label: 'RECHERCHE ACTIVE', title: 'Critères définis, envoi de biens', icon: '🔍', color: '#AB47BC' },
-            { key: 'achete_avec_moi', label: 'ACHETÉS AVEC MOI 🎉', title: 'Mes transactions', icon: '🎉', color: '#66BB6A' },
-            { key: 'achete_ailleurs', label: 'ACHETÉS AILLEURS 🔄', title: 'Ont trouvé sans moi', icon: '🔄', color: '#F59E0B' },
-            { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350' }
-        ];
-
-        const PROPERTY_COLUMNS = [
-            { key: 'studio_t1', label: 'STUDIO / T1', title: 'Produits d\'investissement', icon: '🏢', color: '#42A5F5' },
-            { key: 't2', label: 'T2', title: 'Appartements 2 pièces', icon: '🏢', color: '#7C4DFF' },
-            { key: 't3', label: 'T3', title: 'Appartements 3 pièces', icon: '🏢', color: '#26A69A' },
-            { key: 't4_plus', label: 'T4 ET PLUS', title: 'Grands appartements', icon: '🏢', color: '#FF7043' },
-            { key: 'maison_small', label: 'MAISONS < 500K', title: 'Maisons budget modéré', icon: '🏡', color: '#66BB6A' },
-            { key: 'maison_big', label: 'MAISONS ≥ 500K', title: 'Maisons haut de gamme', icon: '🏡', color: '#AB47BC' },
-            { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C' }
-        ];
+        // Colonnes par défaut — source de vérité dans PipelineConfig
+        const STATUS_COLUMNS = PipelineConfig.DEFAULT_BUYER_STATUS_COLUMNS;
+        const PROPERTY_COLUMNS = PipelineConfig.DEFAULT_BUYER_PROPERTY_COLUMNS;
 
         let currentPipelineView = localStorage.getItem('leon_buyer_pipeline_view') || 'status';
+
+        // Colonnes effectives (chargées depuis Supabase au init)
+        let effectiveBuyerColumns = { status: null, property_type: null };
 
         /** Détermine la colonne "type de bien" d'un acquéreur selon ses critères */
         function getBuyerPropertyColumn(buyer) {
@@ -3644,23 +3662,24 @@
             return 'autre';
         }
 
-        /** Retourne les colonnes actives selon la vue courante */
+        /** Retourne les colonnes visibles selon la vue courante (depuis PipelineConfig) */
         function getActiveColumns() {
-            return currentPipelineView === 'property_type' ? PROPERTY_COLUMNS : STATUS_COLUMNS;
+            return PipelineConfig.getVisibleColumns('buyers', currentPipelineView);
         }
 
-        /** Retourne les labels custom depuis localStorage */
-        function getCustomLabels() {
+        /** Retourne toutes les colonnes (y compris masquées) pour le move popup */
+        function getAllBuyerColumns(view) {
+            return PipelineConfig.getAllColumns('buyers', view || 'status');
+        }
+
+        /** Charge la config pipeline depuis Supabase */
+        async function initBuyerPipeline() {
             try {
-                return JSON.parse(localStorage.getItem('leon_buyer_column_labels') || '{}');
-            } catch { return {}; }
-        }
-
-        /** Sauvegarde un label custom */
-        function saveCustomLabel(key, label) {
-            const labels = getCustomLabels();
-            labels[key] = label;
-            localStorage.setItem('leon_buyer_column_labels', JSON.stringify(labels));
+                await PipelineConfig.migrateBuyerLocalStorageLabels();
+                await PipelineConfig.load('buyers');
+            } catch (e) {
+                console.error('[Pipeline] Erreur chargement config acquéreurs:', e);
+            }
         }
 
         // Stub gamification — module supprimé, appels conservés pour compatibilité future
@@ -4916,13 +4935,8 @@
         }
 
         // ===== MOBILE TABS =====
-        const BUYER_TABS = [
-            { status: 'nouveau', icon: '🆕', label: 'Nouveaux' },
-            { status: 'actif', icon: '🔍', label: 'Actifs' },
-            { status: 'achete_avec_moi', icon: '🎉', label: 'Achetés avec moi' },
-            { status: 'achete_ailleurs', icon: '🔄', label: 'Achetés ailleurs' },
-            { status: 'abandon', icon: '❌', label: 'Abandon' }
-        ];
+        // BUYER_TABS dérivé de PipelineConfig (compat avec le code existant)
+        const BUYER_TABS = STATUS_COLUMNS.map(c => ({ status: c.key, icon: c.icon, label: c.label }));
         let mobileActiveTab = localStorage.getItem('leon_mobile_tab_buyers') || 'nouveau';
 
         function isMobile() { return window.innerWidth <= 768; }
@@ -4970,11 +4984,13 @@
             if (!buyer) return;
             const container = document.getElementById('movePopupOptions');
             container.innerHTML = '';
-            BUYER_TABS.filter(t => t.status !== buyer.status).forEach(tab => {
+            // Montrer TOUTES les colonnes status (y compris masquées) pour ne pas piéger de leads
+            const allCols = getAllBuyerColumns('status');
+            allCols.filter(c => c.key !== buyer.status).forEach(col => {
                 const btn = document.createElement('button');
                 btn.className = 'move-popup-option';
-                btn.innerHTML = `<span>${tab.icon}</span> ${tab.label}`;
-                btn.addEventListener('click', () => moveBuyer(buyerId, tab.status));
+                btn.innerHTML = `<span>${col.icon}</span> ${escapeHtml(col.label)}`;
+                btn.addEventListener('click', () => moveBuyer(buyerId, col.key));
                 container.appendChild(btn);
             });
             document.getElementById('movePopup').classList.add('active');
@@ -5105,23 +5121,21 @@
             });
 
             const columns = getActiveColumns();
-            const customLabels = getCustomLabels();
             const pipeline = document.querySelector('.pipeline');
             if (!pipeline) return;
 
             // Adapter le nombre de colonnes CSS
             pipeline.style.setProperty('--pipeline-cols', columns.length);
 
-            // Régénérer les colonnes HTML
+            // Régénérer les colonnes HTML (labels déjà fusionnés par PipelineConfig)
             pipeline.innerHTML = columns.map(col => {
-                const displayLabel = customLabels[col.key] || col.label;
                 return `
                 <div class="column" data-status="${col.key}">
                     <div class="column-top">
                         <div class="column-header header-${col.key}">
-                            <div class="column-label">${displayLabel}</div>
+                            <div class="column-label">${escapeHtml(col.label)}</div>
                         </div>
-                        <div class="column-title">${col.title}</div>
+                        <div class="column-title">${escapeHtml(col.title || '')}</div>
                         <div class="column-count"><span>📋</span><span class="count">0</span></div>
                     </div>
                     <div class="cards-container" id="${col.key}-container"></div>
@@ -5132,9 +5146,8 @@
             const tabsContainer = document.getElementById('mobileTabs');
             if (tabsContainer) {
                 tabsContainer.innerHTML = columns.map((col, i) => {
-                    const displayLabel = customLabels[col.key] || col.label;
-                    const shortLabel = displayLabel.length > 15 ? displayLabel.substring(0, 15) + '…' : displayLabel;
-                    return `<button class="mobile-tab${i === 0 ? ' active' : ''}" data-status="${col.key}">${col.icon} ${shortLabel} <span class="tab-count">(0)</span></button>`;
+                    const shortLabel = col.label.length > 15 ? col.label.substring(0, 15) + '…' : col.label;
+                    return `<button class="mobile-tab${i === 0 ? ' active' : ''}" data-status="${col.key}">${col.icon} ${escapeHtml(shortLabel)} <span class="tab-count">(0)</span></button>`;
                 }).join('');
 
                 // Réattacher les handlers de clic sur les tabs
@@ -5159,20 +5172,68 @@
             if (firstKey && isMobile()) setMobileTab(firstKey);
         }
 
-        /** Ouvre la modal de personnalisation des titres de colonnes */
+        /** Ouvre la modal de personnalisation des colonnes (renommer, masquer, réordonner) */
+        let buyerColSettingsDragItem = null;
+
         function openColumnSettings() {
-            const columns = getActiveColumns();
-            const customLabels = getCustomLabels();
+            const defaults = PipelineConfig.getDefaults('buyers', currentPipelineView);
+            const defaultsByKey = {};
+            defaults.forEach(d => { defaultsByKey[d.key] = d; });
+
+            // Toutes les colonnes (y compris masquées)
+            const allCols = PipelineConfig.getAllColumns('buyers', currentPipelineView);
+
             const container = document.getElementById('colSettingsRows');
-            container.innerHTML = columns.map(col => {
-                const currentLabel = customLabels[col.key] || col.label;
-                return `
-                    <div class="col-settings-row">
-                        <div class="col-settings-color" style="background:${col.color}"></div>
-                        <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${col.label}" value="${currentLabel}">
-                        <span class="col-settings-default" title="Remettre le titre par défaut" data-col-key="${col.key}">reset</span>
-                    </div>`;
+            container.innerHTML = allCols.map((col, i) => {
+                const def = defaultsByKey[col.key] || col;
+                const isVisible = col.visible !== false;
+                return `<div class="col-settings-row${isVisible ? '' : ' hidden-col'}" data-key="${col.key}" data-index="${i}" draggable="true">
+                    <span class="col-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
+                    <div class="col-settings-color" style="background:${col.color}"></div>
+                    <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${escapeHtml(def.label)}" value="${escapeHtml(col.label)}">
+                    <button class="col-vis-btn" data-visible="${isVisible}" title="${isVisible ? 'Masquer' : 'Afficher'}">${isVisible ? '👁️' : '👁️‍🗨️'}</button>
+                    <span class="col-settings-default" title="Remettre le titre par défaut" data-col-key="${col.key}">reset</span>
+                </div>`;
             }).join('');
+
+            // Drag-and-drop pour réordonner
+            container.querySelectorAll('.col-settings-row').forEach(item => {
+                item.addEventListener('dragstart', e => {
+                    buyerColSettingsDragItem = item;
+                    item.style.opacity = '0.4';
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                item.addEventListener('dragend', () => {
+                    item.style.opacity = '';
+                    container.querySelectorAll('.drag-over-row').forEach(el => el.classList.remove('drag-over-row'));
+                    buyerColSettingsDragItem = null;
+                });
+                item.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (buyerColSettingsDragItem && buyerColSettingsDragItem !== item) {
+                        item.classList.add('drag-over-row');
+                    }
+                });
+                item.addEventListener('dragleave', () => item.classList.remove('drag-over-row'));
+                item.addEventListener('drop', e => {
+                    e.preventDefault();
+                    item.classList.remove('drag-over-row');
+                    if (buyerColSettingsDragItem && buyerColSettingsDragItem !== item) {
+                        container.insertBefore(buyerColSettingsDragItem, item);
+                    }
+                });
+            });
+
+            // Toggle visibilité
+            container.querySelectorAll('.col-vis-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isVis = btn.dataset.visible === 'true';
+                    btn.dataset.visible = !isVis;
+                    btn.textContent = !isVis ? '👁️' : '👁️‍🗨️';
+                    btn.title = !isVis ? 'Masquer' : 'Afficher';
+                    btn.closest('.col-settings-row').classList.toggle('hidden-col', isVis);
+                });
+            });
 
             // Reset buttons
             container.querySelectorAll('.col-settings-default').forEach(btn => {
@@ -5190,23 +5251,44 @@
             document.getElementById('colSettingsOverlay').classList.remove('active');
         }
 
-        function saveColumnSettings() {
-            const inputs = document.querySelectorAll('#colSettingsRows .col-settings-input');
-            inputs.forEach(input => {
-                const key = input.dataset.colKey;
-                const val = input.value.trim().toUpperCase();
-                const def = input.dataset.default;
-                if (val && val !== def) {
-                    saveCustomLabel(key, val);
-                } else {
-                    // Supprimer le custom label si c'est le défaut
-                    const labels = getCustomLabels();
-                    delete labels[key];
-                    localStorage.setItem('leon_buyer_column_labels', JSON.stringify(labels));
-                }
+        async function saveColumnSettings() {
+            const rows = document.querySelectorAll('#colSettingsRows .col-settings-row');
+            const MIN_VISIBLE = 2;
+
+            // Construire la config pour la vue courante
+            const columns = [];
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const key = row.dataset.key;
+                const input = row.querySelector('.col-settings-input');
+                const visBtn = row.querySelector('.col-vis-btn');
+                const isVisible = visBtn.dataset.visible === 'true';
+                const label = input.value.trim();
+                const defaultLabel = input.dataset.default;
+
+                if (isVisible) visibleCount++;
+                columns.push({
+                    key,
+                    label: label !== defaultLabel ? label : null,
+                    visible: isVisible
+                });
             });
+
+            if (visibleCount < MIN_VISIBLE) {
+                alert('Minimum 2 colonnes doivent rester visibles.');
+                return;
+            }
+
+            // Charger la config existante pour conserver l'autre vue
+            const existingConfig = await PipelineConfig.load('buyers') || {};
+            const configKey = currentPipelineView === 'property_type' ? 'property_columns' : 'status_columns';
+            existingConfig[configKey] = columns;
+
+            await PipelineConfig.save('buyers', existingConfig);
+            PipelineConfig.invalidateCache('buyers');
+            await PipelineConfig.load('buyers');
+
             closeColumnSettings();
-            // Ré-appliquer les labels dans le pipeline
             switchPipelineView(currentPipelineView);
         }
 
@@ -7803,8 +7885,11 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialiser la vue pipeline (status ou property_type)
-            switchPipelineView(currentPipelineView);
+            // Charger la config pipeline depuis Supabase AVANT le rendu
+            initBuyerPipeline().then(() => {
+                // Initialiser la vue pipeline (status ou property_type)
+                switchPipelineView(currentPipelineView);
+            });
 
             // Handler toggle vue (bottom bar)
             document.querySelectorAll('.view-toggle-btn').forEach(btn => {
