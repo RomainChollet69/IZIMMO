@@ -104,32 +104,29 @@ const PipelineOnboarding = {
     // ÉTAPE 1 : Bravo, ta première fiche !
     step1_bravoFiche() {
         this.removeSpotlight();
-        this.setSpotlight(this.targetCard);
 
         // Alléger l'overlay pour que la carte soit bien éclairée
         if (this.overlay) {
             this.overlay.style.background = 'rgba(15, 23, 42, 0.15)';
         }
 
-        // Scroller la colonne si nécessaire
-        const column = this.targetCard.closest('.column-content');
-        if (column) {
-            const cardTop = this.targetCard.offsetTop;
-            const columnHeight = column.clientHeight;
-            if (cardTop > columnHeight / 2) {
-                column.scrollTop = cardTop - 100;
-            }
-        }
+        // Scroller la carte en vue (pipeline horizontal + colonne verticale)
+        this.targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
 
-        this.showTooltip({
-            target: this.targetCard,
-            title: '🎉 Bravo, ta première fiche !',
-            text: 'Léon a transformé ta dictée en fiche complète. Toutes les infos sont là : nom, téléphone, adresse, budget…',
-            buttonText: 'Voir la fiche →',
-            showSkip: true,
-            preferred: 'right',
-            onButtonClick: () => this.goToStep(2)
-        });
+        // Attendre la fin du scroll pour positionner correctement le tooltip
+        setTimeout(() => {
+            this.setSpotlight(this.targetCard);
+
+            this.showTooltip({
+                target: this.targetCard,
+                title: '🎉 Bravo, ta première fiche !',
+                text: 'Léon a transformé ta dictée en fiche complète. Toutes les infos sont là : nom, téléphone, adresse, budget…',
+                buttonText: 'Voir la fiche →',
+                showSkip: true,
+                preferred: 'right',
+                onButtonClick: () => this.goToStep(2)
+            });
+        }, 400);
     },
 
     // ÉTAPE 2 : Tout est rangé au bon endroit
