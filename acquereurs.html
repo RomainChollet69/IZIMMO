@@ -904,9 +904,18 @@
             height: 14px;
             border-radius: 50%;
             flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 10px;
+        }
+        .col-settings-inputs-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
         }
         .col-settings-input {
-            flex: 1;
+            width: 100%;
             padding: 8px 12px;
             border: 1.5px solid #E5E7EB;
             border-radius: 8px;
@@ -914,6 +923,12 @@
             font-size: 14px;
             color: #1E293B;
             transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .col-settings-input.col-subtitle-input {
+            font-size: 12px;
+            padding: 5px 12px;
+            color: #64748B;
         }
         .col-settings-input:focus {
             outline: none;
@@ -5190,9 +5205,12 @@
                 return `<div class="col-settings-row${isVisible ? '' : ' hidden-col'}" data-key="${col.key}" data-index="${i}" draggable="true">
                     <span class="col-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
                     <div class="col-settings-color" style="background:${col.color}"></div>
-                    <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${escapeHtml(def.label)}" value="${escapeHtml(col.label)}">
+                    <div class="col-settings-inputs-wrap">
+                        <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${escapeHtml(def.label)}" value="${escapeHtml(col.label)}" placeholder="Titre">
+                        <input type="text" class="col-settings-input col-subtitle-input" data-col-key="${col.key}-subtitle" data-default="${escapeHtml(def.title || '')}" value="${escapeHtml(col.title || '')}" placeholder="Sous-titre">
+                    </div>
                     <button class="col-vis-btn" data-visible="${isVisible}" title="${isVisible ? 'Masquer' : 'Afficher'}">${isVisible ? '👁️' : '👁️‍🗨️'}</button>
-                    <span class="col-settings-default" title="Remettre le titre par défaut" data-col-key="${col.key}">reset</span>
+                    <span class="col-settings-default" title="Remettre par défaut" data-col-key="${col.key}">reset</span>
                 </div>`;
             }).join('');
 
@@ -5235,12 +5253,14 @@
                 });
             });
 
-            // Reset buttons
+            // Reset buttons (titre + sous-titre)
             container.querySelectorAll('.col-settings-default').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const key = btn.dataset.colKey;
-                    const input = container.querySelector(`.col-settings-input[data-col-key="${key}"]`);
-                    if (input) input.value = input.dataset.default;
+                    const titleInput = container.querySelector(`.col-settings-input[data-col-key="${key}"]`);
+                    const subtitleInput = container.querySelector(`.col-settings-input[data-col-key="${key}-subtitle"]`);
+                    if (titleInput) titleInput.value = titleInput.dataset.default;
+                    if (subtitleInput) subtitleInput.value = subtitleInput.dataset.default;
                 });
             });
 
@@ -5260,16 +5280,20 @@
             let visibleCount = 0;
             rows.forEach(row => {
                 const key = row.dataset.key;
-                const input = row.querySelector('.col-settings-input');
+                const titleInput = row.querySelector('.col-settings-input:not(.col-subtitle-input)');
+                const subtitleInput = row.querySelector('.col-subtitle-input');
                 const visBtn = row.querySelector('.col-vis-btn');
                 const isVisible = visBtn.dataset.visible === 'true';
-                const label = input.value.trim();
-                const defaultLabel = input.dataset.default;
+                const label = titleInput.value.trim();
+                const defaultLabel = titleInput.dataset.default;
+                const title = subtitleInput ? subtitleInput.value.trim() : '';
+                const defaultTitle = subtitleInput ? subtitleInput.dataset.default : '';
 
                 if (isVisible) visibleCount++;
                 columns.push({
                     key,
                     label: label !== defaultLabel ? label : null,
+                    title: title !== defaultTitle ? title : null,
                     visible: isVisible
                 });
             });
@@ -7977,8 +8001,15 @@
                 if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) closeModal();
             });
             // Backdrop click — ferme si pas de modifications
+            // On vérifie que mousedown ET click sont sur le backdrop pour éviter la fermeture
+            // accidentelle lors de la sélection de texte qui déborde du contenu
+            let modalMouseDownTarget = null;
+            document.getElementById('modal').addEventListener('mousedown', e => {
+                modalMouseDownTarget = e.target;
+            });
             document.getElementById('modal').addEventListener('click', e => {
-                if (e.target === document.getElementById('modal')) closeModal();
+                const modal = document.getElementById('modal');
+                if (e.target === modal && modalMouseDownTarget === modal) closeModal();
             });
 
             // Grab & scroll horizontal géré par setupPipelineGrab() dans switchPipelineView()

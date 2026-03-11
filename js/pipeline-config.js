@@ -16,14 +16,14 @@ const PipelineConfig = (function () {
     // ===== COLONNES PAR DÉFAUT =====
 
     const DEFAULT_SELLER_COLUMNS = [
-        { key: 'hot', label: 'LEADS CHAUDES', icon: '🔥', color: '#FF6B6B', headerImage: 'img/chaud_fond_carte_pipe_vente.png' },
-        { key: 'warm', label: 'LEADS TIÈDES', icon: '🟠', color: '#FFA726', headerImage: 'img/tiede_fond_carte_pipe_vente.png' },
-        { key: 'cold', label: 'LEADS FROIDES', icon: '🔵', color: '#42A5F5', headerImage: 'img/froid_fond_carte_pipe_vente.png' },
-        { key: 'off_market', label: '🔒 OFF MARKET', icon: '🔒', color: '#9B59B6', headerImage: 'img/offmarket.png' },
-        { key: 'mandate', label: 'SOUS MANDATS', icon: '📋', color: '#66BB6A', headerImage: 'img/mandat_fond_carte_pipe_vente.png' },
-        { key: 'competitor', label: '🏢 CONCURRENTS / PAP', icon: '🏢', color: '#78909C', headerImage: 'img/concurrence.png' },
-        { key: 'sold', label: 'VENDUS', icon: '✅', color: '#AB47BC', headerImage: 'img/vendu_fond_carte_pipe_vente.png' },
-        { key: 'lost', label: 'PERDUS', icon: '❌', color: '#BDBDBD', headerImage: 'img/perdu_fond_carte_pipe_vente.png' }
+        { key: 'hot', label: 'LEADS CHAUDES', title: 'Prospects prêts à - 30 Jours', icon: '🔥', color: '#FF6B6B', headerImage: 'img/chaud_fond_carte_pipe_vente.png' },
+        { key: 'warm', label: 'LEADS TIÈDES', title: 'Prospects prêts entre 30 et 60 jours', icon: '🟠', color: '#FFA726', headerImage: 'img/tiede_fond_carte_pipe_vente.png' },
+        { key: 'cold', label: 'LEADS FROIDES', title: 'Prospects à 60 Jours et +', icon: '🔵', color: '#42A5F5', headerImage: 'img/froid_fond_carte_pipe_vente.png' },
+        { key: 'off_market', label: '🔒 OFF MARKET', title: 'Biens visitables hors mandats', icon: '🔒', color: '#9B59B6', headerImage: 'img/offmarket.png' },
+        { key: 'mandate', label: 'SOUS MANDATS', title: 'Mandats signés', icon: '📋', color: '#66BB6A', headerImage: 'img/mandat_fond_carte_pipe_vente.png' },
+        { key: 'competitor', label: '🏢 CONCURRENTS / PAP', title: 'Biens chez la concurrence', icon: '🏢', color: '#78909C', headerImage: 'img/concurrence.png' },
+        { key: 'sold', label: 'VENDUS', title: 'Biens vendus', icon: '✅', color: '#AB47BC', headerImage: 'img/vendu_fond_carte_pipe_vente.png' },
+        { key: 'lost', label: 'PERDUS', title: 'Leads perdus / Abandonnés', icon: '❌', color: '#BDBDBD', headerImage: 'img/perdu_fond_carte_pipe_vente.png' }
     ];
 
     const DEFAULT_BUYER_STATUS_COLUMNS = [
@@ -181,6 +181,7 @@ const PipelineConfig = (function () {
             result.push({
                 ...def,
                 label: userCol.label || def.label,
+                title: userCol.title != null ? userCol.title : def.title,
                 visible: userCol.visible !== false
             });
         });

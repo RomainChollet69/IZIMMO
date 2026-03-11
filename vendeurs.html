@@ -610,9 +610,18 @@
             height: 14px;
             border-radius: 50%;
             flex-shrink: 0;
+            align-self: flex-start;
+            margin-top: 10px;
+        }
+        .col-settings-inputs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
         }
         .col-settings-item input[type="text"] {
-            flex: 1;
+            width: 100%;
             border: 1px solid #E2E8F0;
             border-radius: 8px;
             padding: 8px 10px;
@@ -620,6 +629,12 @@
             font-family: 'Inter', sans-serif;
             color: #334155;
             min-width: 0;
+            box-sizing: border-box;
+        }
+        .col-settings-item input.col-subtitle-input {
+            font-size: 12px;
+            padding: 5px 10px;
+            color: #64748B;
         }
         .col-settings-item input[type="text"]:focus {
             outline: none;
@@ -5806,17 +5821,8 @@
         // ===== COLONNES PIPELINE (source de vérité unifiée) =====
         const SELLER_COLUMNS = PipelineConfig.DEFAULT_SELLER_COLUMNS;
 
-        // Descriptions des colonnes (affichées sous le header)
-        const SELLER_COLUMN_TITLES = {
-            hot: 'Prospects prêts à - 30 Jours',
-            warm: 'Prospects prêts entre 30 et 60 jours',
-            cold: 'Prospects à 60 Jours et +',
-            off_market: 'Biens visitables hors mandats',
-            mandate: 'Mandats signés',
-            competitor: 'Biens chez la concurrence',
-            sold: 'Biens vendus',
-            lost: 'Leads perdus / Abandonnés'
-        };
+        // Descriptions des colonnes : désormais intégrées dans DEFAULT_SELLER_COLUMNS (pipeline-config.js)
+        // et personnalisables via la modale settings
 
         // Colonnes visibles (chargées au init, mises à jour par la personnalisation)
         let effectiveSellerColumns = SELLER_COLUMNS.map(c => ({ ...c, visible: true }));
@@ -5850,13 +5856,12 @@
 
             // Générer les colonnes desktop
             pipeline.innerHTML = visibleCols.map(col => {
-                const title = SELLER_COLUMN_TITLES[col.key] || '';
                 return `<div class="column" data-status="${col.key}">
                     <div class="column-top">
                         <div class="column-header header-${col.key}" style="background-image: url('${col.headerImage || ''}')">
                             <div class="column-label">${escapeHtml(col.label)}</div>
                         </div>
-                        <div class="column-title">${escapeHtml(title)}</div>
+                        <div class="column-title">${escapeHtml(col.title || '')}</div>
                         <div class="column-count"><span>📋</span><span class="count">0</span></div>
                     </div>
                     <div class="cards-container" id="${col.key}-container"></div>
@@ -5953,9 +5958,12 @@
                 return `<div class="col-settings-item${isVisible ? '' : ' hidden-col'}" data-key="${col.key}" data-index="${i}" draggable="true">
                     <span class="col-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
                     <span class="col-color-dot" style="background:${col.color}"></span>
-                    <input type="text" value="${escapeHtml(col.label)}" data-default="${escapeHtml(def.label)}" />
+                    <div class="col-settings-inputs">
+                        <input type="text" value="${escapeHtml(col.label)}" data-default="${escapeHtml(def.label)}" placeholder="Titre" />
+                        <input type="text" class="col-subtitle-input" value="${escapeHtml(col.title || '')}" data-default="${escapeHtml(def.title || '')}" placeholder="Sous-titre" />
+                    </div>
                     <button class="col-vis-btn" data-visible="${isVisible}" title="${isVisible ? 'Masquer' : 'Afficher'}">${isVisible ? '👁️' : '👁️‍🗨️'}</button>
-                    <button class="col-reset-btn" title="Réinitialiser le nom">reset</button>
+                    <button class="col-reset-btn" title="Réinitialiser">reset</button>
                 </div>`;
             }).join('');
 
@@ -6000,11 +6008,11 @@
                 });
             });
 
-            // Reset label
+            // Reset label + sous-titre
             list.querySelectorAll('.col-reset-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const input = btn.closest('.col-settings-item').querySelector('input');
-                    input.value = input.dataset.default;
+                    const inputs = btn.closest('.col-settings-item').querySelectorAll('input');
+                    inputs.forEach(input => { input.value = input.dataset.default; });
                 });
             });
 
@@ -6026,17 +6034,22 @@
             let visibleCount = 0;
             items.forEach(item => {
                 const key = item.dataset.key;
-                const input = item.querySelector('input');
+                const inputs = item.querySelectorAll('input');
+                const labelInput = inputs[0];
+                const subtitleInput = inputs[1];
                 const visBtn = item.querySelector('.col-vis-btn');
                 const isVisible = visBtn.dataset.visible === 'true';
-                const label = input.value.trim();
-                const defaultLabel = input.dataset.default;
+                const label = labelInput.value.trim();
+                const defaultLabel = labelInput.dataset.default;
+                const title = subtitleInput ? subtitleInput.value.trim() : '';
+                const defaultTitle = subtitleInput ? subtitleInput.dataset.default : '';
 
                 if (isVisible) visibleCount++;
 
                 columns.push({
                     key: key,
                     label: label !== defaultLabel ? label : null,
+                    title: title !== defaultTitle ? title : null,
                     visible: isVisible
                 });
             });
@@ -6509,6 +6522,7 @@
                 html += '<div class="detail-section"><div class="detail-section-title">Concurrent</div>';
                 if (seller.competitor_agency) html += `<div class="detail-info-row"><span class="detail-label">🏢</span>${escapeHtml(seller.competitor_agency)}</div>`;
                 if (seller.competitor_url) html += `<div class="detail-info-row"><span class="detail-label">🔗</span><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;text-decoration:none;word-break:break-all">Voir l'annonce</a></div>`;
+                if (seller.competitor_date) html += `<div class="detail-info-row"><span class="detail-label">📅</span>En ligne depuis le ${new Date(seller.competitor_date).toLocaleDateString('fr-FR')}</div>`;
                 html += '</div>';
             }
 
@@ -7794,6 +7808,7 @@
             // Competitor specifics
             if (seller.status === 'competitor') {
                 if (seller.competitor_agency) ext += `<div class="card-info" style="background:#ECEFF1;padding:4px 8px;border-radius:6px;font-weight:600;font-size:12px;display:inline-block;margin-top:4px">🏢 ${escapeHtml(seller.competitor_agency)}</div>`;
+                if (seller.competitor_date) ext += `<div class="card-info" style="font-size:11px;color:#78909C">📅 ${new Date(seller.competitor_date).toLocaleDateString('fr-FR')}</div>`;
                 if (seller.competitor_url) ext += `<div class="card-info"><a href="${escapeHtml(seller.competitor_url)}" target="_blank" style="color:#667eea;font-size:12px;text-decoration:underline">🔗 Voir l'annonce</a></div>`;
             }
 
@@ -9273,8 +9288,12 @@
         }
 
         async function handleCompetitorUrl() {
-            const url = document.getElementById('competitorUrlInput').value.trim();
+            let url = document.getElementById('competitorUrlInput').value.trim();
             if (!url || !pendingCompetitorSellerId) { closeCompetitorPopup(); return; }
+            // Auto-ajouter https:// si pas de protocole (ex: bienici.com/annonce/...)
+            if (url && !url.match(/^https?:\/\//i)) {
+                url = 'https://' + url;
+            }
 
             const statusEl = document.getElementById('competitorScrapingStatus');
             statusEl.style.display = 'block';
@@ -10899,8 +10918,15 @@
                 if (e.key === 'Escape' && document.getElementById('modal').classList.contains('active')) closeModal();
             });
             // Backdrop click — ferme si pas de modifications
+            // On vérifie que mousedown ET click sont sur le backdrop pour éviter la fermeture
+            // accidentelle lors de la sélection de texte qui déborde du contenu
+            let modalMouseDownTarget = null;
+            document.getElementById('modal').addEventListener('mousedown', e => {
+                modalMouseDownTarget = e.target;
+            });
             document.getElementById('modal').addEventListener('click', e => {
-                if (e.target === document.getElementById('modal')) closeModal();
+                const modal = document.getElementById('modal');
+                if (e.target === modal && modalMouseDownTarget === modal) closeModal();
             });
 
             // Grab & drag horizontal du pipeline
@@ -11226,7 +11252,7 @@
         <div class="move-popup" style="max-width:420px;border-radius:16px">
             <div class="move-popup-title">🏢 Lien de l'annonce concurrente</div>
             <p style="font-size:13px;color:var(--text-light);margin-bottom:12px">Collez le lien de l'annonce sur SeLoger, LeBonCoin, etc.</p>
-            <input type="url" id="competitorUrlInput" placeholder="https://www.seloger.com/..." style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:'Inter',sans-serif">
+            <input type="text" id="competitorUrlInput" placeholder="seloger.com/annonce/..." style="width:100%;padding:10px 12px;border:1px solid var(--border-color);border-radius:8px;font-size:14px;margin-bottom:12px;font-family:'Inter',sans-serif">
             <div id="competitorScrapingStatus" style="display:none;font-size:13px;color:#667eea;margin-bottom:12px">⏳ Récupération des informations...</div>
             <div style="display:flex;gap:8px">
                 <button id="competitorUrlConfirm" style="flex:1;padding:10px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif">Valider</button>
