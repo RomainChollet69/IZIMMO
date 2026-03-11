@@ -10784,20 +10784,25 @@
                 document.getElementById('onboardingSuccess').style.display = 'block';
 
                 // Reload and transition to pipeline
-                setTimeout(async () => {
-                    try {
-                        await loadSellers();
-                    } catch (e) {
-                        console.error('[Onboarding] Erreur rechargement sellers:', e);
-                    }
+                setTimeout(() => {
+                    // 1. Cacher l'onboarding immédiatement (synchrone, garanti)
                     hideOnboarding();
 
-                    // Lancer le tour guidé après la transition (premier lead créé)
-                    setTimeout(() => {
-                        if (typeof PipelineOnboarding !== 'undefined' && PipelineOnboarding.shouldStart()) {
-                            PipelineOnboarding.start();
+                    // 2. Charger les sellers + lancer le tuto (async, non-bloquant)
+                    (async () => {
+                        try {
+                            await loadSellers();
+                        } catch (e) {
+                            console.error('[Onboarding] Erreur rechargement sellers:', e);
                         }
-                    }, 500);
+
+                        // 3. Lancer le tour guidé après le rendu
+                        setTimeout(() => {
+                            if (typeof PipelineOnboarding !== 'undefined' && PipelineOnboarding.shouldStart()) {
+                                PipelineOnboarding.start();
+                            }
+                        }, 500);
+                    })();
                 }, 2000);
 
             } catch (err) {
