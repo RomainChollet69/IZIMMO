@@ -3102,11 +3102,33 @@
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            max-width: 400px;
+            transform: translate(-50%, -50%) scale(0.9);
+            max-width: 420px;
+            text-align: center;
+            padding: 36px 40px;
         }
         #onboarding-tooltip.centered.visible {
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Confetti celebration pour step 4 */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-10px) rotate(0deg) scale(1); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg) scale(0.5); opacity: 0; }
+        }
+        .confetti-container {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 10001;
+            overflow: hidden;
+        }
+        .confetti-piece {
+            position: absolute;
+            top: -10px;
+            border-radius: 2px;
+            animation: confetti-fall ease-out forwards;
         }
 
         #onboarding-tooltip::before {

@@ -263,18 +263,55 @@ const PipelineOnboarding = {
 
         // Faire disparaître les fiches fantômes
         this.fadeOutExampleCards(() => {
+            // Lancer les confettis
+            this.launchConfetti();
+
             // Quand toutes les fantômes ont disparu, afficher la bulle finale
             this.showTooltip({
                 target: null, // Bulle centrée
-                title: '🚀 Ton pipeline est prêt !',
+                title: '🎉 Ton pipeline est prêt !',
                 text: 'Ajoute tes leads par dictée vocale, import Excel ou saisie manuelle. Léon s\'occupe de tout structurer pour toi.',
-                buttonText: 'C\'est parti !',
+                buttonText: 'C\'est parti ! 🚀',
                 buttonLarge: true,
                 showSkip: false,
                 centered: true,
                 onButtonClick: () => this.finish()
             });
         });
+    },
+
+    // Animation confetti de célébration
+    launchConfetti() {
+        const container = document.createElement('div');
+        container.className = 'confetti-container';
+        document.body.appendChild(container);
+
+        const colors = ['#667eea', '#764ba2', '#FF6B6B', '#FFA726', '#66BB6A', '#42A5F5', '#AB47BC', '#FFD93D'];
+        const CONFETTI_COUNT = 60;
+
+        for (let i = 0; i < CONFETTI_COUNT; i++) {
+            const piece = document.createElement('div');
+            piece.className = 'confetti-piece';
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const left = Math.random() * 100;
+            const width = 6 + Math.random() * 8;
+            const height = 4 + Math.random() * 6;
+            const duration = 1.5 + Math.random() * 2;
+            const delay = Math.random() * 0.8;
+
+            piece.style.cssText = `
+                left: ${left}%;
+                width: ${width}px;
+                height: ${height}px;
+                background: ${color};
+                animation-duration: ${duration}s;
+                animation-delay: ${delay}s;
+            `;
+            container.appendChild(piece);
+        }
+
+        // Cleanup après l'animation
+        setTimeout(() => container.remove(), 4000);
     },
 
     // Afficher la bulle tooltip
