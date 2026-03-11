@@ -182,16 +182,23 @@ const PipelineOnboarding = {
         }
 
         this.removeSpotlight();
-        this.setSpotlight(this.targetCard);
 
-        this.showTooltip({
-            target: this.targetCard,
-            title: '👆 Déplace ta fiche d\'une colonne à l\'autre',
-            text: 'Maintiens ta fiche et glisse-la vers une autre colonne. C\'est comme ça que tu feras avancer tes leads dans ton pipeline.',
-            buttonText: null, // Pas de bouton, on attend l'action
-            showSkip: true,
-            preferred: 'top'
-        });
+        // Scroller la carte en vue avant de positionner le tooltip
+        this.targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+
+        // Attendre la fin du scroll pour positionner correctement
+        setTimeout(() => {
+            this.setSpotlight(this.targetCard);
+
+            this.showTooltip({
+                target: this.targetCard,
+                title: '👆 Déplace ta fiche d\'une colonne à l\'autre',
+                text: 'Maintiens ta fiche et glisse-la vers une autre colonne. C\'est comme ça que tu feras avancer tes leads dans ton pipeline.',
+                buttonText: null, // Pas de bouton, on attend l'action
+                showSkip: true,
+                preferred: 'right'
+            });
+        }, 400);
 
         // Réactiver le drag & drop sur la carte
         this.targetCard.style.pointerEvents = 'auto';
