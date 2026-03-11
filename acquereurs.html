@@ -3687,6 +3687,29 @@
             return PipelineConfig.getAllColumns('buyers', view || 'status');
         }
 
+        // Met à jour le select statut avec les colonnes custom actives
+        function updateBuyerStatusSelect() {
+            const select = document.getElementById('status');
+            const currentValue = select.value;
+            const baseOptions = [
+                { value: 'nouveau', label: '🆕 Nouveaux Acquéreurs' },
+                { value: 'actif', label: '🔍 En Recherche Active' },
+                { value: 'achete_avec_moi', label: '🎉 Achetés avec moi' },
+                { value: 'achete_ailleurs', label: '🔄 Achetés ailleurs' },
+                { value: 'abandon', label: '❌ Plus en recherche' }
+            ];
+            const allCols = getAllBuyerColumns('status');
+            allCols.forEach(col => {
+                if (col.key.startsWith('custom_')) {
+                    baseOptions.push({ value: col.key, label: `${col.icon} ${col.label}` });
+                }
+            });
+            select.innerHTML = baseOptions.map(o =>
+                `<option value="${o.value}">${escapeHtml(o.label)}</option>`
+            ).join('');
+            select.value = currentValue;
+        }
+
         /** Charge la config pipeline depuis Supabase */
         async function initBuyerPipeline() {
             try {
@@ -5704,6 +5727,7 @@
             const submitBtn = document.getElementById('submitBtn');
             isNewLead = !submitBtn.dataset.editId;
 
+            updateBuyerStatusSelect();
             document.getElementById('modal').classList.add('active');
             document.body.style.overflow = 'hidden';
 
@@ -6708,7 +6732,8 @@
             }
             document.getElementById('contactDate').value = buyer.contact_date || '';
             document.getElementById('reminder').value = buyer.reminder || '';
-            document.getElementById('status').value = buyer.status || 'new';
+            updateBuyerStatusSelect();
+            document.getElementById('status').value = buyer.status || 'nouveau';
 
             // Critères
             document.querySelectorAll('input[name="criteria"]').forEach(cb => {

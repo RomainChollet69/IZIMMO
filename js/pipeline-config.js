@@ -23,7 +23,10 @@ const PipelineConfig = (function () {
         { key: 'mandate', label: 'SOUS MANDATS', title: 'Mandats signés', icon: '📋', color: '#66BB6A', headerImage: 'img/mandat_fond_carte_pipe_vente.png' },
         { key: 'competitor', label: '🏢 CONCURRENTS / PAP', title: 'Biens chez la concurrence', icon: '🏢', color: '#78909C', headerImage: 'img/concurrence.png' },
         { key: 'sold', label: 'VENDUS', title: 'Biens vendus', icon: '✅', color: '#AB47BC', headerImage: 'img/vendu_fond_carte_pipe_vente.png' },
-        { key: 'lost', label: 'PERDUS', title: 'Leads perdus / Abandonnés', icon: '❌', color: '#BDBDBD', headerImage: 'img/perdu_fond_carte_pipe_vente.png' }
+        { key: 'lost', label: 'PERDUS', title: 'Leads perdus / Abandonnés', icon: '❌', color: '#BDBDBD', headerImage: 'img/perdu_fond_carte_pipe_vente.png' },
+        { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true },
+        { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#00BCD4', hiddenByDefault: true },
+        { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true }
     ];
 
     const DEFAULT_BUYER_STATUS_COLUMNS = [
@@ -31,7 +34,10 @@ const PipelineConfig = (function () {
         { key: 'actif', label: 'RECHERCHE ACTIVE', title: 'Critères définis, envoi de biens', icon: '🔍', color: '#AB47BC' },
         { key: 'achete_avec_moi', label: 'ACHETÉS AVEC MOI 🎉', title: 'Mes transactions', icon: '🎉', color: '#66BB6A' },
         { key: 'achete_ailleurs', label: 'ACHETÉS AILLEURS 🔄', title: 'Ont trouvé sans moi', icon: '🔄', color: '#F59E0B' },
-        { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350' }
+        { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350' },
+        { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true },
+        { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#00BCD4', hiddenByDefault: true },
+        { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true }
     ];
 
     const DEFAULT_BUYER_PROPERTY_COLUMNS = [
@@ -41,7 +47,10 @@ const PipelineConfig = (function () {
         { key: 't4_plus', label: 'T4 ET PLUS', title: 'Grands appartements', icon: '🏢', color: '#FF7043' },
         { key: 'maison_small', label: 'MAISONS < 500K', title: 'Maisons budget modéré', icon: '🏡', color: '#66BB6A' },
         { key: 'maison_big', label: 'MAISONS ≥ 500K', title: 'Maisons haut de gamme', icon: '🏡', color: '#AB47BC' },
-        { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C' }
+        { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C' },
+        { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true },
+        { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#00BCD4', hiddenByDefault: true },
+        { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true }
     ];
 
     // ===== FONCTIONS PUBLIQUES =====
@@ -150,7 +159,7 @@ const PipelineConfig = (function () {
         const defaults = getDefaults(pipeline, view);
         const config = configOverride || _cache[pipeline];
 
-        if (!config) return defaults.map(col => ({ ...col, visible: true }));
+        if (!config) return defaults.map(col => ({ ...col, visible: !col.hiddenByDefault }));
 
         // Déterminer la clé de config selon le pipeline et la vue
         let userColumns;
@@ -162,7 +171,7 @@ const PipelineConfig = (function () {
         }
 
         if (!userColumns || !Array.isArray(userColumns) || userColumns.length === 0) {
-            return defaults.map(col => ({ ...col, visible: true }));
+            return defaults.map(col => ({ ...col, visible: !col.hiddenByDefault }));
         }
 
         // Construire un index des défauts par key
@@ -189,7 +198,7 @@ const PipelineConfig = (function () {
         // Ajouter les colonnes par défaut manquantes (forward-compatible)
         defaults.forEach(col => {
             if (!seenKeys.has(col.key)) {
-                result.push({ ...col, visible: true });
+                result.push({ ...col, visible: !col.hiddenByDefault });
             }
         });
 

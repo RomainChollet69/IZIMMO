@@ -5858,7 +5858,7 @@
             pipeline.innerHTML = visibleCols.map(col => {
                 return `<div class="column" data-status="${col.key}">
                     <div class="column-top">
-                        <div class="column-header header-${col.key}" style="background-image: url('${col.headerImage || ''}')">
+                        <div class="column-header header-${col.key}" style="${col.headerImage ? `background-image: url('${col.headerImage}')` : `background: linear-gradient(135deg, ${col.color}, ${col.color}dd)`}">
                             <div class="column-label">${escapeHtml(col.label)}</div>
                         </div>
                         <div class="column-title">${escapeHtml(col.title || '')}</div>
@@ -8081,6 +8081,7 @@
             const submitBtn = document.getElementById('submitBtn');
             isNewLead = !submitBtn.dataset.editId;
 
+            updateStatusSelect();
             document.getElementById('modal').classList.add('active');
             document.querySelector('.modal-content').scrollTop = 0;
             document.body.style.overflow = 'hidden';
@@ -8887,11 +8888,43 @@
             document.getElementById('noteInput').value = '';
         }
 
+        // ===== SELECT STATUS DYNAMIQUE =====
+        // Met à jour les options du select statut pour inclure les colonnes custom actives
+        function updateStatusSelect() {
+            const select = document.getElementById('status');
+            const currentValue = select.value;
+            // Options de base (statiques) — on garde les icônes originales
+            const baseOptions = [
+                { value: '', label: 'Sélectionnez un statut' },
+                { value: 'hot', label: '🔥 Hot - Prêt à - 30 jours' },
+                { value: 'warm', label: '🟡 Warm - Entre 30 et 60 jours' },
+                { value: 'cold', label: '❄️ Cold - 60 jours et +' },
+                { value: 'off_market', label: '🔒 Off Market' },
+                { value: 'mandate', label: '✅ Sous Mandats' },
+                { value: 'competitor', label: '🏢 Concurrents / PAP' },
+                { value: 'sold', label: '🏆 Vendus' },
+                { value: 'lost', label: '❌ Perdus' }
+            ];
+            // Ajouter les colonnes custom (toutes, pas seulement visibles, pour ne pas bloquer l'édition)
+            const allCols = allSellerColumns || [];
+            allCols.forEach(col => {
+                if (col.key.startsWith('custom_')) {
+                    baseOptions.push({ value: col.key, label: `${col.icon} ${col.label}` });
+                }
+            });
+            select.innerHTML = baseOptions.map(o =>
+                `<option value="${o.value}">${escapeHtml(o.label)}</option>`
+            ).join('');
+            // Restaurer la valeur sélectionnée
+            select.value = currentValue;
+        }
+
         // ===== EDIT / DELETE =====
         function editSeller(id, initialTab) {
             const seller = sellers.find(s => s.id === id);
             if (!seller) return;
 
+            updateStatusSelect();
             document.getElementById('status').value = seller.status || '';
             document.getElementById('source').value = seller.source || '';
             // Referrer field
