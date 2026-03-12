@@ -2154,7 +2154,7 @@
             const channel = p.channel || 'sms';
             const recipient = p.recipient || 'buyer'; // 'buyer' ou 'seller'
 
-            // 1. Trouver le contact
+            // 1. Trouver le contact (par nom, ou par visite si pas de nom)
             const leads = await loadUserLeads();
             let contact = contactId ? leads.find(l => l.id === contactId) : null;
             if (!contact && contactName) {
@@ -2164,6 +2164,16 @@
                     const full = norm(`${l.first_name || ''} ${l.last_name || ''}`);
                     return full.includes(searchName) || searchName.includes(norm(l.last_name));
                 });
+            }
+            // Si pas de contact trouvé par nom, chercher la visite par date/adresse
+            if (!contact && (!contactName || contactName.trim() === '')) {
+                console.log('[Micro:ConfirmVisite] Pas de nom de contact, recherche par visite');
+                const visitResult = await findVisitByContext(p, leads);
+                if (visitResult) {
+                    return await generateMessageFromVisit(visitResult, p, channel, recipient, headers);
+                }
+                showLeonCmdResult({ response: `Je n'ai pas trouvé de visite correspondante. Peux-tu préciser le nom du contact ?` });
+                return;
             }
             if (!contact) {
                 showLeonCmdResult({ response: `Je n'ai pas trouvé de contact "${contactName}" dans tes leads.` });
@@ -2285,6 +2295,101 @@
                 }
                 showLeonCmdResult({
                     response: orch.leon_response || `Message de confirmation de visite pour ${targetName} :`,
+                    message: data.message,
+                    contactPhone: phone,
+                    channel
+                });
+            } catch (err) {
+                console.error('[Micro:ConfirmVisite] Erreur génération:', err);
+                showLeonCmdResult({ response: `Erreur lors de la génération du message : ${err.message}` });
+            }
+        }
+
+        // Recherche visite par date/adresse quand pas de nom de contact
+        async function findVisitByContext(params, leads) {
+            const today = new Date().toISOString().split('T')[0];
+            const sevenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+            const addr = (params.property_address || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+            // Chercher les visites récentes
+            const { data: visits } = await supabaseClient.from('visits')
+                .select('*, sellers(*), buyers(*)')
+                .eq('user_id', userId)
+                .gte('visit_date', sevenDaysAgo)
+                .order('visit_date', { ascending: false })
+                .limit(20);
+
+            if (!visits || visits.length === 0) return null;
+
+            // Filtrer par date si fournie
+            let candidates = visits;
+            if (params.visit_date) {
+                candidates = visits.filter(v => v.visit_date === params.visit_date);
+            }
+
+            // Filtrer par adresse si fournie
+            if (addr && addr.length > 3) {
+                const addrWords = addr.split(/\s+/).filter(w => w.length > 2);
+                const addrMatched = candidates.filter(v => {
+                    const sellerAddr = (v.sellers?.address || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    return addrWords.some(w => sellerAddr.includes(w));
+                });
+                if (addrMatched.length > 0) candidates = addrMatched;
+            }
+
+            if (candidates.length === 0) return null;
+            return candidates[0]; // La plus récente correspondante
+        }
+
+        async function generateMessageFromVisit(visit, params, channel, recipient, headers) {
+            const seller = visit.sellers || null;
+            const buyer = visit.buyers || null;
+            const target = recipient === 'seller' ? (seller || buyer) : (buyer || seller);
+            const targetType = recipient === 'seller' ? 'seller' : 'buyer';
+            const targetName = target ? `${target.first_name || ''} ${target.last_name || ''}`.trim() : '';
+
+            const today = new Date().toISOString().split('T')[0];
+            const visitDate = visit.visit_date || today;
+            const visitTime = visit.visit_time ? visit.visit_time.substring(0, 5) : null;
+            const address = seller?.address || params.property_address || '';
+            const msgType = params.message_type || 'confirmation';
+            const dateLabel = new Date(visitDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+            const customPrompt = msgType === 'retour'
+                ? `Visite effectuée le ${dateLabel}.${address ? ' Adresse : ' + address : ''} L'agent demande un retour/avis sur la visite. NE PAS écrire "de ce jour" ou "d'aujourd'hui".`
+                : `La visite est prévue le ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
+
+            const leadData = {
+                first_name: target?.first_name || '',
+                last_name: target?.last_name || '',
+                phone: target?.phone || '',
+                address: address
+            };
+
+            const { data: { session: sess } } = await supabaseClient.auth.getSession();
+            const meta = sess?.user?.user_metadata || {};
+            const agentName = meta.full_name || meta.name || '';
+            const { data: profile } = await supabaseClient.from('profiles')
+                .select('agency_name').eq('id', userId).maybeSingle();
+            const agencyName = profile?.agency_name || '';
+
+            try {
+                const resp = await fetch('/api/generate-message', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({
+                        channel,
+                        scenario: msgType === 'retour' ? 'retour_visite' : 'confirmation_visite',
+                        leadData, notes: [], customPrompt,
+                        leadType: targetType, agentName, agencyName, tone: 'vous'
+                    })
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (!resp.ok) throw new Error(data.detail || data.error || 'Erreur génération');
+
+                const phone = target?.phone || '';
+                const hasPhone = phone && phone.trim().length > 0;
+                showLeonCmdResult({
+                    response: `Message de ${msgType === 'retour' ? 'retour' : 'confirmation'} de visite pour ${targetName || 'le contact'} :`,
                     message: data.message,
                     contactPhone: phone,
                     channel
