@@ -642,11 +642,8 @@
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) return;
 
-        // Redirection mobile vers micro.html (après auth pour ne pas casser le callback OAuth)
-        if (window.matchMedia('(max-width: 768px)').matches) {
-            window.location.replace('micro.html');
-            return;
-        }
+        // Plus de redirection mobile automatique — home.html est accessible sur mobile
+        // Le micro reste accessible via la bottom nav (bouton central)
 
         const meta = session.user.user_metadata || {};
         const fullName = meta.full_name || meta.name || session.user.email.split('@')[0];
