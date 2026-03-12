@@ -11394,7 +11394,7 @@
             const overlay = document.getElementById('microModalOverlay');
             const iframe = document.getElementById('microModalIframe');
             if (!iframe.src || iframe.src === window.location.href) {
-                iframe.src = 'micro.html?context=sellers';
+                iframe.src = 'micro.html?context=sellers&v=' + Date.now();
             }
             overlay.classList.add('visible');
         }

@@ -8291,7 +8291,7 @@
             const overlay = document.getElementById('microModalOverlay');
             const iframe = document.getElementById('microModalIframe');
             if (!iframe.src || iframe.src === window.location.href) {
-                iframe.src = 'micro.html?context=buyers';
+                iframe.src = 'micro.html?context=buyers&v=' + Date.now();
             }
             overlay.classList.add('visible');
         }
