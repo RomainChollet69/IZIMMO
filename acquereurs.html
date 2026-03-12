@@ -2398,8 +2398,9 @@
         .match-detail-bar .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .match-empty { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
         .off-market-badge { display: inline-flex; align-items: center; gap: 3px; background: rgba(155, 89, 182, 0.12); color: #8E44AD; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px; }
-        .match-indicator { position: absolute; top: 8px; right: 8px; background: #ECFDF5; color: #059669; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 12px; border: 1px solid #A7F3D0; cursor: pointer; z-index: 2; transition: background 0.2s; }
-        .match-indicator:hover { background: #D1FAE5; }
+        .card-top-badges { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; flex-wrap: wrap; }
+        .match-indicator-inline { background: #ECFDF5; color: #059669; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; border: 1px solid #A7F3D0; cursor: pointer; transition: background 0.2s; }
+        .match-indicator-inline:hover { background: #D1FAE5; }
 
         /* ===== VISITES DANS MATCHING ===== */
         .visits-match-section { margin-bottom: 8px; }
@@ -4088,10 +4089,10 @@
             const editId = document.getElementById('submitBtn').dataset.editId;
             if (editId && buyerMatchCounts[editId] !== undefined) {
                 buyerMatchCounts[editId] = Math.max(0, (buyerMatchCounts[editId] || 0) - 1);
-                const badge = document.querySelector(`.buyer-card[data-id="${editId}"] .match-indicator`);
+                const badge = document.querySelector(`.buyer-card[data-id="${editId}"] .match-indicator-inline`);
                 if (badge) {
                     if (buyerMatchCounts[editId] === 0) badge.remove();
-                    else badge.textContent = '🎯 ' + buyerMatchCounts[editId] + ' bien' + (buyerMatchCounts[editId] > 1 ? 's' : '');
+                    else badge.textContent = '🎯 ' + buyerMatchCounts[editId];
                 }
             }
         }
@@ -5487,7 +5488,11 @@
 
             // === COMPACT VIEW ===
             let compact = '<div class="card-compact">';
-            if (buyer.source) compact += getBuyerSourceTag(buyer.source);
+            // Ligne source + matching côte à côte
+            const sourceHtml = buyer.source ? getBuyerSourceTag(buyer.source) : '';
+            const matchCount = buyerMatchCounts[buyer.id] || 0;
+            const matchBadgeInline = matchCount > 0 ? `<span class="match-indicator-inline" data-match-buyer="${buyer.id}">🎯 ${matchCount}</span>` : '';
+            if (sourceHtml || matchBadgeInline) compact += `<div class="card-top-badges">${sourceHtml}${matchBadgeInline}</div>`;
             if (buyer.source === 'recommandation' && buyer.referrer_name) compact += `<div class="referrer-via">via ${escapeHtml(buyer.referrer_name)}</div>`;
             compact += `<div class="card-name">${escapeHtml((buyer.first_name || '') + ' ' + (buyer.last_name || ''))}</div>`;
             compact += compactPropLine;
@@ -5523,16 +5528,10 @@
             </div>`;
             ext += '</div>';
 
-            // Match indicator badge
-            const matchCount = buyerMatchCounts[buyer.id] || 0;
-            const matchIndicator = matchCount > 0
-                ? `<div class="match-indicator" data-match-buyer="${buyer.id}">🎯 ${matchCount} bien${matchCount > 1 ? 's' : ''}</div>`
-                : '';
-
-            card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
+            card.innerHTML = compact + ext + '<div class="card-expand-arrow">▼</div>';
 
             // Click handler on match indicator → open modal on matching tab
-            const matchEl = card.querySelector('.match-indicator');
+            const matchEl = card.querySelector('.match-indicator-inline');
             if (matchEl) {
                 matchEl.addEventListener('click', (e) => {
                     e.stopPropagation();
