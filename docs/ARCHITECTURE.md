@@ -10,7 +10,7 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
-├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée
+├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée (accessible mobile, plus de redirect vers micro)
 ├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes personnalisables + Card Deck mobile + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
@@ -40,7 +40,7 @@ IZIMMO/
 │   ├── social.js               # Logique calendrier social + IA
 │   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
 │   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
-│   ├── pipeline-config.js      # Personnalisation colonnes pipeline (renommer, masquer, réordonner) — Supabase JSONB
+│   ├── pipeline-config.js      # Personnalisation colonnes pipeline (renommer, masquer, réordonner, sous-titres, 3 colonnes custom) — Supabase JSONB
 │   └── maps-config.js          # Clé API Google Maps
 │
 ├── api/                        # Vercel Serverless Functions
@@ -441,7 +441,8 @@ visites.html — Bandeau "Nouvelles demandes"
 | `rooms`         | TEXT        | Nombre de pièces (`T1`, `T2`, `T3`, `T4`, `T5+`)        |
 | `description`   | TEXT        | Description physique du bien                             |
 | `annexes`       | TEXT[]      | `parking`, `cave`, `balcon`, `jardin`, `garage`, `piscine`, `ascenseur` |
-| `status`        | TEXT        | `hot` \| `warm` \| `cold` \| `off_market` …             |
+| `status`        | TEXT        | `hot` \| `warm` \| `cold` \| `off_market` \| `mandate` \| `competitor` \| `sold` \| `lost` \| `custom_1` \| `custom_2` \| `custom_3` |
+| `competitor_date` | DATE      | Date de publication de l'annonce concurrente (scraping IA) |
 | `source`        | TEXT        | `boitage` \| `recommandation` \| `pige` \| `siteimmo` \| `efficity` \| `internet` \| `ancien_client` \| `acquereur` \| `autre` |
 | `referrer_name` | TEXT        | Nom du recommandant (si source = recommandation)         |
 | `notes`         | TEXT        | Notes relationnelles / commerciales                      |
@@ -471,7 +472,7 @@ visites.html — Bandeau "Nouvelles demandes"
 | `surface_min`   | NUMERIC     | Surface minimum souhaitée (m²)                           |
 | `budget_min`    | NUMERIC     | Budget minimum (EUR)                                     |
 | `budget_max`    | NUMERIC     | Budget maximum (EUR)                                     |
-| `status`        | TEXT        | `nouveau` \| `actif` \| `achete_avec_moi`               |
+| `status`        | TEXT        | `nouveau` \| `actif` \| `achete_avec_moi` \| `achete_ailleurs` \| `abandon` \| `custom_1` \| `custom_2` \| `custom_3` |
 | `source`        | TEXT        | `site_annonce` \| `efficity` \| `recommandation` \| `appel_entrant` \| `reseaux_sociaux` \| `autre` |
 | `criteria`      | TEXT        | Critères de recherche détaillés                          |
 | `dealbreakers`  | TEXT        | Critères éliminatoires                                   |

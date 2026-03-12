@@ -4,6 +4,57 @@
 
 ---
 
+## Session 2026-03-12 — Colonnes custom, sous-titres, bugs fixes, home mobile
+
+### Résumé
+Enrichissement majeur de la personnalisation des pipelines : sous-titres éditables, 3 colonnes custom activables, select statut dynamique. Correction de 3 bugs UX (URL concurrents, fermeture modale, redirection mobile).
+
+### Modifications
+
+**`js/pipeline-config.js`** :
+- Ajout `title` aux `DEFAULT_SELLER_COLUMNS` (sous-titres migrés depuis SELLER_COLUMN_TITLES)
+- 3 colonnes custom (`custom_1/2/3`) ajoutées à chaque pipeline (sellers, buyers status, buyers property)
+- Flag `hiddenByDefault: true` pour les colonnes custom
+- `getEffectiveColumns()` fusionne le `title` personnalisé et respecte `hiddenByDefault`
+
+**`vendeurs.html`** :
+- Sous-titres éditables dans la modale settings (2 inputs empilés par colonne)
+- Select statut dynamique : utilise les labels personnalisés de `allSellerColumns`
+- Fix URL concurrente : auto-ajout `https://`, input `type="text"` au lieu de `type="url"`
+- Fix fermeture modale accidentelle : vérification `mousedown` + `click` sur le backdrop
+- Affichage date publication concurrente (carte + fiche détail)
+- Header colonnes custom : gradient coloré en fallback (pas d'image)
+
+**`acquereurs.html`** :
+- Sous-titres éditables dans la modale settings
+- Select statut dynamique depuis `getAllBuyerColumns()`
+- Fix fermeture modale accidentelle (même pattern que vendeurs)
+
+**`home.html`** :
+- Suppression de la redirection automatique mobile → `micro.html`
+
+**`sql/015_seller_competitor_date.sql`** (nouveau) :
+- `ALTER TABLE sellers ADD COLUMN competitor_date DATE`
+
+### Fichiers créés/modifiés
+- js/pipeline-config.js
+- vendeurs.html
+- acquereurs.html
+- home.html
+- sql/015_seller_competitor_date.sql
+- docs/ARCHITECTURE.md
+- docs/DECISIONS.md (D056, D057)
+
+### Points d'attention
+- Migration SQL `015_seller_competitor_date.sql` à exécuter manuellement dans Supabase
+- Les colonnes custom utilisent des valeurs status `custom_1/2/3` — pas de CHECK constraint en BDD
+
+### Prochaines étapes prioritaires
+- Tester l'activation/renommage des colonnes custom en prod
+- Vérifier le scraping de la date d'annonce sur différents portails
+
+---
+
 ## Session 2026-03-11/12 — Fix bug critique onboarding + animation célébration
 
 ### Résumé

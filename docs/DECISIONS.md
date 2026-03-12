@@ -1193,6 +1193,44 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 
 ---
 
+## D057 — Suppression de la redirection automatique home → micro sur mobile
+
+**Date** : 2026-03-12
+**Statut** : Actif
+
+**Contexte** : Sur mobile, cliquer sur le logo renvoyait vers `home.html` qui redirigeait automatiquement vers `micro.html`. L'utilisateur ne pouvait jamais voir la page d'accueil sur mobile.
+
+**Décision** : Supprimer le `window.location.replace('micro.html')` dans `home.html`. La page d'accueil est désormais accessible sur mobile (responsive déjà en place). Le micro reste accessible via le bouton central de la bottom nav.
+
+**Pourquoi** :
+- `home.html` a un design responsive fonctionnel (grille 2 colonnes, tuiles adaptées)
+- Le micro n'est pas toujours la destination souhaitée
+- La bottom nav offre un accès direct au micro sans forcer la redirection
+
+---
+
+## D056 — 3 colonnes custom par pipeline (slots pré-définis, pas colonnes libres)
+
+**Date** : 2026-03-12
+**Statut** : Actif
+
+**Contexte** : Les conseillers veulent pouvoir ajouter des colonnes à leurs pipelines pour des usages spécifiques (ex: "Estimation en cours", "Visite prévue").
+
+**Décision** : 3 slots custom (`custom_1`, `custom_2`, `custom_3`) pré-définis dans chaque pipeline, masqués par défaut via `hiddenByDefault: true`. Le conseiller les active, renomme et positionne depuis la modale settings.
+
+**Pourquoi** :
+- Zéro migration BDD — les `custom_*` sont des valeurs `status` TEXT libres, pas de CHECK constraint
+- Pas de gestion de création/suppression dynamique de colonnes (complexité évitée)
+- 3 slots suffisent pour 99% des cas d'usage terrain
+- Le flag `hiddenByDefault` évite de polluer les pipelines des utilisateurs existants
+- Le select statut dans les fiches lead est dynamisé pour inclure les colonnes custom actives
+
+**Alternatives rejetées** :
+- **Colonnes 100% libres** : Trop complexe (validation, garbage collection, impact stats)
+- **Plus de 3 slots** : Risque de surcharge visuelle du pipeline
+
+---
+
 ## D052 — Confirmation visite vocale via orchestrateur + generate-message
 
 **Date** : 2026-03-09
