@@ -1913,10 +1913,12 @@
             if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+creneaux|quand\s+(suis-je|etes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/.test(t)) return true;
             // Requêtes DVF / prix marché
             if (/^(a\s+combien|quel\s+(est\s+le\s+)?prix|combien\s+(se\s+sont\s+vendus?|vaut|coute)|les\s+ventes?|des\s+comparables?)/.test(t)) return true;
-            // Confirmation de visite / SMS / message de visite
-            if (/(?:envoie?|fai[st]?|redige|prepare|ecri[st]?|genere|j'aimerais|je\s+voudrais|je\s+veux|peux.tu|tu\s+(?:peux|pourrais)).*(?:sms|message|mail|texto|confirmation).*visite/.test(t)) return true;
-            if (/(?:sms|message|mail|texto).*(?:confirmation|retour).*visite/.test(t)) return true;
-            if (/confirmation\s+de\s+visite/.test(t)) return true;
+            // Confirmation / retour de visite / SMS / message WhatsApp
+            if (/(?:envoie?|fai[st]?|redige|prepare|ecri[st]?|genere|j'aimerais|je\s+voudrais|je\s+veux|peux.tu|tu\s+(?:peux|pourrais)).*(?:sms|message|mail|texto|confirmation|whatsapp).*(?:visite|retour)/.test(t)) return true;
+            if (/(?:envoie?|fai[st]?|redige|prepare|ecri[st]?|genere|j'aimerais|je\s+voudrais|je\s+veux|peux.tu|tu\s+(?:peux|pourrais)).*(?:retour|confirmation)\s+(?:de\s+)?visite/.test(t)) return true;
+            if (/(?:sms|message|mail|texto|whatsapp).*(?:confirmation|retour)/.test(t)) return true;
+            if (/(?:confirmation|retour)\s+(?:de\s+)?visite/.test(t)) return true;
+            if (/demander\s+(?:un\s+)?retour/.test(t)) return true;
             return false;
         }
 
