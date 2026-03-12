@@ -746,7 +746,8 @@ INTENTIONS POSSIBLES :
    - Par défaut recipient="buyer" (message à l'acquéreur)
    - Si l'agent mentionne explicitement le vendeur ("pour les vendeurs", "pour Elsa et Cédric" qui sont les vendeurs, "message aux propriétaires"), mettre recipient="seller"
    - Si l'agent dit "pour le groupe WhatsApp" ou "sur WhatsApp" sans préciser, mettre channel="whatsapp"
-   Params : { "contact_name": "nom du contact", "contact_id": "uuid si trouvé", "channel": "sms"|"whatsapp", "recipient": "buyer"|"seller" }
+   IMPORTANT : extrais aussi le contexte de visite de la demande (date, adresse, type de message) car la visite peut ne pas exister dans la base.
+   Params : { "contact_name": "nom du contact", "contact_id": "uuid si trouvé", "channel": "sms"|"whatsapp", "recipient": "buyer"|"seller", "visit_date": "YYYY-MM-DD si mentionnée", "property_address": "adresse si mentionnée", "message_type": "confirmation"|"retour" }
 11. "unknown" — Intention non reconnue, demander une précision
 
 RÈGLE DE CONFIRMATION :

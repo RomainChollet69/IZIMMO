@@ -2161,7 +2161,7 @@
                 return;
             }
 
-            // 2. Trouver la visite la plus proche (future d'abord, puis passée récente)
+            // 2. Trouver la visite (DB d'abord, puis fallback sur le contexte orchestrateur)
             const today = new Date().toISOString().split('T')[0];
             const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
             const contactCol = contact.type === 'buyer' ? 'buyer_id' : 'seller_id';
@@ -2191,27 +2191,39 @@
             }
             if (visitErr) console.error('[Micro:ConfirmVisite] Erreur query visits:', visitErr);
 
-            if (!visits || visits.length === 0) {
-                showLeonCmdResult({ response: `Aucune visite trouvée pour ${contactName} (7 derniers jours ou à venir).` });
-                return;
+            let visit = visits?.[0] || null;
+            let seller, buyer;
+
+            if (visit) {
+                seller = contact.type === 'buyer' ? visit.sellers : contact;
+                buyer = contact.type === 'buyer' ? contact : visit.buyers;
+            } else {
+                // Fallback : pas de visite en DB, utiliser le contexte de l'orchestrateur
+                console.log('[Micro:ConfirmVisite] Pas de visite en DB, fallback sur contexte orchestrateur');
+                if (contact.type === 'buyer') {
+                    buyer = contact;
+                    seller = null;
+                } else {
+                    seller = contact;
+                    buyer = null;
+                }
             }
 
-            const visit = visits[0];
-            const seller = contact.type === 'buyer' ? visit.sellers : contact;
-            const buyer = contact.type === 'buyer' ? contact : visit.buyers;
-
             // 3. Déterminer le destinataire du message (buyer ou seller)
-            const target = recipient === 'seller' ? seller : buyer;
+            const target = recipient === 'seller' ? (seller || contact) : (buyer || contact);
             const targetType = recipient === 'seller' ? 'seller' : 'buyer';
 
-            const visitDate = visit.visit_date;
-            const visitTime = visit.visit_time ? visit.visit_time.substring(0, 5) : null;
-            const address = seller?.address || '';
+            const visitDate = visit?.visit_date || p.visit_date || today;
+            const visitTime = visit?.visit_time ? visit.visit_time.substring(0, 5) : null;
+            const address = seller?.address || p.property_address || '';
 
+            const msgType = p.message_type || 'confirmation';
             const dateLabel = visitDate === today
                 ? 'ce jour'
                 : new Date(visitDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-            const customPrompt = `La visite est prévue ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
+            const customPrompt = msgType === 'retour'
+                ? `Visite effectuée ${dateLabel}.${address ? ' Adresse : ' + address : ''} L'agent demande un retour/avis sur la visite.`
+                : `La visite est prévue ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
 
             const leadData = {
                 first_name: target?.first_name || '',
@@ -2238,7 +2250,7 @@
                     method: 'POST', headers,
                     body: JSON.stringify({
                         channel,
-                        scenario: 'confirmation_visite',
+                        scenario: msgType === 'retour' ? 'retour_visite' : 'confirmation_visite',
                         leadData,
                         notes: [],
                         customPrompt,
