@@ -2220,12 +2220,10 @@
             const address = seller?.address || p.property_address || '';
 
             const msgType = p.message_type || 'confirmation';
-            const dateLabel = visitDate === today
-                ? 'ce jour'
-                : new Date(visitDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            const dateLabel = new Date(visitDate).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
             const customPrompt = msgType === 'retour'
-                ? `Visite effectuée ${dateLabel}.${address ? ' Adresse : ' + address : ''} L'agent demande un retour/avis sur la visite.`
-                : `La visite est prévue ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
+                ? `Visite effectuée le ${dateLabel}.${address ? ' Adresse : ' + address : ''} L'agent demande un retour/avis sur la visite. NE PAS écrire "de ce jour" ou "d'aujourd'hui" — utiliser la date réelle ou ne pas mentionner de date.`
+                : `La visite est prévue le ${dateLabel}${visitTime ? ' à ' + visitTime : ''}.${address ? ' Adresse : ' + address : ''}`;
 
             const leadData = {
                 first_name: target?.first_name || '',

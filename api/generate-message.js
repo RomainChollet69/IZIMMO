@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     if (isConfirmVisite) {
         systemPrompt = `Tu rédiges un message de confirmation de visite pour un agent immobilier. Écris comme un VRAI agent, pas comme une IA.
 
-Date du jour : ${todayISO}. Si la date de visite correspond à aujourd'hui, écris "ce jour" au lieu de la date complète (ex: "la visite prévue ce jour à 14h").
+Date du jour : ${todayISO}. Utilise la date fournie dans les instructions. Ne jamais écrire "ce jour" ou "aujourd'hui" — utiliser la date réelle (ex: "la visite prévue le lundi 9 mars à 14h") ou ne pas mentionner de date si elle n'est pas pertinente.
 
 Ton et style — CRITIQUE :
 - Message court et professionnel, comme un vrai SMS/WhatsApp de confirmation
