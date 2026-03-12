@@ -4,26 +4,36 @@
 
 ---
 
-## Session 2026-03-11 — Fix bug critique : transition onboarding → pipeline
+## Session 2026-03-11/12 — Fix bug critique onboarding + animation célébration
 
 ### Résumé
-Après la création du premier lead via l'onboarding vocal, la page restait bloquée sur l'écran micro sans jamais afficher les colonnes du pipeline.
-
-### Cause racine
-Dans `saveOnboardingLead()`, si `loadSellers()` lançait une exception (via `renderSellers()`), `hideOnboarding()` n'était jamais appelé car le `await` dans le setTimeout async avalait l'erreur silencieusement (cf. leçon L015). De plus, le `PipelineOnboarding` (tour guidé) n'était jamais déclenché après la transition car le `return` au DOMContentLoaded empêchait son lancement.
+Bug critique : après création du 1er lead via l'onboarding vocal, la page restait bloquée sur l'écran micro. Corrigé en 4 itérations + ajout d'une animation confetti pour le step 4 du tuto guidé.
 
 ### Modifications
 
 **`vendeurs.html`** :
-- `saveOnboardingLead()` : wrap `loadSellers()` dans try/catch pour que `hideOnboarding()` soit TOUJOURS appelé
-- Ajout du déclenchement de `PipelineOnboarding.start()` après la transition (setTimeout 500ms)
+- `saveOnboardingLead()` : `hideOnboarding()` appelé de manière synchrone avant `loadSellers()` (plus de blocage async)
+- `hideOnboarding()` utilise `classList.add('hidden')` avec CSS `display: none !important` en double sécurité
+- `showOnboarding()` retire la classe `.hidden` avant d'afficher
+- Ajout CSS `.onboarding-screen.hidden { display: none !important }`
+- Déclenchement de `PipelineOnboarding.start()` après la transition (setTimeout 500ms)
+- Tooltip step 4 centré avec animation scale + padding généreux
+- CSS confetti : `@keyframes confetti-fall`, `.confetti-container`, `.confetti-piece`
+
+**`js/onboarding.js`** :
+- `start()` : filet de sécurité — force `display: none` + classe `.hidden` sur `#onboardingScreen`, s'assure que le pipeline est visible
+- Steps 1 et 3 : `scrollIntoView()` + délai 400ms avant positionnement du tooltip (évite décalage)
+- Step 4 : animation confetti (60 pièces, 8 couleurs du gradient Léon, cleanup 4s)
+- Nouvelle méthode `launchConfetti()` : génère des confettis DOM avec animation CSS
 
 ### Fichiers modifiés
-- vendeurs.html (lignes ~10787-10801)
+- vendeurs.html
+- js/onboarding.js
 
-### Points d'attention
-- Si `loadSellers()` échoue, le pipeline sera vide mais visible — l'utilisateur peut recharger la page
-- Le tour guidé se lancera correctement après création du 1er lead (conditions : 1-2 leads + cartes exemples)
+### Décisions techniques
+- Triple sécurité pour masquer l'onboarding : inline `display: none` + classe CSS `!important` + filet dans `PipelineOnboarding.start()`
+- `hideOnboarding()` synchrone (plus de dépendance au `await loadSellers()`) — le pipeline peut être vide 1-2s avant que loadSellers ne le peuple
+- Confetti en pur CSS/DOM (pas de lib externe) pour rester léger
 
 ---
 
