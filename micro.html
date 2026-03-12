@@ -2161,29 +2161,38 @@
                 return;
             }
 
-            // 2. Trouver la prochaine visite de ce contact
+            // 2. Trouver la visite la plus proche (future d'abord, puis passée récente)
             const today = new Date().toISOString().split('T')[0];
-            let visitQuery;
-            if (contact.type === 'buyer') {
-                visitQuery = supabaseClient.from('visits')
-                    .select('*, sellers(*)')
-                    .eq('buyer_id', contact.id)
-                    .gte('visit_date', today)
-                    .order('visit_date', { ascending: true })
+            const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
+            const contactCol = contact.type === 'buyer' ? 'buyer_id' : 'seller_id';
+            const joinTable = contact.type === 'buyer' ? '*, sellers(*)' : '*, buyers(*)';
+
+            // D'abord chercher une visite future
+            let visitQuery = supabaseClient.from('visits')
+                .select(joinTable)
+                .eq(contactCol, contact.id)
+                .gte('visit_date', today)
+                .order('visit_date', { ascending: true })
+                .limit(1);
+            let { data: visits, error: visitErr } = await visitQuery;
+
+            // Si pas de visite future, chercher la plus récente (7 derniers jours)
+            if ((!visits || visits.length === 0) && !visitErr) {
+                const pastQuery = supabaseClient.from('visits')
+                    .select(joinTable)
+                    .eq(contactCol, contact.id)
+                    .gte('visit_date', sevenDaysAgo)
+                    .lt('visit_date', today)
+                    .order('visit_date', { ascending: false })
                     .limit(1);
-            } else {
-                visitQuery = supabaseClient.from('visits')
-                    .select('*, buyers(*)')
-                    .eq('seller_id', contact.id)
-                    .gte('visit_date', today)
-                    .order('visit_date', { ascending: true })
-                    .limit(1);
+                const pastResult = await pastQuery;
+                visits = pastResult.data;
+                visitErr = pastResult.error;
             }
-            const { data: visits, error: visitErr } = await visitQuery;
             if (visitErr) console.error('[Micro:ConfirmVisite] Erreur query visits:', visitErr);
 
             if (!visits || visits.length === 0) {
-                showLeonCmdResult({ response: `Aucune visite prochaine trouvée pour ${contactName}.` });
+                showLeonCmdResult({ response: `Aucune visite trouvée pour ${contactName} (7 derniers jours ou à venir).` });
                 return;
             }
 
