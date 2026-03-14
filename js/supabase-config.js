@@ -24,7 +24,10 @@ const SOURCE_CONFIG = {
 
 // Sources de leads ACQUÉREURS
 const BUYER_SOURCE_CONFIG = {
-    site_annonce: { label: '🌐 Site d\'annonce', bg: '#D1C4E9', color: '#4527A0' },
+    leboncoin: { label: '🟠 Le Bon Coin', bg: '#FFE0B2', color: '#E65100' },
+    seloger: { label: '🔵 SeLoger', bg: '#BBDEFB', color: '#1565C0' },
+    autre_plateforme: { label: '🌐 Autres plateformes', bg: '#D1C4E9', color: '#4527A0' },
+    site_annonce: { label: '🌐 Site d\'annonce', bg: '#D1C4E9', color: '#4527A0' }, // Rétrocompat données existantes
     efficity: { label: '🏢 Efficity', bg: '#B2DFDB', color: '#004D40' },
     recommandation: { label: '🤝 Recommandation', bg: '#B3E5FC', color: '#01579B' },
     appel_entrant: { label: '📞 Appel entrant', bg: '#DCEDC8', color: '#33691E' },

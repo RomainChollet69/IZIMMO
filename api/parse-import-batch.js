@@ -158,7 +158,7 @@ async function handleParseBatch(req, res, apiKey) {
 - "email": string ou null
 - "budget_min": number ou null — budget minimum en euros
 - "budget_max": number ou null — budget maximum en euros
-- "source": string ou null — parmi "site_annonce", "efficity", "recommandation", "appel_entrant", "reseaux_sociaux", "autre"
+- "source": string ou null — parmi "leboncoin", "seloger", "autre_plateforme", "efficity", "recommandation", "appel_entrant", "reseaux_sociaux", "autre"
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble"
 - "surface_min": number ou null — surface minimum recherchée en m²
 - "rooms": string ou null — nombre de pièces (T1, T2, T3...)

@@ -76,7 +76,9 @@ Retourne un JSON avec ces champs :
 - "criteria": array ou null — parmi ["parking", "cave", "balcon", "terrasse", "jardin", "garage", "piscine", "ascenseur"]
 - "dealbreakers": string ou null — éléments rédhibitoires mentionnés
 - "source": string ou null — déterminée par la plateforme :
-  - Si SeLoger, LeBonCoin, BienIci, Logic-Immo, Jinka, PAP → "site_annonce"
+  - Si LeBonCoin → "leboncoin"
+  - Si SeLoger → "seloger"
+  - Si BienIci, Logic-Immo, Jinka, PAP ou autre plateforme → "autre_plateforme"
   - Si Efficity → "efficity"
   - Sinon → "autre"
 - "source_platform": string ou null — nom de la plateforme en minuscules

@@ -113,7 +113,9 @@ Retourne un JSON avec ces champs :
 - "phone": string ou null — numéro de téléphone (format français avec espaces : 06 12 34 56 78)
 - "email": string ou null
 - "source": string ou null — source du lead parmi ces valeurs exactes :
-  - "site_annonce" (si "site d'annonce", "leboncoin", "seloger" est mentionné)
+  - "leboncoin" (si "leboncoin", "le bon coin", "LBC" est mentionné)
+  - "seloger" (si "seloger", "se loger" est mentionné)
+  - "autre_plateforme" (si "site d'annonce", "bien ici", "logic-immo", "pap" ou autre plateforme est mentionné)
   - "efficity" (si "efficity" est mentionné)
   - "recommandation" (si "recommandation" ou "recommandé par" est mentionné)
   - "appel_entrant" (si "appel entrant", "appel", "il m'a appelé" est mentionné)

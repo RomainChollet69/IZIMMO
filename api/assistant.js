@@ -1029,6 +1029,15 @@ async function handleListVisitRequests(res, user, params) {
     return res.status(200).json({ requests: data || [] });
 }
 
+// Mapping portal_name → source acquéreur pour les stats
+function portalToBuyerSource(portalName) {
+    if (!portalName) return 'autre_plateforme';
+    const p = portalName.toLowerCase();
+    if (p.includes('leboncoin') || p.includes('bon coin') || p.includes('lbc')) return 'leboncoin';
+    if (p.includes('seloger') || p.includes('se loger')) return 'seloger';
+    return 'autre_plateforme';
+}
+
 async function handleProcessVisitRequest(res, user, params) {
     const supabaseAdmin = getSupabaseAdmin();
     const { request_id, decision, seller_id, create_buyer, visit_date, visit_time, note, processing_note } = params;
@@ -1068,7 +1077,7 @@ async function handleProcessVisitRequest(res, user, params) {
                 last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
                 phone: vr.visitor_phone || null,
                 email: vr.visitor_email || null,
-                source: 'site_annonce',
+                source: portalToBuyerSource(vr.portal_name),
                 status: 'nouveau',
                 contact_date: new Date().toISOString().split('T')[0],
                 notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
@@ -1134,7 +1143,7 @@ async function handleProcessVisitRequest(res, user, params) {
                 last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
                 phone: vr.visitor_phone || null,
                 email: vr.visitor_email || null,
-                source: 'site_annonce',
+                source: portalToBuyerSource(vr.portal_name),
                 status: 'nouveau',
                 contact_date: new Date().toISOString().split('T')[0],
                 notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
