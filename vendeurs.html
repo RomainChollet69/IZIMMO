@@ -237,6 +237,172 @@
             background: #F3F4F6;
         }
 
+        /* ===== IMPORT SCREENSHOT ===== */
+        .import-screenshot-btn {
+            background: transparent;
+            color: #6B7280;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .import-screenshot-btn i { font-size: 12px; }
+        .import-screenshot-btn:hover {
+            background: #F3F4F6;
+        }
+        .import-tabs {
+            display: flex;
+            border-bottom: 1px solid #E5E7EB;
+            margin: 0 -24px;
+            padding: 0 24px;
+        }
+        .import-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #9CA3AF;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .import-tab.active { color: #243B53; font-weight: 600; border-bottom-color: #243B53; }
+        .import-tab:hover:not(.active) { color: #6B7280; }
+
+        .import-paste-area {
+            border: 2px dashed #D1D5DB;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+            margin: 16px 0;
+        }
+        .import-paste-area:focus,
+        .import-paste-area.drag-over {
+            border-color: #667eea;
+            background: #F5F3FF;
+        }
+        .import-paste-icon { font-size: 40px; margin-bottom: 12px; }
+        .import-paste-text { font-weight: 600; font-size: 15px; color: #374151; margin-bottom: 4px; }
+        .import-paste-hint { font-size: 13px; color: #9CA3AF; }
+        .import-paste-or { font-size: 12px; color: #9CA3AF; margin: 12px 0 8px; }
+        .import-file-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .import-file-btn:hover { background: #E5E7EB; }
+
+        .import-preview {
+            position: relative;
+            margin: 16px 0;
+            text-align: center;
+        }
+        .import-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+        }
+        .import-preview-remove {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .import-preview-info {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-top: 8px;
+        }
+
+        .import-textarea {
+            width: 100%;
+            min-height: 150px;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            margin: 16px 0;
+            box-sizing: border-box;
+        }
+        .import-textarea:focus { border-color: #667eea; }
+
+        .import-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding-top: 8px;
+        }
+        .import-cancel-btn {
+            padding: 10px 20px;
+            background: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .import-cancel-btn:hover { background: #E5E7EB; }
+        .import-analyze-btn {
+            padding: 10px 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .import-analyze-btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        .import-analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .import-loading { text-align: center; padding: 24px; }
+        .import-spinner {
+            width: 32px; height: 32px;
+            border: 3px solid #E5E7EB; border-top-color: #667eea;
+            border-radius: 50%; margin: 0 auto 12px;
+            animation: importSpin 0.8s linear infinite;
+        }
+        @keyframes importSpin { to { transform: rotate(360deg); } }
+        .import-loading-text { font-size: 14px; color: #6B7280; }
+
         .export-dropdown {
             display: none;
             position: absolute;
@@ -2546,6 +2712,19 @@
 
             .btn-text { display: none; }
 
+            .import-screenshot-btn {
+                grid-column: 1;
+                grid-row: 3;
+                justify-self: start;
+                align-self: center;
+                padding: 8px 14px;
+                font-size: 13px;
+                border-radius: 10px;
+            }
+
+            .alert-bell { display: none !important; }
+            #importSellerCsvBtn { display: none !important; }
+
             .add-btn {
                 grid-column: 2;
                 grid-row: 3;
@@ -4037,6 +4216,11 @@
                     <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
                 </button>
 
+                <!-- Bouton Import screenshot/texte -->
+                <button class="import-screenshot-btn" id="importScreenshotBtn" title="Importer depuis capture d'écran ou texte">
+                    <i class="fa-solid fa-camera"></i> Import
+                </button>
+
                 <!-- Bouton Import CSV vendeurs -->
                 <button class="export-btn" id="importSellerCsvBtn" title="Importer vendeurs depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
                     <i class="fa-solid fa-file-csv"></i> CSV
@@ -4185,6 +4369,69 @@
             <span>ou</span>
             <button onclick="hideOnboarding(); openModal();">✏️ Saisie manuelle</button>
             <button onclick="goToSettings()">📂 Importer un fichier Excel</button>
+        </div>
+    </div>
+
+    <!-- Modal Import Screenshot/Texte -->
+    <div class="modal" id="importModal">
+        <div class="modal-content" style="max-width:540px">
+            <div class="modal-header">
+                <div>
+                    <h2 class="modal-title">Importer un lead vendeur</h2>
+                    <p style="font-size:13px;color:#9CA3AF;margin:4px 0 0;">Collez une capture ou du texte depuis SeLoger, LeBonCoin, Jinka...</p>
+                </div>
+                <button class="close-btn" id="closeImportModalBtn">&times;</button>
+            </div>
+
+            <!-- Onglets Image / Texte -->
+            <div class="import-tabs">
+                <button type="button" class="import-tab active" id="importTabImage" data-mode="image">
+                    Capture d'écran
+                </button>
+                <button type="button" class="import-tab" id="importTabText" data-mode="text">
+                    Texte
+                </button>
+            </div>
+
+            <!-- Zone Image -->
+            <div id="importImageZone">
+                <div class="import-paste-area" id="importPasteArea" tabindex="0">
+                    <div class="import-paste-icon"><i class="fa-regular fa-image"></i></div>
+                    <div class="import-paste-text">Collez votre capture ici</div>
+                    <div class="import-paste-hint">Cmd+V (Mac) / Ctrl+V (Windows)</div>
+                    <div class="import-paste-or">— ou —</div>
+                    <button type="button" class="import-file-btn" id="importFileBtn">
+                        <i class="fa-solid fa-folder-open"></i> Choisir une image
+                    </button>
+                </div>
+                <input type="file" id="importFileInput" accept="image/*" style="display:none">
+                <!-- Preview après collage -->
+                <div class="import-preview" id="importPreview" style="display:none">
+                    <img id="importPreviewImg" src="" alt="Aperçu">
+                    <button type="button" class="import-preview-remove" id="importPreviewRemove">&times;</button>
+                    <div class="import-preview-info" id="importPreviewInfo"></div>
+                </div>
+            </div>
+
+            <!-- Zone Texte -->
+            <div id="importTextZone" style="display:none">
+                <textarea class="import-textarea" id="importTextarea"
+                    placeholder="Collez ici le texte de l'email ou de la notification..."></textarea>
+            </div>
+
+            <!-- Actions -->
+            <div class="import-actions" id="importActions">
+                <button type="button" class="import-cancel-btn" id="importCancelBtn">Annuler</button>
+                <button type="button" class="import-analyze-btn" id="importAnalyzeBtn" disabled>
+                    Analyser
+                </button>
+            </div>
+
+            <!-- Loading -->
+            <div class="import-loading" id="importLoading" style="display:none">
+                <div class="import-spinner"></div>
+                <div class="import-loading-text">Extraction des informations en cours...</div>
+            </div>
         </div>
     </div>
 
@@ -6930,6 +7177,308 @@
                 reader.onerror = reject;
                 reader.readAsDataURL(file);
             });
+        }
+
+        // ===== IMPORT SCREENSHOT / TEXTE =====
+        // Gère l'import de leads vendeurs depuis captures d'écran (Cmd+V) ou texte collé.
+        // Appelle /api/analyze-document (mode: screenshot_import, leadType: seller),
+        // puis pré-remplit le formulaire de création de lead existant.
+
+        const IMPORT_LEAD_TYPE = 'seller';
+        let importedImageBase64 = null;
+        let importedImageType = null;
+
+        function setupImportScreenshot() {
+            const btn = document.getElementById('importScreenshotBtn');
+            const modal = document.getElementById('importModal');
+            if (!btn || !modal) return;
+
+            btn.addEventListener('click', () => openImportModal());
+            document.getElementById('closeImportModalBtn').addEventListener('click', () => closeImportModal());
+            document.getElementById('importCancelBtn').addEventListener('click', () => closeImportModal());
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeImportModal(); });
+
+            // Onglets
+            document.getElementById('importTabImage').addEventListener('click', () => switchImportTab('image'));
+            document.getElementById('importTabText').addEventListener('click', () => switchImportTab('text'));
+
+            // Paste — écouter sur le paste area ET globalement quand le modal est ouvert
+            const pasteArea = document.getElementById('importPasteArea');
+            pasteArea.addEventListener('paste', handleImportPaste);
+            pasteArea.addEventListener('click', () => pasteArea.focus());
+            document.addEventListener('paste', (e) => {
+                if (modal.classList.contains('active') && document.getElementById('importTabImage').classList.contains('active')) {
+                    handleImportPaste(e);
+                }
+            });
+
+            // Drag & drop
+            pasteArea.addEventListener('dragover', (e) => { e.preventDefault(); pasteArea.classList.add('drag-over'); });
+            pasteArea.addEventListener('dragleave', () => pasteArea.classList.remove('drag-over'));
+            pasteArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                pasteArea.classList.remove('drag-over');
+                const file = e.dataTransfer.files?.[0];
+                if (file && file.type.startsWith('image/')) processImportImageFile(file);
+            });
+
+            // Bouton choisir image (file picker)
+            document.getElementById('importFileBtn').addEventListener('click', () => {
+                document.getElementById('importFileInput').click();
+            });
+            document.getElementById('importFileInput').addEventListener('change', (e) => {
+                const file = e.target.files?.[0];
+                if (file) processImportImageFile(file);
+                e.target.value = '';
+            });
+
+            // Retirer l'image
+            document.getElementById('importPreviewRemove').addEventListener('click', clearImportImage);
+
+            // Textarea
+            document.getElementById('importTextarea').addEventListener('input', () => {
+                document.getElementById('importAnalyzeBtn').disabled =
+                    !document.getElementById('importTextarea').value.trim();
+            });
+
+            // Analyser
+            document.getElementById('importAnalyzeBtn').addEventListener('click', handleImportAnalyze);
+
+            // Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('active')) closeImportModal();
+            });
+        }
+
+        function openImportModal() {
+            document.getElementById('importModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => document.getElementById('importPasteArea')?.focus(), 100);
+        }
+
+        function closeImportModal() {
+            document.getElementById('importModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            resetImportModal();
+        }
+
+        function resetImportModal() {
+            importedImageBase64 = null;
+            importedImageType = null;
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importPasteArea').style.display = '';
+            document.getElementById('importPreviewImg').src = '';
+            document.getElementById('importTextarea').value = '';
+            document.getElementById('importAnalyzeBtn').disabled = true;
+            document.getElementById('importLoading').style.display = 'none';
+            document.getElementById('importActions').style.display = 'flex';
+            switchImportTab('image');
+        }
+
+        function switchImportTab(mode) {
+            document.getElementById('importTabImage').classList.toggle('active', mode === 'image');
+            document.getElementById('importTabText').classList.toggle('active', mode === 'text');
+            document.getElementById('importImageZone').style.display = mode === 'image' ? '' : 'none';
+            document.getElementById('importTextZone').style.display = mode === 'text' ? '' : 'none';
+            if (mode === 'image') {
+                document.getElementById('importAnalyzeBtn').disabled = !importedImageBase64;
+            } else {
+                document.getElementById('importAnalyzeBtn').disabled =
+                    !document.getElementById('importTextarea').value.trim();
+            }
+        }
+
+        async function handleImportPaste(e) {
+            if (document.getElementById('importTabText').classList.contains('active')) return;
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    if (blob) await processImportImageFile(blob);
+                    return;
+                }
+            }
+        }
+
+        /** Traite un fichier image (depuis paste, drag-drop ou file picker) */
+        async function processImportImageFile(file) {
+            try {
+                const compressed = await compressImage(file, 1600, 0.8);
+                const base64 = await fileToBase64Import(compressed);
+                importedImageBase64 = base64;
+                importedImageType = 'image/jpeg';
+
+                document.getElementById('importPasteArea').style.display = 'none';
+                document.getElementById('importPreview').style.display = '';
+                document.getElementById('importPreviewImg').src = 'data:image/jpeg;base64,' + base64;
+                document.getElementById('importPreviewInfo').textContent =
+                    `Image — ${(compressed.size / 1024).toFixed(0)} Ko`;
+                document.getElementById('importAnalyzeBtn').disabled = false;
+            } catch (err) {
+                console.error('[Import] Erreur compression:', err);
+                alert('Erreur lors du traitement de l\'image.');
+            }
+        }
+
+        function fileToBase64Import(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function clearImportImage() {
+            importedImageBase64 = null;
+            importedImageType = null;
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importPasteArea').style.display = '';
+            document.getElementById('importAnalyzeBtn').disabled = true;
+        }
+
+        async function handleImportAnalyze() {
+            const isImageMode = document.getElementById('importTabImage').classList.contains('active');
+
+            document.getElementById('importActions').style.display = 'none';
+            document.getElementById('importLoading').style.display = '';
+
+            try {
+                const body = { mode: 'screenshot_import', leadType: IMPORT_LEAD_TYPE };
+                if (isImageMode) {
+                    body.image = importedImageBase64;
+                    body.imageType = importedImageType;
+                } else {
+                    body.text = document.getElementById('importTextarea').value.trim();
+                }
+
+                const resp = await fetch('/api/analyze-document', {
+                    method: 'POST',
+                    headers: await getAuthHeaders(),
+                    body: JSON.stringify(body)
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.error || `Erreur ${resp.status}`);
+                }
+
+                const { fields } = await resp.json();
+                console.log('[Import] Champs extraits:', fields);
+
+                if (!fields || Object.keys(fields).every(k => fields[k] === null)) {
+                    alert('Aucune information exploitable détectée. Essayez avec une capture plus nette ou collez le texte.');
+                    document.getElementById('importActions').style.display = 'flex';
+                    document.getElementById('importLoading').style.display = 'none';
+                    return;
+                }
+
+                closeImportModal();
+                prefillSellerFromImport(fields);
+
+            } catch (err) {
+                console.error('[Import] Erreur:', err);
+                alert('Erreur lors de l\'extraction : ' + err.message);
+                document.getElementById('importActions').style.display = 'flex';
+                document.getElementById('importLoading').style.display = 'none';
+            }
+        }
+
+        /** Pré-remplit le formulaire vendeur avec les champs extraits par l'IA */
+        function prefillSellerFromImport(fields) {
+            // Reset le formulaire et ouvrir le modal
+            const submitBtn = document.getElementById('submitBtn');
+            delete submitBtn.dataset.editId;
+            document.getElementById('leadForm').reset();
+            openModal();
+
+            setTimeout(() => {
+                // Contact
+                if (fields.first_name) { setImportFieldValue('firstName', fields.first_name); }
+                if (fields.last_name) { setImportFieldValue('lastName', fields.last_name); }
+                if (fields.first_name || fields.last_name) {
+                    const fullName = [fields.first_name, fields.last_name].filter(Boolean).join(' ');
+                    setImportFieldValue('fullName', fullName);
+                }
+                if (fields.phone) { setImportFieldValue('phone', fields.phone); }
+                if (fields.email) { setImportFieldValue('email', fields.email); }
+
+                // Source
+                if (fields.source) {
+                    const sourceEl = document.getElementById('source');
+                    for (const opt of sourceEl.options) {
+                        if (opt.value === fields.source) { sourceEl.value = opt.value; flashImportField('source'); break; }
+                    }
+                }
+
+                // Bien
+                if (fields.address) { setImportFieldValue('address', fields.address); }
+                if (fields.property_type) {
+                    const ptEl = document.getElementById('propertyType');
+                    for (const opt of ptEl.options) {
+                        if (opt.value === fields.property_type) { ptEl.value = opt.value; flashImportField('propertyType'); break; }
+                    }
+                }
+                if (fields.rooms) {
+                    const roomsEl = document.getElementById('rooms');
+                    const roomsVal = String(fields.rooms).replace(/[^0-9]/g, '');
+                    for (const opt of roomsEl.options) {
+                        if (opt.value === roomsVal) { roomsEl.value = opt.value; flashImportField('rooms'); break; }
+                    }
+                }
+                if (fields.surface) { setImportFieldValue('surface', fields.surface + 'm²'); }
+                if (fields.budget) { setImportFieldValue('budget', Number(fields.budget).toLocaleString('fr-FR') + ' €'); }
+
+                // Annexes (checkboxes)
+                if (Array.isArray(fields.annexes)) {
+                    fields.annexes.forEach(a => {
+                        const cb = document.querySelector(`input[name="annexes"][value="${a}"]`);
+                        if (cb) {
+                            cb.checked = true;
+                            const toggle = cb.closest('.criteria-toggle, .annexe-toggle, label');
+                            if (toggle) toggle.classList.add('field-flash');
+                        }
+                    });
+                }
+
+                // Description
+                if (fields.description) {
+                    const descEl = document.getElementById('description');
+                    if (descEl) { descEl.value = fields.description; flashImportField('description'); }
+                }
+
+                // Notes : plateforme + infos complémentaires
+                const noteParts = [];
+                if (fields.source_platform) noteParts.push(`[Import ${fields.source_platform}]`);
+                if (fields.listing_url) noteParts.push(`Annonce : ${fields.listing_url}`);
+                if (fields.notes) noteParts.push(fields.notes);
+                if (noteParts.length > 0) {
+                    const noteInput = document.getElementById('noteInput');
+                    if (noteInput) { noteInput.value = noteParts.join('\n'); flashImportField('noteInput'); }
+                }
+
+                // Titre du modal pour indiquer l'import
+                document.querySelector('#modal .modal-title').textContent = 'Nouveau lead (import)';
+
+            }, 150);
+        }
+
+        /** Helper : remplit un champ et déclenche l'animation flash */
+        function setImportFieldValue(id, value) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.value = value;
+            flashImportField(id);
+        }
+
+        function flashImportField(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.remove('field-flash');
+            void el.offsetWidth;
+            el.classList.add('field-flash');
         }
 
         // ===== DOCUMENTS / FICHIERS JOINTS =====
@@ -10887,6 +11436,7 @@
             setupAppointmentDateToggle();
             setupDocsDropZone();
             setupImportDoc();
+            setupImportScreenshot();
 
             document.getElementById('date').value = new Date().toISOString().split('T')[0];
 
