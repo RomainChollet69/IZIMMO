@@ -884,6 +884,46 @@
         }
         .note-chip:hover { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; }
         .note-chip.selected { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; font-weight: 600; }
+        /* Liens cliquables téléphone / email */
+        .portal-phone-link, .portal-email-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+        }
+        .portal-phone-link:hover, .portal-email-link:hover { text-decoration: underline; }
+        .phone-popover {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            z-index: 100;
+            min-width: 160px;
+            overflow: hidden;
+        }
+        .phone-popover.active { display: block; }
+        .phone-popover-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-dark);
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .phone-popover-item:hover { background: #F3F4F6; }
+        .phone-popover-item i { width: 16px; text-align: center; }
+        .phone-popover-item.whatsapp { color: #25D366; }
+        .phone-popover-item.sms { color: #3F51B5; }
+        .phone-popover-item.call { color: #E65100; }
         .portal-request-actions {
             display: flex;
             gap: 8px;
@@ -2446,7 +2486,7 @@
             const emailDate = req.email_date ? new Date(req.email_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
             const detailLines = [];
             if (emailDate) detailLines.push(`<i class="fa-regular fa-clock"></i> Reçue le ${emailDate}`);
-            if (email) detailLines.push(`<i class="fa-regular fa-envelope"></i> ${escapeHtml(email)}`);
+            if (email) detailLines.push(`<i class="fa-regular fa-envelope"></i> <a class="portal-email-link" href="mailto:${encodeURIComponent(email)}" onclick="event.stopPropagation()">${escapeHtml(email)}</a>`);
             if (req.property_address && !seller) detailLines.push(`<i class="fa-solid fa-location-dot"></i> Adresse extraite : ${escapeHtml(req.property_address)}`);
             if (portalFull) detailLines.push(`<i class="fa-solid fa-globe"></i> Via ${escapeHtml(portalFull)}`);
 
@@ -2459,7 +2499,11 @@
                 <div class="portal-request-info" onclick="togglePortalRequestExpand(this)" style="cursor:pointer">
                     <div class="portal-request-visitor">
                         ${escapeHtml(visitorName)}
-                        <span>${escapeHtml(phone)}</span>
+                        ${phone ? `<span style="position:relative"><a class="portal-phone-link" onclick="event.stopPropagation();togglePhonePopover(this, '${escapeHtml(phone)}')">${escapeHtml(phone)}</a><div class="phone-popover" onclick="event.stopPropagation()">
+                            <a class="phone-popover-item call" href="tel:${encodeURIComponent(phone)}"><i class="fa-solid fa-phone"></i> Appeler</a>
+                            <a class="phone-popover-item sms" href="sms:${encodeURIComponent(phone)}"><i class="fa-solid fa-comment-sms"></i> SMS</a>
+                            <a class="phone-popover-item whatsapp" href="https://wa.me/${phone.replace(/[\s.-]/g, '').replace(/^0/, '33')}" target="_blank"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                        </div></span>` : ''}
                     </div>
                     <div class="portal-request-property">${propertyLine}</div>
                     ${msgPreview}
@@ -2513,6 +2557,20 @@
             console.error('[Visites] Dismiss error:', e);
         }
     }
+
+    // ===== POPOVER TELEPHONE =====
+    function togglePhonePopover(linkEl, phone) {
+        // Fermer tous les autres popovers
+        document.querySelectorAll('.phone-popover.active').forEach(p => {
+            if (p !== linkEl.nextElementSibling) p.classList.remove('active');
+        });
+        const popover = linkEl.nextElementSibling;
+        popover.classList.toggle('active');
+    }
+    // Fermer le popover au clic extérieur
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.phone-popover.active').forEach(p => p.classList.remove('active'));
+    });
 
     // ===== EXPANSION INLINE DES CARTES =====
     function togglePortalRequestExpand(infoEl) {
