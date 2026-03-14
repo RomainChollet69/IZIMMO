@@ -763,14 +763,7 @@
         .column[data-status="maison_big"] .lead-card { border-left-color: #AB47BC; }
         .column[data-status="autre"] .lead-card { border-left-color: #78909C; }
 
-        /* Headers type de bien — gradient par défaut (pas d'image) */
-        .column-header.header-studio_t1 { background: linear-gradient(135deg, #42A5F5, #1E88E5); }
-        .column-header.header-t2 { background: linear-gradient(135deg, #7C4DFF, #651FFF); }
-        .column-header.header-t3 { background: linear-gradient(135deg, #26A69A, #00897B); }
-        .column-header.header-t4_plus { background: linear-gradient(135deg, #FF7043, #F4511E); }
-        .column-header.header-maison_small { background: linear-gradient(135deg, #66BB6A, #43A047); }
-        .column-header.header-maison_big { background: linear-gradient(135deg, #AB47BC, #8E24AA); }
-        .column-header.header-autre { background: linear-gradient(135deg, #78909C, #546E7A); }
+        /* Headers type de bien — images ou gradient via inline style */
 
         /* Toggle vue pipeline (dans la bottom bar) */
         .bottom-view-toggle {
@@ -941,6 +934,26 @@
             cursor: pointer;
         }
         .col-settings-default:hover { color: #667eea; }
+
+        /* Image picker pour headers colonnes */
+        .col-img-picker { position: relative; flex-shrink: 0; }
+        .col-img-preview {
+            width: 44px; height: 30px; border-radius: 6px; cursor: pointer;
+            object-fit: cover; border: 2px solid #E5E7EB; transition: border-color 0.15s;
+        }
+        .col-img-preview:hover { border-color: #667eea; }
+        .col-img-dropdown {
+            display: none; position: absolute; right: 0; top: 100%; margin-top: 4px;
+            background: white; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+            padding: 8px; z-index: 100; grid-template-columns: repeat(5, 1fr); gap: 6px;
+        }
+        .col-img-dropdown.active { display: grid; }
+        .col-img-option {
+            width: 56px; height: 38px; border-radius: 6px; cursor: pointer;
+            object-fit: cover; border: 2px solid transparent; transition: all 0.15s;
+        }
+        .col-img-option:hover { border-color: #667eea; transform: scale(1.08); }
+        .col-img-option.selected { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.3); }
         .col-settings-actions {
             display: flex;
             justify-content: flex-end;
@@ -5187,10 +5200,10 @@
 
             // Régénérer les colonnes HTML (labels déjà fusionnés par PipelineConfig)
             pipeline.innerHTML = columns.map(col => {
-                // Gradient de fallback pour colonnes custom sans image de header
-                const headerStyle = col.key.startsWith('custom_') && col.color
-                    ? `style="background: linear-gradient(135deg, ${col.color}, ${col.color}CC)"`
-                    : '';
+                // Image de header ou gradient fallback
+                const headerStyle = col.headerImage
+                    ? `style="background-image: url('${col.headerImage}')"`
+                    : (col.color ? `style="background: linear-gradient(135deg, ${col.color}, ${col.color}CC)"` : '');
                 return `
                 <div class="column" data-status="${col.key}">
                     <div class="column-top">
@@ -5249,6 +5262,17 @@
             container.innerHTML = allCols.map((col, i) => {
                 const def = defaultsByKey[col.key] || col;
                 const isVisible = col.visible !== false;
+                // Picker d'image seulement en vue property_type
+                const imgPicker = currentPipelineView === 'property_type'
+                    ? `<div class="col-img-picker">
+                        <img src="${col.headerImage || 'img/acheteurs/tb1.png'}" class="col-img-preview" data-src="${col.headerImage || ''}" title="Changer l'image">
+                        <div class="col-img-dropdown">
+                            ${PipelineConfig.BUYER_HEADER_IMAGES.map(src =>
+                                `<img src="${src}" class="col-img-option${col.headerImage === src ? ' selected' : ''}" data-src="${src}">`
+                            ).join('')}
+                        </div>
+                       </div>`
+                    : '';
                 return `<div class="col-settings-row${isVisible ? '' : ' hidden-col'}" data-key="${col.key}" data-index="${i}" draggable="true">
                     <span class="col-drag-handle"><i class="fa-solid fa-grip-vertical"></i></span>
                     <div class="col-settings-color" style="background:${col.color}"></div>
@@ -5256,6 +5280,7 @@
                         <input type="text" class="col-settings-input" data-col-key="${col.key}" data-default="${escapeHtml(def.label)}" value="${escapeHtml(col.label)}" placeholder="Titre">
                         <input type="text" class="col-settings-input col-subtitle-input" data-col-key="${col.key}-subtitle" data-default="${escapeHtml(def.title || '')}" value="${escapeHtml(col.title || '')}" placeholder="Sous-titre">
                     </div>
+                    ${imgPicker}
                     <button class="col-vis-btn" data-visible="${isVisible}" title="${isVisible ? 'Masquer' : 'Afficher'}">${isVisible ? '👁️' : '👁️‍🗨️'}</button>
                     <span class="col-settings-default" title="Remettre par défaut" data-col-key="${col.key}">reset</span>
                 </div>`;
@@ -5300,7 +5325,7 @@
                 });
             });
 
-            // Reset buttons (titre + sous-titre)
+            // Reset buttons (titre + sous-titre + image)
             container.querySelectorAll('.col-settings-default').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const key = btn.dataset.colKey;
@@ -5308,8 +5333,47 @@
                     const subtitleInput = container.querySelector(`.col-settings-input[data-col-key="${key}-subtitle"]`);
                     if (titleInput) titleInput.value = titleInput.dataset.default;
                     if (subtitleInput) subtitleInput.value = subtitleInput.dataset.default;
+                    // Reset image
+                    const row = btn.closest('.col-settings-row');
+                    const preview = row.querySelector('.col-img-preview');
+                    if (preview) {
+                        const def = defaultsByKey[key];
+                        const defaultImg = def?.headerImage || 'img/acheteurs/tb1.png';
+                        preview.src = defaultImg;
+                        preview.dataset.src = defaultImg;
+                        row.querySelectorAll('.col-img-option').forEach(opt => {
+                            opt.classList.toggle('selected', opt.dataset.src === defaultImg);
+                        });
+                    }
                 });
             });
+
+            // Image picker handlers
+            container.querySelectorAll('.col-img-preview').forEach(preview => {
+                preview.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Fermer les autres dropdowns
+                    container.querySelectorAll('.col-img-dropdown.active').forEach(d => d.classList.remove('active'));
+                    preview.nextElementSibling.classList.toggle('active');
+                });
+            });
+            container.querySelectorAll('.col-img-option').forEach(opt => {
+                opt.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const picker = opt.closest('.col-img-picker');
+                    const preview = picker.querySelector('.col-img-preview');
+                    preview.src = opt.dataset.src;
+                    preview.dataset.src = opt.dataset.src;
+                    // Mettre à jour la sélection
+                    picker.querySelectorAll('.col-img-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    picker.querySelector('.col-img-dropdown').classList.remove('active');
+                });
+            });
+            // Fermer le dropdown au clic extérieur
+            document.addEventListener('click', function closeImgPicker() {
+                container.querySelectorAll('.col-img-dropdown.active').forEach(d => d.classList.remove('active'));
+            }, { once: false });
 
             document.getElementById('colSettingsOverlay').classList.add('active');
         }
@@ -5337,11 +5401,14 @@
                 const defaultTitle = subtitleInput ? subtitleInput.dataset.default : '';
 
                 if (isVisible) visibleCount++;
+                const imgPreview = row.querySelector('.col-img-preview');
+                const headerImage = imgPreview ? (imgPreview.dataset.src || null) : null;
                 columns.push({
                     key,
                     label: label !== defaultLabel ? label : null,
                     title: title !== defaultTitle ? title : null,
-                    visible: isVisible
+                    visible: isVisible,
+                    headerImage
                 });
             });
 
