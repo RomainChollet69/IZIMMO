@@ -2631,7 +2631,7 @@
             });
 
             // Si on a un prix, filtrer par proximité ±15%
-            if (reqPrice && candidates.length > 1) {
+            if (reqPrice) {
                 const priceFiltered = candidates.filter(s => {
                     if (!s.budget) return false;
                     return Math.abs(s.budget - reqPrice) <= reqPrice * 0.15;
@@ -2639,17 +2639,17 @@
                 if (priceFiltered.length > 0) candidates = priceFiltered;
             }
 
-            // Si un seul candidat du même type, c'est probablement le bon
-            if (candidates.length === 1) {
+            // Avec prix : prendre le plus proche
+            if (reqPrice && candidates.length >= 1) {
+                candidates.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
                 req.matched_seller_id = candidates[0].id;
                 req.sellers = candidates[0];
-                req.match_confidence = reqPrice ? 'medium' : 'low';
+                req.match_confidence = candidates.length === 1 ? 'medium' : 'low';
                 return;
             }
 
-            // Plusieurs candidats : prendre le plus proche en prix
-            if (candidates.length > 1 && reqPrice) {
-                candidates.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
+            // Sans prix : matcher seulement s'il n'y a qu'UN SEUL bien de ce type
+            if (!reqPrice && candidates.length === 1) {
                 req.matched_seller_id = candidates[0].id;
                 req.sellers = candidates[0];
                 req.match_confidence = 'low';

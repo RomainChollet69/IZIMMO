@@ -361,12 +361,14 @@ Extrais les informations et retourne UNIQUEMENT un JSON valide :
 }
 
 RÈGLES :
-- is_visit_request = true si c'est un message d'un portail concernant un bien (demande de visite, demande d'info, nouveau message, prise de contact)
+- is_visit_request = true si c'est un message d'un portail concernant un bien (demande de visite, demande d'info, nouveau message, prise de contact, favori)
 - is_visit_request = false UNIQUEMENT pour les newsletters, rapports de stats, confirmations de publication, pubs
 - En cas de doute, mets is_visit_request = true (mieux vaut un faux positif qu'un faux négatif)
 - Détecte le portail depuis l'objet, l'expéditeur ou le contenu
 - Le téléphone doit être au format français (06/07) avec espaces
-- property_price en nombre entier sans symbole
+- property_price en nombre entier sans symbole (ex: 515000). IMPORTANT : extrais le prix depuis la description du bien dans l'email (souvent en bas : "Maison 4 pièces 96 m² / 515000 €")
+- property_reference : extrais la référence annonce si présente (ex: "Référence : 193576")
+- property_address : extrais l'adresse ou la ville si mentionnée
 - Retourne UNIQUEMENT le JSON, sans markdown`;
 
     const controller = new AbortController();
