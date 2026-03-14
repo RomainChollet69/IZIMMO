@@ -379,14 +379,19 @@
             letter-spacing: 0.5px;
             margin: 14px 0 6px;
         }
+        .visit-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
         .visit-card {
             position: relative;
-            padding: 14px 18px;
+            padding: 12px 14px;
             background: #FAFBFC;
             border-radius: 10px;
             border: 1px solid #E0E0E0;
-            margin-bottom: 8px;
             transition: border-color 0.2s;
+            cursor: pointer;
         }
         .visit-card:hover { border-color: #667eea; }
         .visit-card.planifiee { border-left: 4px solid var(--visit-planned); }
@@ -423,7 +428,11 @@
         .visit-card-price { font-size: 13px; color: #78909C; }
         .visit-card-points { font-size: 12px; margin-top: 3px; line-height: 1.5; }
         .visit-card-decision { font-size: 13px; font-weight: 600; margin-top: 3px; }
+        .visit-card-decision.refus { color: #C62828; background: #FFEBEE; padding: 3px 8px; border-radius: 6px; display: inline-block; }
         .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 4px; max-height: 40px; overflow: hidden; }
+        /* Vue condensée par défaut */
+        .visit-card-details { display: none; }
+        .visit-card.expanded .visit-card-details { display: block; }
 
         .visit-card-actions { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
         .visit-action-btn {
@@ -951,6 +960,7 @@
             .property-accordion-header { padding: 14px 16px; gap: 10px; }
             .accordion-badges { flex-wrap: wrap; gap: 4px; }
             .accordion-body-inner { padding: 0 16px 14px; }
+            .visit-cards-grid { grid-template-columns: 1fr; }
             .visit-card { padding: 12px 14px; }
             .modal-card { padding: 20px; width: 95%; }
             .portal-banner { padding: 0 16px; margin-top: 12px; }
@@ -1416,15 +1426,21 @@
         let visitCards = '';
         if (planned.length > 0) {
             visitCards += '<div class="visit-group-label">À venir</div>';
+            visitCards += '<div class="visit-cards-grid">';
             planned.forEach(v => { visitCards += renderVisitCard(v); });
+            visitCards += '</div>';
         }
         if (done.length > 0) {
             visitCards += '<div class="visit-group-label">Effectuées</div>';
+            visitCards += '<div class="visit-cards-grid">';
             done.forEach(v => { visitCards += renderVisitCard(v); });
+            visitCards += '</div>';
         }
         if (cancelled.length > 0) {
             visitCards += '<div class="visit-group-label">Annulées</div>';
+            visitCards += '<div class="visit-cards-grid">';
             cancelled.forEach(v => { visitCards += renderVisitCard(v); });
+            visitCards += '</div>';
         }
 
         return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
@@ -1491,7 +1507,12 @@
             ? '<span class="visit-card-type-badge lie">Acquéreur</span>'
             : '<span class="visit-card-type-badge libre">Visiteur libre</span>';
 
-        return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}">
+        // Résumé condensé : ligne 1 = nom + décision (si refus, très visible)
+        const decisionClass = visit.buyer_decision === 'refus' ? ' refus' : '';
+        const summaryDec = dec ? `<span class="visit-card-decision${decisionClass}">${dec.emoji} ${dec.label}</span>` : '';
+        const summaryFb = fb && !dec ? `<span style="font-size:12px; color:#78909C">${fb.emoji} ${fb.label}</span>` : '';
+
+        return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}" onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 ${STATUS_BADGES[visit.status] || ''}
                 <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
@@ -1500,13 +1521,16 @@
                 <span class="visit-card-name">${escapeHtml(visitorName)}</span>
                 ${typeBadge}
                 ${visitorPhone ? `<span class="visit-card-phone">${escapeHtml(visitorPhone)}</span>` : ''}
+                ${summaryDec}${summaryFb}
             </div>
-            ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
-            ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
-            ${pointsHtml}
-            ${dec ? `<div class="visit-card-decision" style="color:${dec.color}">${dec.emoji} ${dec.label}</div>` : ''}
-            ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
-            ${actions}
+            <div class="visit-card-details">
+                ${fb ? `<div class="visit-card-feedback">${fb.emoji} ${fb.label}</div>` : ''}
+                ${pp ? `<div class="visit-card-price">${pp}</div>` : ''}
+                ${pointsHtml}
+                ${dec ? `<div class="visit-card-decision${decisionClass}">${dec.emoji} ${dec.label}</div>` : ''}
+                ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
+                ${actions}
+            </div>
             <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${visit.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
         </div>`;
     }
@@ -1568,6 +1592,10 @@
         if (visit) visit.status = 'annulee';
         renderVisitsPage();
         showToast('Visite annulée');
+    }
+
+    function toggleVisitCardExpand(cardEl) {
+        cardEl.classList.toggle('expanded');
     }
 
     async function confirmDeleteVisit(visitId) {
