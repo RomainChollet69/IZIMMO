@@ -5158,10 +5158,14 @@
 
             // Régénérer les colonnes HTML (labels déjà fusionnés par PipelineConfig)
             pipeline.innerHTML = columns.map(col => {
+                // Gradient de fallback pour colonnes custom sans image de header
+                const headerStyle = col.key.startsWith('custom_') && col.color
+                    ? `style="background: linear-gradient(135deg, ${col.color}, ${col.color}CC)"`
+                    : '';
                 return `
                 <div class="column" data-status="${col.key}">
                     <div class="column-top">
-                        <div class="column-header header-${col.key}">
+                        <div class="column-header header-${col.key}" ${headerStyle}>
                             <div class="column-label">${escapeHtml(col.label)}</div>
                         </div>
                         <div class="column-title">${escapeHtml(col.title || '')}</div>
