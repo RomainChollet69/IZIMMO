@@ -5091,8 +5091,8 @@
 
         // ===== HELPERS =====
         function formatBudget(min, max) {
-            if (max) return formatEuro(max) + ' HFN';
-            if (min) return formatEuro(min) + ' HFN';
+            if (max) return formatEuro(max);
+            if (min) return formatEuro(min);
             return '';
         }
 
@@ -5551,7 +5551,7 @@
             if (buyer.surface_min) ext += `<div class="card-info">📐 ${buyer.surface_min} m² min</div>`;
 
             // Budget max
-            if (buyer.budget_max) ext += `<div class="card-info">💰 ${formatEuro(buyer.budget_max)} HFN</div>`;
+            if (buyer.budget_max) ext += `<div class="card-info">💰 ${formatEuro(buyer.budget_max)}</div>`;
 
             // Relance (seulement dans extended si pas déjà affiché en compact)
             if (!followup.isAlert) ext += followup.html;
