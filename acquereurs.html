@@ -1134,6 +1134,25 @@
             transition: transform 0.15s, background 0.15s;
         }
         .badge-alert:hover { transform: scale(1.15); background: #28a745; }
+        .badge-alert::after {
+            content: 'Relance effectuée ✓';
+            position: absolute;
+            right: 110%;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #28a745;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+            padding: 4px 8px;
+            border-radius: 6px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            transition-delay: 0s;
+        }
+        .badge-alert:hover::after { opacity: 1; transition-delay: 1.5s; }
 
         /* ===== FICHES EXEMPLE (ONBOARDING) ===== */
         .example-card {
