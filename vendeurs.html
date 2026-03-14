@@ -8962,7 +8962,9 @@
             addrInput.dataset.city = seller.city || '';
             addrInput.dataset.postalCode = seller.postal_code || '';
             document.getElementById('dvfBtn').style.display = seller.address ? '' : 'none';
-            document.getElementById('studyBtn').style.display = seller.address ? '' : 'none';
+            // studyBtn commenté (feature gelée)
+            const studyBtn = document.getElementById('studyBtn');
+            if (studyBtn) studyBtn.style.display = seller.address ? '' : 'none';
             document.getElementById('description').value = seller.description || '';
             document.getElementById('propertyType').value = seller.property_type || '';
             document.getElementById('rooms').value = seller.rooms || '';
