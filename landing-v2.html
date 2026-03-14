@@ -1,0 +1,1363 @@
+<!--
+  landing-v2.html
+  Landing page premium pour Léon — CRM immobilier voice-first.
+  Narration Apple-style en 8 sections. Autonome (CSS + JS inline).
+  Dépendances : Google Fonts (Barlow SC + Inter), Font Awesome 6.5.
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Léon — Parlez, l'IA fait le reste</title>
+    <meta name="description" content="Le premier CRM immobilier pensé pour les agents qui sont sur le terrain, pas derrière un écran. Dictée vocale, IA contextuelle, matching intelligent.">
+    <meta property="og:title" content="Léon — CRM immobilier voice-first">
+    <meta property="og:description" content="Parlez, l'IA fait le reste. Le premier CRM immobilier pensé pour le terrain.">
+    <meta property="og:image" content="img/F.png">
+    <meta property="og:type" content="website">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="img/fav_leon.svg">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-subtle: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(118, 75, 162, 0.06) 100%);
+            --primary: #6C4CC8;
+            --primary-soft: rgba(108, 76, 200, 0.08);
+            --text-primary: #1A1F36;
+            --text-secondary: #4A5568;
+            --text-tertiary: #94A3B8;
+            --bg-light: #F8F9FB;
+            --bg-white: #FFFFFF;
+            --border-light: #E8EBF0;
+            --radius-card: 14px;
+            --radius-pill: 100px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+            --shadow-device: 0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            color: var(--text-primary);
+            background: var(--bg-white);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== TYPOGRAPHY ===== */
+        .display-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.05;
+        }
+
+        .gradient-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .section {
+            padding: 120px 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal.visible,
+        .reveal-left.visible,
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translate(0);
+        }
+        .delay-1 { transition-delay: 0.15s; }
+        .delay-2 { transition-delay: 0.3s; }
+        .delay-3 { transition-delay: 0.45s; }
+        .delay-4 { transition-delay: 0.6s; }
+
+        /* ===== HEADER ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: background 0.3s ease;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-logo img {
+            height: 30px;
+        }
+
+        .header-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--gradient);
+            color: white;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            border-radius: var(--radius-pill);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .header-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        /* ===== SECTION 1 : HERO ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 32px 80px;
+            background: var(--bg-white);
+        }
+
+        .hero-title {
+            font-size: clamp(52px, 8vw, 96px);
+            margin-bottom: 0;
+            animation: fadeInUp 0.8s ease-out both;
+        }
+
+        .hero-title-gradient {
+            font-size: clamp(52px, 8vw, 96px);
+            display: block;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .hero-subtitle {
+            font-size: clamp(16px, 2.2vw, 20px);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 28px auto 0;
+            line-height: 1.7;
+            font-weight: 400;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .hero-cta-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            margin-top: 40px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: var(--gradient);
+            color: white;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: transparent;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: 2px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .hero-note {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 400;
+        }
+
+        .hero-visual {
+            margin-top: 64px;
+            animation: fadeInUp 1s ease-out 0.8s both;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Device frame */
+        .device-desktop {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: var(--shadow-device);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .device-desktop img {
+            width: 100%;
+            display: block;
+        }
+
+        /* Placeholder pour screenshots */
+        .screenshot-placeholder {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .screenshot-placeholder i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        /* ===== SECTION 2 : RUPTURE ===== */
+        .rupture {
+            background: var(--bg-light);
+        }
+
+        .rupture-title {
+            font-size: clamp(28px, 5vw, 48px);
+            max-width: 800px;
+            margin: 0 auto 32px;
+        }
+
+        .rupture-text {
+            font-size: clamp(16px, 1.8vw, 19px);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto;
+            line-height: 1.85;
+        }
+
+        /* ===== SECTION 3 : VOICE-FIRST ===== */
+        .split-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .split-text {
+            max-width: 480px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 44px);
+            margin-bottom: 20px;
+        }
+
+        .section-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 22px;
+            background: var(--primary-soft);
+            border-radius: var(--radius-card);
+            min-width: 100px;
+        }
+
+        .stat-pill-value {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-pill-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Device phone */
+        .device-phone {
+            position: relative;
+            max-width: 300px;
+            margin: 0 auto;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: var(--shadow-device);
+            border: 8px solid #1A1F36;
+            background: #1A1F36;
+        }
+
+        .device-phone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 28px;
+            background: #1A1F36;
+            border-radius: 0 0 16px 16px;
+            z-index: 2;
+        }
+
+        .device-phone img {
+            width: 100%;
+            display: block;
+            border-radius: 28px;
+        }
+
+        .device-phone .screenshot-placeholder {
+            aspect-ratio: 9/18;
+            border-radius: 28px;
+        }
+
+        /* ===== SECTION 4 : CRM INTELLIGENT ===== */
+        .split-section-reverse {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .split-visual-left {
+            order: -1;
+        }
+
+        .feature-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .feature-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 18px 20px;
+            background: var(--bg-white);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-light);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .feature-card-icon {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 12px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .feature-card-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .feature-card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ===== SECTION 5 : IA CONTEXTUELLE ===== */
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 56px;
+        }
+
+        .mockup-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mockup-card-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: var(--radius-pill);
+            margin: 16px 16px 0;
+        }
+
+        .badge-generated {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .badge-contextual {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+        }
+
+        .badge-realtime {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8B5CF6;
+        }
+
+        .mockup-card-content {
+            padding: 16px;
+        }
+
+        .mockup-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .mockup-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mockup-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .mockup-platform {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .mockup-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* SMS bubble */
+        .sms-bubble {
+            background: #E9F5FF;
+            border-radius: 18px 18px 18px 4px;
+            padding: 14px 18px;
+            margin: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .sms-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-align: right;
+            margin-top: 6px;
+        }
+
+        /* Match card */
+        .match-visual {
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .match-score {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+        }
+
+        .match-score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0deg, #764ba2 312deg, #E8EBF0 312deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .match-score-inner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--primary);
+        }
+
+        .match-from {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .match-arrow {
+            color: var(--text-tertiary);
+            margin: 6px 0;
+            font-size: 14px;
+        }
+
+        .match-to {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== SECTION 6 : MOBILE ===== */
+        .mobile-section {
+            background: var(--gradient-subtle);
+        }
+
+        .phones-fan {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0;
+            margin-top: 56px;
+            perspective: 1200px;
+        }
+
+        .phone-item {
+            transition: transform 0.6s ease;
+        }
+
+        .phone-item:nth-child(1) {
+            transform: rotate(-8deg) translateX(40px) translateY(10px);
+            z-index: 1;
+        }
+
+        .phone-item:nth-child(2) {
+            transform: scale(1.08);
+            z-index: 3;
+        }
+
+        .phone-item:nth-child(3) {
+            transform: rotate(8deg) translateX(-40px) translateY(10px);
+            z-index: 1;
+        }
+
+        .phone-item .device-phone {
+            max-width: 220px;
+        }
+
+        /* ===== SECTION 7 : CHIFFRES ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 56px;
+        }
+
+        .stat-block {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: clamp(40px, 5vw, 56px);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* ===== SECTION 8 : CTA FINAL ===== */
+        .cta-final {
+            background: var(--gradient);
+            padding: 120px 0;
+        }
+
+        .cta-final .display-title {
+            color: white;
+            font-size: clamp(32px, 5.5vw, 56px);
+            margin-bottom: 20px;
+        }
+
+        .cta-final .section-desc {
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 520px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-white {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: white;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-outline-white {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: transparent;
+            color: white;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-white:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-note {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 20px;
+        }
+
+        /* ===== FOOTER ===== */
+        .footer {
+            background: #0F1419;
+            padding: 48px 0;
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-logo {
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        .footer-tagline {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .footer-copy {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+
+            .section {
+                padding: 80px 0;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 100px 20px 60px;
+            }
+
+            .hero-visual {
+                margin-top: 40px;
+            }
+
+            /* Split sections → stack */
+            .split-section,
+            .split-section-reverse {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .split-visual-left {
+                order: 0;
+            }
+
+            .split-text {
+                max-width: 100%;
+            }
+
+            .device-phone {
+                max-width: 240px;
+            }
+
+            /* Mockup grid → stack */
+            .mockup-grid {
+                grid-template-columns: 1fr;
+                max-width: 360px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            /* Phones fan → single phone */
+            .phones-fan {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .phone-item:nth-child(1),
+            .phone-item:nth-child(3) {
+                display: none;
+            }
+
+            .phone-item:nth-child(2) {
+                transform: none;
+            }
+
+            .phone-item .device-phone {
+                max-width: 260px;
+            }
+
+            /* Stats grid → 2 columns */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
+            }
+
+            /* Stats row → wrap */
+            .stats-row {
+                justify-content: center;
+            }
+
+            /* CTA buttons → stack */
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-primary,
+            .btn-white,
+            .btn-outline-white {
+                width: 100%;
+                max-width: 320px;
+                justify-content: center;
+            }
+
+            /* Footer → stack */
+            .footer-inner {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+
+            .footer-brand {
+                flex-direction: column;
+            }
+
+            /* Header */
+            .header-inner {
+                padding: 0 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title,
+            .hero-title-gradient {
+                font-size: clamp(36px, 10vw, 52px);
+            }
+
+            .rupture-title {
+                font-size: clamp(24px, 7vw, 32px);
+            }
+
+            .section-title {
+                font-size: clamp(24px, 7vw, 32px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="header-inner">
+            <a href="/" class="header-logo">
+                <img src="img/Logo_leon.svg" alt="Léon">
+            </a>
+            <a href="login.html" class="header-cta">
+                Se connecter
+            </a>
+        </div>
+    </header>
+
+    <!-- ===== SECTION 1 : HERO ===== -->
+    <section class="hero">
+        <h1 class="display-title hero-title">Parlez.</h1>
+        <span class="display-title hero-title-gradient gradient-text">L'IA fait le reste.</span>
+        <p class="hero-subtitle">
+            Le premier CRM immobilier pensé pour les agents qui sont sur le terrain, pas derrière un écran.
+        </p>
+        <div class="hero-cta-group">
+            <a href="login.html" class="btn-primary">
+                Essayer gratuitement
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <span class="hero-note">Pas de carte bancaire. Prêt en 30 secondes.</span>
+        </div>
+        <div class="hero-visual">
+            <div class="device-desktop">
+                <!-- SCREENSHOT: Remplacer par une capture du pipeline desktop -->
+                <div class="screenshot-placeholder" id="screenshot-hero">
+                    <i class="fas fa-image"></i>
+                    Screenshot : pipeline Léon (desktop)
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 2 : RUPTURE ===== -->
+    <section class="section rupture">
+        <div class="container text-center">
+            <h2 class="display-title rupture-title reveal">
+                Vous n'avez pas choisi<br>ce métier pour faire<br>de l'admin.
+            </h2>
+            <p class="rupture-text reveal delay-1">
+                Entre les fiches Excel, les relances oubliées, les SMS recopiés à la main
+                et les posts LinkedIn écrits avec ChatGPT qui sonnent faux... vous passez
+                plus de temps à alimenter vos outils qu'à rencontrer vos clients.
+                Et pendant ce temps, des mandats vous échappent.
+            </p>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 3 : VOICE-FIRST ===== -->
+    <section class="section">
+        <div class="container">
+            <div class="split-section">
+                <div class="split-text reveal-left">
+                    <div class="section-label">
+                        <i class="fas fa-microphone"></i>
+                        Voice-first
+                    </div>
+                    <h2 class="display-title section-title">
+                        Vous parlez.<br>
+                        <span class="gradient-text">Léon comprend.</span>
+                    </h2>
+                    <p class="section-desc">
+                        Sortez d'une visite, dictez ce que vous avez vu. Léon transcrit,
+                        structure et remplit la fiche automatiquement. Nom, téléphone,
+                        adresse, surface, budget — tout est rangé au bon endroit.
+                    </p>
+                    <div class="stats-row">
+                        <div class="stat-pill reveal delay-1">
+                            <span class="stat-pill-value">15s</span>
+                            <span class="stat-pill-label">Pour créer<br>une fiche</span>
+                        </div>
+                        <div class="stat-pill reveal delay-2">
+                            <span class="stat-pill-value">0</span>
+                            <span class="stat-pill-label">Champs à<br>remplir</span>
+                        </div>
+                        <div class="stat-pill reveal delay-3">
+                            <span class="stat-pill-value">100%</span>
+                            <span class="stat-pill-label">Mains<br>libres</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-right">
+                    <div class="device-phone">
+                        <!-- SCREENSHOT: Remplacer par une capture du mode micro -->
+                        <div class="screenshot-placeholder" id="screenshot-micro">
+                            <i class="fas fa-microphone" style="font-size: 32px;"></i><br>
+                            Screenshot : mode micro
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 4 : CRM INTELLIGENT ===== -->
+    <section class="section" style="background: var(--bg-light);">
+        <div class="container">
+            <div class="split-section-reverse">
+                <div class="split-text reveal-right">
+                    <div class="section-label">
+                        <i class="fas fa-brain"></i>
+                        IA Contextuelle
+                    </div>
+                    <h2 class="display-title section-title">
+                        Votre business,<br>
+                        <span class="gradient-text">en un coup d'œil.</span>
+                    </h2>
+                    <p class="section-desc">
+                        Pipeline vendeurs, pipeline acquéreurs. Chaque lead a sa place,
+                        de la prise de contact jusqu'à la vente. L'IA travaille en coulisses
+                        pour que rien ne vous échappe.
+                    </p>
+                    <div class="feature-cards">
+                        <div class="feature-card reveal delay-1">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Matching automatique</div>
+                                <div class="feature-card-desc">Léon rapproche vos acquéreurs et vos biens en temps réel.</div>
+                            </div>
+                        </div>
+                        <div class="feature-card reveal delay-2">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-comment-dots"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Messages IA</div>
+                                <div class="feature-card-desc">SMS, WhatsApp, email — le bon message, au bon moment.</div>
+                            </div>
+                        </div>
+                        <div class="feature-card reveal delay-3">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-sun"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Briefing du matin</div>
+                                <div class="feature-card-desc">Chaque jour, Léon vous dit qui relancer en priorité.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="split-visual-left reveal-left">
+                    <div class="device-desktop">
+                        <!-- SCREENSHOT: Remplacer par une capture du pipeline desktop -->
+                        <div class="screenshot-placeholder" id="screenshot-pipeline">
+                            <i class="fas fa-columns"></i>
+                            Screenshot : pipeline vendeurs
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 5 : IA CONTEXTUELLE ===== -->
+    <section class="section">
+        <div class="container text-center">
+            <h2 class="display-title section-title reveal" style="max-width: 700px; margin: 0 auto 8px;">
+                Léon connaît vos biens.<br>
+                <span class="gradient-text">ChatGPT, non.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 600px; margin: 0 auto;">
+                Posts réseaux sociaux avec vos vrais mandats. Messages de relance qui citent
+                la dernière visite. Matching calculé sur vos données. Tout est connecté.
+            </p>
+
+            <div class="mockup-grid">
+                <!-- Carte 1 : Post LinkedIn -->
+                <div class="mockup-card reveal delay-1">
+                    <span class="mockup-card-badge badge-generated">Généré par Léon</span>
+                    <div class="mockup-card-content">
+                        <div class="mockup-card-header">
+                            <div class="mockup-avatar">RC</div>
+                            <div>
+                                <div class="mockup-name">Romain Chollet</div>
+                                <div class="mockup-platform">LinkedIn</div>
+                            </div>
+                        </div>
+                        <p class="mockup-text">
+                            Vendu en 3 semaines. Ce T3 lumineux rue Garibaldi partait à 285 000 €.
+                            Résultat : 4 visites, 2 offres, une vente au prix. La clé ? Un prix juste
+                            dès le départ et une mise en valeur soignée...
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Carte 2 : SMS contextuel -->
+                <div class="mockup-card reveal delay-2">
+                    <span class="mockup-card-badge badge-contextual">Contextuel</span>
+                    <div class="sms-bubble">
+                        Bonjour Mme Dupont, suite à notre visite du T4 avenue Jean Jaurès
+                        mardi dernier, avez-vous pu en discuter avec votre conjoint ?
+                        Je reste disponible pour tout complément.
+                        <div class="sms-time">14:32</div>
+                    </div>
+                </div>
+
+                <!-- Carte 3 : Match -->
+                <div class="mockup-card reveal delay-3">
+                    <span class="mockup-card-badge badge-realtime">Temps réel</span>
+                    <div class="match-visual">
+                        <div class="match-score">
+                            <div class="match-score-circle">
+                                <div class="match-score-inner">87%</div>
+                            </div>
+                        </div>
+                        <div class="match-from">Famille Martin</div>
+                        <div class="match-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="match-to">T4 Villeurbanne — 280 000 €<br>
+                            <span style="font-size: 11px; color: var(--text-tertiary);">
+                                Budget · Localisation · Surface · Type
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 6 : MOBILE ===== -->
+    <section class="section mobile-section">
+        <div class="container text-center">
+            <div class="section-label reveal" style="margin: 0 auto 20px;">
+                <i class="fas fa-mobile-alt"></i>
+                Mobile-first
+            </div>
+            <h2 class="display-title section-title reveal" style="max-width: 600px; margin: 0 auto 8px;">
+                <span class="gradient-text">Conçu pour le terrain.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 560px; margin: 0 auto;">
+                Bouton micro géant. Navigation à une main. Fiches qui se remplissent
+                en marchant. Léon s'adapte à votre réalité : vous êtes debout,
+                vous êtes pressé, vous êtes en déplacement.
+            </p>
+
+            <div class="phones-fan">
+                <div class="phone-item reveal delay-1">
+                    <div class="device-phone">
+                        <!-- SCREENSHOT: Pipeline mobile -->
+                        <div class="screenshot-placeholder" id="screenshot-mobile-pipeline">
+                            <i class="fas fa-columns"></i><br>
+                            Pipeline mobile
+                        </div>
+                    </div>
+                </div>
+                <div class="phone-item reveal delay-2">
+                    <div class="device-phone">
+                        <!-- SCREENSHOT: Mode micro mobile -->
+                        <div class="screenshot-placeholder" id="screenshot-mobile-micro">
+                            <i class="fas fa-microphone" style="font-size: 28px;"></i><br>
+                            Mode micro
+                        </div>
+                    </div>
+                </div>
+                <div class="phone-item reveal delay-3">
+                    <div class="device-phone">
+                        <!-- SCREENSHOT: Social / messages -->
+                        <div class="screenshot-placeholder" id="screenshot-mobile-social">
+                            <i class="fas fa-share-alt"></i><br>
+                            Posts sociaux
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 7 : CHIFFRES ===== -->
+    <section class="section">
+        <div class="container text-center">
+            <h2 class="display-title section-title reveal" style="max-width: 600px; margin: 0 auto 8px;">
+                L'administratif<br>
+                <span class="gradient-text">devient addictif.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 520px; margin: 0 auto;">
+                Points d'expérience, séries de jours actifs, niveaux de progression.
+                Léon transforme votre routine en jeu. Pas pour vous distraire —
+                pour garder le rythme.
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-block reveal delay-1">
+                    <div class="stat-number gradient-text">15s</div>
+                    <div class="stat-label">Pour créer une fiche<br>complète par la voix</div>
+                </div>
+                <div class="stat-block reveal delay-2">
+                    <div class="stat-number gradient-text">87%</div>
+                    <div class="stat-label">Score matching moyen<br>acquéreur / vendeur</div>
+                </div>
+                <div class="stat-block reveal delay-3">
+                    <div class="stat-number gradient-text">3x</div>
+                    <div class="stat-label">Plus de leads<br>relancés à temps</div>
+                </div>
+                <div class="stat-block reveal delay-4">
+                    <div class="stat-number gradient-text">0 €</div>
+                    <div class="stat-label">Pour commencer<br>avec Léon</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 8 : CTA FINAL ===== -->
+    <section class="cta-final text-center">
+        <div class="container">
+            <h2 class="display-title reveal">
+                Arrêtez de perdre<br>des mandats.
+            </h2>
+            <p class="section-desc reveal delay-1">
+                Léon est gratuit pour commencer. Pas de carte bancaire.
+                Pas d'engagement. Juste votre voix et 30 secondes.
+            </p>
+            <div class="cta-buttons reveal delay-2">
+                <a href="login.html" class="btn-white">
+                    Commencer gratuitement
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="#" class="btn-outline-white">
+                    <i class="fas fa-play"></i>
+                    Voir une démo
+                </a>
+            </div>
+            <p class="cta-note reveal delay-3">Pas de carte bancaire. Prêt en 30 secondes.</p>
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="img/Logo_leon.svg" alt="Léon" class="footer-logo">
+                    <span class="footer-tagline">Le CRM immobilier voice-first.</span>
+                </div>
+                <div class="footer-links">
+                    <a href="login.html">Connexion</a>
+                    <a href="cgu.html">Conditions d'utilisation</a>
+                    <a href="confidentialite.html">Politique de confidentialité</a>
+                    <a href="mailto:romainchollet69@gmail.com">Contact</a>
+                </div>
+                <span class="footer-copy">© 2026 Léon. Fait à Lyon.</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ===== SCROLL REVEAL ===== -->
+    <script>
+        /**
+         * Scroll-reveal : ajoute .visible aux éléments .reveal quand ils entrent dans le viewport.
+         * Pas de librairie externe — IntersectionObserver natif.
+         */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -60px 0px'
+        });
+
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+
+</body>
+</html>

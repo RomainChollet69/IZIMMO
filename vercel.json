@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/home.html" }
+    { "source": "/", "destination": "/landing-v2.html" }
   ],
   "functions": {
     "api/parse-import-batch.js": {
