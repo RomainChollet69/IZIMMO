@@ -5515,7 +5515,7 @@
 
             // Badge relance cliquable (icône notification, visible même en replié)
             const alertBadge = followup.isAlert
-                ? `<div class="badge-alert" onclick="event.stopPropagation();markAsRelanced('${buyer.id}')" title="Marquer comme relancé">🔔</div>`
+                ? `<div class="badge-alert" onclick="event.stopPropagation();markAsRelanced('${buyer.id}')" title="Marquer comme relancé"><i class="fa-solid fa-bell" style="font-size:13px"></i></div>`
                 : '';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
