@@ -455,7 +455,7 @@
         .visit-cards-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
+            gap: 14px;
         }
         .visit-card {
             position: relative;
@@ -1561,7 +1561,7 @@
             visitCards += '</div>';
         }
         if (done.length > 0) {
-            visitCards += '<div class="visit-group-label">Effectuées</div>';
+            visitCards += '<div class="visit-group-label">Visites effectuées</div>';
             visitCards += '<div class="visit-cards-grid">';
             done.forEach(v => { visitCards += renderVisitCard(v); });
             visitCards += '</div>';
