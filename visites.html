@@ -281,6 +281,79 @@
             gap: 8px;
         }
         .new-visit-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+        .filter-toggle-btn {
+            background: #F3F4F6;
+            color: var(--text-dark);
+            border: 1px solid #E5E7EB;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s;
+        }
+        .filter-toggle-btn:hover { background: #E8EAF6; border-color: #667eea; }
+        .filter-toggle-btn.active { background: #E8EAF6; border-color: #667eea; color: #667eea; }
+        .filter-toggle-count {
+            background: #667eea;
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 8px;
+            min-width: 18px;
+            text-align: center;
+        }
+        /* Vue des demandes traitées */
+        .processed-requests-view {
+            display: none;
+            max-width: 1200px;
+            margin: 16px auto 0;
+            padding: 0 32px;
+        }
+        .processed-requests-view.active { display: block; }
+        .processed-requests-list {
+            background: white;
+            border-radius: 14px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .processed-requests-header {
+            padding: 14px 20px;
+            background: linear-gradient(135deg, rgba(46, 125, 50, 0.06), rgba(46, 125, 50, 0.02));
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .processed-request-item {
+            padding: 12px 20px;
+            border-top: 1px solid #F3F4F6;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .processed-request-item:hover { background: #FAFBFC; }
+        .processed-request-info { flex: 1; min-width: 0; }
+        .processed-request-status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .processed-request-note {
+            font-size: 12px;
+            color: #78909C;
+            margin-top: 3px;
+            font-style: italic;
+        }
 
         /* ===== VISITS CONTAINER ===== */
         .visits-container {
@@ -1084,6 +1157,17 @@
         </div>
     </div>
 
+    <!-- ===== PROCESSED REQUESTS VIEW ===== -->
+    <div class="processed-requests-view" id="processedRequestsView">
+        <div class="processed-requests-list">
+            <div class="processed-requests-header">
+                <i class="fa-solid fa-inbox"></i>
+                <span id="processedRequestsTitle">Demandes traitées</span>
+            </div>
+            <div id="processedRequestsList"></div>
+        </div>
+    </div>
+
     <!-- ===== FILTERS ===== -->
     <section class="filters-bar">
         <select class="filter-select" id="filterStatus">
@@ -1098,6 +1182,11 @@
             <i class="fa-solid fa-magnifying-glass"></i>
             <input type="text" id="filterSearch" placeholder="Rechercher (visiteur, adresse...)">
         </div>
+        <button class="filter-toggle-btn" id="toggleProcessedBtn" onclick="toggleProcessedView()" title="Voir les demandes traitées">
+            <i class="fa-solid fa-inbox"></i>
+            <span>Demandes traitées</span>
+            <span class="filter-toggle-count" id="processedCount">0</span>
+        </button>
         <button class="new-visit-btn" id="newVisitBtn">
             <i class="fa-solid fa-plus"></i>
             <span>Nouvelle visite</span>
@@ -1181,6 +1270,7 @@
     let openAccordions = new Set();
     let _cachedAgencyName = null;
     let portalRequests = [];      // Demandes de visite portails (pending)
+    let processedRequests = [];   // Demandes traitées (processed/accepted/dismissed)
     let visitRequestStats = {};   // Stats par seller_id : { contacts, processed }
 
     /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
@@ -1483,6 +1573,15 @@
             visitCards += '</div>';
         }
 
+        // Demandes traitées pour ce bien
+        const sellerProcessed = processedRequests.filter(r => r.matched_seller_id === sellerId);
+        if (sellerProcessed.length > 0) {
+            visitCards += '<div class="visit-group-label">Demandes traitées</div>';
+            visitCards += '<div class="visit-cards-grid">';
+            sellerProcessed.forEach(r => { visitCards += renderProcessedRequestCard(r); });
+            visitCards += '</div>';
+        }
+
         return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
             <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
                 ${photoHtml}
@@ -1576,6 +1675,32 @@
     }
 
     // ===== ACCORDION =====
+
+    function renderProcessedRequestCard(req) {
+        const portal = req.portal_name || 'autre';
+        const shortLabel = PORTAL_SHORT[portal] || '?';
+        const colorClass = PORTAL_COLORS[portal] || 'other';
+        const visitorName = req.visitor_name || 'Visiteur';
+        const phone = req.visitor_phone || '';
+        const statusLabel = req.status === 'accepted' ? 'Visite planifiée' : req.status === 'dismissed' ? 'Ignorée' : 'Traitée';
+        const statusColor = req.status === 'accepted' ? '#2E7D32' : req.status === 'dismissed' ? '#9E9E9E' : '#3F51B5';
+        const note = req.processing_note || '';
+        const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '';
+
+        return `<div class="visit-card effectuee" style="border-left-color:${statusColor}; cursor:default">
+            <div class="visit-card-top">
+                <span class="visit-status-badge" style="background:${statusColor}15; color:${statusColor}">${statusLabel}</span>
+                <span class="visit-card-date">${dateStr}</span>
+            </div>
+            <div class="visit-card-visitor">
+                <span class="portal-icon ${colorClass}" style="width:24px;height:24px;font-size:10px">${shortLabel}</span>
+                <span class="visit-card-name">${escapeHtml(visitorName)}</span>
+                ${phone ? `<span class="visit-card-phone">${escapeHtml(phone)}</span>` : ''}
+            </div>
+            ${note ? `<div class="visit-card-notes" style="max-height:none">${escapeHtml(note)}</div>` : ''}
+            ${req.visitor_message ? `<div class="visit-card-notes" style="max-height:60px">"${escapeHtml(req.visitor_message)}"</div>` : ''}
+        </div>`;
+    }
 
     function toggleAccordion(sellerId) {
         const el = document.querySelector(`.property-accordion[data-seller-id="${sellerId}"]`);
@@ -2418,6 +2543,75 @@
         }
     }
 
+    async function loadProcessedRequests() {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list_visit_requests', status_filter: 'all', limit: 100 })
+            });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            processedRequests = (data.requests || []).filter(r => r.status !== 'pending');
+        } catch (e) {
+            console.error('[Visites] Processed requests load error:', e);
+        }
+    }
+
+    // Re-matching frontend pour les demandes sans match
+    function frontendMatchSeller(req) {
+        if (req.matched_seller_id && req.sellers) return; // Déjà matché
+        if (!req.property_address && !req.property_type) return;
+
+        const searchWords = normalizeAddressFront(req.property_address || req.property_type || '');
+        if (searchWords.length === 0) return;
+
+        let bestMatch = null;
+        let bestScore = 0;
+
+        for (const seller of activeSellers) {
+            if (!seller.address) continue;
+            const sellerWords = normalizeAddressFront(seller.address);
+            const common = searchWords.filter(w => sellerWords.includes(w));
+            const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
+            const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
+            const score = Math.max(scoreFromSearch, scoreFromSeller);
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = seller;
+            }
+        }
+
+        if (bestMatch && bestScore >= 0.3) {
+            req.matched_seller_id = bestMatch.id;
+            req.sellers = bestMatch;
+            req.match_confidence = bestScore >= 0.6 ? 'high' : 'medium';
+        }
+    }
+
+    function normalizeAddressFront(address) {
+        const stopWords = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'l', 'et', 'a', 'en', 'rue', 'avenue', 'boulevard', 'place', 'allee', 'chemin', 'impasse', 'cours', 'passage', 'route', 'voie']);
+        return address
+            .toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => (w.length > 1 || /^\d+$/.test(w)) && !stopWords.has(w));
+    }
+
+    function applyFrontendMatching() {
+        portalRequests.forEach(req => frontendMatchSeller(req));
+        processedRequests.forEach(req => frontendMatchSeller(req));
+    }
+
     async function loadVisitRequestStats() {
         const userId = await getCurrentUserId();
         if (!userId) return;
@@ -2556,6 +2750,54 @@
         } catch (e) {
             console.error('[Visites] Dismiss error:', e);
         }
+    }
+
+    // ===== VUE DEMANDES TRAITÉES =====
+    function toggleProcessedView() {
+        const view = document.getElementById('processedRequestsView');
+        const btn = document.getElementById('toggleProcessedBtn');
+        const isActive = view.classList.toggle('active');
+        btn.classList.toggle('active', isActive);
+        if (isActive) renderProcessedView();
+    }
+
+    function renderProcessedView() {
+        const list = document.getElementById('processedRequestsList');
+        document.getElementById('processedCount').textContent = processedRequests.length;
+
+        if (processedRequests.length === 0) {
+            list.innerHTML = '<div style="padding:20px; text-align:center; color:#9CA3AF; font-size:14px">Aucune demande traitée</div>';
+            return;
+        }
+
+        list.innerHTML = processedRequests.map(req => {
+            const portal = req.portal_name || 'autre';
+            const colorClass = PORTAL_COLORS[portal] || 'other';
+            const shortLabel = PORTAL_SHORT[portal] || '?';
+            const visitorName = req.visitor_name || 'Visiteur';
+            const phone = req.visitor_phone || '';
+            const seller = req.sellers;
+            const sellerAddr = seller ? (seller.address || 'Adresse ?') : 'Bien non identifié';
+            const statusMap = { accepted: { label: 'Visite planifiée', bg: '#E8F5E9', color: '#2E7D32' }, dismissed: { label: 'Ignorée', bg: '#F5F5F5', color: '#9E9E9E' }, processed: { label: 'Traitée', bg: '#E8EAF6', color: '#3F51B5' } };
+            const st = statusMap[req.status] || statusMap.processed;
+            const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+            const note = req.processing_note || '';
+            const msg = req.visitor_message ? req.visitor_message.substring(0, 100) : '';
+
+            return `<div class="processed-request-item">
+                <div class="portal-icon ${colorClass}">${shortLabel}</div>
+                <div class="processed-request-info">
+                    <div style="font-weight:600; font-size:14px">${escapeHtml(visitorName)} ${phone ? '<span style="font-weight:400; color:var(--text-light); font-size:13px; margin-left:6px">' + escapeHtml(phone) + '</span>' : ''}</div>
+                    <div style="font-size:12px; color:var(--text-light); margin-top:2px">${escapeHtml(sellerAddr)}</div>
+                    ${note ? `<div class="processed-request-note"><i class="fa-solid fa-note-sticky" style="font-size:10px"></i> ${escapeHtml(note)}</div>` : ''}
+                    ${msg && !note ? `<div class="processed-request-note">"${escapeHtml(msg)}"</div>` : ''}
+                </div>
+                <span class="processed-request-status" style="background:${st.bg}; color:${st.color}">${st.label}</span>
+                <span style="font-size:12px; color:#9CA3AF; white-space:nowrap">${dateStr}</span>
+            </div>`;
+        }).join('');
+
+        document.getElementById('processedRequestsTitle').textContent = `${processedRequests.length} demande${processedRequests.length > 1 ? 's' : ''} traitée${processedRequests.length > 1 ? 's' : ''}`;
     }
 
     // ===== POPOVER TELEPHONE =====
@@ -2890,16 +3132,21 @@
             loadAllVisits(),
             loadActiveSellers(),
             loadPortalRequests(),
+            loadProcessedRequests(),
             loadVisitRequestStats()
         ]);
 
         allVisits = visits;
         activeSellers = sellers;
 
-        console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers,', portalRequests.length, 'portal requests');
+        // Re-matching frontend pour les demandes sans match
+        applyFrontendMatching();
+
+        console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers,', portalRequests.length, 'portal requests,', processedRequests.length, 'processed');
 
         renderVisitsPage();
         renderPortalBanner();
+        document.getElementById('processedCount').textContent = processedRequests.length;
         setupFilterListeners();
     });
     </script>
