@@ -3082,6 +3082,8 @@
                 portalRequests = portalRequests.filter(r => r.id !== requestId);
                 renderPortalBanner();
                 allVisits = await loadAllVisits();
+                await loadProcessedRequests();
+                applyFrontendMatching();
                 renderVisitsPage();
             } else {
                 showToast('Erreur lors de la planification');
@@ -3186,6 +3188,10 @@
                 showToast(data.buyer_id ? 'Traitée + lead créé !' : 'Demande traitée !');
                 portalRequests = portalRequests.filter(r => r.id !== requestId);
                 renderPortalBanner();
+                // Recharger les demandes traitées et re-rendre la page
+                await loadProcessedRequests();
+                applyFrontendMatching();
+                renderVisitsPage();
             } else {
                 showToast('Erreur lors du traitement');
                 btn.disabled = false;
