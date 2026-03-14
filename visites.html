@@ -354,6 +354,18 @@
             margin-top: 3px;
             font-style: italic;
         }
+        .processed-delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ccc;
+            font-size: 13px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .processed-delete-btn:hover { color: #E53935; background: #FFEBEE; }
 
         /* ===== VISITS CONTAINER ===== */
         .visits-container {
@@ -2568,32 +2580,74 @@
     // Re-matching frontend pour les demandes sans match
     function frontendMatchSeller(req) {
         if (req.matched_seller_id && req.sellers) return; // Déjà matché
-        if (!req.property_address && !req.property_type) return;
 
-        const searchWords = normalizeAddressFront(req.property_address || req.property_type || '');
-        if (searchWords.length === 0) return;
+        // 1. Matching par adresse
+        if (req.property_address) {
+            const searchWords = normalizeAddressFront(req.property_address);
+            if (searchWords.length > 0) {
+                let bestMatch = null;
+                let bestScore = 0;
 
-        let bestMatch = null;
-        let bestScore = 0;
+                for (const seller of activeSellers) {
+                    if (!seller.address) continue;
+                    const sellerWords = normalizeAddressFront(seller.address);
+                    const common = searchWords.filter(w => sellerWords.includes(w));
+                    const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
+                    const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
+                    const score = Math.max(scoreFromSearch, scoreFromSeller);
 
-        for (const seller of activeSellers) {
-            if (!seller.address) continue;
-            const sellerWords = normalizeAddressFront(seller.address);
-            const common = searchWords.filter(w => sellerWords.includes(w));
-            const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
-            const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
-            const score = Math.max(scoreFromSearch, scoreFromSeller);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = seller;
+                    }
+                }
 
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = seller;
+                if (bestMatch && bestScore >= 0.3) {
+                    req.matched_seller_id = bestMatch.id;
+                    req.sellers = bestMatch;
+                    req.match_confidence = bestScore >= 0.6 ? 'high' : 'medium';
+                    return;
+                }
             }
         }
 
-        if (bestMatch && bestScore >= 0.3) {
-            req.matched_seller_id = bestMatch.id;
-            req.sellers = bestMatch;
-            req.match_confidence = bestScore >= 0.6 ? 'high' : 'medium';
+        // 2. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
+        if (req.property_type) {
+            const reqType = (req.property_type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            // Extraire un prix depuis le message ou les champs
+            const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
+            const reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
+
+            let candidates = activeSellers.filter(s => {
+                if (!s.property_type) return false;
+                const sellerType = s.property_type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return sellerType.includes(reqType) || reqType.includes(sellerType);
+            });
+
+            // Si on a un prix, filtrer par proximité ±15%
+            if (reqPrice && candidates.length > 1) {
+                const priceFiltered = candidates.filter(s => {
+                    if (!s.budget) return false;
+                    return Math.abs(s.budget - reqPrice) <= reqPrice * 0.15;
+                });
+                if (priceFiltered.length > 0) candidates = priceFiltered;
+            }
+
+            // Si un seul candidat du même type, c'est probablement le bon
+            if (candidates.length === 1) {
+                req.matched_seller_id = candidates[0].id;
+                req.sellers = candidates[0];
+                req.match_confidence = reqPrice ? 'medium' : 'low';
+                return;
+            }
+
+            // Plusieurs candidats : prendre le plus proche en prix
+            if (candidates.length > 1 && reqPrice) {
+                candidates.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
+                req.matched_seller_id = candidates[0].id;
+                req.sellers = candidates[0];
+                req.match_confidence = 'low';
+            }
         }
     }
 
@@ -2794,6 +2848,7 @@
                 </div>
                 <span class="processed-request-status" style="background:${st.bg}; color:${st.color}">${st.label}</span>
                 <span style="font-size:12px; color:#9CA3AF; white-space:nowrap">${dateStr}</span>
+                <button class="processed-delete-btn" onclick="deleteProcessedRequest('${req.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
         }).join('');
 
@@ -3108,6 +3163,33 @@
             showToast('Erreur réseau');
             btn.disabled = false;
             btn.textContent = 'Valider';
+        }
+    }
+
+    async function deleteProcessedRequest(requestId) {
+        if (!confirm('Supprimer cette demande ?')) return;
+
+        try {
+            const userId = await getCurrentUserId();
+            const { error } = await supabaseClient
+                .from('visit_requests')
+                .delete()
+                .eq('id', requestId)
+                .eq('user_id', userId);
+
+            if (error) {
+                console.error('[Visites] Delete request error:', error);
+                showToast('Erreur lors de la suppression');
+                return;
+            }
+
+            processedRequests = processedRequests.filter(r => r.id !== requestId);
+            renderProcessedView();
+            renderVisitsPage(); // MAJ les accordions
+            showToast('Demande supprimée');
+        } catch (e) {
+            console.error('[Visites] Delete error:', e);
+            showToast('Erreur réseau');
         }
     }
 
