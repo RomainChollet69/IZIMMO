@@ -2584,31 +2584,60 @@
     function frontendMatchSeller(req) {
         if (req.matched_seller_id && req.sellers) return; // Déjà matché
 
+        // Seuls les biens sous mandat/commercialisation sont sur les portails
+        const MATCHABLE_STATUSES = new Set(['mandat', 'commercialisation']);
+        const matchableSellers = activeSellers.filter(s => MATCHABLE_STATUSES.has(s.status));
+        if (matchableSellers.length === 0) return;
+
+        // Récupérer le prix de la demande
+        let reqPrice = req.property_price ? parseInt(req.property_price, 10) : null;
+        if (!reqPrice) {
+            const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
+            reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
+        }
+
         // 1. Matching par adresse
         if (req.property_address) {
             const searchWords = normalizeAddressFront(req.property_address);
             if (searchWords.length > 0) {
-                let bestMatch = null;
-                let bestScore = 0;
+                // Calculer les scores pour tous les biens
+                const scored = matchableSellers
+                    .filter(s => s.address)
+                    .map(seller => {
+                        const sellerWords = normalizeAddressFront(seller.address);
+                        const common = searchWords.filter(w => sellerWords.includes(w));
+                        const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
+                        const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
+                        return { seller, score: Math.max(scoreFromSearch, scoreFromSeller) };
+                    })
+                    .filter(s => s.score >= 0.3)
+                    .sort((a, b) => b.score - a.score);
 
-                for (const seller of activeSellers) {
-                    if (!seller.address) continue;
-                    const sellerWords = normalizeAddressFront(seller.address);
-                    const common = searchWords.filter(w => sellerWords.includes(w));
-                    const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
-                    const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
-                    const score = Math.max(scoreFromSearch, scoreFromSeller);
-
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMatch = seller;
-                    }
+                if (scored.length === 1) {
+                    req.matched_seller_id = scored[0].seller.id;
+                    req.sellers = scored[0].seller;
+                    req.match_confidence = scored[0].score >= 0.6 ? 'high' : 'medium';
+                    return;
                 }
 
-                if (bestMatch && bestScore >= 0.3) {
-                    req.matched_seller_id = bestMatch.id;
-                    req.sellers = bestMatch;
-                    req.match_confidence = bestScore >= 0.6 ? 'high' : 'medium';
+                // Plusieurs biens avec le même score d'adresse → départager par prix
+                if (scored.length > 1 && reqPrice) {
+                    const topScore = scored[0].score;
+                    const tied = scored.filter(s => Math.abs(s.score - topScore) < 0.05);
+                    if (tied.length > 1) {
+                        tied.sort((a, b) => Math.abs((a.seller.budget || 0) - reqPrice) - Math.abs((b.seller.budget || 0) - reqPrice));
+                    }
+                    req.matched_seller_id = tied[0].seller.id;
+                    req.sellers = tied[0].seller;
+                    req.match_confidence = topScore >= 0.6 ? 'high' : 'medium';
+                    return;
+                }
+
+                // Plusieurs biens, pas de prix → prendre le meilleur score si nettement supérieur
+                if (scored.length > 1 && scored[0].score > scored[1].score + 0.15) {
+                    req.matched_seller_id = scored[0].seller.id;
+                    req.sellers = scored[0].seller;
+                    req.match_confidence = scored[0].score >= 0.6 ? 'high' : 'medium';
                     return;
                 }
             }
@@ -2617,20 +2646,14 @@
         // 2. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
         if (req.property_type) {
             const reqType = (req.property_type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            // Utiliser property_price stocké en DB, sinon extraire du message
-            let reqPrice = req.property_price ? parseInt(req.property_price, 10) : null;
-            if (!reqPrice) {
-                const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
-                reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
-            }
 
-            let candidates = activeSellers.filter(s => {
+            let candidates = matchableSellers.filter(s => {
                 if (!s.property_type) return false;
                 const sellerType = s.property_type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return sellerType.includes(reqType) || reqType.includes(sellerType);
             });
 
-            // Si on a un prix, filtrer par proximité ±15%
+            // Filtrer par proximité prix ±15%
             if (reqPrice) {
                 const priceFiltered = candidates.filter(s => {
                     if (!s.budget) return false;
