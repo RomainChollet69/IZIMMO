@@ -4,6 +4,83 @@
 
 ---
 
+## Session 2026-03-14 — Micro améliorations, WhatsApp, blocage étude de marché, lancement communication
+
+### Résumé
+Session de polish et stabilisation avant lancement communication auprès de ~50 conseillers. Corrections micro vocales (visites, commandes, WhatsApp), gel de l'étude de marché (tokens), améliorations UX (carte nouveau contact, messages IA).
+
+### Modifications
+
+**`micro.html`** :
+- Fix `visitCheck` variable manquante
+- `preFilterLeads()` : matching par adresse en plus du nom (2+ mots communs)
+- `isLeonCommand()` : normalisation agressive (tirets, apostrophes, espaces Whisper) + catch-all WhatsApp/retour/visite
+- `loadUpcomingVisits()` : charge les visites des 7 prochains jours pour contexte IA
+- `executeConfirmVisiteIntent` : recherche visite par date/adresse quand pas de nom de contact (via `findVisitByContext`)
+- `generateMessageFromVisit` : génère message même sans visite en DB
+- Boutons SMS + WhatsApp sur les messages générés
+- Gestion absence de numéro de téléphone avec message d'erreur
+- Style carte nouveau contact : gradient violet au lieu du rouge erreur
+- Cache leads mis à jour après création depuis micro
+- Gestion erreurs silencieuses sur `lead_notes` insert
+
+**`api/parse-voice-note.js`** :
+- `upcoming_visits` ajouté au contexte IA
+- Règles strictes : ne pas créer visit_detected juste parce qu'une visite existe
+- Matching vendeur par adresse dans visit_detected
+
+**`api/assistant.js`** :
+- `buildOrchestratorPrompt` accepte `visitsJson`
+- Section `VISITES_A_VENIR` dans le prompt orchestrateur
+- Intent `send_confirmation_visite` enrichi avec contexte visites
+
+**`api/generate-message.js`** :
+- Suppression des emojis dans tous les messages générés
+- Prompt retour visite : ne plus écrire "de ce jour"
+
+**`api/transcribe.js`** :
+- Filtre hallucinations Whisper (silence → "Sous-titres réalisés par Amara.org")
+
+**`api/inbound-email.js`** :
+- Interception emails de confirmation forwarding Gmail/Outlook
+- `handleForwardingConfirmation()` + `extractConfirmationLink()`
+
+**`parametres.html`** :
+- Bannière confirmation forwarding email avec lien cliquable
+
+**`home.html`** :
+- Tuile "Étude de marché" grisée avec badge "Bientôt"
+
+**`etude-marche.html`** :
+- Écran de blocage plein écran avec redirection accueil
+
+**`vendeurs.html`** :
+- Bouton "Étude de marché" commenté dans les fiches
+- Fix crash `studyBtn` null → protection `if (studyBtn)`
+
+**`landing-v2.html`** :
+- Texte section dictée : "Après un appel, en sortie de rendez-vous ou entre deux portes"
+
+**`sql/013_forwarding_confirmation.sql`** (nouveau) :
+- Colonnes `forwarding_confirmation_link` et `forwarding_confirmation_date` sur `user_integrations`
+
+### Fichiers créés/modifiés
+- micro.html, vendeurs.html, home.html, etude-marche.html, parametres.html, landing-v2.html
+- api/parse-voice-note.js, api/assistant.js, api/generate-message.js, api/transcribe.js, api/inbound-email.js
+- sql/013_forwarding_confirmation.sql
+
+### Points d'attention
+- Lancement communication : ~50 conseillers contactés
+- Étude de marché gelée pour économiser les tokens
+- Migration SQL 013 à exécuter si pas encore fait
+
+### Prochaines étapes prioritaires
+- Tester le flux WhatsApp message bout en bout
+- Monitoring tokens/usage avec l'afflux de nouveaux utilisateurs
+- Vérifier les retours utilisateurs sur le micro vocal
+
+---
+
 ## Session 2026-03-12 — Colonnes custom, sous-titres, bugs fixes, home mobile
 
 ### Résumé

@@ -79,6 +79,14 @@
 **Erreur** : `setTimeout(async () => { await loadSellers(); hideOnboarding(); }, 2000)` — si `loadSellers()` hang ou throw, `hideOnboarding()` n'est jamais appelé. L'écran d'onboarding reste bloqué indéfiniment.
 **Règle** : Les transitions UI critiques (montrer/cacher un écran) doivent être **synchrones et inconditionnelles**. Appeler `hideOnboarding()` d'abord, puis `loadSellers()` en async non-bloquant. Pattern : `setTimeout(() => { hideOnboarding(); (async () => { await loadSellers(); })(); }, 2000)`. Ajouter aussi un filet de sécurité CSS (`display: none !important` via classe) pour les cas extrêmes.
 
+### L018 — Commenter un élément HTML sans nettoyer les refs JS → crash (2026-03-14)
+**Erreur** : Commenter le bouton `studyBtn` dans le HTML de vendeurs.html sans supprimer `document.getElementById('studyBtn').style.display = ...` dans le JS → `null.style` → crash total de l'ouverture des fiches.
+**Règle** : Quand on retire/commente un élément HTML, toujours chercher toutes les références JS avec grep et les protéger avec `if (el)` ou les supprimer.
+
+### L019 — iframe + "Disable cache" DevTools = faux ami (2026-03-14)
+**Erreur** : Le "Disable cache" de DevTools ne s'applique pas toujours aux iframes. Le micro.html chargé dans l'iframe de vendeurs.html gardait l'ancienne version même avec cache désactivé.
+**Règle** : Ajouter un cache buster (`?v=Date.now()`) sur les src d'iframes pour forcer le rechargement. Vérifier avec l'onglet Network que le fichier dans l'iframe est bien rechargé.
+
 ### L017 — scrollIntoView avant getBoundingClientRect (2026-03-12)
 **Erreur** : Le tooltip d'onboarding se positionnait en bas de l'écran au lieu de côté de la carte, car `getBoundingClientRect()` retournait des coordonnées hors viewport (la carte n'était pas scrollée en vue dans le pipeline horizontal).
 **Règle** : Toujours appeler `element.scrollIntoView({ block: 'center', inline: 'center' })` AVANT de calculer la position avec `getBoundingClientRect()`. Ajouter un délai (400ms) après le scroll pour attendre la fin de l'animation avant de positionner.

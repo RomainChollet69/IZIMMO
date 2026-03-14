@@ -1249,3 +1249,51 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives rejetées** :
 - **Tout dans l'orchestrateur** : Aurait nécessité de passer les visites dans le contexte → trop lourd
 - **Popup tu/vous** : Interrompt le flux vocal → forcer le vouvoiement (approprié pour une confirmation)
+
+---
+
+## D058 — Gel de l'étude de marché (économie de tokens)
+
+**Date** : 2026-03-14
+**Statut** : Actif (temporaire)
+
+**Contexte** : Lancement communication auprès de ~50 conseillers. L'étude de marché IA consomme beaucoup de tokens (2 passes Claude Sonnet + DVF + DPE). Risque de coûts élevés avec les nouveaux utilisateurs.
+
+**Décision** : Bloquer l'accès à 3 niveaux : tuile home grisée, écran de blocage sur etude-marche.html, bouton retiré des fiches vendeurs. Message "en cours de développement".
+
+**Pourquoi** : Contrôle des coûts avant d'avoir un modèle de pricing validé. Feature à réactiver une fois le pricing en place.
+
+---
+
+## D059 — Recherche visite par contexte (date/adresse) sans nom de contact
+
+**Date** : 2026-03-14
+**Statut** : Actif
+
+**Contexte** : L'utilisateur dit "génère un message WhatsApp pour la visite de lundi à Villeurbanne" sans mentionner de nom. L'orchestrateur ne retourne pas de `contact_name`.
+
+**Décision** : Fallback `findVisitByContext()` qui cherche dans les visites des 14 derniers jours par date et adresse (mots communs). Génère le message via `generateMessageFromVisit()` sans nécessiter de visite en DB.
+
+**Pourquoi** :
+- L'utilisateur parle naturellement par lieu/date, pas toujours par nom
+- Les visites existent parfois uniquement sur Google Calendar, pas dans la table visits
+
+**Alternatives rejetées** :
+- **Obliger à mentionner le nom** : Friction inutile, l'IA devrait comprendre le contexte
+- **Interroger Google Calendar** : Complexe (OAuth), la table visits suffit pour la majorité des cas
+
+---
+
+## D060 — Boutons SMS + WhatsApp sur les messages générés
+
+**Date** : 2026-03-14
+**Statut** : Actif
+
+**Contexte** : Les agents immobiliers utilisent souvent des groupes WhatsApp pour communiquer avec les vendeurs (couples, successions). Le bouton SMS seul ne suffit pas.
+
+**Décision** : Ajouter un bouton WhatsApp (`whatsapp://send?text=...`) à côté du bouton SMS. L'utilisateur choisit ensuite le contact ou le groupe dans WhatsApp.
+
+**Pourquoi** :
+- WhatsApp ne permet pas d'ouvrir un groupe spécifique par URL (pas de deep link pour les groupes)
+- `whatsapp://send?text=MESSAGE` ouvre WhatsApp avec le message pré-rempli, l'utilisateur sélectionne le destinataire en 1 tap
+- Pas besoin de WhatsApp Business API (cher, complexe, les agents utilisent leur WhatsApp perso)
