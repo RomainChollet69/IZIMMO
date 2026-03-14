@@ -6776,8 +6776,8 @@
         async function markAsRelanced(buyerId) {
             const updated = await updateBuyer(buyerId, { reminder: null });
             if (updated) {
-                const idx = allBuyers.findIndex(b => b.id === buyerId);
-                if (idx !== -1) allBuyers[idx].reminder = null;
+                const idx = buyers.findIndex(b => b.id === buyerId);
+                if (idx !== -1) buyers[idx].reminder = null;
                 renderBuyers();
                 showToast('Relance effectuée ✓');
             }
