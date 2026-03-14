@@ -30,11 +30,11 @@ const PipelineConfig = (function () {
     ];
 
     const DEFAULT_BUYER_STATUS_COLUMNS = [
-        { key: 'nouveau', label: 'NOUVEAUX', title: 'Premier contact', icon: '🆕', color: '#42A5F5' },
-        { key: 'actif', label: 'RECHERCHE ACTIVE', title: 'Critères définis, envoi de biens', icon: '🔍', color: '#AB47BC' },
-        { key: 'achete_avec_moi', label: 'ACHETÉS AVEC MOI 🎉', title: 'Mes transactions', icon: '🎉', color: '#66BB6A' },
-        { key: 'achete_ailleurs', label: 'ACHETÉS AILLEURS 🔄', title: 'Ont trouvé sans moi', icon: '🔄', color: '#F59E0B' },
-        { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350' },
+        { key: 'nouveau', label: 'NOUVEAUX', title: 'Premier contact', icon: '🆕', color: '#42A5F5', headerImage: 'img/nouveaux.png' },
+        { key: 'actif', label: 'RECHERCHE ACTIVE', title: 'Critères définis, envoi de biens', icon: '🔍', color: '#AB47BC', headerImage: 'img/actifs.png' },
+        { key: 'achete_avec_moi', label: 'ACHETÉS AVEC MOI 🎉', title: 'Mes transactions', icon: '🎉', color: '#66BB6A', headerImage: 'img/achetes.png' },
+        { key: 'achete_ailleurs', label: 'ACHETÉS AILLEURS 🔄', title: 'Ont trouvé sans moi', icon: '🔄', color: '#F59E0B', headerImage: 'img/ailleurs.png' },
+        { key: 'abandon', label: 'PLUS EN RECHERCHE ❌', title: 'Abandon', icon: '❌', color: '#EF5350', headerImage: 'img/plusenrecherche.png' },
         { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true },
         { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#00BCD4', hiddenByDefault: true },
         { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true }
