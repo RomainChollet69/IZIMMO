@@ -1031,7 +1031,7 @@ async function handleListVisitRequests(res, user, params) {
 
 async function handleProcessVisitRequest(res, user, params) {
     const supabaseAdmin = getSupabaseAdmin();
-    const { request_id, decision, seller_id, create_buyer, visit_date, visit_time } = params;
+    const { request_id, decision, seller_id, create_buyer, visit_date, visit_time, note, processing_note } = params;
 
     if (!request_id || !decision) {
         return res.status(400).json({ error: 'request_id et decision requis' });
@@ -1084,6 +1084,7 @@ async function handleProcessVisitRequest(res, user, params) {
 
         // Créer la visite (table visits n'a pas visitor_phone/visitor_email — infos dans notes)
         const contactInfo = [vr.visitor_phone, vr.visitor_email].filter(Boolean).join(' / ');
+        const autoNotes = `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${contactInfo ? '\nContact : ' + contactInfo : ''}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`;
         const visitData = {
             user_id: user.id,
             seller_id: finalSellerId || null,
@@ -1092,7 +1093,7 @@ async function handleProcessVisitRequest(res, user, params) {
             visit_date: visit_date || new Date().toISOString().split('T')[0],
             visit_time: visit_time || null,
             status: 'planifiee',
-            notes: `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${contactInfo ? '\nContact : ' + contactInfo : ''}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`
+            notes: note ? note + '\n---\n' + autoNotes : autoNotes
         };
 
         const { data: visit, error: visitErr } = await supabaseAdmin
@@ -1123,5 +1124,44 @@ async function handleProcessVisitRequest(res, user, params) {
         });
     }
 
-    return res.status(400).json({ error: 'decision doit être accept ou dismiss' });
+    if (decision === 'processed') {
+        // Marquer comme traitée avec note, optionnellement créer un lead
+        let buyerId = null;
+        if (create_buyer && (vr.visitor_name || vr.visitor_phone)) {
+            const buyerData = {
+                user_id: user.id,
+                first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
+                last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
+                phone: vr.visitor_phone || null,
+                email: vr.visitor_email || null,
+                source: 'site_annonce',
+                status: 'nouveau',
+                contact_date: new Date().toISOString().split('T')[0],
+                notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+            };
+            const { data: buyer, error: buyerErr } = await supabaseAdmin
+                .from('buyers')
+                .insert([buyerData])
+                .select();
+            if (!buyerErr && buyer?.[0]) {
+                buyerId = buyer[0].id;
+            }
+        }
+
+        const updateData = {
+            status: 'processed',
+            processing_note: processing_note || null,
+            matched_seller_id: seller_id || vr.matched_seller_id,
+            updated_at: new Date().toISOString()
+        };
+        if (buyerId) updateData.created_buyer_id = buyerId;
+
+        await supabaseAdmin.from('visit_requests')
+            .update(updateData)
+            .eq('id', request_id);
+
+        return res.status(200).json({ processed: true, buyer_id: buyerId });
+    }
+
+    return res.status(400).json({ error: 'decision doit être accept, dismiss ou processed' });
 }

@@ -426,7 +426,7 @@ async function matchSeller(userId, parsed) {
 
     if (!sellers || sellers.length === 0) return null;
 
-    // Matching par adresse (mots communs significatifs)
+    // Matching par adresse (score bidirectionnel, seuils assouplis)
     if (parsed.property_address) {
         const searchWords = normalizeAddress(parsed.property_address);
         let bestMatch = null;
@@ -436,7 +436,10 @@ async function matchSeller(userId, parsed) {
             if (!seller.address) continue;
             const sellerWords = normalizeAddress(seller.address);
             const common = searchWords.filter(w => sellerWords.includes(w));
-            const score = common.length / Math.max(searchWords.length, 1);
+            // Score bidirectionnel : prend le max pour gérer les adresses partielles
+            const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
+            const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
+            const score = Math.max(scoreFromSearch, scoreFromSeller);
 
             if (score > bestScore) {
                 bestScore = score;
@@ -444,8 +447,8 @@ async function matchSeller(userId, parsed) {
             }
         }
 
-        if (bestMatch && bestScore >= 0.6) {
-            return { id: bestMatch.id, confidence: bestScore >= 0.8 ? 'high' : 'medium' };
+        if (bestMatch && bestScore >= 0.4) {
+            return { id: bestMatch.id, confidence: bestScore >= 0.6 ? 'high' : 'medium' };
         }
     }
 
@@ -471,5 +474,5 @@ function normalizeAddress(address) {
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9\s]/g, ' ')
         .split(/\s+/)
-        .filter(w => w.length > 1 && !ADDRESS_STOP_WORDS.has(w));
+        .filter(w => (w.length > 1 || /^\d+$/.test(w)) && !ADDRESS_STOP_WORDS.has(w));
 }

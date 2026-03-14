@@ -812,11 +812,69 @@
             color: #9CA3AF;
             margin-top: 4px;
             font-style: italic;
-            white-space: nowrap;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
             overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 500px;
         }
+        .portal-request-item.expanded .portal-request-message {
+            -webkit-line-clamp: unset;
+            overflow: visible;
+        }
+        .portal-request-details {
+            display: none;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        .portal-request-item.expanded .portal-request-details {
+            display: block;
+        }
+        .portal-request-details span {
+            margin-left: 0;
+        }
+        .portal-request-expand {
+            font-size: 10px;
+            color: #667eea;
+            cursor: pointer;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        /* Bouton Traitée */
+        .portal-processed-btn {
+            background: #E8F5E9;
+            color: #2E7D32;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            white-space: nowrap;
+        }
+        .portal-processed-btn:hover { background: #C8E6C9; }
+        /* Modal Traitée — chips de suggestions */
+        .note-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .note-chip {
+            background: #F3F4F6;
+            border: 1px solid #E5E7EB;
+            color: var(--text-dark);
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.15s;
+        }
+        .note-chip:hover { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; }
+        .note-chip.selected { background: #E8F5E9; border-color: #2E7D32; color: #2E7D32; font-weight: 600; }
         .portal-request-actions {
             display: flex;
             gap: 8px;
@@ -2265,6 +2323,10 @@
         seloger: 'SL', leboncoin: 'LBC', bienici: 'BI',
         pap: 'PAP', logicimmo: 'LI', autre: '?'
     };
+    const PORTAL_FULL = {
+        seloger: 'SeLoger', leboncoin: 'LeBonCoin', bienici: "Bien'ici",
+        pap: 'PAP', logicimmo: 'Logic-Immo', autre: 'Portail'
+    };
 
     async function loadPortalRequests() {
         const userId = await getCurrentUserId();
@@ -2331,38 +2393,57 @@
             const portal = req.portal_name || 'autre';
             const colorClass = PORTAL_COLORS[portal] || 'other';
             const shortLabel = PORTAL_SHORT[portal] || '?';
+            const portalFull = PORTAL_FULL[portal] || portal;
             const visitorName = req.visitor_name || 'Visiteur inconnu';
             const phone = req.visitor_phone || '';
+            const email = req.visitor_email || '';
             const seller = req.sellers;
             const sellerLabel = seller
                 ? `${seller.address || 'Adresse ?'}`
                 : null;
             const matchConf = req.match_confidence || 'none';
-            const matchLabel = matchConf === 'high' ? 'Bien matche' : matchConf === 'medium' ? 'Match partiel' : '';
+            const matchLabel = matchConf === 'high' ? 'Bien matché' : matchConf === 'medium' ? 'Match partiel' : '';
             const matchTag = matchLabel ? `<span class="match-tag ${matchConf}">${matchLabel}</span>` : '';
-            const noMatchTag = !seller ? '<span class="match-tag none">Aucun bien matche</span>' : '';
+            const noMatchTag = !seller ? '<span class="match-tag none">Aucun bien matché</span>' : '';
 
             const propertyLine = sellerLabel
                 ? `${escapeHtml(req.property_type || '')} → ${escapeHtml(sellerLabel)} ${matchTag}`
-                : `${escapeHtml(req.property_address || req.property_type || 'Bien non identifie')} ${noMatchTag}`;
+                : `${escapeHtml(req.property_address || req.property_type || 'Bien non identifié')} ${noMatchTag}`;
 
             const msgPreview = req.visitor_message
-                ? `<div class="portal-request-message">"${escapeHtml(req.visitor_message.substring(0, 120))}"</div>`
+                ? `<div class="portal-request-message">"${escapeHtml(req.visitor_message)}"</div>`
+                : '';
+
+            // Détails étendus (visibles en mode expanded)
+            const emailDate = req.email_date ? new Date(req.email_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+            const detailLines = [];
+            if (emailDate) detailLines.push(`<i class="fa-regular fa-clock"></i> Reçue le ${emailDate}`);
+            if (email) detailLines.push(`<i class="fa-regular fa-envelope"></i> ${escapeHtml(email)}`);
+            if (req.property_address && !seller) detailLines.push(`<i class="fa-solid fa-location-dot"></i> Adresse extraite : ${escapeHtml(req.property_address)}`);
+            if (portalFull) detailLines.push(`<i class="fa-solid fa-globe"></i> Via ${escapeHtml(portalFull)}`);
+
+            const detailsHtml = detailLines.length > 0
+                ? `<div class="portal-request-details">${detailLines.join('<br>')}</div>`
                 : '';
 
             return `<div class="portal-request-item" data-request-id="${req.id}">
                 <div class="portal-icon ${colorClass}">${shortLabel}</div>
-                <div class="portal-request-info">
+                <div class="portal-request-info" onclick="togglePortalRequestExpand(this)" style="cursor:pointer">
                     <div class="portal-request-visitor">
                         ${escapeHtml(visitorName)}
                         <span>${escapeHtml(phone)}</span>
                     </div>
                     <div class="portal-request-property">${propertyLine}</div>
                     ${msgPreview}
+                    ${detailsHtml}
+                    <div class="portal-request-expand"><i class="fa-solid fa-chevron-down"></i> Voir plus</div>
                 </div>
                 <div class="portal-request-actions">
-                    <button class="portal-accept-btn" onclick="acceptPortalRequest('${req.id}', ${seller ? `'${seller.id}'` : 'null'})">
+                    <button class="portal-accept-btn" onclick="openPortalPlanModal('${req.id}')">
                         <i class="fa-solid fa-calendar-plus"></i> Planifier
+                    </button>
+                    <button class="portal-processed-btn" onclick="openPortalProcessedModal('${req.id}')">
+                        <i class="fa-solid fa-check"></i> Traitée
                     </button>
                     <button class="portal-dismiss-btn" onclick="dismissPortalRequest('${req.id}')">Ignorer</button>
                 </div>
@@ -2377,40 +2458,7 @@
         btn.textContent = card.classList.contains('open') ? 'Masquer' : 'Afficher';
     }
 
-    async function acceptPortalRequest(requestId, sellerId) {
-        const headers = {};
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
-
-        try {
-            const resp = await fetch('/api/assistant', {
-                method: 'POST',
-                headers: { ...headers, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'process_visit_request',
-                    request_id: requestId,
-                    decision: 'accept',
-                    seller_id: sellerId,
-                    create_buyer: true
-                })
-            });
-
-            if (resp.ok) {
-                showToast('Visite planifiee !');
-                // Retirer du bandeau
-                portalRequests = portalRequests.filter(r => r.id !== requestId);
-                renderPortalBanner();
-                // Recharger les visites
-                allVisits = await loadAllVisits();
-                renderVisitsPage();
-            } else {
-                showToast('Erreur lors de la planification');
-            }
-        } catch (e) {
-            console.error('[Visites] Accept portal request error:', e);
-            showToast('Erreur reseau');
-        }
-    }
+    // acceptPortalRequest remplacé par openPortalPlanModal + submitPortalPlan
 
     async function dismissPortalRequest(requestId) {
         const headers = {};
@@ -2435,6 +2483,303 @@
             }
         } catch (e) {
             console.error('[Visites] Dismiss error:', e);
+        }
+    }
+
+    // ===== EXPANSION INLINE DES CARTES =====
+    function togglePortalRequestExpand(infoEl) {
+        const item = infoEl.closest('.portal-request-item');
+        const isExpanded = item.classList.toggle('expanded');
+        const expandLabel = item.querySelector('.portal-request-expand');
+        if (expandLabel) {
+            expandLabel.innerHTML = isExpanded
+                ? '<i class="fa-solid fa-chevron-up"></i> Voir moins'
+                : '<i class="fa-solid fa-chevron-down"></i> Voir plus';
+        }
+    }
+
+    // ===== MODAL PLANIFIER (pré-rempli depuis demande portail) =====
+    function openPortalPlanModal(requestId) {
+        const req = portalRequests.find(r => r.id === requestId);
+        if (!req) return;
+
+        closeModal('portalPlanModal');
+        const seller = req.sellers;
+        const sellerLabel = seller
+            ? [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') + (seller.address ? ' — ' + seller.address : '')
+            : '';
+
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        const modal = document.createElement('div');
+        modal.id = 'portalPlanModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card">
+                <div class="modal-title">Planifier une visite</div>
+
+                <div class="form-section">
+                    <label class="form-label">Bien à visiter *</label>
+                    <div style="position:relative">
+                        <input type="text" class="form-input" id="ppSellerSearch" placeholder="Rechercher un bien..." autocomplete="off" value="${escapeHtml(sellerLabel)}">
+                        <input type="hidden" id="ppSelectedSellerId" value="${seller ? seller.id : ''}">
+                        <div class="ac-dropdown-visit" id="ppSellerDropdown"></div>
+                    </div>
+                </div>
+
+                <div class="form-section" style="background:#F9FAFB; border-radius:10px; padding:12px; margin-bottom:12px;">
+                    <label class="form-label" style="margin-bottom:4px">Visiteur</label>
+                    <div style="font-size:14px; font-weight:600; color:var(--text-dark)">${escapeHtml(req.visitor_name || 'Inconnu')}</div>
+                    <div style="font-size:13px; color:var(--text-light); margin-top:2px">
+                        ${req.visitor_phone ? '<i class="fa-solid fa-phone" style="font-size:11px"></i> ' + escapeHtml(req.visitor_phone) : ''}
+                        ${req.visitor_email ? '&nbsp;&nbsp;<i class="fa-regular fa-envelope" style="font-size:11px"></i> ' + escapeHtml(req.visitor_email) : ''}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-section">
+                        <label class="form-label">Date *</label>
+                        <input type="date" class="form-input" id="ppVisitDate" value="${tomorrowStr}">
+                    </div>
+                    <div class="form-section">
+                        <label class="form-label">Heure</label>
+                        <input type="time" class="form-input" id="ppVisitTime">
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">Note</label>
+                    <textarea class="form-textarea" id="ppVisitNote" rows="2" placeholder="Remarques...">${req.visitor_message ? escapeHtml(req.visitor_message) : ''}</textarea>
+                </div>
+
+                <div class="form-section">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text-dark)">
+                        <input type="checkbox" id="ppCreateBuyer" checked>
+                        Créer un lead acquéreur
+                    </label>
+                </div>
+
+                <button type="button" class="submit-btn" id="ppSubmitBtn" onclick="submitPortalPlan('${req.id}')">Planifier la visite</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('portalPlanModal')">Annuler</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('portalPlanModal'); });
+
+        // Setup autocomplete pour le bien
+        setupPortalSellerAutocomplete('ppSellerSearch', 'ppSellerDropdown', 'ppSelectedSellerId');
+    }
+
+    function setupPortalSellerAutocomplete(inputId, dropdownId, hiddenId) {
+        const input = document.getElementById(inputId);
+        const dropdown = document.getElementById(dropdownId);
+        if (!input || !dropdown) return;
+
+        let timer = null;
+        input.addEventListener('input', function() {
+            clearTimeout(timer);
+            const q = this.value.trim().toLowerCase();
+            document.getElementById(hiddenId).value = '';
+            if (q.length < 2) { dropdown.classList.remove('active'); return; }
+
+            timer = setTimeout(() => {
+                const results = activeSellers.filter(s => {
+                    const name = ((s.first_name || '') + ' ' + (s.last_name || '')).toLowerCase();
+                    const addr = (s.address || '').toLowerCase();
+                    return name.includes(q) || addr.includes(q);
+                }).slice(0, 8);
+
+                if (results.length === 0) { dropdown.classList.remove('active'); return; }
+
+                dropdown.innerHTML = results.map(s => {
+                    const name = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ');
+                    const addr = s.address || '';
+                    return `<div class="ac-option" data-id="${s.id}">
+                        <div class="ac-option-name">${escapeHtml(name)}</div>
+                        <div class="ac-option-addr">${escapeHtml(addr)}</div>
+                    </div>`;
+                }).join('');
+                dropdown.classList.add('active');
+
+                dropdown.querySelectorAll('.ac-option').forEach(opt => {
+                    opt.addEventListener('click', function() {
+                        const sid = this.dataset.id;
+                        const s = activeSellers.find(x => x.id === sid);
+                        if (s) {
+                            input.value = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ')
+                                + (s.address ? ' — ' + s.address : '');
+                            document.getElementById(hiddenId).value = sid;
+                        }
+                        dropdown.classList.remove('active');
+                    });
+                });
+            }, 200);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) dropdown.classList.remove('active');
+        });
+    }
+
+    async function submitPortalPlan(requestId) {
+        const sellerId = document.getElementById('ppSelectedSellerId').value;
+        if (!sellerId) {
+            alert('Veuillez sélectionner un bien.');
+            return;
+        }
+        const visitDate = document.getElementById('ppVisitDate').value;
+        if (!visitDate) {
+            alert('Veuillez renseigner une date.');
+            return;
+        }
+
+        const btn = document.getElementById('ppSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Planification...';
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'accept',
+                    seller_id: sellerId,
+                    visit_date: visitDate,
+                    visit_time: document.getElementById('ppVisitTime').value || null,
+                    note: document.getElementById('ppVisitNote').value.trim() || null,
+                    create_buyer: document.getElementById('ppCreateBuyer').checked
+                })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                closeModal('portalPlanModal');
+                showToast(data.buyer_id ? 'Visite planifiée + lead créé !' : 'Visite planifiée !');
+                portalRequests = portalRequests.filter(r => r.id !== requestId);
+                renderPortalBanner();
+                allVisits = await loadAllVisits();
+                renderVisitsPage();
+            } else {
+                showToast('Erreur lors de la planification');
+                btn.disabled = false;
+                btn.textContent = 'Planifier la visite';
+            }
+        } catch (e) {
+            console.error('[Visites] Portal plan error:', e);
+            showToast('Erreur réseau');
+            btn.disabled = false;
+            btn.textContent = 'Planifier la visite';
+        }
+    }
+
+    // ===== MODAL TRAITÉE (avec note + chips + option créer lead) =====
+    function openPortalProcessedModal(requestId) {
+        const req = portalRequests.find(r => r.id === requestId);
+        if (!req) return;
+
+        closeModal('portalProcessedModal');
+        const seller = req.sellers;
+
+        const modal = document.createElement('div');
+        modal.id = 'portalProcessedModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:440px">
+                <div class="modal-title">Marquer comme traitée</div>
+
+                <div style="background:#F9FAFB; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px;">
+                    <strong>${escapeHtml(req.visitor_name || 'Visiteur')}</strong>
+                    ${req.visitor_phone ? ' — ' + escapeHtml(req.visitor_phone) : ''}
+                    ${seller ? '<br><span style="color:var(--text-light)">Bien : ' + escapeHtml(seller.address || '?') + '</span>' : ''}
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">Note</label>
+                    <div class="note-chips">
+                        <span class="note-chip" onclick="selectNoteChip(this)">Visite virtuelle envoyée</span>
+                        <span class="note-chip" onclick="selectNoteChip(this)">Message répondeur</span>
+                        <span class="note-chip" onclick="selectNoteChip(this)">Rappeler</span>
+                        <span class="note-chip" onclick="selectNoteChip(this)">Pas intéressé</span>
+                    </div>
+                    <textarea class="form-textarea" id="procNote" rows="2" placeholder="Ajouter une note..."></textarea>
+                </div>
+
+                <div class="form-section">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text-dark)">
+                        <input type="checkbox" id="procCreateBuyer" checked>
+                        Créer un lead acquéreur
+                    </label>
+                </div>
+
+                <button type="button" class="submit-btn" id="procSubmitBtn" style="background:linear-gradient(135deg, #2E7D32, #43A047)" onclick="submitPortalProcessed('${req.id}')">Valider</button>
+                <button type="button" class="cancel-btn" onclick="closeModal('portalProcessedModal')">Annuler</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('portalProcessedModal'); });
+    }
+
+    function selectNoteChip(chip) {
+        chip.classList.toggle('selected');
+        const textarea = document.getElementById('procNote');
+        const selectedChips = document.querySelectorAll('.note-chip.selected');
+        const chipTexts = Array.from(selectedChips).map(c => c.textContent);
+        const userText = textarea.dataset.userText || '';
+        textarea.value = chipTexts.length > 0
+            ? chipTexts.join(' / ') + (userText ? '\n' + userText : '')
+            : userText;
+    }
+
+    async function submitPortalProcessed(requestId) {
+        const btn = document.getElementById('procSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Traitement...';
+
+        const req = portalRequests.find(r => r.id === requestId);
+        const seller = req?.sellers;
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'processed',
+                    seller_id: seller ? seller.id : null,
+                    processing_note: document.getElementById('procNote').value.trim() || null,
+                    create_buyer: document.getElementById('procCreateBuyer').checked
+                })
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                closeModal('portalProcessedModal');
+                showToast(data.buyer_id ? 'Traitée + lead créé !' : 'Demande traitée !');
+                portalRequests = portalRequests.filter(r => r.id !== requestId);
+                renderPortalBanner();
+            } else {
+                showToast('Erreur lors du traitement');
+                btn.disabled = false;
+                btn.textContent = 'Valider';
+            }
+        } catch (e) {
+            console.error('[Visites] Processed error:', e);
+            showToast('Erreur réseau');
+            btn.disabled = false;
+            btn.textContent = 'Valider';
         }
     }
 
