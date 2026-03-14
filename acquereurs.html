@@ -6774,17 +6774,12 @@
         }
 
         async function markAsRelanced(buyerId) {
-            // Repousse la relance à +7 jours
-            const nextReminder = new Date();
-            nextReminder.setDate(nextReminder.getDate() + 7);
-            const nextStr = nextReminder.toISOString().split('T')[0];
-
-            const updated = await updateBuyer(buyerId, { reminder: nextStr });
+            const updated = await updateBuyer(buyerId, { reminder: null });
             if (updated) {
                 const idx = allBuyers.findIndex(b => b.id === buyerId);
-                if (idx !== -1) allBuyers[idx].reminder = nextStr;
+                if (idx !== -1) allBuyers[idx].reminder = null;
                 renderBuyers();
-                showToast('Relance reportée au ' + nextReminder.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+                showToast('Relance effectuée ✓');
             }
         }
 
