@@ -1115,18 +1115,25 @@
 
         .badge-alert {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
             background: #dc3545;
             color: white;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 4px 8px;
-            border-radius: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             animation: pulse 2s infinite;
+            z-index: 2;
+            border: 2px solid white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            transition: transform 0.15s, background 0.15s;
         }
+        .badge-alert:hover { transform: scale(1.15); background: #28a745; }
 
         /* ===== FICHES EXEMPLE (ONBOARDING) ===== */
         .example-card {
@@ -2330,7 +2337,7 @@
             .card-notes { font-size: 11px; padding: 6px; margin-top: 6px; max-height: 40px; }
             .card-links-count { font-size: 11px; }
             .card-followup { font-size: 11px; padding: 3px 6px; margin-top: 6px; }
-            .badge-alert { font-size: 9px; padding: 3px 6px; }
+            .badge-alert { width: 24px; height: 24px; font-size: 12px; }
             .card-actions { margin-top: 8px; gap: 4px; }
             .card-btn { font-size: 14px; padding: 4px; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
             .mobile-move-btn { display: inline-flex !important; }
@@ -3833,7 +3840,7 @@
             const sentBadge = cardData.sentProperties ? `<div class="match-indicator">🏠 ${cardData.sentProperties} bien${cardData.sentProperties > 1 ? 's' : ''} envoyé${cardData.sentProperties > 1 ? 's' : ''}</div>` : '';
             const name = escapeHtml((cardData.first_name || '') + ' ' + (cardData.last_name || ''));
 
-            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️', appartement_ou_maison: '🏢🏡' };
             const typeIcon = cardData.property_type ? (typeEmojis[cardData.property_type] || '') : '';
             const compactParts = [];
             if (typeIcon) compactParts.push(typeIcon);
@@ -5459,7 +5466,7 @@
 
         function getBuyerPropertyLine(buyer) {
             const parts = [];
-            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️', appartement_ou_maison: '🏢🏡' };
             if (buyer.property_type) parts.push(typeEmojis[buyer.property_type] || '📍');
             if (buyer.surface_min) parts.push(formatSurface(buyer.surface_min) + ' min');
             if (parts.length === 0) return '';
@@ -5475,7 +5482,7 @@
             const followup = getFollowupHTML(buyer.reminder);
 
             // Compact property line
-            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+            const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️', appartement_ou_maison: '🏢🏡' };
             const compactParts = [];
             if (buyer.property_type) compactParts.push(typeEmojis[buyer.property_type] || '');
             if (buyer.rooms) compactParts.push(buyer.rooms);
@@ -5506,10 +5513,13 @@
             if (followupCompact) compact += followupCompact;
             compact += '</div>';
 
+            // Badge relance cliquable (icône notification, visible même en replié)
+            const alertBadge = followup.isAlert
+                ? `<div class="badge-alert" onclick="event.stopPropagation();markAsRelanced('${buyer.id}')" title="Marquer comme relancé">🔔</div>`
+                : '';
+
             // === EXTENDED VIEW (extra info only, no duplicates) ===
             let ext = '<div class="card-extended">';
-
-            if (followup.isAlert) ext += '<div class="badge-alert">À RELANCER</div>';
 
             // Email
             if (buyer.email) ext += `<div class="card-info"><a href="mailto:${escapeHtml(buyer.email)}" class="email-link" style="color:inherit;text-decoration:none">📧 ${escapeHtml(buyer.email)}</a></div>`;
@@ -5534,7 +5544,7 @@
             </div>`;
             ext += '</div>';
 
-            card.innerHTML = compact + ext + '<div class="card-expand-arrow">▼</div>';
+            card.innerHTML = alertBadge + compact + ext + '<div class="card-expand-arrow">▼</div>';
 
             // Click handler on match indicator → open modal on matching tab
             const matchEl = card.querySelector('.match-indicator-inline');
@@ -6761,6 +6771,21 @@
             // Load notes
             loadBuyerNotes(id);
             loadFiles(id, 'buyer');
+        }
+
+        async function markAsRelanced(buyerId) {
+            // Repousse la relance à +7 jours
+            const nextReminder = new Date();
+            nextReminder.setDate(nextReminder.getDate() + 7);
+            const nextStr = nextReminder.toISOString().split('T')[0];
+
+            const updated = await updateBuyer(buyerId, { reminder: nextStr });
+            if (updated) {
+                const idx = allBuyers.findIndex(b => b.id === buyerId);
+                if (idx !== -1) allBuyers[idx].reminder = nextStr;
+                renderBuyers();
+                showToast('Relance reportée au ' + nextReminder.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }));
+            }
         }
 
         async function confirmDeleteBuyer(id) {
