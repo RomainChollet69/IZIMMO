@@ -4,6 +4,70 @@
 
 ---
 
+## Session 2026-03-14 (soir) — Images colonnes acquéreurs, sources détaillées, bordures dynamiques
+
+### Résumé
+Refonte visuelle du pipeline acquéreurs (vue type de bien) : images de header personnalisables, couleurs synchronisées avec les images, sources acquéreurs détaillées (LBC/SeLoger), UX améliorée (cloche relance, toast drag interdit).
+
+### Modifications
+
+**`js/pipeline-config.js`** :
+- Réassignation images par défaut : maisons→tb6/tb8 (vert), autre→tb10 (gris), custom→tb5/tb7/tb9
+- Couleurs par défaut synchronisées avec les images (t2→rose, t3→corail, t4→brun, maisons→verts)
+- `BUYER_HEADER_IMAGES` : tableau des 10 images disponibles
+- `headerImage` propagé dans `getEffectiveColumns()`
+
+**`acquereurs.html`** :
+- Image picker dans la modal de personnalisation des colonnes (vignettes cliquables)
+- Vignettes avec `object-position: top` pour voir l'icône maison/immeuble
+- Bordures de cartes injectées dynamiquement via `<style>` (supporte colonnes custom)
+- Sources acquéreurs détaillées : Le Bon Coin, SeLoger, Autres plateformes (remplace "Site d'annonce")
+- Cloche de relance : icône blanche sur fond rouge, clic pour annuler la relance
+- Source badges réduits et discrets (8px)
+- Budget sans "HFN"
+- Icône double 🏢🏡 pour type `appartement_ou_maison`
+- Toast explicatif quand on tente de drag en vue "type de bien"
+- `showToast()` ajouté
+
+**`js/supabase-config.js`** :
+- `BUYER_SOURCE_CONFIG` : ajout `leboncoin`, `seloger`, `autre_plateforme` + rétrocompat `site_annonce`
+
+**`api/assistant.js`** :
+- `portalToBuyerSource()` : mapping portail → source acquéreur (LBC, SeLoger, autre)
+
+**`api/inbound-email.js`** :
+- `matchSeller()` filtré aux mandats/commercialisation uniquement
+
+**`api/parse-lead.js`, `api/parse-import-batch.js`, `api/analyze-document.js`** :
+- Sources acquéreurs mises à jour dans les prompts Claude
+
+**`formulaire.html`, `parametres.html`** :
+- Select sources mis à jour
+
+**`visites.html`** :
+- Badge "Acquéreur" retiré des cartes de visite
+- Layout cartes : max-width 420px, justify-content space-between
+
+**`img/acheteurs/tb1-tb10.png`** (nouveaux) :
+- 10 images de header pour colonnes type de bien (bleu, rose, corail, brun, rouge, vert, violet, lime, orange, gris)
+
+### Fichiers créés/modifiés
+- js/pipeline-config.js, js/supabase-config.js, acquereurs.html, visites.html
+- api/assistant.js, api/inbound-email.js, api/parse-lead.js, api/parse-import-batch.js, api/analyze-document.js
+- formulaire.html, parametres.html
+- img/acheteurs/tb1.png → tb10.png
+
+### Points d'attention
+- Les utilisateurs existants gardent leurs images/couleurs custom (PipelineConfig merge)
+- CHECK constraint `buyers_status_check` doit inclure custom_1/2/3 (fait manuellement)
+- Vue "type de bien" : drag désactivé volontairement (classement automatique par critères)
+
+### Prochaines étapes prioritaires
+- Continuer le plan "Demandes de visite" (modal planifier, bouton traitée)
+- Validation Google OAuth en attente de review
+
+---
+
 ## Session 2026-03-14 — Micro améliorations, WhatsApp, blocage étude de marché, lancement communication
 
 ### Résumé
