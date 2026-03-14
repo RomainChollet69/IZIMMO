@@ -5506,6 +5506,13 @@
                         if (currentPipelineView === 'property_type') {
                             card.setAttribute('draggable', 'false');
                             card.style.cursor = 'pointer';
+                            card.addEventListener('mousedown', function propTypeDragHint(e) {
+                                if (e.target.closest('a, button')) return;
+                                let moved = false;
+                                const onMove = () => { if (!moved) { moved = true; showToast('Le classement par type de bien est automatique — modifie les critères du lead pour le déplacer'); } };
+                                document.addEventListener('mousemove', onMove, { once: true });
+                                document.addEventListener('mouseup', () => document.removeEventListener('mousemove', onMove), { once: true });
+                            });
                         }
                         containers[colKey].appendChild(card);
                     }
@@ -6879,6 +6886,19 @@
                 renderBuyers();
                 showToast('Relance effectuée ✓');
             }
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            Object.assign(t.style, {
+                position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)',
+                background: '#333', color: '#fff', padding: '10px 20px', borderRadius: '8px',
+                fontSize: '14px', zIndex: '9999', opacity: '0', transition: 'opacity 0.3s'
+            });
+            t.textContent = msg;
+            document.body.appendChild(t);
+            requestAnimationFrame(() => t.style.opacity = '1');
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
         }
 
         async function confirmDeleteBuyer(id) {
