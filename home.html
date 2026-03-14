@@ -409,6 +409,18 @@
         .tile-etude .tile-icon-area { background: linear-gradient(135deg, #667eea15, #764ba215); }
         .tile-etude .tile-fa-icon { color: #764ba2; }
 
+        .tile-disabled {
+            opacity: 0.5; cursor: default; position: relative;
+            filter: grayscale(0.4); pointer-events: auto;
+        }
+        .tile-badge-soon {
+            position: absolute; top: 8px; right: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff; font-size: 10px; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px; text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         /* ===== TOAST ===== */
         .toast {
             position: fixed;
@@ -580,13 +592,14 @@
                 <div class="tile-label">Marché /<br>DVF</div>
             </a>
 
-            <!-- 4. Étude de marché -->
-            <a href="etude-marche.html" class="tile tile-etude">
+            <!-- 4. Étude de marché (bloquée — consomme trop de tokens) -->
+            <div class="tile tile-etude tile-disabled" onclick="alert('Cette fonctionnalité est en cours de développement. Disponible prochainement !')">
                 <div class="tile-icon-area">
                     <i class="fa-solid fa-file-lines tile-fa-icon"></i>
                 </div>
                 <div class="tile-label">Étude de<br>marché</div>
-            </a>
+                <div class="tile-badge-soon">Bientôt</div>
+            </div>
 
             <!-- 5. Community management -->
             <a href="social.html" class="tile tile-social">

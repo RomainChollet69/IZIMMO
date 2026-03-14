@@ -1304,6 +1304,17 @@
     </style>
 </head>
 <body>
+    <!-- BLOCAGE TEMPORAIRE — feature gelée pour économiser les tokens -->
+    <div id="feature-blocked" style="display:none; position:fixed; inset:0; z-index:9999; background:#fff; display:flex; align-items:center; justify-content:center;">
+        <div style="text-align:center; padding:40px; max-width:400px;">
+            <i class="fa-solid fa-flask" style="font-size:48px; color:#764ba2; margin-bottom:20px;"></i>
+            <h2 style="font-family:'Barlow Semi Condensed',sans-serif; font-weight:800; font-size:24px; margin-bottom:12px;">Fonctionnalité en cours</h2>
+            <p style="color:#64748B; font-size:15px; line-height:1.6; margin-bottom:24px;">L'étude de marché IA est en cours de finalisation. Elle sera disponible prochainement.</p>
+            <a href="home.html" style="display:inline-block; padding:12px 32px; background:linear-gradient(135deg,#667eea,#764ba2); color:#fff; border-radius:12px; text-decoration:none; font-weight:600;">Retour à l'accueil</a>
+        </div>
+    </div>
+    <script>document.getElementById('feature-blocked').style.display = 'flex';</script>
+
     <!-- Header -->
     <div class="header no-print">
         <div class="header-inner">
