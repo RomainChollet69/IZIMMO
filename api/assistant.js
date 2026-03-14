@@ -1149,16 +1149,21 @@ async function handleProcessVisitRequest(res, user, params) {
         }
 
         const updateData = {
-            status: 'processed',
-            processing_note: processing_note || null,
+            status: 'dismissed',
+            processing_note: processing_note || 'Traitée',
             matched_seller_id: seller_id || vr.matched_seller_id,
             updated_at: new Date().toISOString()
         };
         if (buyerId) updateData.created_buyer_id = buyerId;
 
-        await supabaseAdmin.from('visit_requests')
+        const { error: updateErr } = await supabaseAdmin.from('visit_requests')
             .update(updateData)
             .eq('id', request_id);
+
+        if (updateErr) {
+            console.error('[Assistant] Update visit request error:', updateErr);
+            return res.status(500).json({ error: 'Erreur mise à jour demande' });
+        }
 
         return res.status(200).json({ processed: true, buyer_id: buyerId });
     }

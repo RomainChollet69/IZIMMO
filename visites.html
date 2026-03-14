@@ -1694,8 +1694,8 @@
         const colorClass = PORTAL_COLORS[portal] || 'other';
         const visitorName = req.visitor_name || 'Visiteur';
         const phone = req.visitor_phone || '';
-        const statusLabel = req.status === 'accepted' ? 'Visite planifiée' : req.status === 'dismissed' ? 'Ignorée' : 'Traitée';
-        const statusColor = req.status === 'accepted' ? '#2E7D32' : req.status === 'dismissed' ? '#9E9E9E' : '#3F51B5';
+        const statusLabel = req.status === 'accepted' ? 'Visite planifiée' : 'Traitée';
+        const statusColor = req.status === 'accepted' ? '#2E7D32' : '#3F51B5';
         const note = req.processing_note || '';
         const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '';
 
@@ -2571,7 +2571,10 @@
             });
             if (!resp.ok) return;
             const data = await resp.json();
-            processedRequests = (data.requests || []).filter(r => r.status === 'processed' || r.status === 'accepted');
+            // Traitées = dismissed avec processing_note OU accepted (visite planifiée)
+            processedRequests = (data.requests || []).filter(r =>
+                r.status === 'accepted' || (r.status === 'dismissed' && r.processing_note)
+            );
         } catch (e) {
             console.error('[Visites] Processed requests load error:', e);
         }
@@ -2832,8 +2835,12 @@
             const phone = req.visitor_phone || '';
             const seller = req.sellers;
             const sellerAddr = seller ? (seller.address || 'Adresse ?') : 'Bien non identifié';
-            const statusMap = { accepted: { label: 'Visite planifiée', bg: '#E8F5E9', color: '#2E7D32' }, dismissed: { label: 'Ignorée', bg: '#F5F5F5', color: '#9E9E9E' }, processed: { label: 'Traitée', bg: '#E8EAF6', color: '#3F51B5' } };
-            const st = statusMap[req.status] || statusMap.processed;
+            const isProcessed = req.processing_note;
+            const st = req.status === 'accepted'
+                ? { label: 'Visite planifiée', bg: '#E8F5E9', color: '#2E7D32' }
+                : isProcessed
+                    ? { label: 'Traitée', bg: '#E8EAF6', color: '#3F51B5' }
+                    : { label: 'Traitée', bg: '#E8EAF6', color: '#3F51B5' };
             const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
             const note = req.processing_note || '';
             const msg = req.visitor_message ? req.visitor_message.substring(0, 100) : '';
