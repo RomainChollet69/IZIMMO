@@ -754,13 +754,13 @@
         .column[data-status="achete_ailleurs"] .lead-card { border-left-color: #F59E0B; }
         .column[data-status="abandon"] .lead-card { border-left-color: #EF5350; }
 
-        /* Couleurs colonnes type de bien */
+        /* Couleurs colonnes type de bien — synchronisées avec pipeline-config.js */
         .column[data-status="studio_t1"] .lead-card { border-left-color: #42A5F5; }
-        .column[data-status="t2"] .lead-card { border-left-color: #7C4DFF; }
-        .column[data-status="t3"] .lead-card { border-left-color: #26A69A; }
-        .column[data-status="t4_plus"] .lead-card { border-left-color: #FF7043; }
-        .column[data-status="maison_small"] .lead-card { border-left-color: #66BB6A; }
-        .column[data-status="maison_big"] .lead-card { border-left-color: #AB47BC; }
+        .column[data-status="t2"] .lead-card { border-left-color: #E040FB; }
+        .column[data-status="t3"] .lead-card { border-left-color: #FF8A65; }
+        .column[data-status="t4_plus"] .lead-card { border-left-color: #A1887F; }
+        .column[data-status="maison_small"] .lead-card { border-left-color: #4CAF50; }
+        .column[data-status="maison_big"] .lead-card { border-left-color: #8BC34A; }
         .column[data-status="autre"] .lead-card { border-left-color: #78909C; }
 
         /* Headers type de bien — images ou gradient via inline style */
@@ -939,7 +939,7 @@
         .col-img-picker { position: relative; flex-shrink: 0; }
         .col-img-preview {
             width: 44px; height: 30px; border-radius: 6px; cursor: pointer;
-            object-fit: cover; border: 2px solid #E5E7EB; transition: border-color 0.15s;
+            object-fit: cover; object-position: top; border: 2px solid #E5E7EB; transition: border-color 0.15s;
         }
         .col-img-preview:hover { border-color: #667eea; }
         .col-img-dropdown {
@@ -950,7 +950,7 @@
         .col-img-dropdown.active { display: grid; }
         .col-img-option {
             width: 56px; height: 38px; border-radius: 6px; cursor: pointer;
-            object-fit: cover; border: 2px solid transparent; transition: all 0.15s;
+            object-fit: cover; object-position: top; border: 2px solid transparent; transition: all 0.15s;
         }
         .col-img-option:hover { border-color: #667eea; transform: scale(1.08); }
         .col-img-option.selected { border-color: #667eea; box-shadow: 0 0 0 2px rgba(102,126,234,0.3); }
@@ -5216,6 +5216,17 @@
                     <div class="cards-container" id="${col.key}-container"></div>
                 </div>`;
             }).join('');
+
+            // Injecter les couleurs de bordure dynamiques (supporte les colonnes custom)
+            let dynamicStyle = document.getElementById('dynamic-card-colors');
+            if (!dynamicStyle) {
+                dynamicStyle = document.createElement('style');
+                dynamicStyle.id = 'dynamic-card-colors';
+                document.head.appendChild(dynamicStyle);
+            }
+            dynamicStyle.textContent = columns.map(col =>
+                `.column[data-status="${col.key}"] .lead-card { border-left-color: ${col.color}; }`
+            ).join('\n');
 
             // Régénérer les tabs mobiles
             const tabsContainer = document.getElementById('mobileTabs');

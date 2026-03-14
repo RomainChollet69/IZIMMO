@@ -42,15 +42,15 @@ const PipelineConfig = (function () {
 
     const DEFAULT_BUYER_PROPERTY_COLUMNS = [
         { key: 'studio_t1', label: 'STUDIO / T1', title: "Produits d'investissement", icon: '🏢', color: '#42A5F5', headerImage: 'img/acheteurs/tb1.png' },
-        { key: 't2', label: 'T2', title: 'Appartements 2 pièces', icon: '🏢', color: '#7C4DFF', headerImage: 'img/acheteurs/tb2.png' },
-        { key: 't3', label: 'T3', title: 'Appartements 3 pièces', icon: '🏢', color: '#26A69A', headerImage: 'img/acheteurs/tb3.png' },
-        { key: 't4_plus', label: 'T4 ET PLUS', title: 'Grands appartements', icon: '🏢', color: '#FF7043', headerImage: 'img/acheteurs/tb4.png' },
-        { key: 'maison_small', label: 'MAISONS < 500K', title: 'Maisons budget modéré', icon: '🏡', color: '#66BB6A', headerImage: 'img/acheteurs/tb5.png' },
-        { key: 'maison_big', label: 'MAISONS ≥ 500K', title: 'Maisons haut de gamme', icon: '🏡', color: '#AB47BC', headerImage: 'img/acheteurs/tb6.png' },
-        { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C', headerImage: 'img/acheteurs/tb7.png' },
-        { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true, headerImage: 'img/acheteurs/tb8.png' },
-        { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#00BCD4', hiddenByDefault: true, headerImage: 'img/acheteurs/tb9.png' },
-        { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true, headerImage: 'img/acheteurs/tb10.png' }
+        { key: 't2', label: 'T2', title: 'Appartements 2 pièces', icon: '🏢', color: '#E040FB', headerImage: 'img/acheteurs/tb2.png' },
+        { key: 't3', label: 'T3', title: 'Appartements 3 pièces', icon: '🏢', color: '#FF8A65', headerImage: 'img/acheteurs/tb3.png' },
+        { key: 't4_plus', label: 'T4 ET PLUS', title: 'Grands appartements', icon: '🏢', color: '#A1887F', headerImage: 'img/acheteurs/tb4.png' },
+        { key: 'maison_small', label: 'MAISONS < 500K', title: 'Maisons budget modéré', icon: '🏡', color: '#4CAF50', headerImage: 'img/acheteurs/tb6.png' },
+        { key: 'maison_big', label: 'MAISONS ≥ 500K', title: 'Maisons haut de gamme', icon: '🏡', color: '#8BC34A', headerImage: 'img/acheteurs/tb8.png' },
+        { key: 'autre', label: 'AUTRE / NON DÉFINI', title: 'Terrain, immeuble, sans critères', icon: '📍', color: '#78909C', headerImage: 'img/acheteurs/tb10.png' },
+        { key: 'custom_1', label: 'COLONNE PERSO 1', title: 'Personnalise cette colonne', icon: '⭐', color: '#E91E63', hiddenByDefault: true, headerImage: 'img/acheteurs/tb5.png' },
+        { key: 'custom_2', label: 'COLONNE PERSO 2', title: 'Personnalise cette colonne', icon: '💎', color: '#7E57C2', hiddenByDefault: true, headerImage: 'img/acheteurs/tb7.png' },
+        { key: 'custom_3', label: 'COLONNE PERSO 3', title: 'Personnalise cette colonne', icon: '🚀', color: '#FF9800', hiddenByDefault: true, headerImage: 'img/acheteurs/tb9.png' }
     ];
 
     // Images disponibles pour les headers acquéreurs (type de bien)
