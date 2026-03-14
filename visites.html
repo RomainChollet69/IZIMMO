@@ -466,8 +466,8 @@
         }
         .visit-cards-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 14px;
+            grid-template-columns: repeat(2, minmax(0, 420px));
+            gap: 20px 28px;
         }
         .visit-card {
             position: relative;
@@ -1655,7 +1655,7 @@
         }
 
         const typeBadge = linked
-            ? '<span class="visit-card-type-badge lie">Acquéreur</span>'
+            ? ''
             : '<span class="visit-card-type-badge libre">Visiteur libre</span>';
 
         // Résumé condensé : ligne 1 = nom + décision (si refus, très visible)
