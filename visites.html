@@ -2571,7 +2571,7 @@
             });
             if (!resp.ok) return;
             const data = await resp.json();
-            processedRequests = (data.requests || []).filter(r => r.status !== 'pending');
+            processedRequests = (data.requests || []).filter(r => r.status === 'processed' || r.status === 'accepted');
         } catch (e) {
             console.error('[Visites] Processed requests load error:', e);
         }
