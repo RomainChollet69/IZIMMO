@@ -2617,9 +2617,12 @@
         // 2. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
         if (req.property_type) {
             const reqType = (req.property_type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-            // Extraire un prix depuis le message ou les champs
-            const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
-            const reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
+            // Utiliser property_price stocké en DB, sinon extraire du message
+            let reqPrice = req.property_price ? parseInt(req.property_price, 10) : null;
+            if (!reqPrice) {
+                const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
+                reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
+            }
 
             let candidates = activeSellers.filter(s => {
                 if (!s.property_type) return false;
@@ -3104,7 +3107,7 @@
 
                 <div class="form-section">
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text-dark)">
-                        <input type="checkbox" id="procCreateBuyer" checked>
+                        <input type="checkbox" id="procCreateBuyer">
                         Créer un lead acquéreur
                     </label>
                 </div>
