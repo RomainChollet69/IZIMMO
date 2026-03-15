@@ -357,7 +357,7 @@ Extrais les informations et retourne UNIQUEMENT un JSON valide :
   "property_reference": "référence annonce" | null,
   "property_type": "appartement | maison | terrain | commerce" | null,
   "property_price": 350000 | null,
-  "portal_name": "seloger | leboncoin | bienici | pap | logicimmo | meilleursagents | autre" | null
+  "portal_name": "seloger | leboncoin | bienici | pap | logicimmo | meilleursagents | jinka | autre" | null
 }
 
 RÈGLES :
@@ -475,6 +475,8 @@ function normalizeAddress(address) {
         .toLowerCase()
         .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
         .replace(/[^a-z0-9\s]/g, ' ')
+        // Normaliser les arrondissements : 9e, 9eme, 9ème → 9
+        .replace(/(\d+)\s*(e|er|ere|eme|ème)\b/g, '$1')
         .split(/\s+/)
         .filter(w => (w.length > 1 || /^\d+$/.test(w)) && !ADDRESS_STOP_WORDS.has(w));
 }
