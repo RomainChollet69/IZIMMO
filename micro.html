@@ -2642,6 +2642,23 @@
 
         // ===== SHOW RESULT =====
         function showResult(result) {
+            // Filtrer les matches low confidence (< 75%) → les passer en ambiguous
+            if (result.contacts_matched && result.contacts_matched.length > 0) {
+                const kept = [];
+                const demoted = [];
+                for (const m of result.contacts_matched) {
+                    if (m.confidence === 'low') {
+                        console.log(`[Micro] Match low confidence filtré : ${m.lead_name} (${m.confidence})`);
+                        demoted.push({ name_mentioned: m.lead_name, possible_matches: [{ lead_id: m.lead_id, lead_type: m.lead_type, lead_name: m.lead_name }] });
+                    } else {
+                        kept.push(m);
+                    }
+                }
+                result.contacts_matched = kept;
+                if (demoted.length > 0) {
+                    result.ambiguous_contacts = [...(result.ambiguous_contacts || []), ...demoted];
+                }
+            }
             const hasMatches = result.contacts_matched && result.contacts_matched.length > 0;
             const hasAmbiguous = result.ambiguous_contacts && result.ambiguous_contacts.length > 0;
             const hasUnmatched = result.unmatched_contacts && result.unmatched_contacts.length > 0;

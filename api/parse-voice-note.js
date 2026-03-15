@@ -57,7 +57,7 @@ Retourne UNIQUEMENT un JSON valide :
       "lead_id": "uuid du lead matché",
       "lead_type": "seller ou buyer",
       "lead_name": "nom complet du lead",
-      "confidence": "high" | "medium" | "low",
+      "confidence": "high" (nom exact ou quasi-exact) | "medium" (prénom seul ou nom partiel clair) | "low" (vague, phonétique lointaine — sera FILTRÉ et non affiché),
       "note_content": "texte de la note à enregistrer (ex: '📧 Estimation envoyée le 23/02/2026')",
       "next_step": "suggestion de prochaine action (ex: 'Relancer dans 3 jours pour discuter du mandat')",
       "reminder_date": "YYYY-MM-DD si une relance est suggérée, sinon null"
