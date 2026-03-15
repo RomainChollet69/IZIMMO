@@ -518,6 +518,47 @@
 
             .cta-section { padding: 28px 20px; }
         }
+
+        /* ===== VIDEO MODAL ===== */
+        .video-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .video-modal.active { display: flex; }
+        .video-modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 900px;
+        }
+        .video-modal-close {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 32px;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .video-modal-iframe-wrap {
+            position: relative;
+            width: 100%;
+            padding-bottom: 56.25%; /* 16:9 */
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .video-modal-iframe-wrap iframe {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+        }
     </style>
 </head>
 <body>
@@ -578,7 +619,7 @@
                 <i class="fa-solid fa-play-circle"></i> Tutoriels vidéo
             </h2>
             <div class="tuto-video-grid">
-                <a href="https://youtu.be/BHU4n1_9cCg" target="_blank" rel="noopener" class="tuto-video-card">
+                <div class="tuto-video-card" onclick="openVideoModal('BHU4n1_9cCg')">
                     <div class="tuto-video-thumb">
                         <img src="img/tutorials/vignette_tuto_portails.png" alt="Tutoriel transfert portails">
                         <div class="tuto-video-play"><i class="fa-solid fa-play"></i></div>
@@ -587,7 +628,7 @@
                         <div class="tuto-video-title">Recevoir les demandes de visite automatiquement</div>
                         <div class="tuto-video-desc">Connectez vos portails (Le Bon Coin, SeLoger, Bien'ici...) à Léon via Gmail en quelques minutes.</div>
                     </div>
-                </a>
+                </div>
             </div>
         </div>
 
@@ -689,6 +730,31 @@
         </div>
 
     </div>
+
+    <!-- Modal vidéo -->
+    <div class="video-modal" id="videoModal">
+        <div class="video-modal-content">
+            <button class="video-modal-close" onclick="closeVideoModal()">&times;</button>
+            <div class="video-modal-iframe-wrap">
+                <iframe id="videoIframe" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    function openVideoModal(videoId) {
+        const modal = document.getElementById('videoModal');
+        document.getElementById('videoIframe').src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+        modal.classList.add('active');
+    }
+    function closeVideoModal(e) {
+        if (e && e.target !== e.currentTarget && !e.target.closest('.video-modal-close')) return;
+        const modal = document.getElementById('videoModal');
+        modal.classList.remove('active');
+        document.getElementById('videoIframe').src = '';
+    }
+    document.getElementById('videoModal').addEventListener('click', closeVideoModal);
+    </script>
 
     <script src="js/mobile-nav.js"></script>
 
