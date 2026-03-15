@@ -1914,8 +1914,10 @@
             console.log('[isLeonCommand] normalized:', t);
             // Trigger explicite "Dis Léon" / "Léon" / "Leon"
             if (/^(dis\s+)?leon[\s,!?]/.test(t)) return true;
-            // Demandes de créneaux / agenda
+            // Demandes de créneaux / agenda (début de phrase)
             if (/^(propose|trouv|cherch|donne.moi|montre.moi|quels?\s+creneaux|quand\s+(suis-je|etes-vous|es-tu)|qu'est-ce\s+que\s+j'ai|qu'est.ce\s+qu'il\s+y\s+a)/.test(t)) return true;
+            // Catch-all agenda / créneaux / dispos (n'importe où dans la phrase)
+            if (/(?:creneaux?|disponibilite|dispo[s ]|agenda|regarde.*(?:agenda|calendrier|planning)|mes\s+dispo)/.test(t)) return true;
             // Requêtes DVF / prix marché
             if (/^(a\s+combien|quel\s+(est\s+le\s+)?prix|combien\s+(se\s+sont\s+vendus?|vaut|coute)|les\s+ventes?|des\s+comparables?)/.test(t)) return true;
             // Catch-all simple : WhatsApp/message + visite/retour (ordre indifférent)
