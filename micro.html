@@ -1999,7 +1999,11 @@
                 analysingZone.classList.remove('visible');
                 setMicState('idle');
                 console.error('[Micro] handleLeonCommand error:', err);
-                showLeonCmdResult({ response: "Désolé, je n'ai pas pu traiter ta demande. Vérifie que ton agenda Google est connecté." });
+                const errMsg = err.message || '';
+                const isCalendarErr = errMsg.includes('calendar_not_connected') || errMsg.includes('not_connected');
+                showLeonCmdResult({ response: isCalendarErr
+                    ? "Ton agenda Google n'est plus connecté. Va dans Paramètres pour le reconnecter."
+                    : `Désolé, je n'ai pas pu traiter ta demande. (${errMsg})` });
             }
         }
 
@@ -2021,7 +2025,11 @@
                     duration_minutes: p.duration_minutes || 30
                 })
             });
-            if (!slotsResp.ok) throw new Error('Erreur find_slots');
+            if (!slotsResp.ok) {
+                const errData = await slotsResp.json().catch(() => ({}));
+                console.error('[Micro:FindSlots] API 400:', errData);
+                throw new Error(errData.detail || errData.error || 'Erreur find_slots');
+            }
             const slotsData = await slotsResp.json();
             const slots = (slotsData.slots || []).slice(0, 3);
 
