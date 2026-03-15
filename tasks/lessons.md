@@ -87,6 +87,14 @@
 **Erreur** : Le "Disable cache" de DevTools ne s'applique pas toujours aux iframes. Le micro.html chargé dans l'iframe de vendeurs.html gardait l'ancienne version même avec cache désactivé.
 **Règle** : Ajouter un cache buster (`?v=Date.now()`) sur les src d'iframes pour forcer le rechargement. Vérifier avec l'onglet Network que le fichier dans l'iframe est bien rechargé.
 
+### L020 — Regex début de phrase trop restrictif pour la détection de commandes (2026-03-15)
+**Erreur** : `isLeonCommand` ne matchait que les phrases commençant par `propose|trouv|cherch...`. "Mon courtier veut déjeuner, regarde mon agenda" n'était pas capté car commence par "mon".
+**Règle** : Pour la détection de commandes vocales, toujours ajouter des catch-all par mots-clés (n'importe où dans la phrase) en plus des regex de début de phrase. L'utilisateur parle naturellement, pas en commandes structurées.
+
+### L021 — Whisper produit des caractères Unicode spéciaux invisibles (2026-03-15)
+**Erreur** : Les transcriptions Whisper contiennent parfois des tirets Unicode (U+2010-2015), des apostrophes typographiques (U+2018-2019) et des espaces insécables (U+00A0) qui cassent les regex standards.
+**Règle** : Toujours normaliser les transcriptions Whisper avant tout traitement regex : remplacer tous les variants de tirets, apostrophes et espaces par leurs équivalents ASCII.
+
 ### L017 — scrollIntoView avant getBoundingClientRect (2026-03-12)
 **Erreur** : Le tooltip d'onboarding se positionnait en bas de l'écran au lieu de côté de la carte, car `getBoundingClientRect()` retournait des coordonnées hors viewport (la carte n'était pas scrollée en vue dans le pipeline horizontal).
 **Règle** : Toujours appeler `element.scrollIntoView({ block: 'center', inline: 'center' })` AVANT de calculer la position avec `getBoundingClientRect()`. Ajouter un délai (400ms) après le scroll pour attendre la fin de l'animation avant de positionner.

@@ -1297,3 +1297,42 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - WhatsApp ne permet pas d'ouvrir un groupe spécifique par URL (pas de deep link pour les groupes)
 - `whatsapp://send?text=MESSAGE` ouvre WhatsApp avec le message pré-rempli, l'utilisateur sélectionne le destinataire en 1 tap
 - Pas besoin de WhatsApp Business API (cher, complexe, les agents utilisent leur WhatsApp perso)
+
+---
+
+## D061 — Gel temporaire de l'étude de marché (contrôle coûts tokens)
+
+**Date** : 2026-03-15
+**Statut** : Actif (temporaire)
+
+**Contexte** : Lancement communication auprès de ~50 conseillers. L'étude de marché consomme beaucoup de tokens (2 passes Claude Sonnet + DVF + DPE). Risque de coûts élevés non maîtrisés.
+
+**Décision** : Blocage à 3 niveaux : tuile home grisée + badge "Bientôt", écran de blocage sur etude-marche.html, bouton retiré des fiches vendeurs. Réactivation prévue après validation du pricing.
+
+**Pourquoi** :
+- Un seul rapport consomme ~15k tokens (2 passes Sonnet)
+- 50 utilisateurs × 3-5 rapports = coût significatif sans revenu
+- Mieux vaut geler proprement que laisser exploser les coûts
+
+**Conséquences** :
+- Bouton studyBtn commenté dans vendeurs.html → protection `if (studyBtn)` ajoutée dans le JS pour éviter crash
+
+---
+
+## D062 — isLeonCommand : catch-all par mots-clés (pas seulement début de phrase)
+
+**Date** : 2026-03-15
+**Statut** : Actif
+
+**Contexte** : Les regex de détection de commandes vocales ne matchaient que les phrases commençant par certains mots (`propose`, `cherche`, `trouve`...). Des formulations naturelles comme "Mon courtier veut déjeuner, regarde mon agenda" n'étaient pas captées.
+
+**Décision** : Ajouter des catch-all qui cherchent les mots-clés n'importe où dans la phrase : `agenda`, `dispos`, `créneaux`, `whatsapp+visite/retour`, `message+retour`.
+
+**Pourquoi** :
+- L'utilisateur parle naturellement, pas en commandes structurées
+- Les transcriptions Whisper contiennent des caractères spéciaux (tirets Unicode, apostrophes typographiques, espaces insécables) qui cassaient les regex → normalisation agressive ajoutée
+- Faux négatifs = l'utilisateur croit que la feature ne marche pas → perte de confiance
+
+**Alternatives rejetées** :
+- **Tout envoyer à l'orchestrateur** : Gaspille des tokens API pour des notes CRM simples
+- **Boutons dédiés** : Casse le paradigme voice-first de Léon

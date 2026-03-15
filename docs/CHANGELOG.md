@@ -4,6 +4,51 @@
 
 ---
 
+## Session 2026-03-15 — Lancement communication, gel étude de marché, fix vocal agenda/WhatsApp
+
+### Résumé
+Préparation au lancement auprès de ~50 conseillers. Gel de l'étude de marché pour contrôler les coûts tokens. Corrections critiques sur le micro vocal : détection des commandes agenda/créneaux/dispos, recherche de visites par contexte (date/adresse), boutons WhatsApp, meilleur logging d'erreurs. Fix crash ouverture fiche vendeur (studyBtn null).
+
+### Modifications
+
+**`micro.html`** :
+- `isLeonCommand()` : normalisation agressive des caractères Whisper (tirets, apostrophes, espaces insécables) + catch-all pour agenda/créneaux/dispos n'importe où dans la phrase
+- `findVisitByContext()` : recherche visite par date + adresse quand pas de nom de contact
+- `generateMessageFromVisit()` : génère message même sans visite en DB (fallback sur params orchestrateur)
+- Boutons SMS + WhatsApp sur les messages générés (via `showLeonCmdResult`)
+- Meilleur logging erreurs `find_slots` : affiche le détail de l'erreur API au lieu du message générique
+- Exemples enrichis au démarrage du micro : agenda, WhatsApp, retour visite
+
+**`home.html`** :
+- Tuile "Étude de marché" grisée avec badge "Bientôt" + CSS `.tile-disabled` / `.tile-badge-soon`
+
+**`etude-marche.html`** :
+- Écran de blocage plein écran avec redirection accueil
+
+**`vendeurs.html`** :
+- Bouton "Étude de marché" commenté dans les fiches
+- Fix crash `studyBtn` null → protection `if (studyBtn)` sur `document.getElementById('studyBtn')`
+
+**`landing-v2.html`** :
+- Texte section dictée : "Après un appel, en sortie de rendez-vous ou entre deux portes" (plus réaliste)
+
+### Fichiers créés/modifiés
+- micro.html, home.html, etude-marche.html, vendeurs.html, landing-v2.html
+- docs/CHANGELOG.md, docs/DECISIONS.md, tasks/lessons.md
+
+### Points d'attention
+- **Bug critique corrigé** : `studyBtn` commenté en HTML mais référencé en JS → crash ouverture fiches vendeurs
+- **Lancement communication** : ~50 conseillers contactés, monitoring tokens à surveiller
+- L'erreur 400 `find_slots` était liée à un token Calendar temporairement expiré (auto-refresh OK)
+
+### Prochaines étapes prioritaires
+- Monitoring usage/tokens avec les nouveaux utilisateurs
+- Tester le flux WhatsApp bout en bout sur mobile
+- Corriger le flux "Léon a compris" vs commande (double affichage possible)
+- Implémenter le bouton WhatsApp aussi sur le flux standard (après clic Confirmer)
+
+---
+
 ## Session 2026-03-14 (soir) — Images colonnes acquéreurs, sources détaillées, bordures dynamiques
 
 ### Résumé
