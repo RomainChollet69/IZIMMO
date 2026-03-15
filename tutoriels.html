@@ -350,6 +350,106 @@
             color: #2E7D32;
         }
 
+        /* ===== VIDEO TUTO CARDS ===== */
+        .tuto-video-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .tuto-video-card {
+            background: #FFFFFF;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .tuto-video-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .tuto-video-thumb {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+        }
+
+        .tuto-video-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .tuto-video-play {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 56px;
+            height: 56px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+
+        .tuto-video-card:hover .tuto-video-play {
+            background: rgba(102, 126, 234, 0.9);
+        }
+
+        .tuto-video-play i {
+            color: white;
+            font-size: 22px;
+            margin-left: 3px;
+        }
+
+        .tuto-video-info {
+            padding: 16px 20px;
+        }
+
+        .tuto-video-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            color: #243B53;
+            margin-bottom: 6px;
+        }
+
+        .tuto-video-desc {
+            font-size: 13px;
+            color: #6B7280;
+            line-height: 1.5;
+        }
+
+        .tuto-video-duration {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .tuto-video-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+        }
+
         /* ===== CTA BOTTOM ===== */
         .cta-section {
             text-align: center;
@@ -472,6 +572,25 @@
             <p class="page-subtitle">Apprenez à tirer le maximum de Léon en quelques minutes. Guides pratiques, astuces et bonnes pratiques.</p>
         </div>
 
+        <!-- Section : Tutoriels vidéo -->
+        <div class="tuto-section">
+            <h2 class="tuto-section-title">
+                <i class="fa-solid fa-play-circle"></i> Tutoriels vidéo
+            </h2>
+            <div class="tuto-video-grid">
+                <a href="https://youtu.be/BHU4n1_9cCg" target="_blank" rel="noopener" class="tuto-video-card">
+                    <div class="tuto-video-thumb">
+                        <img src="img/tutorials/vignette_tuto_portails.png" alt="Tutoriel transfert portails">
+                        <div class="tuto-video-play"><i class="fa-solid fa-play"></i></div>
+                    </div>
+                    <div class="tuto-video-info">
+                        <div class="tuto-video-title">Recevoir les demandes de visite automatiquement</div>
+                        <div class="tuto-video-desc">Connectez vos portails (Le Bon Coin, SeLoger, Bien'ici...) à Léon via Gmail en quelques minutes.</div>
+                    </div>
+                </a>
+            </div>
+        </div>
+
         <!-- Section : Premiers pas -->
         <div class="tuto-section">
             <h2 class="tuto-section-title">
@@ -563,7 +682,7 @@
         <!-- CTA -->
         <div class="cta-section">
             <div class="cta-title">Besoin d'aide ?</div>
-            <div class="cta-desc">Les tutoriels vidéo et guides détaillés arrivent très bientôt. En attendant, n'hésitez pas à explorer Léon !</div>
+            <div class="cta-desc">D'autres tutoriels vidéo et guides détaillés arrivent très bientôt. En attendant, n'hésitez pas à explorer Léon !</div>
             <a href="home.html" class="cta-btn">
                 <i class="fa-solid fa-arrow-left"></i> Retour à l'accueil
             </a>
