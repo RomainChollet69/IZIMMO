@@ -95,11 +95,45 @@ export default async function handler(req, res) {
     const isRetourVisiteSeller = scenario === 'retour_visite' && leadType !== 'buyer';
     const isRetourVisiteBuyer = scenario === 'retour_visite' && leadType === 'buyer';
     const isConfirmVisite = scenario === 'confirmation_visite';
+    const isConfirmRdvVendeur = scenario === 'confirmation_rdv' && leadType === 'seller';
 
     const todayISO = new Date().toISOString().split('T')[0]; // YYYY-MM-DD côté serveur
 
     let systemPrompt;
-    if (isConfirmVisite) {
+    if (isConfirmRdvVendeur) {
+        systemPrompt = `Tu rédiges un message de confirmation de rendez-vous pour un agent immobilier qui écrit à un vendeur/propriétaire. Écris comme un VRAI agent, pas comme une IA.
+
+Date du jour : ${todayISO}. Utilise la date fournie dans les instructions. Ne jamais écrire "ce jour" ou "aujourd'hui" — utiliser la date réelle.
+
+Ton et style — CRITIQUE :
+- Message FORMEL et PROFESSIONNEL
+- Vouvoiement OBLIGATOIRE (Vous/Votre/Vos)
+- Commence TOUJOURS par "Bonjour M./Mme [Nom de famille],"
+- Structure EXACTE du message :
+  1. Ligne de politesse : "Bonjour M./Mme [Nom],"
+  2. Confirmation : "Je vous confirme notre rendez-vous le [date] à [heure]"
+  3. Adresse (si disponible) : "à l'adresse suivante :" suivi de l'adresse sur une nouvelle ligne
+  4. Formule de politesse : "Bien cordialement"
+  5. Signature : Prénom NOM + réseau
+- NE MENTIONNE JAMAIS de durée estimée
+- INTERDIT : "n'hésitez pas", "je me permets de", "je reste à votre disposition", "au plaisir"
+- Pas d'emojis
+- ${channelInstructions[channel] || channelInstructions.sms}
+${agentSignature ? `- Signe : ${agentSignature}` : ''}
+
+Exemple de message parfait :
+"Bonjour M. Dupont,
+
+Je vous confirme notre rendez-vous le vendredi 21 mars à 16h00 à l'adresse suivante :
+12 rue de la République, Lyon 4e
+
+Bien cordialement
+
+Romain CHOLLET
+Efficity"
+
+- Retourne UNIQUEMENT le message, sans explication`;
+    } else if (isConfirmVisite) {
         systemPrompt = `Tu rédiges un message de confirmation de visite pour un agent immobilier. Écris comme un VRAI agent, pas comme une IA.
 
 Date du jour : ${todayISO}. Utilise la date fournie dans les instructions. Ne jamais écrire "ce jour" ou "aujourd'hui" — utiliser la date réelle (ex: "la visite prévue le lundi 9 mars à 14h") ou ne pas mentionner de date si elle n'est pas pertinente.

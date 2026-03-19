@@ -728,17 +728,23 @@ NOM DE L'AGENT : ${userName}
 ${visitsJson ? `\nVISITES_A_VENIR (7 prochains jours) :\n${visitsJson}\n` : ''}
 INTENTIONS POSSIBLES :
 
-1. "find_slots" — Trouver des créneaux disponibles dans l'agenda
+1. "find_slots" — Trouver des créneaux disponibles dans l'agenda (PAS de date/heure précise, l'agent veut des suggestions)
 2. "create_event" — Créer un événement dans l'agenda (TOUJOURS retourner avec needs_confirmation: true)
-3. "update_event" — Modifier un événement existant (décaler, changer l'heure)
-4. "delete_event" — Supprimer/annuler un événement
-5. "list_events" — Lister les événements à venir ("qu'est-ce que j'ai demain ?")
-6. "draft_message" — Rédiger un message pour quelqu'un (sans lien avec l'agenda)
-7. "find_slots_and_draft" — Trouver des créneaux ET rédiger un message proposant ces créneaux
-8. "confirm_action" — L'agent confirme une action proposée ("oui", "ok", "c'est bon")
-9. "dvf_query" — Rechercher des ventes immobilières comparables (prix au m², mutations DVF)
+   RÈGLE CRITIQUE : si l'agent donne une date ET une heure précises ("vendredi à 16h", "demain 10h", "le 25 mars à 14h"), c'est TOUJOURS create_event, PAS find_slots.
+   find_slots = "quand es-tu dispo ?", "trouve-moi un créneau". create_event = "mets un RDV vendredi à 16h".
+3. "create_event_and_draft" — Créer un événement ET rédiger un message (confirmation RDV, SMS...)
+   Déclencheurs : l'agent demande un RDV précis (date+heure) ET un message/SMS/WhatsApp en même temps
+   Exemple : "indique un RDV vendredi 16h avec M. Dupont et fais-moi un SMS de confirmation"
+   Params : ceux de create_event + ceux pour le message (who, who_role, who_relationship, context, message_channel, message_tone, event_type)
+4. "update_event" — Modifier un événement existant (décaler, changer l'heure)
+5. "delete_event" — Supprimer/annuler un événement
+6. "list_events" — Lister les événements à venir ("qu'est-ce que j'ai demain ?")
+7. "draft_message" — Rédiger un message pour quelqu'un (sans lien avec l'agenda)
+8. "find_slots_and_draft" — Trouver des créneaux ET rédiger un message proposant ces créneaux (PAS de date/heure précise)
+9. "confirm_action" — L'agent confirme une action proposée ("oui", "ok", "c'est bon")
+10. "dvf_query" — Rechercher des ventes immobilières comparables (prix au m², mutations DVF)
    Déclencheurs : "à combien se sont vendus", "quel est le prix au m²", "combien vaut", "les ventes de", "des comparables", "une estimation", "le marché"
-10. "send_confirmation_visite" — Envoyer un message de confirmation/retour de visite à un acquéreur OU un vendeur
+11. "send_confirmation_visite" — Envoyer un message de confirmation/retour de visite à un acquéreur OU un vendeur
    Déclencheurs : "envoie un message/SMS de confirmation de visite", "fais-moi un SMS de confirmation", "confirme la visite à/de", "retour de visite"
    CRUCIAL : utilise la liste VISITES_A_VENIR pour trouver la visite correspondante (par date, lieu, nom)
    Si l'agent dit "ma visite de demain à Lyon 9ème", cherche dans les visites celle qui correspond
@@ -748,10 +754,10 @@ INTENTIONS POSSIBLES :
    - Si l'agent dit "pour le groupe WhatsApp" ou "sur WhatsApp" sans préciser, mettre channel="whatsapp"
    IMPORTANT : extrais aussi le contexte de visite de la demande (date, adresse, type de message) car la visite peut ne pas exister dans la base.
    Params : { "contact_name": "nom du contact", "contact_id": "uuid si trouvé", "channel": "sms"|"whatsapp", "recipient": "buyer"|"seller", "visit_date": "YYYY-MM-DD si mentionnée", "property_address": "adresse si mentionnée", "message_type": "confirmation"|"retour" }
-11. "unknown" — Intention non reconnue, demander une précision
+12. "unknown" — Intention non reconnue, demander une précision
 
 RÈGLE DE CONFIRMATION :
-- Pour create_event, update_event, delete_event : TOUJOURS ajouter "needs_confirmation": true dans params
+- Pour create_event, create_event_and_draft, update_event, delete_event : TOUJOURS ajouter "needs_confirmation": true dans params
 - L'action ne sera exécutée qu'après confirmation explicite de l'agent
 
 RÈGLE DE DÉSAMBIGUÏSATION :
@@ -802,9 +808,35 @@ Pour create_event :
   "date": "YYYY-MM-DD",
   "start_time": "HH:MM",
   "end_time": "HH:MM",
-  "location": null,
+  "location": "adresse si mentionnée ou null",
   "description": null,
+  "event_type": "rdv_vendeur"|"estimation"|"visite"|"signature"|"reunion"|"autre",
   "needs_confirmation": true
+}
+
+RÈGLE event_type (CRITIQUE pour le titre et le SMS) :
+- "vendeur", "propriétaire", "estimation", "mandat" → event_type = "rdv_vendeur"
+- "visite" avec un acquéreur → event_type = "visite"
+- "signature", "compromis", "acte" → event_type = "signature"
+- Par défaut si ambiguïté → "rdv_vendeur"
+- Le title doit refléter l'event_type : "RDV Vendeur — Philippe Fol, Lyon 4e" ou "Visite — 12 rue X, Lyon 3e"
+
+Pour create_event_and_draft (combine création événement + rédaction message) :
+{
+  "title": "titre de l'événement",
+  "date": "YYYY-MM-DD",
+  "start_time": "HH:MM",
+  "end_time": "HH:MM",
+  "location": "adresse si mentionnée ou null",
+  "description": null,
+  "event_type": "rdv_vendeur"|"estimation"|"visite"|"signature"|"reunion"|"autre",
+  "needs_confirmation": true,
+  "who": "nom du contact",
+  "who_role": "vendeur"|"acquéreur"|"courtier"|"notaire"|...,
+  "who_relationship": "client"|"prospect"|"professionnel_amical"|...,
+  "context": "description complète de la situation",
+  "message_channel": "sms"|"whatsapp"|"email",
+  "message_tone": "formel"|"pro_chaleureux"|"amical_pro"
 }
 
 Pour update_event / delete_event avec ambiguïté :

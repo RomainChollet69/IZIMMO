@@ -623,6 +623,14 @@
         .leon-cmd-slot { background: #f0f0ff; border: 1.5px solid #c7d2fe; border-radius: 12px; padding: 10px 14px; }
         .leon-cmd-slot-day { font-size: 13px; font-weight: 700; color: #4338ca; }
         .leon-cmd-slot-time { font-size: 12px; color: #6366f1; margin-top: 2px; }
+        .leon-cmd-confirm-wrap { padding: 0 16px 12px; }
+        .leon-cmd-confirm-btn { width: 100%; padding: 12px; background: linear-gradient(135deg,#667eea,#764ba2); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: Inter, sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .leon-cmd-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .leon-cmd-event-summary { padding: 0 16px 8px; }
+        .leon-cmd-event-detail { background: #f0f0ff; border: 1.5px solid #c7d2fe; border-radius: 12px; padding: 12px 14px; }
+        .leon-cmd-event-title { font-size: 14px; font-weight: 700; color: #4338ca; }
+        .leon-cmd-event-datetime { font-size: 13px; color: #6366f1; margin-top: 4px; }
+        .leon-cmd-event-location { font-size: 12px; color: #64748b; margin-top: 4px; }
         .leon-cmd-message-wrap { padding: 12px 16px 16px; border-top: 1px solid #f1f5f9; }
         .leon-cmd-message-label { font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .leon-cmd-message-text { width: 100%; box-sizing: border-box; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 13px; font-family: Inter, sans-serif; line-height: 1.5; color: #374151; resize: vertical; }
@@ -1302,6 +1310,11 @@
                     </div>
                     <div class="leon-cmd-response" id="leonCmdResponse"></div>
                     <div class="leon-cmd-slots" id="leonCmdSlots"></div>
+                    <div class="leon-cmd-confirm-wrap" id="leonCmdConfirmWrap" style="display:none">
+                        <button class="leon-cmd-confirm-btn" id="leonCmdConfirmBtn">
+                            <i class="fa-solid fa-calendar-check"></i> Confirmer le RDV
+                        </button>
+                    </div>
                     <div class="leon-cmd-message-wrap" id="leonCmdMessageWrap" style="display:none">
                         <div class="leon-cmd-message-label">Message prêt à envoyer</div>
                         <textarea class="leon-cmd-message-text" id="leonCmdMessageText" rows="5"></textarea>
@@ -1932,6 +1945,7 @@
         }
 
         const leonCmdZone = document.getElementById('leonCmdZone');
+        let pendingCreateEvent = null;
         document.getElementById('leonCmdClose').addEventListener('click', () => {
             leonCmdZone.classList.remove('visible');
             setMicState('idle');
@@ -1953,6 +1967,35 @@
         });
         document.getElementById('leonCmdSendWA').addEventListener('click', () => {
             openChannelFromLeon(document.getElementById('leonCmdMessageText').value, 'whatsapp');
+        });
+        document.getElementById('leonCmdConfirmBtn').addEventListener('click', async () => {
+            if (!pendingCreateEvent) return;
+            const btn = document.getElementById('leonCmdConfirmBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Création...';
+            try {
+                const headers = pendingCreateEvent.headers;
+                const resp = await fetch('/api/assistant', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({
+                        action: 'create_event',
+                        title: pendingCreateEvent.title,
+                        date: pendingCreateEvent.date,
+                        start_time: pendingCreateEvent.start_time,
+                        end_time: pendingCreateEvent.end_time,
+                        location: pendingCreateEvent.location,
+                        description: pendingCreateEvent.description
+                    })
+                });
+                if (!resp.ok) throw new Error('Erreur création événement');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> RDV confirmé !';
+                btn.style.background = '#22c55e';
+                pendingCreateEvent = null;
+            } catch (err) {
+                console.error('[Micro:CreateEvent] Erreur:', err);
+                btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur — réessayer';
+                btn.disabled = false;
+            }
         });
 
         async function handleLeonCommand(text) {
@@ -1986,6 +2029,8 @@
                 // 2. Exécuter l'intention
                 if (orch.intent === 'find_slots' || orch.intent === 'find_slots_and_draft') {
                     await executeFindSlotsIntent(orch, headers, today);
+                } else if (orch.intent === 'create_event' || orch.intent === 'create_event_and_draft') {
+                    await executeCreateEventIntent(orch, headers);
                 } else if (orch.intent === 'list_events') {
                     await executeListEventsIntent(orch, headers);
                 } else if (orch.intent === 'dvf_query') {
@@ -2066,6 +2111,93 @@
             });
         }
 
+        async function executeCreateEventIntent(orch, headers) {
+            const p = orch.params || {};
+
+            // Formatter le résumé de l'événement
+            const dateObj = new Date(p.date + 'T12:00:00');
+            const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+            // Générer un message si demandé (create_event_and_draft)
+            let message = null;
+            let contactPhone = null;
+            if (orch.intent === 'create_event_and_draft' && p.who) {
+                // Chercher le contact pour le téléphone
+                const leads = await loadUserLeads();
+                const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const searchName = norm(p.who);
+                const contact = leads.find(l => {
+                    const full = norm(`${l.first_name || ''} ${l.last_name || ''}`);
+                    return full.includes(searchName) || searchName.includes(norm(l.last_name));
+                });
+                contactPhone = contact?.phone || null;
+
+                // Déterminer le scénario de message
+                const isVendeur = (p.who_role || '').match(/vendeur|propriétaire/i) || (p.event_type || '').match(/rdv_vendeur|estimation/i);
+                const leadType = isVendeur ? 'seller' : 'buyer';
+                const scenario = isVendeur ? 'confirmation_rdv' : 'confirmation_visite';
+
+                // Récupérer nom/prénom de l'agent et réseau
+                const { data: { session: sess } } = await supabaseClient.auth.getSession();
+                const meta = sess?.user?.user_metadata || {};
+                const agentName = meta.full_name || meta.name || '';
+                const userId = sess?.user?.id;
+                const { data: profile } = await supabaseClient.from('profiles')
+                    .select('agency_name')
+                    .eq('id', userId)
+                    .maybeSingle();
+                const agencyName = profile?.agency_name || 'Efficity';
+
+                const msgResp = await fetch('/api/generate-message', {
+                    method: 'POST', headers,
+                    body: JSON.stringify({
+                        channel: p.message_channel || 'sms',
+                        scenario,
+                        leadType,
+                        leadData: {
+                            first_name: contact?.first_name || p.who,
+                            last_name: contact?.last_name || '',
+                            phone: contactPhone,
+                            address: p.location || ''
+                        },
+                        agentName,
+                        agencyName,
+                        tone: 'vous',
+                        customPrompt: `Date du RDV : ${dayLabel} à ${p.start_time}. Adresse : ${p.location || 'non précisée'}.`
+                    })
+                });
+                if (msgResp.ok) {
+                    const msgData = await msgResp.json();
+                    message = msgData.message || null;
+                }
+            }
+
+            // Stocker l'événement en attente de confirmation
+            pendingCreateEvent = {
+                title: p.title,
+                date: p.date,
+                start_time: p.start_time,
+                end_time: p.end_time,
+                location: p.location || null,
+                description: p.description || null,
+                headers
+            };
+
+            showLeonCmdResult({
+                response: orch.leon_response || `Je te propose de créer ce RDV dans ton agenda.`,
+                eventDetail: {
+                    title: p.title,
+                    dayLabel: dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1),
+                    time: `${p.start_time} – ${p.end_time}`,
+                    location: p.location
+                },
+                showConfirm: true,
+                message,
+                contactPhone,
+                channel: p.message_channel
+            });
+        }
+
         async function executeListEventsIntent(orch, headers) {
             const p = orch.params || {};
             const today = new Date().toISOString().split('T')[0];
@@ -2095,9 +2227,10 @@
         // Stocke le téléphone du contact pour les boutons SMS/WhatsApp
         let leonCmdContactPhone = null;
 
-        function showLeonCmdResult({ response, slots, message, contactPhone, channel }) {
+        function showLeonCmdResult({ response, slots, message, contactPhone, channel, eventDetail, showConfirm }) {
             document.getElementById('leonCmdResponse').textContent = response || '';
 
+            // Slots (créneaux disponibles)
             const slotsEl = document.getElementById('leonCmdSlots');
             if (slots && slots.length > 0) {
                 slotsEl.innerHTML = slots.map(s => `
@@ -2105,10 +2238,30 @@
                         <div class="leon-cmd-slot-day">${escHtml(s.day_label)}</div>
                         <div class="leon-cmd-slot-time">${s.start} – ${s.end}</div>
                     </div>`).join('');
+            } else if (eventDetail) {
+                // Résumé de l'événement à créer
+                slotsEl.innerHTML = `
+                    <div class="leon-cmd-event-detail">
+                        <div class="leon-cmd-event-title">${escHtml(eventDetail.title)}</div>
+                        <div class="leon-cmd-event-datetime">${escHtml(eventDetail.dayLabel)} — ${escHtml(eventDetail.time)}</div>
+                        ${eventDetail.location ? `<div class="leon-cmd-event-location"><i class="fa-solid fa-location-dot"></i> ${escHtml(eventDetail.location)}</div>` : ''}
+                    </div>`;
             } else {
                 slotsEl.innerHTML = '';
             }
 
+            // Bouton confirmer RDV
+            const confirmWrap = document.getElementById('leonCmdConfirmWrap');
+            if (showConfirm) {
+                confirmWrap.style.display = '';
+                const confirmBtn = document.getElementById('leonCmdConfirmBtn');
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> Confirmer le RDV';
+            } else {
+                confirmWrap.style.display = 'none';
+            }
+
+            // Message (SMS/WhatsApp)
             const msgWrap = document.getElementById('leonCmdMessageWrap');
             const msgText = document.getElementById('leonCmdMessageText');
             const smsBtn = document.getElementById('leonCmdSendSMS');
@@ -2119,15 +2272,8 @@
                 msgWrap.style.display = '';
                 leonCmdContactPhone = contactPhone || null;
                 const hasPhone = leonCmdContactPhone && leonCmdContactPhone.trim().length > 0;
-                // SMS : uniquement avec numéro. WhatsApp : toujours (peut envoyer sur un groupe)
                 smsBtn.style.display = hasPhone ? '' : 'none';
                 waBtn.style.display = '';
-                // Ouvrir automatiquement l'app demandée
-                if (hasPhone && channel === 'sms') {
-                    setTimeout(() => openChannelFromLeon(message, 'sms'), 300);
-                } else if (channel === 'whatsapp' && hasPhone) {
-                    setTimeout(() => openChannelFromLeon(message, 'whatsapp'), 300);
-                }
             } else {
                 msgWrap.style.display = 'none';
                 smsBtn.style.display = 'none';
