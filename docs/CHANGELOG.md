@@ -41,6 +41,10 @@ Préparation au lancement auprès de ~50 conseillers. Gel de l'étude de marché
 - **Lancement communication** : ~50 conseillers contactés, monitoring tokens à surveiller
 - L'erreur 400 `find_slots` était liée à un token Calendar temporairement expiré (auto-refresh OK)
 
+**`acquereurs.html`** :
+- Seuil matching acquéreurs ↔ biens relevé de 50% à 75% (trop de faux positifs à 50%)
+- Classification couleurs ajustée : vert ≥85%, orange ≥75%, masqué <75%
+
 ### Prochaines étapes prioritaires
 - Monitoring usage/tokens avec les nouveaux utilisateurs
 - Tester le flux WhatsApp bout en bout sur mobile

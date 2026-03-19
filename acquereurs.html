@@ -3997,14 +3997,14 @@
             return { score, maxScore, percent, details, eliminated: false };
         }
 
-        function getScoreClass(p) { return p >= 70 ? 'match-score-high' : p >= 50 ? 'match-score-medium' : 'match-score-low'; }
+        function getScoreClass(p) { return p >= 85 ? 'match-score-high' : p >= 75 ? 'match-score-medium' : 'match-score-low'; }
 
         async function computeBuyerMatchCounts() {
             const allSellers = await loadSellersForMatching();
             const activeSellers = allSellers.filter(s => s.status !== 'sold' && s.status !== 'lost');
             const counts = {};
             buyers.forEach(buyer => {
-                const mc = activeSellers.filter(s => { const r = calculateMatchScore(s, buyer); return !r.eliminated && r.percent >= 50; }).length;
+                const mc = activeSellers.filter(s => { const r = calculateMatchScore(s, buyer); return !r.eliminated && r.percent >= 75; }).length;
                 if (mc > 0) counts[buyer.id] = mc;
             });
             buyerMatchCounts = counts;
@@ -4169,7 +4169,7 @@
             const allMatches = allSellers
                 .filter(s => s.status !== 'sold' && s.status !== 'lost' && !visitedSellerIds.has(s.id))
                 .map(s => ({ seller: s, ...calculateMatchScore(s, buyer) }))
-                .filter(m => !m.eliminated && m.percent >= 50)
+                .filter(m => !m.eliminated && m.percent >= 75)
                 .sort((a, b) => b.percent - a.percent);
 
             // Séparer actifs et écartés

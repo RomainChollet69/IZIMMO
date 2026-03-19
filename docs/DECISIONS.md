@@ -1336,3 +1336,23 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives rejetées** :
 - **Tout envoyer à l'orchestrateur** : Gaspille des tokens API pour des notes CRM simples
 - **Boutons dédiés** : Casse le paradigme voice-first de Léon
+
+---
+
+## D063 — Seuil matching acquéreurs ↔ biens relevé à 75% (pas 50%)
+
+**Date** : 2026-03-15
+**Statut** : Actif
+
+**Contexte** : Le matching à 50% produisait trop de faux positifs — des biens peu pertinents apparaissaient dans la pastille "X biens" sur les cartes acquéreurs, polluant l'information.
+
+**Décision** : Seuil minimum relevé de 50% à 75%. Classification : vert ≥85%, orange ≥75%.
+
+**Pourquoi** :
+- À 50%, un T4 à Lyon 7e pouvait matcher un acquéreur cherchant un T2 à Villeurbanne juste parce que le budget et le département correspondaient
+- Mieux vaut afficher 1 bon match que 5 mauvais — l'agent perd confiance dans le matching sinon
+- Le seuil peut être réajusté à l'avenir si les critères de scoring évoluent
+
+**Alternatives rejetées** :
+- **Garder 50%** : Trop de bruit, les agents ignorent les matchs
+- **Seuil à 90%** : Trop restrictif, très peu de matchs affichés
