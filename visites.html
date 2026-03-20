@@ -1887,21 +1887,41 @@
                 <p style="margin:0 0 16px; font-size:13px; color:#78909C">${escapeHtml(sellerLabel)}</p>
                 <input type="hidden" id="contactSellerId" value="${sellerId}">
 
-                <!-- Zone coller une demande -->
-                <div id="pasteZone" style="margin-bottom:16px">
-                    <button type="button" class="btn-paste-toggle" id="pasteToggleBtn" onclick="togglePasteZone()" style="
-                        width:100%; padding:10px; background:#F3E5F5; border:1.5px dashed #CE93D8; border-radius:10px;
-                        font-size:13px; font-weight:600; color:#7B1FA2; cursor:pointer; font-family:Inter,sans-serif;
-                        display:flex; align-items:center; justify-content:center; gap:6px;
-                    "><i class="fa-solid fa-paste"></i> Coller une demande (email, portail...)</button>
-                    <div id="pasteArea" style="display:none; margin-top:8px">
-                        <textarea class="form-input" id="pasteContent" rows="5" placeholder="Collez ici le contenu de l'email ou du message portail..." style="font-size:12px; line-height:1.4"></textarea>
-                        <button type="button" onclick="parseContactFromPaste()" style="
-                            margin-top:6px; padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2);
-                            color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
-                            font-family:Inter,sans-serif; width:100%;
-                        "><i class="fa-solid fa-wand-magic-sparkles"></i> Extraire les infos</button>
+                <!-- Zone coller un screenshot -->
+                <div id="contactImportZone" style="margin-bottom:16px">
+                    <div id="contactImportPasteArea" style="
+                        border:2px dashed #CE93D8; border-radius:12px; padding:20px; text-align:center;
+                        background:#FAFAFE; cursor:pointer; transition:all 0.2s;
+                    " onclick="document.getElementById('contactImportFile').click()"
+                       ondragover="event.preventDefault(); this.style.borderColor='#7B1FA2'; this.style.background='#F3E5F5'"
+                       ondragleave="this.style.borderColor='#CE93D8'; this.style.background='#FAFAFE'"
+                       ondrop="event.preventDefault(); this.style.borderColor='#CE93D8'; this.style.background='#FAFAFE'; if(event.dataTransfer.files[0]) processContactImage(event.dataTransfer.files[0])">
+                        <i class="fa-solid fa-paste" style="font-size:24px; color:#7B1FA2; margin-bottom:8px; display:block"></i>
+                        <div style="font-size:13px; font-weight:600; color:#7B1FA2">Collez un screenshot</div>
+                        <div style="font-size:11px; color:#9CA3AF; margin-top:4px">${navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'}+V ou glissez une image</div>
+                        <input type="file" id="contactImportFile" accept="image/*" style="display:none"
+                            onchange="if(this.files[0]) processContactImage(this.files[0])">
                     </div>
+                    <div id="contactImportPreview" style="display:none; margin-top:8px">
+                        <div style="position:relative; border-radius:10px; overflow:hidden; border:1px solid #E0E0E0">
+                            <img id="contactImportPreviewImg" style="width:100%; max-height:200px; object-fit:contain; display:block">
+                            <button type="button" onclick="clearContactImage()" style="
+                                position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.6); color:white;
+                                border:none; border-radius:50%; width:24px; height:24px; font-size:12px; cursor:pointer;
+                            ">&times;</button>
+                        </div>
+                        <div id="contactImportInfo" style="font-size:11px; color:#78909C; margin-top:4px; text-align:center"></div>
+                    </div>
+                    <div id="contactImportLoading" style="display:none; text-align:center; padding:12px">
+                        <i class="fa-solid fa-spinner fa-spin" style="color:#7B1FA2; font-size:18px"></i>
+                        <div style="font-size:12px; color:#78909C; margin-top:6px">Extraction en cours...</div>
+                    </div>
+                    <button type="button" id="contactImportAnalyzeBtn" onclick="analyzeContactImage()" disabled style="
+                        margin-top:8px; padding:10px; background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white; border:none; border-radius:10px; font-size:13px; font-weight:600; cursor:pointer;
+                        font-family:Inter,sans-serif; width:100%; display:none;
+                    "><i class="fa-solid fa-wand-magic-sparkles"></i> Extraire les infos</button>
+                    <div id="contactImportResult" style="display:none"></div>
                 </div>
 
                 <label class="form-label">Nom du contact *</label>
@@ -1936,108 +1956,120 @@
         document.getElementById('contactName').focus();
     }
 
-    function togglePasteZone() {
-        const area = document.getElementById('pasteArea');
-        const btn = document.getElementById('pasteToggleBtn');
-        if (area.style.display === 'none') {
-            area.style.display = '';
-            btn.style.display = 'none';
-            document.getElementById('pasteContent').focus();
-        } else {
-            area.style.display = 'none';
-            btn.style.display = '';
+    // ===== SCREENSHOT IMPORT POUR CONTACTS =====
+
+    let contactImageBase64 = null;
+    let contactImageType = null;
+
+    // Paste listener global pour le modal contact
+    document.addEventListener('paste', async (e) => {
+        const modal = document.getElementById('addContactModal');
+        if (!modal) return;
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+            if (item.type.startsWith('image/')) {
+                e.preventDefault();
+                const blob = item.getAsFile();
+                if (blob) await processContactImage(blob);
+                return;
+            }
+        }
+    });
+
+    async function processContactImage(file) {
+        try {
+            const compressed = await compressImage(file, 1600, 0.8);
+            const base64 = await fileToBase64Contact(compressed);
+            contactImageBase64 = base64;
+            contactImageType = 'image/jpeg';
+
+            document.getElementById('contactImportPasteArea').style.display = 'none';
+            document.getElementById('contactImportPreview').style.display = '';
+            document.getElementById('contactImportPreviewImg').src = 'data:image/jpeg;base64,' + base64;
+            document.getElementById('contactImportInfo').textContent = `Image — ${(compressed.size / 1024).toFixed(0)} Ko`;
+            document.getElementById('contactImportAnalyzeBtn').style.display = '';
+            document.getElementById('contactImportAnalyzeBtn').disabled = false;
+        } catch (err) {
+            console.error('[ContactImport] Erreur compression:', err);
+            alert('Erreur lors du traitement de l\'image.');
         }
     }
 
-    function parseContactFromPaste() {
-        const raw = document.getElementById('pasteContent').value.trim();
-        if (!raw) return;
+    function fileToBase64Contact(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
+    }
 
-        // Extraction téléphone (formats français)
-        const phoneRegex = /(?:(?:\+33|0033)\s*[1-9]|0[1-9])[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}/g;
-        const phones = raw.match(phoneRegex) || [];
-        const phone = phones.length > 0 ? phones[0].replace(/[\s.\-]/g, '') : '';
+    function clearContactImage() {
+        contactImageBase64 = null;
+        contactImageType = null;
+        document.getElementById('contactImportPreview').style.display = 'none';
+        document.getElementById('contactImportPasteArea').style.display = '';
+        document.getElementById('contactImportAnalyzeBtn').style.display = 'none';
+        document.getElementById('contactImportResult').style.display = 'none';
+    }
 
-        // Extraction email
-        const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
-        const emails = raw.match(emailRegex) || [];
-        // Exclure les emails de service/plateforme
-        const excludedDomains = ['seloger.com', 'leboncoin.fr', 'bienici.com', 'pap.fr', 'jinka.fr', 'logic-immo.com', 'classifieds.fr'];
-        const contactEmail = emails.find(e => !excludedDomains.some(d => e.toLowerCase().includes(d))) || '';
+    async function analyzeContactImage() {
+        if (!contactImageBase64) return;
 
-        // Extraction nom — chercher des patterns courants des portails
-        let name = '';
-        // Pattern SeLoger/LeBonCoin : "Prénom NOM" souvent en début ou après "de" / "par"
-        // Pattern : ligne avec juste un nom (Prénom NOM ou Prénom MAJUSCULES)
-        const namePatterns = [
-            /^([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][A-ZÀ-Ü]+)/m,                  // Prénom NOM (NOM en majuscules)
-            /(?:de|par|contact|acquéreur|intéressé)[:\s]+([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü]+)/i,
-            /^([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)?)\s*$/m,         // Ligne avec juste un nom
-        ];
-        for (const pat of namePatterns) {
-            const m = raw.match(pat);
-            if (m && m[1] && m[1].length > 3 && m[1].length < 40) {
-                name = m[1].trim();
-                break;
+        document.getElementById('contactImportAnalyzeBtn').style.display = 'none';
+        document.getElementById('contactImportLoading').style.display = '';
+
+        try {
+            const headers = await getAuthHeaders();
+            const resp = await fetch('/api/analyze-document', {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    mode: 'screenshot_import',
+                    leadType: 'buyer',
+                    image: contactImageBase64,
+                    imageType: contactImageType
+                })
+            });
+
+            if (!resp.ok) throw new Error('Erreur analyse');
+            const data = await resp.json();
+            const f = data.fields || {};
+
+            // Pré-remplir le formulaire
+            const fullName = [f.first_name, f.last_name].filter(Boolean).join(' ');
+            if (fullName) document.getElementById('contactName').value = fullName;
+            if (f.phone) document.getElementById('contactPhone').value = f.phone;
+            if (f.email) document.getElementById('contactEmail').value = f.email;
+            if (f.notes) document.getElementById('contactNotes').value = f.notes;
+
+            // Source depuis la plateforme détectée
+            if (f.source_platform || f.source) {
+                document.getElementById('contactSource').value = 'portal';
             }
-        }
-        // Fallback : extraire le nom depuis l'email
-        if (!name && contactEmail) {
-            const localPart = contactEmail.split('@')[0];
-            name = localPart.replace(/[._\-\d]/g, ' ').replace(/\s+/g, ' ').trim()
-                .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-        }
 
-        // Détecter la source
-        let source = 'portal';
-        const lowerRaw = raw.toLowerCase();
-        if (lowerRaw.includes('seloger') || lowerRaw.includes('logic-immo') || lowerRaw.includes('myselogerpro')) source = 'portal';
-        else if (lowerRaw.includes('leboncoin')) source = 'portal';
-        else if (lowerRaw.includes('bienici') || lowerRaw.includes("bien'ici")) source = 'portal';
-        else if (lowerRaw.includes('pap.fr')) source = 'portal';
-        else if (/@/.test(raw) && phones.length === 0) source = 'email';
-        else if (phones.length > 0 && !/@/.test(raw)) source = 'phone';
-
-        // Extraire le message du contact (entre guillemets ou après un séparateur)
-        let message = '';
-        const msgPatterns = [
-            /[«"]([\s\S]*?)[»"]/,                                            // Entre guillemets
-            /(?:message|demande|commentaire)\s*:\s*([\s\S]*?)(?:\n{2}|$)/i,   // Après "message :"
-        ];
-        for (const pat of msgPatterns) {
-            const m = raw.match(pat);
-            if (m && m[1] && m[1].trim().length > 10) {
-                message = m[1].trim();
-                break;
+            // Feedback visuel
+            const extracted = [fullName, f.phone, f.email].filter(Boolean);
+            const resultEl = document.getElementById('contactImportResult');
+            resultEl.style.display = '';
+            if (extracted.length > 0) {
+                resultEl.innerHTML = `<div style="padding:8px 12px; background:#E8F5E9; border-radius:8px; font-size:12px; color:#2E7D32; margin-top:8px">
+                    <i class="fa-solid fa-check"></i> Extrait : ${extracted.map(e => escapeHtml(e)).join(' • ')}
+                    ${f.source_platform ? `<span style="margin-left:4px; opacity:0.7">(${escapeHtml(f.source_platform)})</span>` : ''}
+                </div>`;
+            } else {
+                resultEl.innerHTML = `<div style="padding:8px 12px; background:#FFF3E0; border-radius:8px; font-size:12px; color:#E65100; margin-top:8px">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Aucune info détectée — remplissez manuellement
+                </div>`;
             }
-        }
-        // Fallback : chercher les lignes qui ressemblent à un message personnel
-        if (!message) {
-            const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 30);
-            const msgLine = lines.find(l =>
-                /^(je |bonjour|bonsoir|nous |j'|interested|intéressé)/i.test(l)
-            );
-            if (msgLine) message = msgLine;
-        }
-
-        // Pré-remplir le formulaire
-        if (name) document.getElementById('contactName').value = name;
-        if (phone) document.getElementById('contactPhone').value = phone;
-        if (contactEmail) document.getElementById('contactEmail').value = contactEmail;
-        document.getElementById('contactSource').value = source;
-        if (message) document.getElementById('contactNotes').value = message;
-
-        // Feedback visuel
-        const pasteArea = document.getElementById('pasteArea');
-        const extracted = [name, phone, contactEmail].filter(Boolean);
-        if (extracted.length > 0) {
-            pasteArea.innerHTML = `<div style="padding:8px 12px; background:#E8F5E9; border-radius:8px; font-size:12px; color:#2E7D32">
-                <i class="fa-solid fa-check"></i> Extrait : ${extracted.join(' • ')}
+        } catch (err) {
+            console.error('[ContactImport] Erreur analyse:', err);
+            document.getElementById('contactImportResult').style.display = '';
+            document.getElementById('contactImportResult').innerHTML = `<div style="padding:8px 12px; background:#FFEBEE; border-radius:8px; font-size:12px; color:#C62828; margin-top:8px">
+                <i class="fa-solid fa-xmark"></i> Erreur lors de l'extraction
             </div>`;
-        } else {
-            pasteArea.innerHTML = `<div style="padding:8px 12px; background:#FFF3E0; border-radius:8px; font-size:12px; color:#E65100">
-                <i class="fa-solid fa-triangle-exclamation"></i> Aucune info détectée — remplissez manuellement
-            </div>`;
+        } finally {
+            document.getElementById('contactImportLoading').style.display = 'none';
         }
     }
 
