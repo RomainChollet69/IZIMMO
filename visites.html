@@ -1511,7 +1511,27 @@
 
         const container = document.getElementById('visitsContainer');
 
-        if (filtered.length === 0) {
+        const groups = groupVisitsBySeller(filtered);
+
+        // Ajouter les biens actifs sans visite ni contact (pour pouvoir ajouter des contacts)
+        const hasStatusFilter = filters.status && filters.status !== '';
+        if (!hasStatusFilter) {
+            activeSellers.forEach(s => {
+                if (!groups[s.id]) {
+                    groups[s.id] = {
+                        seller: s,
+                        visits: [],
+                        contacts: [],
+                        nextVisit: null,
+                        plannedCount: 0,
+                        doneCount: 0,
+                        contactCount: 0
+                    };
+                }
+            });
+        }
+
+        if (Object.keys(groups).length === 0) {
             container.innerHTML = `<div class="visits-empty">
                 <i class="fa-solid fa-calendar-check"></i>
                 <p>${allVisits.length === 0 ? 'Aucune visite enregistrée' : 'Aucune visite ne correspond aux filtres'}</p>
@@ -1520,15 +1540,19 @@
             return;
         }
 
-        const groups = groupVisitsBySeller(filtered);
-
         // Tri : propriétés avec visites planifiées en premier, puis par date de prochaine visite
         const sortedKeys = Object.keys(groups).sort((a, b) => {
             const ga = groups[a], gb = groups[b];
+            const totalA = ga.visits.length + ga.contactCount;
+            const totalB = gb.visits.length + gb.contactCount;
+            // Biens avec visites planifiées en premier
             if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
             if (gb.plannedCount > 0 && ga.plannedCount === 0) return 1;
             if (ga.nextVisit && gb.nextVisit) return ga.nextVisit.localeCompare(gb.nextVisit);
-            return (gb.visits.length + gb.contactCount) - (ga.visits.length + ga.contactCount);
+            // Biens avec activité avant les biens vides
+            if (totalA > 0 && totalB === 0) return -1;
+            if (totalB > 0 && totalA === 0) return 1;
+            return totalB - totalA;
         });
 
         let html = '';
