@@ -1798,9 +1798,14 @@
             </div>
             ${contact.notes ? `<div style="font-size:12px; color:#78909C; margin-top:4px; font-style:italic">${escapeHtml(contact.notes)}</div>` : ''}
             <div class="visit-card-actions" style="margin-top:8px">
-                ${!isTraite ? `<button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); markContactTraite('${contact.id}')">
-                    <i class="fa-solid fa-check"></i> Traité
-                </button>` : ''}
+                ${!isTraite
+                    ? `<button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openContactTraiteModal('${contact.id}')">
+                        <i class="fa-solid fa-check"></i> Traité
+                    </button>`
+                    : `<button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation(); unmarkContactTraite('${contact.id}')">
+                        <i class="fa-solid fa-rotate-left"></i> Non traité
+                    </button>`
+                }
                 <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPlanFromContact('${contact.id}')">
                     <i class="fa-solid fa-calendar-plus"></i> Planifier
                 </button>
@@ -1912,18 +1917,137 @@
         showToast('Visite supprimée');
     }
 
-    async function markContactTraite(contactId) {
+    function openContactTraiteModal(contactId) {
+        const contact = allVisits.find(v => v.id === contactId);
+        if (!contact) return;
+
+        const name = contact.buyer_name || 'Contact';
+        const phone = getVisitorPhone(contact);
+
+        closeModal('contactTraiteModal');
+        const modal = document.createElement('div');
+        modal.id = 'contactTraiteModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:440px">
+                <div class="modal-title">Marquer comme traité</div>
+                <div style="background:#F9FAFB; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px">
+                    <strong>${escapeHtml(name)}</strong>
+                    ${phone ? ' — ' + escapeHtml(phone) : ''}
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">Comment avez-vous traité ce contact ?</label>
+                    <div class="note-chips" id="contactTraiteChips">
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Visite virtuelle envoyée</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Message répondeur</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">SMS envoyé</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Rappeler</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Ne convient pas</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Visite planifiée</span>
+                    </div>
+                    <textarea class="form-textarea" id="contactTraiteNote" rows="2" placeholder="Note complémentaire..."></textarea>
+                </div>
+
+                <div class="form-section">
+                    <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text-dark)">
+                        <input type="checkbox" id="contactTraiteCreateBuyer">
+                        Créer un lead acquéreur
+                    </label>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:16px">
+                    <button type="button" id="contactTraiteSubmitBtn" onclick="submitContactTraite('${contactId}')" style="
+                        flex:1; padding:12px; background:linear-gradient(135deg,#2E7D32,#43A047);
+                        color:white; border:none; border-radius:12px; font-size:14px; font-weight:700;
+                        cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center;
+                        justify-content:center; gap:8px;
+                    "><i class="fa-solid fa-check"></i> Valider</button>
+                    <button type="button" onclick="closeModal('contactTraiteModal')" style="
+                        padding:12px 20px; background:#F1F5F9; color:#64748b; border:none; border-radius:12px;
+                        font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Annuler</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('contactTraiteModal'); });
+    }
+
+    function selectContactTraiteChip(chip) {
+        chip.classList.toggle('selected');
+        const textarea = document.getElementById('contactTraiteNote');
+        const chips = document.querySelectorAll('#contactTraiteChips .note-chip.selected');
+        const chipTexts = Array.from(chips).map(c => c.textContent);
+        const userText = textarea.dataset.userText || '';
+        textarea.value = chipTexts.length > 0
+            ? chipTexts.join(' / ') + (userText ? '\n' + userText : '')
+            : userText;
+    }
+
+    async function submitContactTraite(contactId) {
+        const btn = document.getElementById('contactTraiteSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
+
+        const note = document.getElementById('contactTraiteNote').value.trim();
+        const createBuyer = document.getElementById('contactTraiteCreateBuyer').checked;
+        const contact = allVisits.find(v => v.id === contactId);
+
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        // Mettre à jour le contact comme traité
+        const updateData = { contact_treated: true, updated_at: new Date().toISOString() };
+        // Ajouter la note de traitement aux notes existantes
+        if (note) {
+            const existingNotes = contact?.notes || '';
+            updateData.notes = existingNotes
+                ? existingNotes + '\n[Traité] ' + note
+                : '[Traité] ' + note;
+        }
+
+        const { error } = await supabaseClient.from('visits')
+            .update(updateData)
+            .eq('id', contactId).eq('user_id', userId);
+
+        if (error) {
+            console.error('[Visites] Mark traite error:', error);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Valider';
+            return;
+        }
+
+        if (contact) {
+            contact.contact_treated = true;
+            if (updateData.notes) contact.notes = updateData.notes;
+        }
+
+        // Créer acquéreur si demandé
+        if (createBuyer && contact && !contact.buyer_id) {
+            closeModal('contactTraiteModal');
+            openPromoteModal(contactId);
+            showToast('Contact marqué comme traité');
+            renderVisitsPage();
+            return;
+        }
+
+        closeModal('contactTraiteModal');
+        renderVisitsPage();
+        showToast('Contact marqué comme traité');
+    }
+
+    async function unmarkContactTraite(contactId) {
         const userId = await getCurrentUserId();
         if (!userId) return;
         const { error } = await supabaseClient.from('visits')
-            .update({ contact_treated: true, updated_at: new Date().toISOString() })
+            .update({ contact_treated: false, updated_at: new Date().toISOString() })
             .eq('id', contactId).eq('user_id', userId);
-        if (error) { console.error('[Visites] Mark traite error:', error); return; }
+        if (error) { console.error('[Visites] Unmark traite error:', error); return; }
 
         const contact = allVisits.find(v => v.id === contactId);
-        if (contact) contact.contact_treated = true;
+        if (contact) contact.contact_treated = false;
         renderVisitsPage();
-        showToast('Contact marqué comme traité');
+        showToast('Contact remis en non traité');
     }
 
     // ===== MODAL: AJOUTER UN CONTACT =====
