@@ -495,7 +495,14 @@
         .visit-card.annulee { border-left: 4px solid var(--visit-cancelled); opacity: 0.7; }
         .visit-card.demande { border-left: 4px solid #7B1FA2; cursor: grab; }
         .visit-card.demande:active { cursor: grabbing; }
-        .visit-card.demande.treated { border-left-color: #4CAF50; opacity: 0.7; }
+        .visit-card.demande.treated { border-left-color: #4CAF50; opacity: 0.75; }
+        .contact-card-info { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+        .contact-card-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .contact-card-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: #78909C; margin-top: 2px; }
+        .contact-card-meta a { color: #78909C; text-decoration: none; }
+        .contact-card-meta a:hover { color: #667eea; }
+        .contact-card-meta i { font-size: 10px; width: 14px; text-align: center; }
+        .contact-card-treatment { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #2E7D32; background: #E8F5E9; padding: 2px 8px; border-radius: 6px; margin-top: 4px; }
 
         .visit-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
         .visit-status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
@@ -1789,27 +1796,26 @@
         const treatmentNote = contact.notes && contact.notes.includes('[Traité]')
             ? contact.notes.split('[Traité]').pop().trim()
             : '';
-        // Résumé visible (1 ligne) : note de traitement ou début des notes
-        const summaryNote = isTraite && treatmentNote
-            ? `<span style="font-size:12px; color:#2E7D32"><i class="fa-solid fa-check" style="font-size:10px"></i> ${escapeHtml(treatmentNote)}</span>`
-            : '';
 
         return `<div class="visit-card demande${isTraite ? ' treated' : ''}" draggable="true" data-contact-id="${contact.id}"
                     ondragstart="handleContactDragStart(event, '${contact.id}')"
                     onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 ${statusBadge}
+                <span class="contact-source-badge">${CONTACT_SOURCE_LABELS[source] || source}</span>
                 <span class="visit-card-date">${dateStr}</span>
             </div>
-            <div class="visit-card-visitor">
-                <span class="visit-card-name">${escapeHtml(name)}</span>
-                <span class="contact-source-badge">${CONTACT_SOURCE_LABELS[source] || source}</span>
-                ${phone ? `<span class="visit-card-phone">${escapeHtml(phone)}</span>` : ''}
-                ${summaryNote}
+            <div class="contact-card-info">
+                <div class="contact-card-name-row">
+                    <span class="visit-card-name">${escapeHtml(name)}</span>
+                </div>
+                <div class="contact-card-meta">
+                    ${phone ? `<span><i class="fa-solid fa-phone"></i> <a href="tel:${escapeHtml(phone)}" onclick="event.stopPropagation()">${escapeHtml(phone)}</a></span>` : ''}
+                    ${email ? `<span><i class="fa-solid fa-envelope"></i> <a href="mailto:${escapeHtml(email)}" onclick="event.stopPropagation()">${escapeHtml(email)}</a></span>` : ''}
+                </div>
+                ${isTraite && treatmentNote ? `<div class="contact-card-treatment"><i class="fa-solid fa-check"></i> ${escapeHtml(treatmentNote)}</div>` : ''}
             </div>
             <div class="visit-card-details">
-                ${phone ? `<div style="font-size:13px; color:var(--text-dark); margin-bottom:4px"><i class="fa-solid fa-phone" style="font-size:11px; color:#78909C"></i> <a href="tel:${escapeHtml(phone)}" style="color:inherit" onclick="event.stopPropagation()">${escapeHtml(phone)}</a></div>` : ''}
-                ${email ? `<div style="font-size:13px; color:var(--text-dark); margin-bottom:4px"><i class="fa-solid fa-envelope" style="font-size:11px; color:#78909C"></i> <a href="mailto:${escapeHtml(email)}" style="color:inherit" onclick="event.stopPropagation()">${escapeHtml(email)}</a></div>` : ''}
                 ${contact.notes ? `<div class="visit-card-notes">${escapeHtml(contact.notes)}</div>` : ''}
                 <div class="visit-card-actions" style="margin-top:8px">
                     ${!isTraite
