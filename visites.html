@@ -1887,6 +1887,23 @@
                 <p style="margin:0 0 16px; font-size:13px; color:#78909C">${escapeHtml(sellerLabel)}</p>
                 <input type="hidden" id="contactSellerId" value="${sellerId}">
 
+                <!-- Zone coller une demande -->
+                <div id="pasteZone" style="margin-bottom:16px">
+                    <button type="button" class="btn-paste-toggle" id="pasteToggleBtn" onclick="togglePasteZone()" style="
+                        width:100%; padding:10px; background:#F3E5F5; border:1.5px dashed #CE93D8; border-radius:10px;
+                        font-size:13px; font-weight:600; color:#7B1FA2; cursor:pointer; font-family:Inter,sans-serif;
+                        display:flex; align-items:center; justify-content:center; gap:6px;
+                    "><i class="fa-solid fa-paste"></i> Coller une demande (email, portail...)</button>
+                    <div id="pasteArea" style="display:none; margin-top:8px">
+                        <textarea class="form-input" id="pasteContent" rows="5" placeholder="Collez ici le contenu de l'email ou du message portail..." style="font-size:12px; line-height:1.4"></textarea>
+                        <button type="button" onclick="parseContactFromPaste()" style="
+                            margin-top:6px; padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2);
+                            color:white; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer;
+                            font-family:Inter,sans-serif; width:100%;
+                        "><i class="fa-solid fa-wand-magic-sparkles"></i> Extraire les infos</button>
+                    </div>
+                </div>
+
                 <label class="form-label">Nom du contact *</label>
                 <input class="form-input" id="contactName" placeholder="Nom du contact" required>
 
@@ -1917,6 +1934,111 @@
             </div>`;
         document.body.appendChild(modal);
         document.getElementById('contactName').focus();
+    }
+
+    function togglePasteZone() {
+        const area = document.getElementById('pasteArea');
+        const btn = document.getElementById('pasteToggleBtn');
+        if (area.style.display === 'none') {
+            area.style.display = '';
+            btn.style.display = 'none';
+            document.getElementById('pasteContent').focus();
+        } else {
+            area.style.display = 'none';
+            btn.style.display = '';
+        }
+    }
+
+    function parseContactFromPaste() {
+        const raw = document.getElementById('pasteContent').value.trim();
+        if (!raw) return;
+
+        // Extraction téléphone (formats français)
+        const phoneRegex = /(?:(?:\+33|0033)\s*[1-9]|0[1-9])[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}[\s.\-]?\d{2}/g;
+        const phones = raw.match(phoneRegex) || [];
+        const phone = phones.length > 0 ? phones[0].replace(/[\s.\-]/g, '') : '';
+
+        // Extraction email
+        const emailRegex = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
+        const emails = raw.match(emailRegex) || [];
+        // Exclure les emails de service/plateforme
+        const excludedDomains = ['seloger.com', 'leboncoin.fr', 'bienici.com', 'pap.fr', 'jinka.fr', 'logic-immo.com', 'classifieds.fr'];
+        const contactEmail = emails.find(e => !excludedDomains.some(d => e.toLowerCase().includes(d))) || '';
+
+        // Extraction nom — chercher des patterns courants des portails
+        let name = '';
+        // Pattern SeLoger/LeBonCoin : "Prénom NOM" souvent en début ou après "de" / "par"
+        // Pattern : ligne avec juste un nom (Prénom NOM ou Prénom MAJUSCULES)
+        const namePatterns = [
+            /^([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü][A-ZÀ-Ü]+)/m,                  // Prénom NOM (NOM en majuscules)
+            /(?:de|par|contact|acquéreur|intéressé)[:\s]+([A-ZÀ-Ü][a-zà-ü]+\s+[A-ZÀ-Ü]+)/i,
+            /^([A-ZÀ-Ü][a-zà-ü]+(?:\s+[A-ZÀ-Ü][a-zà-ü]+)?)\s*$/m,         // Ligne avec juste un nom
+        ];
+        for (const pat of namePatterns) {
+            const m = raw.match(pat);
+            if (m && m[1] && m[1].length > 3 && m[1].length < 40) {
+                name = m[1].trim();
+                break;
+            }
+        }
+        // Fallback : extraire le nom depuis l'email
+        if (!name && contactEmail) {
+            const localPart = contactEmail.split('@')[0];
+            name = localPart.replace(/[._\-\d]/g, ' ').replace(/\s+/g, ' ').trim()
+                .split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
+
+        // Détecter la source
+        let source = 'portal';
+        const lowerRaw = raw.toLowerCase();
+        if (lowerRaw.includes('seloger') || lowerRaw.includes('logic-immo') || lowerRaw.includes('myselogerpro')) source = 'portal';
+        else if (lowerRaw.includes('leboncoin')) source = 'portal';
+        else if (lowerRaw.includes('bienici') || lowerRaw.includes("bien'ici")) source = 'portal';
+        else if (lowerRaw.includes('pap.fr')) source = 'portal';
+        else if (/@/.test(raw) && phones.length === 0) source = 'email';
+        else if (phones.length > 0 && !/@/.test(raw)) source = 'phone';
+
+        // Extraire le message du contact (entre guillemets ou après un séparateur)
+        let message = '';
+        const msgPatterns = [
+            /[«"]([\s\S]*?)[»"]/,                                            // Entre guillemets
+            /(?:message|demande|commentaire)\s*:\s*([\s\S]*?)(?:\n{2}|$)/i,   // Après "message :"
+        ];
+        for (const pat of msgPatterns) {
+            const m = raw.match(pat);
+            if (m && m[1] && m[1].trim().length > 10) {
+                message = m[1].trim();
+                break;
+            }
+        }
+        // Fallback : chercher les lignes qui ressemblent à un message personnel
+        if (!message) {
+            const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 30);
+            const msgLine = lines.find(l =>
+                /^(je |bonjour|bonsoir|nous |j'|interested|intéressé)/i.test(l)
+            );
+            if (msgLine) message = msgLine;
+        }
+
+        // Pré-remplir le formulaire
+        if (name) document.getElementById('contactName').value = name;
+        if (phone) document.getElementById('contactPhone').value = phone;
+        if (contactEmail) document.getElementById('contactEmail').value = contactEmail;
+        document.getElementById('contactSource').value = source;
+        if (message) document.getElementById('contactNotes').value = message;
+
+        // Feedback visuel
+        const pasteArea = document.getElementById('pasteArea');
+        const extracted = [name, phone, contactEmail].filter(Boolean);
+        if (extracted.length > 0) {
+            pasteArea.innerHTML = `<div style="padding:8px 12px; background:#E8F5E9; border-radius:8px; font-size:12px; color:#2E7D32">
+                <i class="fa-solid fa-check"></i> Extrait : ${extracted.join(' • ')}
+            </div>`;
+        } else {
+            pasteArea.innerHTML = `<div style="padding:8px 12px; background:#FFF3E0; border-radius:8px; font-size:12px; color:#E65100">
+                <i class="fa-solid fa-triangle-exclamation"></i> Aucune info détectée — remplissez manuellement
+            </div>`;
+        }
     }
 
     async function submitContactForm() {
