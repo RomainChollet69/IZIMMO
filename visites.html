@@ -495,6 +495,7 @@
         .visit-card.annulee { border-left: 4px solid var(--visit-cancelled); opacity: 0.7; }
         .visit-card.demande { border-left: 4px solid #7B1FA2; cursor: grab; }
         .visit-card.demande:active { cursor: grabbing; }
+        .visit-card.demande.treated { border-left-color: #4CAF50; opacity: 0.7; }
 
         .visit-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
         .visit-status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
@@ -1720,6 +1721,7 @@
             actions = `<div class="visit-card-actions">
                 <button type="button" class="visit-action-btn done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">Effectuée</button>
                 <button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation();cancelVisit('${visit.id}')">Annuler</button>
+                ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation();openPromoteModal('${visit.id}')">Créer un acquéreur</button>` : ''}
             </div>`;
         } else if (visit.status === 'effectuee') {
             const btnLabel = visit.feedback_rating ? 'Modifier le retour' : 'Donner un retour';
@@ -1773,14 +1775,20 @@
         const name = contact.buyer_name || 'Contact inconnu';
         const phone = getVisitorPhone(contact);
         const source = contact.contact_source || 'manual';
+        const isTraite = contact.contact_treated === true;
+        const linked = contact.buyer_id != null;
         const dateStr = contact.created_at
             ? new Date(contact.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
             : '';
 
-        return `<div class="visit-card demande" draggable="true" data-contact-id="${contact.id}"
+        const statusBadge = isTraite
+            ? '<span class="visit-status-badge done">Traité</span>'
+            : STATUS_BADGES.demande;
+
+        return `<div class="visit-card demande${isTraite ? ' treated' : ''}" draggable="true" data-contact-id="${contact.id}"
                     ondragstart="handleContactDragStart(event, '${contact.id}')">
             <div class="visit-card-top">
-                ${STATUS_BADGES.demande}
+                ${statusBadge}
                 <span class="visit-card-date">${dateStr}</span>
             </div>
             <div class="visit-card-visitor">
@@ -1790,9 +1798,13 @@
             </div>
             ${contact.notes ? `<div style="font-size:12px; color:#78909C; margin-top:4px; font-style:italic">${escapeHtml(contact.notes)}</div>` : ''}
             <div class="visit-card-actions" style="margin-top:8px">
+                ${!isTraite ? `<button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); markContactTraite('${contact.id}')">
+                    <i class="fa-solid fa-check"></i> Traité
+                </button>` : ''}
                 <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPlanFromContact('${contact.id}')">
-                    <i class="fa-solid fa-calendar-plus"></i> Planifier une visite
+                    <i class="fa-solid fa-calendar-plus"></i> Planifier
                 </button>
+                ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation(); openPromoteModal('${contact.id}')">Créer acquéreur</button>` : ''}
             </div>
             <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${contact.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
         </div>`;
@@ -1898,6 +1910,20 @@
         allVisits = allVisits.filter(v => v.id !== visitId);
         renderVisitsPage();
         showToast('Visite supprimée');
+    }
+
+    async function markContactTraite(contactId) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { error } = await supabaseClient.from('visits')
+            .update({ contact_treated: true, updated_at: new Date().toISOString() })
+            .eq('id', contactId).eq('user_id', userId);
+        if (error) { console.error('[Visites] Mark traite error:', error); return; }
+
+        const contact = allVisits.find(v => v.id === contactId);
+        if (contact) contact.contact_treated = true;
+        renderVisitsPage();
+        showToast('Contact marqué comme traité');
     }
 
     // ===== MODAL: AJOUTER UN CONTACT =====
