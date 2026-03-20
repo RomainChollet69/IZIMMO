@@ -1513,10 +1513,11 @@
 
         const groups = groupVisitsBySeller(filtered);
 
-        // Ajouter les biens actifs sans visite ni contact (pour pouvoir ajouter des contacts)
+        // Ajouter les biens sous mandat sans visite ni contact (pour pouvoir ajouter des contacts)
         const hasStatusFilter = filters.status && filters.status !== '';
         if (!hasStatusFilter) {
             activeSellers.forEach(s => {
+                if (s.status !== 'mandate' && s.status !== 'off_market') return;
                 if (!groups[s.id]) {
                     groups[s.id] = {
                         seller: s,
