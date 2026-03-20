@@ -442,6 +442,16 @@
             flex-shrink: 0;
         }
         .property-accordion.open .accordion-chevron { transform: rotate(180deg); }
+        .accordion-add-contact-btn {
+            background: none; border: 2px solid #E1E8ED; border-radius: 8px;
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #7B1FA2; font-size: 14px; transition: all 0.15s; flex-shrink: 0;
+        }
+        .accordion-add-contact-btn:hover { background: #F3E5F5; border-color: #7B1FA2; }
+        .visits-drop-zone { min-height: 20px; transition: all 0.2s; border-radius: 8px; }
+        .visits-drop-zone.drag-over { background: #F3E5F5; outline: 2px dashed #7B1FA2; outline-offset: -2px; }
+        .contact-source-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #F3E5F5; color: #7B1FA2; }
+        .visit-group-label.contact-label { color: #7B1FA2; }
         .property-accordion-body {
             max-height: 0;
             overflow: hidden;
@@ -483,12 +493,15 @@
         .visit-card.planifiee { border-left: 4px solid var(--visit-planned); }
         .visit-card.effectuee { border-left: 4px solid var(--visit-done); }
         .visit-card.annulee { border-left: 4px solid var(--visit-cancelled); opacity: 0.7; }
+        .visit-card.demande { border-left: 4px solid #7B1FA2; cursor: grab; }
+        .visit-card.demande:active { cursor: grabbing; }
 
         .visit-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
         .visit-status-badge { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
         .visit-status-badge.planned { background: #E8EAF6; color: var(--visit-planned); }
         .visit-status-badge.done { background: #E8F5E9; color: var(--visit-done); }
         .visit-status-badge.cancelled { background: #F5F5F5; color: var(--visit-cancelled); }
+        .visit-status-badge.contact { background: #F3E5F5; color: #7B1FA2; }
         .visit-card-date { font-size: 13px; color: #78909C; font-weight: 500; }
 
         .visit-card-visitor {
@@ -1186,6 +1199,7 @@
     <section class="filters-bar">
         <select class="filter-select" id="filterStatus">
             <option value="">Tous les statuts</option>
+            <option value="demande">Contacts</option>
             <option value="planifiee">Planifiées</option>
             <option value="effectuee">Effectuées</option>
             <option value="annulee">Annulées</option>
@@ -1268,7 +1282,8 @@
     const STATUS_BADGES = {
         planifiee: '<span class="visit-status-badge planned">Planifiée</span>',
         effectuee: '<span class="visit-status-badge done">Effectuée</span>',
-        annulee: '<span class="visit-status-badge cancelled">Annulée</span>'
+        annulee: '<span class="visit-status-badge cancelled">Annulée</span>',
+        demande: '<span class="visit-status-badge contact">Contact</span>'
     };
 
     // ===== AUTH =====
@@ -1390,20 +1405,27 @@
                 groups[key] = {
                     seller: v.sellers || null,
                     visits: [],
+                    contacts: [],
                     nextVisit: null,
                     plannedCount: 0,
-                    doneCount: 0
+                    doneCount: 0,
+                    contactCount: 0
                 };
             }
-            groups[key].visits.push(v);
-            if (v.status === 'planifiee') {
-                groups[key].plannedCount++;
-                const vDate = new Date(v.visit_date);
-                if (!groups[key].nextVisit || vDate < new Date(groups[key].nextVisit)) {
-                    groups[key].nextVisit = v.visit_date;
+            if (v.status === 'demande') {
+                groups[key].contacts.push(v);
+                groups[key].contactCount++;
+            } else {
+                groups[key].visits.push(v);
+                if (v.status === 'planifiee') {
+                    groups[key].plannedCount++;
+                    const vDate = new Date(v.visit_date);
+                    if (!groups[key].nextVisit || vDate < new Date(groups[key].nextVisit)) {
+                        groups[key].nextVisit = v.visit_date;
+                    }
+                } else if (v.status === 'effectuee') {
+                    groups[key].doneCount++;
                 }
-            } else if (v.status === 'effectuee') {
-                groups[key].doneCount++;
             }
         });
         return groups;
@@ -1414,9 +1436,13 @@
             // Status filter
             if (filters.status && v.status !== filters.status) return false;
 
-            // Date range filter
-            if (filters.dateFrom && v.visit_date < filters.dateFrom) return false;
-            if (filters.dateTo && v.visit_date > filters.dateTo) return false;
+            // Date range filter — contacts (demande) n'ont pas de date
+            if (v.status === 'demande') {
+                if (filters.dateFrom || filters.dateTo) return true; // pas de filtre date sur contacts
+            } else {
+                if (filters.dateFrom && v.visit_date < filters.dateFrom) return false;
+                if (filters.dateTo && v.visit_date > filters.dateTo) return false;
+            }
 
             // Search filter
             if (filters.search) {
@@ -1502,7 +1528,7 @@
             if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
             if (gb.plannedCount > 0 && ga.plannedCount === 0) return 1;
             if (ga.nextVisit && gb.nextVisit) return ga.nextVisit.localeCompare(gb.nextVisit);
-            return gb.visits.length - ga.visits.length;
+            return (gb.visits.length + gb.contactCount) - (ga.visits.length + ga.contactCount);
         });
 
         let html = '';
@@ -1539,6 +1565,7 @@
             : '';
 
         const totalVisits = group.visits.length;
+        const contacts = group.contacts || [];
         const isOpen = openAccordions.has(sellerId);
 
         // Portal stats pour ce bien
@@ -1553,7 +1580,11 @@
         }
 
         // Badges
-        let badges = `<span class="accordion-badge count">${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`;
+        let badges = '';
+        if (contacts.length > 0) {
+            badges += `<span class="accordion-badge" style="background:#F3E5F5;color:#7B1FA2">${contacts.length} contact${contacts.length > 1 ? 's' : ''}</span>`;
+        }
+        badges += `<span class="accordion-badge count">${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`;
         if (group.plannedCount > 0) {
             const nextDate = new Date(group.nextVisit).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
             badges += `<span class="accordion-badge next">Prochaine : ${nextDate}</span>`;
@@ -1562,38 +1593,53 @@
             badges += `<span class="accordion-badge done-count">${group.doneCount} effectuée${group.doneCount > 1 ? 's' : ''}</span>`;
         }
 
-        // Séparer visites par statut
+        // Section Contacts (status=demande + demandes traitées portail)
+        let contactCards = '';
+        const sellerProcessed = processedRequests.filter(r => r.matched_seller_id === sellerId);
+        if (contacts.length > 0 || sellerProcessed.length > 0) {
+            contactCards += '<div class="visit-group-label contact-label">Contacts</div>';
+            contactCards += '<div class="visit-cards-grid">';
+            contacts.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+            contacts.forEach(c => { contactCards += renderContactCard(c); });
+            sellerProcessed.forEach(r => { contactCards += renderProcessedRequestCard(r); });
+            contactCards += '</div>';
+        }
+
+        // Section Visites par statut
         const planned = group.visits.filter(v => v.status === 'planifiee').sort((a, b) => a.visit_date.localeCompare(b.visit_date));
         const done = group.visits.filter(v => v.status === 'effectuee').sort((a, b) => b.visit_date.localeCompare(a.visit_date));
         const cancelled = group.visits.filter(v => v.status === 'annulee').sort((a, b) => b.visit_date.localeCompare(a.visit_date));
 
         let visitCards = '';
+        if (planned.length > 0 || done.length > 0 || cancelled.length > 0) {
+            visitCards += '<div class="visit-group-label">Visites</div>';
+        }
+        const visitDropZone = `<div class="visits-drop-zone" data-seller-id="${sellerId}"
+            ondragover="event.preventDefault(); this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleContactDrop(event, this)">`;
+
         if (planned.length > 0) {
-            visitCards += '<div class="visit-group-label">À venir</div>';
-            visitCards += '<div class="visit-cards-grid">';
+            visitCards += '<div class="visit-group-label" style="font-size:10px; color:#9CA3AF; margin-top:4px">À venir</div>';
+            visitCards += visitDropZone + '<div class="visit-cards-grid">';
             planned.forEach(v => { visitCards += renderVisitCard(v); });
-            visitCards += '</div>';
+            visitCards += '</div></div>';
         }
         if (done.length > 0) {
-            visitCards += '<div class="visit-group-label">Visites effectuées</div>';
+            visitCards += '<div class="visit-group-label" style="font-size:10px; color:#9CA3AF; margin-top:4px">Effectuées</div>';
             visitCards += '<div class="visit-cards-grid">';
             done.forEach(v => { visitCards += renderVisitCard(v); });
             visitCards += '</div>';
         }
         if (cancelled.length > 0) {
-            visitCards += '<div class="visit-group-label">Annulées</div>';
+            visitCards += '<div class="visit-group-label" style="font-size:10px; color:#9CA3AF; margin-top:4px">Annulées</div>';
             visitCards += '<div class="visit-cards-grid">';
             cancelled.forEach(v => { visitCards += renderVisitCard(v); });
             visitCards += '</div>';
         }
-
-        // Demandes traitées pour ce bien
-        const sellerProcessed = processedRequests.filter(r => r.matched_seller_id === sellerId);
-        if (sellerProcessed.length > 0) {
-            visitCards += '<div class="visit-group-label">Demandes traitées</div>';
-            visitCards += '<div class="visit-cards-grid">';
-            sellerProcessed.forEach(r => { visitCards += renderProcessedRequestCard(r); });
-            visitCards += '</div>';
+        // Drop zone vide si pas de visites planifiées (pour pouvoir dropper des contacts)
+        if (planned.length === 0) {
+            visitCards += visitDropZone + '</div>';
         }
 
         return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
@@ -1604,11 +1650,14 @@
                     <div class="accordion-seller">${escapeHtml(sellerName)}${propertyInfo ? ' — ' + escapeHtml(propertyInfo) : ''}</div>
                     ${portalStatsHtml}
                 </div>
+                <button class="accordion-add-contact-btn" onclick="event.stopPropagation(); openAddContactModal('${sellerId}')" title="Ajouter un contact">
+                    <i class="fa-solid fa-user-plus"></i>
+                </button>
                 <div class="accordion-badges">${badges}</div>
                 <i class="fa-solid fa-chevron-down accordion-chevron"></i>
             </div>
             <div class="property-accordion-body">
-                <div class="accordion-body-inner">${visitCards}</div>
+                <div class="accordion-body-inner">${contactCards}${visitCards}</div>
             </div>
         </div>`;
     }
@@ -1685,6 +1734,37 @@
                 ${actions}
             </div>
             <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${visit.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
+        </div>`;
+    }
+
+    const CONTACT_SOURCE_LABELS = { manual: 'Manuel', portal: 'Portail', phone: 'Appel', email: 'Email', sms: 'SMS', recommandation: 'Recommandation', autre: 'Autre' };
+
+    function renderContactCard(contact) {
+        const name = contact.buyer_name || 'Contact inconnu';
+        const phone = getVisitorPhone(contact);
+        const source = contact.contact_source || 'manual';
+        const dateStr = contact.created_at
+            ? new Date(contact.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+            : '';
+
+        return `<div class="visit-card demande" draggable="true" data-contact-id="${contact.id}"
+                    ondragstart="handleContactDragStart(event, '${contact.id}')">
+            <div class="visit-card-top">
+                ${STATUS_BADGES.demande}
+                <span class="visit-card-date">${dateStr}</span>
+            </div>
+            <div class="visit-card-visitor">
+                <span class="visit-card-name">${escapeHtml(name)}</span>
+                <span class="contact-source-badge">${CONTACT_SOURCE_LABELS[source] || source}</span>
+                ${phone ? `<span class="visit-card-phone">${escapeHtml(phone)}</span>` : ''}
+            </div>
+            ${contact.notes ? `<div style="font-size:12px; color:#78909C; margin-top:4px; font-style:italic">${escapeHtml(contact.notes)}</div>` : ''}
+            <div class="visit-card-actions" style="margin-top:8px">
+                <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPlanFromContact('${contact.id}')">
+                    <i class="fa-solid fa-calendar-plus"></i> Planifier une visite
+                </button>
+            </div>
+            <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${contact.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
         </div>`;
     }
 
@@ -1788,6 +1868,174 @@
         allVisits = allVisits.filter(v => v.id !== visitId);
         renderVisitsPage();
         showToast('Visite supprimée');
+    }
+
+    // ===== MODAL: AJOUTER UN CONTACT =====
+
+    function openAddContactModal(sellerId) {
+        const seller = activeSellers.find(s => s.id === sellerId);
+        const sellerLabel = seller
+            ? `${seller.address || 'Adresse inconnue'} — ${[(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ')}`
+            : 'Bien sélectionné';
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'addContactModal';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:440px">
+                <h2 style="margin:0 0 4px; font-size:18px; font-weight:700; color:var(--text-dark)">Ajouter un contact</h2>
+                <p style="margin:0 0 16px; font-size:13px; color:#78909C">${escapeHtml(sellerLabel)}</p>
+                <input type="hidden" id="contactSellerId" value="${sellerId}">
+
+                <label class="form-label">Nom du contact *</label>
+                <input class="form-input" id="contactName" placeholder="Nom du contact" required>
+
+                <label class="form-label">Téléphone</label>
+                <input class="form-input" id="contactPhone" type="tel" placeholder="06...">
+
+                <label class="form-label">Email</label>
+                <input class="form-input" id="contactEmail" type="email" placeholder="email@...">
+
+                <label class="form-label">Source</label>
+                <select class="form-input" id="contactSource">
+                    <option value="phone">Appel entrant</option>
+                    <option value="portal">Portail</option>
+                    <option value="email">Email</option>
+                    <option value="sms">SMS</option>
+                    <option value="recommandation">Recommandation</option>
+                    <option value="manual" selected>Manuel</option>
+                    <option value="autre">Autre</option>
+                </select>
+
+                <label class="form-label">Notes</label>
+                <textarea class="form-input" id="contactNotes" rows="2" placeholder="Contexte, demande..."></textarea>
+
+                <div style="display:flex; gap:8px; margin-top:16px">
+                    <button class="btn-submit" onclick="submitContactForm()" style="flex:1">Ajouter</button>
+                    <button class="btn-cancel" onclick="document.getElementById('addContactModal').remove()" style="flex:0">Annuler</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+        document.getElementById('contactName').focus();
+    }
+
+    async function submitContactForm() {
+        const sellerId = document.getElementById('contactSellerId').value;
+        const name = document.getElementById('contactName').value.trim();
+        if (!name) { alert('Nom requis'); return; }
+
+        const contact = {
+            seller_id: sellerId,
+            buyer_name: name,
+            visitor_phone: document.getElementById('contactPhone').value.trim() || null,
+            visitor_email: document.getElementById('contactEmail').value.trim() || null,
+            notes: document.getElementById('contactNotes').value.trim() || null,
+            contact_source: document.getElementById('contactSource').value || 'manual',
+            status: 'demande',
+            visit_date: null,
+            visit_time: null
+        };
+
+        const created = await createVisitRecord(contact);
+        if (created) {
+            document.getElementById('addContactModal').remove();
+            allVisits.push({ ...created, sellers: activeSellers.find(s => s.id === sellerId) || null, buyers: null });
+            openAccordions.add(sellerId);
+            renderVisitsPage();
+            showToast('Contact ajouté');
+        }
+    }
+
+    // ===== MODAL: PLANIFIER DEPUIS CONTACT =====
+
+    function openPlanFromContact(contactId) {
+        const contact = allVisits.find(v => v.id === contactId);
+        if (!contact) return;
+
+        const name = contact.buyer_name || 'Contact';
+        const phone = getVisitorPhone(contact);
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'planFromContactModal';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:400px">
+                <h2 style="margin:0 0 4px; font-size:18px; font-weight:700; color:var(--text-dark)">Planifier une visite</h2>
+                <p style="margin:0 0 16px; font-size:13px; color:#78909C">
+                    ${escapeHtml(name)}${phone ? ' — ' + escapeHtml(phone) : ''}
+                </p>
+                <input type="hidden" id="planContactId" value="${contactId}">
+
+                <label class="form-label">Date *</label>
+                <input class="form-input" id="planContactDate" type="date" value="${tomorrowStr}" required>
+
+                <label class="form-label">Heure</label>
+                <input class="form-input" id="planContactTime" type="time">
+
+                <div style="display:flex; gap:8px; margin-top:16px">
+                    <button class="btn-submit" onclick="submitPlanFromContact()" style="flex:1">
+                        <i class="fa-solid fa-calendar-check"></i> Planifier
+                    </button>
+                    <button class="btn-cancel" onclick="document.getElementById('planFromContactModal').remove()" style="flex:0">Annuler</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    async function submitPlanFromContact() {
+        const contactId = document.getElementById('planContactId').value;
+        const date = document.getElementById('planContactDate').value;
+        const time = document.getElementById('planContactTime').value || null;
+
+        if (!date) { alert('Date requise'); return; }
+
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const { error } = await supabaseClient.from('visits')
+            .update({
+                status: 'planifiee',
+                visit_date: date,
+                visit_time: time,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', contactId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('[Visites] Plan from contact error:', error);
+            alert('Erreur : ' + error.message);
+            return;
+        }
+
+        // Mettre à jour le state local
+        const contact = allVisits.find(v => v.id === contactId);
+        if (contact) {
+            contact.status = 'planifiee';
+            contact.visit_date = date;
+            contact.visit_time = time;
+        }
+
+        document.getElementById('planFromContactModal').remove();
+        renderVisitsPage();
+        showToast('Visite planifiée');
+    }
+
+    // ===== DRAG & DROP : CONTACT → VISITE =====
+
+    function handleContactDragStart(event, contactId) {
+        event.dataTransfer.setData('text/plain', contactId);
+        event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleContactDrop(event, target) {
+        event.preventDefault();
+        target.classList.remove('drag-over');
+        const contactId = event.dataTransfer.getData('text/plain');
+        if (contactId) openPlanFromContact(contactId);
     }
 
     // ===== MODAL: NOUVELLE VISITE =====
