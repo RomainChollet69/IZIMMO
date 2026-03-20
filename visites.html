@@ -1785,8 +1785,18 @@
             ? '<span class="visit-status-badge done">Traité</span>'
             : STATUS_BADGES.demande;
 
+        const email = contact.visitor_email || '';
+        const treatmentNote = contact.notes && contact.notes.includes('[Traité]')
+            ? contact.notes.split('[Traité]').pop().trim()
+            : '';
+        // Résumé visible (1 ligne) : note de traitement ou début des notes
+        const summaryNote = isTraite && treatmentNote
+            ? `<span style="font-size:12px; color:#2E7D32"><i class="fa-solid fa-check" style="font-size:10px"></i> ${escapeHtml(treatmentNote)}</span>`
+            : '';
+
         return `<div class="visit-card demande${isTraite ? ' treated' : ''}" draggable="true" data-contact-id="${contact.id}"
-                    ondragstart="handleContactDragStart(event, '${contact.id}')">
+                    ondragstart="handleContactDragStart(event, '${contact.id}')"
+                    onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 ${statusBadge}
                 <span class="visit-card-date">${dateStr}</span>
@@ -1795,21 +1805,26 @@
                 <span class="visit-card-name">${escapeHtml(name)}</span>
                 <span class="contact-source-badge">${CONTACT_SOURCE_LABELS[source] || source}</span>
                 ${phone ? `<span class="visit-card-phone">${escapeHtml(phone)}</span>` : ''}
+                ${summaryNote}
             </div>
-            ${contact.notes ? `<div style="font-size:12px; color:#78909C; margin-top:4px; font-style:italic">${escapeHtml(contact.notes)}</div>` : ''}
-            <div class="visit-card-actions" style="margin-top:8px">
-                ${!isTraite
-                    ? `<button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openContactTraiteModal('${contact.id}')">
-                        <i class="fa-solid fa-check"></i> Traité
-                    </button>`
-                    : `<button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation(); unmarkContactTraite('${contact.id}')">
-                        <i class="fa-solid fa-rotate-left"></i> Non traité
-                    </button>`
-                }
-                <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPlanFromContact('${contact.id}')">
-                    <i class="fa-solid fa-calendar-plus"></i> Planifier
-                </button>
-                ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation(); openPromoteModal('${contact.id}')">Créer acquéreur</button>` : ''}
+            <div class="visit-card-details">
+                ${phone ? `<div style="font-size:13px; color:var(--text-dark); margin-bottom:4px"><i class="fa-solid fa-phone" style="font-size:11px; color:#78909C"></i> <a href="tel:${escapeHtml(phone)}" style="color:inherit" onclick="event.stopPropagation()">${escapeHtml(phone)}</a></div>` : ''}
+                ${email ? `<div style="font-size:13px; color:var(--text-dark); margin-bottom:4px"><i class="fa-solid fa-envelope" style="font-size:11px; color:#78909C"></i> <a href="mailto:${escapeHtml(email)}" style="color:inherit" onclick="event.stopPropagation()">${escapeHtml(email)}</a></div>` : ''}
+                ${contact.notes ? `<div class="visit-card-notes">${escapeHtml(contact.notes)}</div>` : ''}
+                <div class="visit-card-actions" style="margin-top:8px">
+                    ${!isTraite
+                        ? `<button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openContactTraiteModal('${contact.id}')">
+                            <i class="fa-solid fa-check"></i> Traité
+                        </button>`
+                        : `<button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation(); unmarkContactTraite('${contact.id}')">
+                            <i class="fa-solid fa-rotate-left"></i> Non traité
+                        </button>`
+                    }
+                    <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPlanFromContact('${contact.id}')">
+                        <i class="fa-solid fa-calendar-plus"></i> Planifier
+                    </button>
+                    ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation(); openPromoteModal('${contact.id}')">Créer acquéreur</button>` : ''}
+                </div>
             </div>
             <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${contact.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
         </div>`;
@@ -2045,6 +2060,7 @@
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">Visite virtuelle envoyée</span>
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">Message répondeur</span>
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">SMS envoyé</span>
+                        <span class="note-chip" onclick="selectContactTraiteChip(this)">Mail envoyé</span>
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">Rappeler</span>
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">Ne convient pas</span>
                         <span class="note-chip" onclick="selectContactTraiteChip(this)">Visite planifiée</span>
