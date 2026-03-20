@@ -1761,7 +1761,12 @@
         </div>`;
     }
 
-    const CONTACT_SOURCE_LABELS = { manual: 'Manuel', portal: 'Portail', phone: 'Appel', email: 'Email', sms: 'SMS', recommandation: 'Recommandation', autre: 'Autre' };
+    const CONTACT_SOURCE_LABELS = {
+        seloger: 'SeLoger', leboncoin: 'LeBonCoin', bienici: "Bien'ici", jinka: 'Jinka',
+        figaro: 'Figaro', pap: 'PAP', efficity: 'Efficity',
+        phone: 'Appel', email: 'Email', sms: 'SMS', recommandation: 'Recommandation',
+        manual: 'Manuel', portal: 'Portail', autre: 'Autre'
+    };
 
     function renderContactCard(contact) {
         const name = contact.buyer_name || 'Contact inconnu';
@@ -1959,21 +1964,35 @@
 
                 <label class="form-label">Source</label>
                 <select class="form-input" id="contactSource">
+                    <option value="seloger">SeLoger</option>
+                    <option value="leboncoin">LeBonCoin</option>
+                    <option value="bienici">Bien'ici</option>
+                    <option value="jinka">Jinka</option>
+                    <option value="figaro">Figaro Immobilier</option>
+                    <option value="pap">PAP</option>
+                    <option value="efficity">Efficity</option>
                     <option value="phone">Appel entrant</option>
-                    <option value="portal">Portail</option>
                     <option value="email">Email</option>
                     <option value="sms">SMS</option>
                     <option value="recommandation">Recommandation</option>
-                    <option value="manual" selected>Manuel</option>
-                    <option value="autre">Autre</option>
+                    <option value="autre" selected>Autre</option>
                 </select>
 
                 <label class="form-label">Notes</label>
                 <textarea class="form-input" id="contactNotes" rows="2" placeholder="Contexte, demande..."></textarea>
 
-                <div style="display:flex; gap:8px; margin-top:16px">
-                    <button class="btn-submit" onclick="submitContactForm()" style="flex:1">Ajouter</button>
-                    <button class="btn-cancel" onclick="document.getElementById('addContactModal').remove()" style="flex:0">Annuler</button>
+                <div style="display:flex; gap:10px; margin-top:20px">
+                    <button onclick="submitContactForm()" style="
+                        flex:1; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white; border:none; border-radius:12px; font-size:14px; font-weight:700;
+                        cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center;
+                        justify-content:center; gap:8px; transition:opacity 0.15s;
+                    "><i class="fa-solid fa-user-plus"></i> Ajouter le contact</button>
+                    <button onclick="document.getElementById('addContactModal').remove()" style="
+                        padding:12px 20px; background:#F1F5F9; color:#64748b; border:none; border-radius:12px;
+                        font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                        transition:background 0.15s;
+                    ">Annuler</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
@@ -2068,8 +2087,15 @@
             if (f.notes) document.getElementById('contactNotes').value = f.notes;
 
             // Source depuis la plateforme détectée
-            if (f.source_platform || f.source) {
-                document.getElementById('contactSource').value = 'portal';
+            if (f.source_platform) {
+                const platformMap = {
+                    'seloger': 'seloger', 'myselogerpro': 'seloger', 'logic-immo': 'seloger',
+                    'leboncoin': 'leboncoin', 'bienici': 'bienici', 'jinka': 'jinka',
+                    'pap': 'pap', 'efficity': 'efficity', 'figaro': 'figaro',
+                    'meilleursagents': 'autre'
+                };
+                const mapped = platformMap[f.source_platform] || 'autre';
+                document.getElementById('contactSource').value = mapped;
             }
 
             // Feedback visuel
@@ -2154,10 +2180,16 @@
                 <input class="form-input" id="planContactTime" type="time">
 
                 <div style="display:flex; gap:8px; margin-top:16px">
-                    <button class="btn-submit" onclick="submitPlanFromContact()" style="flex:1">
-                        <i class="fa-solid fa-calendar-check"></i> Planifier
-                    </button>
-                    <button class="btn-cancel" onclick="document.getElementById('planFromContactModal').remove()" style="flex:0">Annuler</button>
+                    <button onclick="submitPlanFromContact()" style="
+                        flex:1; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white; border:none; border-radius:12px; font-size:14px; font-weight:700;
+                        cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center;
+                        justify-content:center; gap:8px;
+                    "><i class="fa-solid fa-calendar-check"></i> Planifier la visite</button>
+                    <button onclick="document.getElementById('planFromContactModal').remove()" style="
+                        padding:12px 20px; background:#F1F5F9; color:#64748b; border:none; border-radius:12px;
+                        font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Annuler</button>
                 </div>
             </div>`;
         document.body.appendChild(modal);
