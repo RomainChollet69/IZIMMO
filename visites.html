@@ -1607,21 +1607,27 @@
         const contacts = group.contacts || [];
         const isOpen = openAccordions.has(sellerId);
 
-        // Portal stats pour ce bien
-        const vrStats = visitRequestStats[sellerId];
+        // Stats combinées : portail + contacts manuels + visites converties
+        const vrStats = visitRequestStats[sellerId] || { contacts: 0, processed: 0 };
+        // Compter les visites qui viennent d'un contact (ont un contact_source)
+        const visitsFromContacts = group.visits.filter(v => v.contact_source);
+        const totalContacts = contacts.length + visitsFromContacts.length + vrStats.contacts;
+        const treatedContacts = contacts.filter(c => c.contact_treated).length + vrStats.processed;
+        const totalVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee').length;
+
         let portalStatsHtml = '';
-        if (vrStats && vrStats.contacts > 0) {
+        if (totalContacts > 0 || totalVisits > 0) {
             portalStatsHtml = `<div class="accordion-portal-stats">
-                <span class="portal-stat-tag"><i class="fa-solid fa-envelope"></i> ${vrStats.contacts} contact${vrStats.contacts > 1 ? 's' : ''}</span>
-                <span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${vrStats.processed} traite${vrStats.processed > 1 ? 's' : ''}</span>
-                <span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${group.doneCount} visite${group.doneCount > 1 ? 's' : ''}</span>
+                <span class="portal-stat-tag"><i class="fa-solid fa-envelope"></i> ${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>
+                ${treatedContacts > 0 ? `<span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>` : ''}
+                <span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>
             </div>`;
         }
 
         // Badges
         let badges = '';
-        if (contacts.length > 0) {
-            badges += `<span class="accordion-badge" style="background:#F3E5F5;color:#7B1FA2">${contacts.length} contact${contacts.length > 1 ? 's' : ''}</span>`;
+        if (totalContacts > 0) {
+            badges += `<span class="accordion-badge" style="background:#F3E5F5;color:#7B1FA2">${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>`;
         }
         badges += `<span class="accordion-badge count">${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`;
         if (group.plannedCount > 0) {
