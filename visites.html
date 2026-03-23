@@ -1638,16 +1638,21 @@
             badges += `<span class="accordion-badge done-count">${group.doneCount} effectuée${group.doneCount > 1 ? 's' : ''}</span>`;
         }
 
-        // Section Contacts (status=demande + demandes traitées portail sans visite planifiée)
+        // Section Contacts : contacts manuels + demandes portail pending matchées + demandes traitées
         let contactCards = '';
+        const sellerPending = portalRequests.filter(r => r.matched_seller_id === sellerId);
         const sellerProcessed = processedRequests.filter(r =>
             r.matched_seller_id === sellerId && r.status !== 'accepted'
         );
-        if (contacts.length > 0 || sellerProcessed.length > 0) {
+        if (contacts.length > 0 || sellerPending.length > 0 || sellerProcessed.length > 0) {
             contactCards += '<div class="visit-group-label contact-label">Contacts</div>';
             contactCards += '<div class="visit-cards-grid">';
+            // Demandes portail en attente en premier (les plus urgentes)
+            sellerPending.forEach(r => { contactCards += renderPendingRequestCard(r); });
+            // Contacts manuels
             contacts.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
             contacts.forEach(c => { contactCards += renderContactCard(c); });
+            // Demandes traitées
             sellerProcessed.forEach(r => { contactCards += renderProcessedRequestCard(r); });
             contactCards += '</div>';
         }
@@ -1880,6 +1885,46 @@
             </div>
             ${note ? `<div class="visit-card-notes" style="max-height:none">${escapeHtml(note)}</div>` : ''}
             ${req.visitor_message ? `<div class="visit-card-notes" style="max-height:60px">"${escapeHtml(req.visitor_message)}"</div>` : ''}
+        </div>`;
+    }
+
+    function renderPendingRequestCard(req) {
+        const portal = req.portal_name || 'autre';
+        const shortLabel = PORTAL_SHORT[portal] || '?';
+        const colorClass = PORTAL_COLORS[portal] || 'other';
+        const visitorName = req.visitor_name || 'Visiteur';
+        const phone = req.visitor_phone || '';
+        const email = req.visitor_email || '';
+        const dateStr = req.email_date
+            ? new Date(req.email_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+            : '';
+
+        return `<div class="visit-card demande" style="border-left-color:#FF9800" onclick="toggleVisitCardExpand(this)">
+            <div class="visit-card-top">
+                <span class="visit-status-badge" style="background:#FFF3E0; color:#E65100">Nouveau</span>
+                <span class="contact-source-badge">${escapeHtml(shortLabel)}</span>
+                <span class="visit-card-date">${dateStr}</span>
+            </div>
+            <div class="contact-card-info">
+                <div class="contact-card-name-row">
+                    <span class="visit-card-name">${escapeHtml(visitorName)}</span>
+                </div>
+                <div class="contact-card-meta">
+                    ${phone ? `<span><i class="fa-solid fa-phone"></i> <a href="tel:${escapeHtml(phone)}" onclick="event.stopPropagation()">${escapeHtml(phone)}</a></span>` : ''}
+                    ${email ? `<span><i class="fa-solid fa-envelope"></i> <a href="mailto:${escapeHtml(email)}" onclick="event.stopPropagation()">${escapeHtml(email)}</a></span>` : ''}
+                </div>
+            </div>
+            <div class="visit-card-details">
+                ${req.visitor_message ? `<div class="visit-card-notes">"${escapeHtml(req.visitor_message)}"</div>` : ''}
+                <div class="visit-card-actions" style="margin-top:8px">
+                    <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPortalPlanModal('${req.id}')">
+                        <i class="fa-solid fa-calendar-plus"></i> Planifier
+                    </button>
+                    <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation(); openPortalProcessedModal('${req.id}')">
+                        <i class="fa-solid fa-check"></i> Traitée
+                    </button>
+                </div>
+            </div>
         </div>`;
     }
 
