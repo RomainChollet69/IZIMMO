@@ -1616,12 +1616,12 @@
         const totalVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee').length;
 
         let portalStatsHtml = '';
-        if (totalContacts > 0 || totalVisits > 0) {
-            portalStatsHtml = `<div class="accordion-portal-stats">
-                <span class="portal-stat-tag"><i class="fa-solid fa-envelope"></i> ${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>
-                ${treatedContacts > 0 ? `<span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>` : ''}
-                <span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>
-            </div>`;
+        const statParts = [];
+        if (totalContacts > 0) statParts.push(`<span class="portal-stat-tag"><i class="fa-solid fa-envelope"></i> ${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>`);
+        if (treatedContacts > 0) statParts.push(`<span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>`);
+        if (totalVisits > 0) statParts.push(`<span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`);
+        if (statParts.length > 0) {
+            portalStatsHtml = `<div class="accordion-portal-stats">${statParts.join('')}</div>`;
         }
 
         // Badges
