@@ -8262,7 +8262,23 @@
 
             const leadData = getBuyerLeadData();
             const notes = currentNotes.slice(0, 5).map(n => n.content);
-            const customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
+            let customPrompt = scenario === 'libre' ? document.getElementById('msgCustomPrompt').value : '';
+
+            // Pour confirmation_visite : injecter les infos de la prochaine visite planifiée
+            if (scenario === 'confirmation_visite' && currentMatchVisits && currentMatchVisits.length > 0) {
+                const today = new Date().toISOString().split('T')[0];
+                const nextVisit = currentMatchVisits
+                    .filter(v => v.status === 'planifiee' && v.visit_date >= today)
+                    .sort((a, b) => (a.visit_date + (a.visit_time || '')).localeCompare(b.visit_date + (b.visit_time || '')))[0];
+                if (nextVisit) {
+                    const vDate = new Date(nextVisit.visit_date + 'T12:00:00');
+                    const dateLabel = vDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const timeLabel = nextVisit.visit_time ? nextVisit.visit_time.slice(0, 5) : '';
+                    const address = nextVisit.sellers?.address || '';
+                    customPrompt = `Date du RDV : ${dateLabel}${timeLabel ? ' à ' + timeLabel : ''}. Adresse du bien : ${address || 'non précisée'}.`;
+                    if (address) leadData.address = address;
+                }
+            }
 
             const agentName = document.querySelector('#userProfile .user-name')?.textContent?.trim() || '';
             const agencyName = await getAgencyName();

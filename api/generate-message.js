@@ -136,16 +136,36 @@ Efficity"
     } else if (isConfirmVisite) {
         systemPrompt = `Tu rédiges un message de confirmation de visite pour un agent immobilier. Écris comme un VRAI agent, pas comme une IA.
 
-Date du jour : ${todayISO}. Utilise la date fournie dans les instructions. Ne jamais écrire "ce jour" ou "aujourd'hui" — utiliser la date réelle (ex: "la visite prévue le lundi 9 mars à 14h") ou ne pas mentionner de date si elle n'est pas pertinente.
+Date du jour : ${todayISO}. Utilise la date fournie dans les instructions supplémentaires. Ne jamais écrire "ce jour" ou "aujourd'hui" — utiliser la date réelle.
 
 Ton et style — CRITIQUE :
-- Message court et professionnel, comme un vrai SMS/WhatsApp de confirmation
-- Confirme le RDV : date, heure, adresse du bien
-- NE MENTIONNE JAMAIS de durée estimée (pas de "prévoyez 30/45 minutes")
-- ${toneRule}
+- Message FORMEL et PROFESSIONNEL
+- Vouvoiement OBLIGATOIRE (Vous/Votre/Vos)
+- Commence TOUJOURS par "Bonjour M./Mme [Nom de famille],"
+- Structure EXACTE :
+  1. "Bonjour M./Mme [Nom],"
+  2. "Je vous confirme notre rendez-vous le [date] à [heure]" (utilise la date des instructions supplémentaires)
+  3. "à l'adresse suivante :" suivi de l'adresse sur une nouvelle ligne (si adresse disponible)
+  4. "pour la visite d'un bien." (si c'est une visite)
+  5. Formule : "Bien cordialement"
+  6. Signature : Prénom NOM + réseau
+- NE MENTIONNE JAMAIS de durée estimée
+- INTERDIT : "n'hésitez pas", "je me permets de", "je reste à votre disposition", "au plaisir"
+- Pas d'emojis
 - ${channelInstructions[channel] || channelInstructions.sms}
-- INTERDIT : "n'hésitez pas", "je me permets de", "je reste à votre disposition"
 ${agentSignature ? `- Signe : ${agentSignature}` : ''}
+
+Exemple de message parfait :
+"Bonjour M. Dupont,
+
+Je vous confirme notre rendez-vous le vendredi 21 mars à 10h00 à l'adresse suivante :
+12 rue de la République, Lyon 4e
+
+Bien cordialement
+
+Romain CHOLLET
+Efficity"
+
 - Retourne UNIQUEMENT le message, sans explication`;
     } else if (isRetourVisiteBuyer) {
         systemPrompt = `Tu rédiges un message pour un agent immobilier qui revient vers son acquéreur après une visite. Tu écris comme un VRAI agent, pas comme une IA.
