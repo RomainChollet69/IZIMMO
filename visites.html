@@ -511,6 +511,12 @@
         .visit-status-badge.cancelled { background: #F5F5F5; color: var(--visit-cancelled); }
         .visit-status-badge.contact { background: #F3E5F5; color: #7B1FA2; }
         .visit-card-date { font-size: 13px; color: #78909C; font-weight: 500; }
+        .visit-cal-btn {
+            background: none; border: 1.5px solid #E0E0E0; border-radius: 6px;
+            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #4285F4; font-size: 12px; transition: all 0.15s; flex-shrink: 0; margin-left: auto;
+        }
+        .visit-cal-btn:hover { background: #E8F0FE; border-color: #4285F4; }
 
         .visit-card-visitor {
             display: flex;
@@ -1750,10 +1756,15 @@
         const summaryDec = dec ? `<span class="visit-card-decision${decisionClass}">${dec.emoji} ${dec.label}</span>` : '';
         const summaryFb = fb && !dec ? `<span style="font-size:12px; color:#78909C">${fb.emoji} ${fb.label}</span>` : '';
 
+        const calBtn = visit.status === 'planifiee'
+            ? `<button type="button" class="visit-cal-btn" onclick="event.stopPropagation();addVisitToCalendar('${visit.id}')" title="Ajouter à l'agenda"><i class="fa-brands fa-google"></i></button>`
+            : '';
+
         return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}" onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 ${STATUS_BADGES[visit.status] || ''}
                 <span class="visit-card-date">${dateStr}${timeStr ? ' à ' + timeStr : ''}</span>
+                ${calBtn}
             </div>
             <div class="visit-card-visitor">
                 <span class="visit-card-name">${escapeHtml(visitorName)}</span>
@@ -1899,7 +1910,8 @@
         const connected = await isCalendarConnected();
         if (!connected) return;
 
-        const visitorName = visit.buyer_name || 'Visiteur';
+        const buyerName = visit.buyers ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim() : '';
+        const visitorName = buyerName || visit.buyer_name || 'Visiteur';
         const address = seller?.address || '';
         const dateObj = new Date(visit.visit_date + 'T12:00:00');
         const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -1979,6 +1991,20 @@
             btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur';
             btn.disabled = false;
         }
+    }
+
+    async function addVisitToCalendar(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit || !visit.visit_date) return;
+
+        const connected = await isCalendarConnected();
+        if (!connected) {
+            showToast('Agenda non connecté — va dans Paramètres');
+            return;
+        }
+
+        const seller = visit.sellers || activeSellers.find(s => s.id === visit.seller_id);
+        proposeCalendarSync(visit, seller);
     }
 
     // ===== CRUD =====
