@@ -1873,18 +1873,32 @@
         const note = req.processing_note || '';
         const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '';
 
-        return `<div class="visit-card effectuee" style="border-left-color:${statusColor}; cursor:default">
+        return `<div class="visit-card demande treated" onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 <span class="visit-status-badge" style="background:${statusColor}15; color:${statusColor}">${statusLabel}</span>
+                <span class="contact-source-badge">${escapeHtml(shortLabel)}</span>
                 <span class="visit-card-date">${dateStr}</span>
             </div>
-            <div class="visit-card-visitor">
-                <span class="portal-icon ${colorClass}" style="width:24px;height:24px;font-size:10px">${shortLabel}</span>
-                <span class="visit-card-name">${escapeHtml(visitorName)}</span>
-                ${phone ? `<span class="visit-card-phone">${escapeHtml(phone)}</span>` : ''}
+            <div class="contact-card-info">
+                <div class="contact-card-name-row">
+                    <span class="visit-card-name">${escapeHtml(visitorName)}</span>
+                </div>
+                <div class="contact-card-meta">
+                    ${phone ? `<span><i class="fa-solid fa-phone"></i> <a href="tel:${escapeHtml(phone)}" onclick="event.stopPropagation()">${escapeHtml(phone)}</a></span>` : ''}
+                </div>
+                ${note ? `<div class="contact-card-treatment"><i class="fa-solid fa-check"></i> ${escapeHtml(note)}</div>` : ''}
             </div>
-            ${note ? `<div class="visit-card-notes" style="max-height:none">${escapeHtml(note)}</div>` : ''}
-            ${req.visitor_message ? `<div class="visit-card-notes" style="max-height:60px">"${escapeHtml(req.visitor_message)}"</div>` : ''}
+            <div class="visit-card-details">
+                ${req.visitor_message ? `<div class="visit-card-notes">"${escapeHtml(req.visitor_message)}"</div>` : ''}
+                <div class="visit-card-actions" style="margin-top:8px">
+                    <button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation(); unmarkPortalProcessed('${req.id}')">
+                        <i class="fa-solid fa-rotate-left"></i> Non traité
+                    </button>
+                    <button type="button" class="visit-action-btn done" onclick="event.stopPropagation(); openPortalPlanModal('${req.id}')">
+                        <i class="fa-solid fa-calendar-plus"></i> Planifier
+                    </button>
+                </div>
+            </div>
         </div>`;
     }
 
@@ -1928,6 +1942,37 @@
         </div>`;
     }
 
+    async function unmarkPortalProcessed(requestId) {
+        try {
+            const headers = await getAuthHeaders();
+            const resp = await fetch('/api/assistant', {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'reopen'
+                })
+            });
+            if (!resp.ok) {
+                // Fallback : update direct en DB
+                const userId = await getCurrentUserId();
+                await supabaseClient.from('visit_requests')
+                    .update({ status: 'pending', processing_note: null, updated_at: new Date().toISOString() })
+                    .eq('id', requestId)
+                    .eq('user_id', userId);
+            }
+            // Recharger les deux listes
+            await Promise.all([loadPortalRequests(), loadProcessedRequests()]);
+            applyFrontendMatching();
+            renderPortalBanner();
+            renderVisitsPage();
+            showToast('Demande remise en attente');
+        } catch (err) {
+            console.error('[Visites] Unmark processed error:', err);
+            showToast('Erreur');
+        }
+    }
+
     function toggleAccordion(sellerId) {
         const el = document.querySelector(`.property-accordion[data-seller-id="${sellerId}"]`);
         if (!el) return;
@@ -1969,11 +2014,14 @@
         const timeLabel = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
         const title = `Visite — ${visitorName}${address ? ', ' + address : ''}`;
 
+        // Normaliser visit_time (peut être HH:MM:SS depuis PG)
+        const startTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+
         // Calculer end_time (1h par défaut)
         let endTime = '18:00';
-        if (visit.visit_time) {
-            const [h, m] = visit.visit_time.split(':').map(Number);
-            const endH = h + 1;
+        if (startTime) {
+            const [h, m] = startTime.split(':').map(Number);
+            const endH = Math.min(h + 1, 23);
             endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         }
 
@@ -1992,7 +2040,7 @@
                     ${address ? `<div style="font-size:12px; color:#64748b; margin-top:4px"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(address)}</div>` : ''}
                 </div>
                 <div style="display:flex; gap:10px">
-                    <button id="calSyncBtn" onclick="confirmCalendarSync('${visit.visit_date}', '${visit.visit_time || ''}', '${endTime}', this)" style="
+                    <button id="calSyncBtn" onclick="confirmCalendarSync('${visit.visit_date}', '${startTime}', '${endTime}', this)" style="
                         flex:1; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2);
                         color:white; border:none; border-radius:12px; font-size:14px; font-weight:700;
                         cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center;
@@ -2017,6 +2065,9 @@
         const title = modal.dataset.title;
         const location = modal.dataset.location;
 
+        // Normaliser les heures en HH:MM (pas HH:MM:SS)
+        const normalizeTime = t => t ? t.slice(0, 5) : t;
+
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Ajout...';
 
@@ -2028,8 +2079,8 @@
                     action: 'create_event',
                     title,
                     date,
-                    start_time: startTime || '09:00',
-                    end_time: endTime || '10:00',
+                    start_time: normalizeTime(startTime) || '09:00',
+                    end_time: normalizeTime(endTime) || '10:00',
                     location: location || null
                 })
             });
