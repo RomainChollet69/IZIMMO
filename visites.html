@@ -1525,7 +1525,7 @@
         const hasStatusFilter = filters.status && filters.status !== '';
         if (!hasStatusFilter) {
             activeSellers.forEach(s => {
-                if (s.status !== 'mandate' && s.status !== 'off_market') return;
+                if (s.status !== 'mandate') return;
                 if (!groups[s.id]) {
                     groups[s.id] = {
                         seller: s,
@@ -1626,9 +1626,11 @@
             badges += `<span class="accordion-badge done-count">${group.doneCount} effectuée${group.doneCount > 1 ? 's' : ''}</span>`;
         }
 
-        // Section Contacts (status=demande + demandes traitées portail)
+        // Section Contacts (status=demande + demandes traitées portail sans visite planifiée)
         let contactCards = '';
-        const sellerProcessed = processedRequests.filter(r => r.matched_seller_id === sellerId);
+        const sellerProcessed = processedRequests.filter(r =>
+            r.matched_seller_id === sellerId && r.status !== 'accepted'
+        );
         if (contacts.length > 0 || sellerProcessed.length > 0) {
             contactCards += '<div class="visit-group-label contact-label">Contacts</div>';
             contactCards += '<div class="visit-cards-grid">';
@@ -3052,6 +3054,21 @@
                 .eq('visitor_phone', visit.visitor_phone)
                 .eq('user_id', userId)
                 .is('buyer_id', null);
+        }
+
+        // Copier les notes du contact/visite vers la fiche acquéreur
+        if (visit && visit.notes && visit.notes.trim()) {
+            const seller = visit.sellers || activeSellers.find(s => s.id === visit.seller_id);
+            const sellerLabel = seller ? (seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim()) : '';
+            const noteContent = sellerLabel
+                ? `📋 Import visite — ${sellerLabel}\n${visit.notes}`
+                : `📋 Import visite\n${visit.notes}`;
+            await supabaseClient.from('lead_notes').insert([{
+                lead_id: newBuyerId,
+                lead_type: 'buyer',
+                user_id: userId,
+                content: noteContent
+            }]);
         }
 
         closeModal('promoteModal');
