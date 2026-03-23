@@ -3331,6 +3331,39 @@
     }
 
     // Re-matching frontend pour les demandes sans match
+    /** Extrait les références d'annonce depuis les URLs d'un seller */
+    function extractRefsFromLinks(seller) {
+        const refs = new Set();
+        const links = seller.links || [];
+        for (const url of links) {
+            if (typeof url !== 'string') continue;
+            // Efficity : /achat-immobilier/..._REFERENCE/  (dernière partie numérique de l'URL)
+            const efficityMatch = url.match(/efficity\.com\/.*?_(\d{6,})\/?/);
+            if (efficityMatch) refs.add(efficityMatch[1]);
+            // SeLoger : /annonces/.../REFERENCE.htm ou ?ci=REFERENCE
+            const selogerMatch = url.match(/seloger\.com\/.*?(\d{6,})/);
+            if (selogerMatch) refs.add(selogerMatch[1]);
+            // LeBonCoin : /ad/.../REFERENCE.htm
+            const lbcMatch = url.match(/leboncoin\.fr\/.*?(\d{8,})/);
+            if (lbcMatch) refs.add(lbcMatch[1]);
+            // BienIci : /annonce/.../ ou id dans l'URL
+            const bieniciMatch = url.match(/bienici\.com\/.*?(\d{6,})/);
+            if (bieniciMatch) refs.add(bieniciMatch[1]);
+            // Générique : extraire tout nombre de 6+ chiffres dans l'URL
+            const genericNums = url.match(/\/(\d{6,})(?:[\/\?.]|$)/g);
+            if (genericNums) genericNums.forEach(m => refs.add(m.replace(/[\/\?.]/g, '')));
+        }
+        // Aussi chercher dans les titres des link_previews
+        const previews = seller.link_previews || {};
+        for (const [url, preview] of Object.entries(previews)) {
+            if (preview?.title) {
+                const titleRefs = preview.title.match(/\b(\d{6,})\b/g);
+                if (titleRefs) titleRefs.forEach(r => refs.add(r));
+            }
+        }
+        return refs;
+    }
+
     function frontendMatchSeller(req) {
         if (req.matched_seller_id && req.sellers) return; // Déjà matché
 
@@ -3344,6 +3377,27 @@
         if (!reqPrice) {
             const priceMatch = (req.visitor_message || '').match(/(\d[\d\s]*)\s*€/);
             reqPrice = priceMatch ? parseInt(priceMatch[1].replace(/\s/g, ''), 10) : null;
+        }
+
+        // 0. Matching par référence d'annonce (priorité maximale)
+        const reqRef = req.property_reference ? req.property_reference.replace(/\D/g, '') : '';
+        // Aussi chercher une référence dans le message ou l'adresse
+        const reqRefFromMessage = !reqRef && req.visitor_message
+            ? (req.visitor_message.match(/[Rr][ée]f(?:[ée]rence)?[\s.:]*(\d{5,})/)?.[1] || '')
+            : '';
+        const refToMatch = reqRef || reqRefFromMessage;
+
+        if (refToMatch && refToMatch.length >= 5) {
+            for (const seller of matchableSellers) {
+                const sellerRefs = extractRefsFromLinks(seller);
+                if (sellerRefs.has(refToMatch)) {
+                    req.matched_seller_id = seller.id;
+                    req.sellers = seller;
+                    req.match_confidence = 'high';
+                    console.log(`[Match] Référence ${refToMatch} → ${seller.address || seller.id}`);
+                    return;
+                }
+            }
         }
 
         // 1. Matching par adresse
@@ -3393,7 +3447,44 @@
             }
         }
 
-        // 2. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
+        // 2. Matching par ville/CP + prix (quand l'adresse du portail est juste "VILLE, CP")
+        if (req.property_address && reqPrice) {
+            const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ');
+            const reqAddr = norm(req.property_address);
+            // Extraire code postal de la demande
+            const cpMatch = reqAddr.match(/\b(69\d{3}|01\d{3}|38\d{3}|42\d{3})\b/);
+            const reqCP = cpMatch ? cpMatch[1] : '';
+            // Extraire mots de ville (hors CP et chiffres de rue)
+            const reqCityWords = reqAddr.replace(/\d+/g, ' ').split(/\s+/).filter(w => w.length > 2);
+
+            if (reqCP || reqCityWords.length > 0) {
+                const cityMatches = matchableSellers.filter(s => {
+                    if (!s.address) return false;
+                    const sellerAddr = norm(s.address);
+                    const cpOk = reqCP && sellerAddr.includes(reqCP);
+                    const cityOk = reqCityWords.length > 0 && reqCityWords.some(w => sellerAddr.includes(w));
+                    const priceOk = s.budget && Math.abs(s.budget - reqPrice) <= reqPrice * 0.15;
+                    return (cpOk || cityOk) && priceOk;
+                });
+
+                if (cityMatches.length === 1) {
+                    req.matched_seller_id = cityMatches[0].id;
+                    req.sellers = cityMatches[0];
+                    req.match_confidence = 'medium';
+                    return;
+                }
+                if (cityMatches.length > 1) {
+                    // Départager par proximité de prix
+                    cityMatches.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
+                    req.matched_seller_id = cityMatches[0].id;
+                    req.sellers = cityMatches[0];
+                    req.match_confidence = 'medium';
+                    return;
+                }
+            }
+        }
+
+        // 3. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
         if (req.property_type) {
             const reqType = (req.property_type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 

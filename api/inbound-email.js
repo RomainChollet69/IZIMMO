@@ -417,18 +417,35 @@ RÈGLES :
 // =================================================================
 
 async function matchSeller(userId, parsed) {
-    if (!parsed.property_address && !parsed.property_type) return null;
+    if (!parsed.property_address && !parsed.property_type && !parsed.property_reference) return null;
 
     const supabaseAdmin = getSupabaseAdmin();
     const { data: sellers } = await supabaseAdmin
         .from('sellers')
-        .select('id, first_name, last_name, address, property_type, budget')
+        .select('id, first_name, last_name, address, property_type, budget, links')
         .eq('user_id', userId)
         .in('status', ['mandat', 'commercialisation']); // Ne matcher qu'avec les biens sous mandat
 
     if (!sellers || sellers.length === 0) return null;
 
-    // Matching par adresse (score bidirectionnel, seuils assouplis)
+    // 0. Matching par référence d'annonce (priorité maximale)
+    const reqRef = parsed.property_reference ? parsed.property_reference.replace(/\D/g, '') : '';
+    if (reqRef && reqRef.length >= 5) {
+        for (const seller of sellers) {
+            const sellerLinks = seller.links || [];
+            for (const url of sellerLinks) {
+                if (typeof url !== 'string') continue;
+                // Extraire les nombres de 6+ chiffres des URLs
+                const nums = url.match(/(\d{6,})/g);
+                if (nums && nums.includes(reqRef)) {
+                    console.log(`[InboundEmail:Match] Référence ${reqRef} trouvée dans ${url}`);
+                    return { id: seller.id, confidence: 'high' };
+                }
+            }
+        }
+    }
+
+    // 1. Matching par adresse (score bidirectionnel, seuils assouplis)
     if (parsed.property_address) {
         const searchWords = normalizeAddress(parsed.property_address);
         let bestMatch = null;
@@ -454,7 +471,35 @@ async function matchSeller(userId, parsed) {
         }
     }
 
-    // Fallback : type + prix à ±10%
+    // 2. Matching ville/CP + prix (quand l'adresse est juste une ville)
+    if (parsed.property_address && parsed.property_price) {
+        const normAddr = normalizeAddress(parsed.property_address).join(' ');
+        const cpMatch = normAddr.match(/\b(69\d{3}|01\d{3}|38\d{3}|42\d{3})\b/);
+        const reqCP = cpMatch ? cpMatch[1] : '';
+        const cityWords = normalizeAddress(parsed.property_address).filter(w => !/^\d+$/.test(w) && w.length > 2);
+
+        if (reqCP || cityWords.length > 0) {
+            const priceMargin = parsed.property_price * 0.15;
+            const cityMatches = sellers.filter(s => {
+                if (!s.address || !s.budget) return false;
+                const sellerNorm = normalizeAddress(s.address).join(' ');
+                const cpOk = reqCP && sellerNorm.includes(reqCP);
+                const cityOk = cityWords.length > 0 && cityWords.some(w => sellerNorm.includes(w));
+                const priceOk = Math.abs(s.budget - parsed.property_price) <= priceMargin;
+                return (cpOk || cityOk) && priceOk;
+            });
+
+            if (cityMatches.length === 1) {
+                return { id: cityMatches[0].id, confidence: 'medium' };
+            }
+            if (cityMatches.length > 1) {
+                cityMatches.sort((a, b) => Math.abs((a.budget || 0) - parsed.property_price) - Math.abs((b.budget || 0) - parsed.property_price));
+                return { id: cityMatches[0].id, confidence: 'low' };
+            }
+        }
+    }
+
+    // 3. Fallback : type + prix à ±10%
     if (parsed.property_type && parsed.property_price) {
         const priceMargin = parsed.property_price * 0.1;
         const match = sellers.find(s => {
