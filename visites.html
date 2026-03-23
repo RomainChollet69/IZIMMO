@@ -3411,7 +3411,7 @@
         if (req.matched_seller_id && req.sellers) return; // Déjà matché
 
         // Seuls les biens sous mandat/commercialisation sont sur les portails
-        const MATCHABLE_STATUSES = new Set(['mandat', 'commercialisation']);
+        const MATCHABLE_STATUSES = new Set(['mandate', 'commercialisation']);
         const matchableSellers = activeSellers.filter(s => MATCHABLE_STATUSES.has(s.status));
         if (matchableSellers.length === 0) return;
 

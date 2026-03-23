@@ -424,7 +424,7 @@ async function matchSeller(userId, parsed) {
         .from('sellers')
         .select('id, first_name, last_name, address, property_type, budget, links')
         .eq('user_id', userId)
-        .in('status', ['mandat', 'commercialisation']); // Ne matcher qu'avec les biens sous mandat
+        .in('status', ['mandate', 'commercialisation']); // Ne matcher qu'avec les biens sous mandat
 
     if (!sellers || sellers.length === 0) return null;
 
