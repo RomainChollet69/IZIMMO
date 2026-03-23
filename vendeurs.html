@@ -8357,7 +8357,7 @@
 
             // Address (rue seule, la ville est déjà en compact)
             const street = extractStreet(seller.address);
-            if (street) ext += `<div class="card-info">📍 ${escapeHtml(street)}</div>`;
+            if (street && street !== city) ext += `<div class="card-info">📍 ${escapeHtml(street)}</div>`;
 
             // Phone (seulement si pas déjà affiché en compact — compact l'affiche quand pas de ville)
             if (seller.phone && city) ext += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
