@@ -2204,6 +2204,11 @@
                 </div>
 
                 <div class="form-section">
+                    <label class="form-label">Infos du contact</label>
+                    <textarea class="form-textarea" id="contactTraiteInfos" rows="3" placeholder="Ce que le contact vous a dit (situation, projet, financement, critères...)"></textarea>
+                </div>
+
+                <div class="form-section">
                     <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:var(--text-dark)">
                         <input type="checkbox" id="contactTraiteCreateBuyer">
                         Créer un lead acquéreur
@@ -2244,6 +2249,7 @@
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
 
         const note = document.getElementById('contactTraiteNote').value.trim();
+        const infos = document.getElementById('contactTraiteInfos').value.trim();
         const createBuyer = document.getElementById('contactTraiteCreateBuyer').checked;
         const contact = allVisits.find(v => v.id === contactId);
 
@@ -2252,12 +2258,15 @@
 
         // Mettre à jour le contact comme traité
         const updateData = { contact_treated: true, updated_at: new Date().toISOString() };
-        // Ajouter la note de traitement aux notes existantes
-        if (note) {
+        // Construire les notes enrichies
+        const noteParts = [];
+        if (note) noteParts.push('[Traité] ' + note);
+        if (infos) noteParts.push('[Infos] ' + infos);
+        if (noteParts.length > 0) {
             const existingNotes = contact?.notes || '';
             updateData.notes = existingNotes
-                ? existingNotes + '\n[Traité] ' + note
-                : '[Traité] ' + note;
+                ? existingNotes + '\n' + noteParts.join('\n')
+                : noteParts.join('\n');
         }
 
         const { error } = await supabaseClient.from('visits')
