@@ -1630,6 +1630,8 @@
         if (treatedContacts > 0) inlineStats.push(`<span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>`);
         if (totalVisits > 0) inlineStats.push(`<span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`);
         if (group.plannedCount > 0) inlineStats.push(`<span class="portal-stat-tag" style="color:#1565C0"><i class="fa-solid fa-calendar-check"></i> ${group.plannedCount} planifiée${group.plannedCount > 1 ? 's' : ''}</span>`);
+        const pendingFeedbackCount = group.visits.filter(v => v.status === 'effectuee' && !v.feedback_rating).length;
+        if (pendingFeedbackCount > 0) inlineStats.push(`<span class="portal-stat-tag" style="color:#E65100"><i class="fa-solid fa-clock"></i> ${pendingFeedbackCount} retour${pendingFeedbackCount > 1 ? 's' : ''} en attente</span>`);
         const portalStatsHtml = inlineStats.length > 0 ? `<div class="accordion-portal-stats">${inlineStats.join('')}</div>` : '';
 
         // Section Contacts : contacts manuels + demandes portail pending matchées + demandes traitées
