@@ -1770,10 +1770,15 @@
         const summaryDec = dec ? `<span class="visit-card-decision${decisionClass}">${dec.emoji} ${dec.label}</span>` : '';
         const summaryFb = fb && !dec ? `<span style="font-size:12px; color:#78909C">${fb.emoji} ${fb.label}</span>` : '';
 
+        const leadBtn = visit.buyer_id
+            ? `<a href="acquereurs.html?openLead=${visit.buyer_id}" class="visit-cal-btn" onclick="event.stopPropagation()" title="Voir la fiche acquéreur" style="color:#7B1FA2; border-color:#E1BEE7; text-decoration:none; font-weight:700; font-size:13px">L</a>`
+            : '';
+
         const calBtn = visit.status === 'planifiee'
             ? `<button type="button" class="visit-cal-btn" onclick="event.stopPropagation();openVisitConfirmMessage('${visit.id}')" title="Message de confirmation"><i class="fa-solid fa-comment-sms"></i></button>
-               <button type="button" class="visit-cal-btn" onclick="event.stopPropagation();addVisitToCalendar('${visit.id}')" title="Ajouter à l'agenda"><i class="fa-brands fa-google"></i></button>`
-            : '';
+               <button type="button" class="visit-cal-btn" onclick="event.stopPropagation();addVisitToCalendar('${visit.id}')" title="Ajouter à l'agenda"><i class="fa-brands fa-google"></i></button>
+               ${leadBtn}`
+            : leadBtn;
 
         return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}" onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
