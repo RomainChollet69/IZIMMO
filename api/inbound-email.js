@@ -8,6 +8,7 @@
  */
 
 import { getSupabaseAdmin } from '../lib/auth.js';
+import { sendEmail } from '../lib/mailgun-send.js';
 import { createHmac } from 'crypto';
 import Busboy from 'busboy';
 
@@ -122,6 +123,10 @@ export default async function handler(req, res) {
         }
 
         console.log(`[InboundEmail] Demande créée: ${parsed.visitor_name || '?'} via ${parsed.portal_name || 'portail'} → agent ${agent.user_id}`);
+
+        // 9. Envoi automatique email de qualification (si activé + email valide)
+        await sendAutoReplyIfEnabled(supabaseAdmin, agent.user_id, parsed);
+
         return res.status(200).json({ message: 'Visit request created', portal: parsed.portal_name });
 
     } catch (err) {
@@ -524,4 +529,129 @@ function normalizeAddress(address) {
         .replace(/(\d+)\s*(e|er|ere|eme|ème)\b/g, '$1')
         .split(/\s+/)
         .filter(w => (w.length > 1 || /^\d+$/.test(w)) && !ADDRESS_STOP_WORDS.has(w));
+}
+
+// =================================================================
+// AUTO-REPLY : email de qualification acquéreur
+// =================================================================
+
+const EXCLUDED_EMAIL_DOMAINS = [
+    'privaterelay.appleid.com', 'seloger.com', 'leboncoin.fr',
+    'bienici.com', 'pap.fr', 'logic-immo.com', 'jinka.fr',
+    'meilleursagents.com', 'noreply', 'no-reply'
+];
+
+async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
+    try {
+        const visitorEmail = parsed.visitor_email;
+        if (!visitorEmail) return;
+
+        // Exclure les emails de service/relay
+        const emailLower = visitorEmail.toLowerCase();
+        if (EXCLUDED_EMAIL_DOMAINS.some(d => emailLower.includes(d))) {
+            console.log('[AutoReply] Email exclu (service/relay):', visitorEmail);
+            return;
+        }
+
+        // Vérifier si l'auto-reply est activé pour cet agent
+        const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('auto_reply_enabled')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (!profile || !profile.auto_reply_enabled) return;
+
+        // Construire l'URL du formulaire avec pré-remplissage
+        const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+            ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+            : 'https://avecleon.fr';
+
+        const formParams = new URLSearchParams({
+            agent_id: userId,
+            source: 'site_annonce'
+        });
+        if (parsed.visitor_first_name) formParams.set('first_name', parsed.visitor_first_name);
+        if (parsed.visitor_last_name) formParams.set('last_name', parsed.visitor_last_name);
+        if (visitorEmail) formParams.set('email', visitorEmail);
+        if (parsed.visitor_phone) formParams.set('phone', parsed.visitor_phone);
+
+        const formUrl = `${baseUrl}/formulaire.html?${formParams.toString()}`;
+        const firstName = parsed.visitor_first_name || parsed.visitor_name || '';
+
+        const html = buildAutoReplyHtml(firstName, formUrl);
+
+        const result = await sendEmail({
+            to: visitorEmail,
+            subject: 'Merci pour votre intérêt — Définissons votre projet ensemble',
+            html
+        });
+
+        if (result.success) {
+            console.log(`[AutoReply] Email envoyé à ${visitorEmail}`);
+        } else {
+            console.error(`[AutoReply] Échec envoi à ${visitorEmail}:`, result.error);
+        }
+    } catch (err) {
+        // Ne pas faire échouer le webhook si l'auto-reply échoue
+        console.error('[AutoReply] Erreur:', err.message);
+    }
+}
+
+function buildAutoReplyHtml(firstName, formUrl) {
+    const greeting = firstName ? `Bonjour ${firstName},` : 'Bonjour,';
+
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f8;font-family:'Helvetica Neue',Arial,sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f8;padding:40px 20px">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
+
+<!-- Header gradient -->
+<tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:32px 40px;text-align:center">
+    <img src="https://avecleon.fr/img/logo_leon_white.svg" alt="Léon" height="36" style="margin-bottom:8px">
+</td></tr>
+
+<!-- Body -->
+<tr><td style="padding:36px 40px 20px">
+    <p style="font-size:16px;color:#2C3E50;line-height:1.7;margin:0 0 20px">
+        ${greeting}
+    </p>
+    <p style="font-size:16px;color:#2C3E50;line-height:1.7;margin:0 0 20px">
+        Merci de l'intérêt que vous portez à notre bien immobilier. Afin de vous offrir le meilleur service
+        et de personnaliser notre accompagnement, nous aurions besoin que vous complétiez le formulaire ci-dessous.
+    </p>
+</td></tr>
+
+<!-- CTA Button -->
+<tr><td style="padding:0 40px 36px" align="center">
+    <a href="${formUrl}" style="
+        display:inline-block;padding:16px 48px;
+        background:#2C3E50;color:white;
+        font-size:16px;font-weight:600;
+        text-decoration:none;border-radius:8px;
+        letter-spacing:0.3px;
+    ">Compléter le formulaire</a>
+</td></tr>
+
+<!-- Footer -->
+<tr><td style="padding:20px 40px 28px;border-top:1px solid #f0f0f0">
+    <p style="font-size:14px;color:#7F8C8D;line-height:1.6;margin:0">
+        À bientôt,<br>
+        <strong>L'équipe Léon</strong>
+    </p>
+</td></tr>
+
+</table>
+
+<!-- Disclaimer -->
+<p style="font-size:11px;color:#aaa;text-align:center;margin-top:20px;line-height:1.5">
+    Cet email a été envoyé automatiquement suite à votre demande d'information.<br>
+    Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer ce message.
+</p>
+
+</td></tr></table>
+</body></html>`;
 }

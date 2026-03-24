@@ -453,6 +453,23 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Lire les paramètres URL pour pré-remplir le formulaire
+            const urlParams = new URLSearchParams(window.location.search);
+            const prefillFields = {
+                'first_name': 'firstName',
+                'last_name': 'lastName',
+                'phone': 'phone',
+                'email': 'email',
+                'source': 'source'
+            };
+            for (const [param, fieldId] of Object.entries(prefillFields)) {
+                const val = urlParams.get(param);
+                if (val) {
+                    const el = document.getElementById(fieldId);
+                    if (el) el.value = decodeURIComponent(val);
+                }
+            }
+
             // Toggle vendeur
             document.getElementById('isSeller').addEventListener('change', function() {
                 document.getElementById('sellerFields').style.display = this.checked ? 'block' : 'none';
@@ -477,6 +494,9 @@
 
                 const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
 
+                const agentId = urlParams.get('agent_id');
+                const refId = urlParams.get('ref');
+
                 const buyerData = {
                     first_name: firstName,
                     last_name: lastName,
@@ -498,6 +518,9 @@
                     dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
                     status: 'new'
                 };
+
+                // Associer au bon agent si venant d'un lien auto-reply
+                if (agentId) buyerData.user_id = agentId;
 
                 const { error } = await supabaseClient.from('buyers').insert([buyerData]);
 
