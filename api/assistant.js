@@ -1165,6 +1165,14 @@ async function handleProcessVisitRequest(res, user, params) {
         });
     }
 
+    if (decision === 'reopen') {
+        // Remettre en pending sans effacer les notes
+        await supabaseAdmin.from('visit_requests')
+            .update({ status: 'pending', updated_at: new Date().toISOString() })
+            .eq('id', request_id);
+        return res.status(200).json({ reopened: true });
+    }
+
     if (decision === 'processed') {
         // Marquer comme traitée avec note, optionnellement créer un lead
         let buyerId = null;
