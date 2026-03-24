@@ -2053,7 +2053,6 @@
         modal.dataset.title = title;
         modal.dataset.location = address;
         document.body.appendChild(modal);
-        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('calendarSyncModal'); });
     }
 
     async function confirmCalendarSync(date, startTime, endTime, btn) {
@@ -2226,7 +2225,6 @@
                 </div>
             </div>`;
         document.body.appendChild(modal);
-        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('contactTraiteModal'); });
     }
 
     function selectContactTraiteChip(chip) {
@@ -2750,9 +2748,6 @@
         document.body.appendChild(modal);
 
         // Fermer au clic sur l'overlay
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal('visitModal');
-        });
 
         // Pré-remplir la date à demain
         const tomorrow = new Date();
@@ -3023,9 +3018,6 @@
         `;
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal('feedbackModal');
-        });
 
         // Chips mono-sélection
         modal.querySelectorAll('.feedback-chip:not(.feedback-chip-multi)').forEach(chip => {
@@ -3136,9 +3128,6 @@
         `;
         document.body.appendChild(modal);
 
-        modal.addEventListener('click', function(e) {
-            if (e.target === modal) closeModal('promoteModal');
-        });
     }
 
     async function confirmPromote(visitId) {
@@ -3973,7 +3962,6 @@
             </div>
         `;
         document.body.appendChild(modal);
-        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('portalPlanModal'); });
 
         // Setup autocomplete pour le bien
         setupPortalSellerAutocomplete('ppSellerSearch', 'ppSellerDropdown', 'ppSelectedSellerId');
@@ -4143,7 +4131,6 @@
             </div>
         `;
         document.body.appendChild(modal);
-        modal.addEventListener('click', function(e) { if (e.target === modal) closeModal('portalProcessedModal'); });
     }
 
     function selectNoteChip(chip) {
