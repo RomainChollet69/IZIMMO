@@ -517,6 +517,13 @@
             cursor: pointer; color: #4285F4; font-size: 12px; transition: all 0.15s; flex-shrink: 0; margin-left: auto;
         }
         .visit-cal-btn:hover { background: #E8F0FE; border-color: #4285F4; }
+        .visit-msg-channel-btn {
+            flex:1; padding:10px; background:#F9FAFB; border:1.5px solid #E1E8ED; border-radius:10px;
+            font-size:13px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+            color:#64748b; display:flex; align-items:center; justify-content:center; gap:6px; transition:all 0.15s;
+        }
+        .visit-msg-channel-btn:hover { border-color: #667eea; color: #667eea; }
+        .visit-msg-channel-btn.active { background: #EEF2FF; border-color: #667eea; color: #667eea; }
 
         .visit-card-visitor {
             display: flex;
@@ -1764,7 +1771,8 @@
         const summaryFb = fb && !dec ? `<span style="font-size:12px; color:#78909C">${fb.emoji} ${fb.label}</span>` : '';
 
         const calBtn = visit.status === 'planifiee'
-            ? `<button type="button" class="visit-cal-btn" onclick="event.stopPropagation();addVisitToCalendar('${visit.id}')" title="Ajouter à l'agenda"><i class="fa-brands fa-google"></i></button>`
+            ? `<button type="button" class="visit-cal-btn" onclick="event.stopPropagation();openVisitConfirmMessage('${visit.id}')" title="Message de confirmation"><i class="fa-solid fa-comment-sms"></i></button>
+               <button type="button" class="visit-cal-btn" onclick="event.stopPropagation();addVisitToCalendar('${visit.id}')" title="Ajouter à l'agenda"><i class="fa-brands fa-google"></i></button>`
             : '';
 
         return `<div class="visit-card ${visit.status}" data-visit-id="${visit.id}" onclick="toggleVisitCardExpand(this)">
@@ -2087,6 +2095,199 @@
             console.error('[Visites:Calendar] Erreur:', err);
             btn.innerHTML = '<i class="fa-solid fa-xmark"></i> Erreur';
             btn.disabled = false;
+        }
+    }
+
+    async function openVisitConfirmMessage(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) return;
+
+        const visitorName = visit.buyers
+            ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim()
+            : visit.buyer_name || 'Visiteur';
+        const phone = visit.buyers?.phone || visit.visitor_phone || '';
+        const email = visit.buyers?.email || visit.visitor_email || '';
+        const seller = visit.sellers || activeSellers.find(s => s.id === visit.seller_id);
+        const address = seller?.address || '';
+
+        closeModal('visitConfirmMsgModal');
+        const modal = document.createElement('div');
+        modal.id = 'visitConfirmMsgModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:460px">
+                <div class="modal-title">Confirmation de visite</div>
+                <div style="background:#F9FAFB; border-radius:10px; padding:12px; margin-bottom:14px; font-size:13px">
+                    <strong>${escapeHtml(visitorName)}</strong>
+                    ${phone ? ' — ' + escapeHtml(phone) : ''}
+                </div>
+
+                <div class="form-section">
+                    <label class="form-label">Canal</label>
+                    <div style="display:flex; gap:8px; margin-bottom:12px">
+                        <button type="button" class="visit-msg-channel-btn active" data-channel="sms" onclick="selectVisitMsgChannel(this)">
+                            <i class="fa-solid fa-comment-sms"></i> SMS
+                        </button>
+                        <button type="button" class="visit-msg-channel-btn" data-channel="whatsapp" onclick="selectVisitMsgChannel(this)">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button type="button" class="visit-msg-channel-btn" data-channel="email" onclick="selectVisitMsgChannel(this)">
+                            <i class="fa-solid fa-envelope"></i> Email
+                        </button>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-bottom:12px">
+                    <button type="button" id="visitMsgGenBtn" onclick="generateVisitConfirmMsg('${visitId}')" style="
+                        padding:10px 24px; background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white; border:none; border-radius:10px; font-size:14px; font-weight:600;
+                        cursor:pointer; font-family:Inter,sans-serif;
+                    "><i class="fa-solid fa-wand-magic-sparkles"></i> Générer le message</button>
+                    <div id="visitMsgLoading" style="display:none; padding:12px; font-size:13px; color:#78909C">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Génération...
+                    </div>
+                </div>
+
+                <textarea class="form-textarea" id="visitMsgOutput" rows="6" style="display:none; font-size:13px; line-height:1.5"></textarea>
+
+                <div id="visitMsgActions" style="display:none; margin-top:10px">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                        <button type="button" onclick="copyVisitMsg()" style="
+                            padding:8px 16px; background:linear-gradient(135deg,#667eea,#764ba2);
+                            color:white; border:none; border-radius:8px; font-size:13px; font-weight:600;
+                            cursor:pointer; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-copy"></i> Copier</button>
+                        <button type="button" onclick="sendVisitMsg('sms')" style="
+                            padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:8px;
+                            font-size:13px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-comment-sms"></i> SMS</button>
+                        <button type="button" onclick="sendVisitMsg('whatsapp')" style="
+                            padding:8px 16px; background:#25d366; color:white; border:none; border-radius:8px;
+                            font-size:13px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+                    </div>
+                </div>
+
+                <div style="display:flex; gap:10px; margin-top:16px">
+                    <button type="button" onclick="closeModal('visitConfirmMsgModal')" style="
+                        flex:1; padding:12px; background:#F1F5F9; color:#64748b; border:none; border-radius:12px;
+                        font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Fermer</button>
+                </div>
+            </div>`;
+
+        // Stocker les données pour l'envoi
+        modal.dataset.phone = phone;
+        modal.dataset.email = email;
+        document.body.appendChild(modal);
+    }
+
+    let visitMsgChannel = 'sms';
+
+    function selectVisitMsgChannel(btn) {
+        document.querySelectorAll('.visit-msg-channel-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        visitMsgChannel = btn.dataset.channel;
+    }
+
+    async function generateVisitConfirmMsg(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) return;
+
+        const genBtn = document.getElementById('visitMsgGenBtn');
+        const loading = document.getElementById('visitMsgLoading');
+        const output = document.getElementById('visitMsgOutput');
+        const actions = document.getElementById('visitMsgActions');
+
+        genBtn.style.display = 'none';
+        loading.style.display = '';
+
+        const visitorName = visit.buyers
+            ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim()
+            : visit.buyer_name || '';
+        const seller = visit.sellers || activeSellers.find(s => s.id === visit.seller_id);
+        const address = seller?.address || '';
+
+        const vDate = new Date(visit.visit_date + 'T12:00:00');
+        const dateLabel = vDate.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        const timeLabel = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+
+        // Récupérer nom agent et réseau
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const meta = session?.user?.user_metadata || {};
+        const agentName = meta.full_name || meta.name || '';
+        const userId = session?.user?.id;
+        const { data: profile } = await supabaseClient.from('profiles')
+            .select('agency_name').eq('id', userId).maybeSingle();
+        const agencyName = profile?.agency_name || 'Efficity';
+
+        // Séparer prénom/nom du visiteur
+        const parts = visitorName.trim().split(/\s+/);
+        const firstName = parts[0] || '';
+        const lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+
+        try {
+            const headers = await getAuthHeaders();
+            const resp = await fetch('/api/generate-message', {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    channel: visitMsgChannel,
+                    scenario: 'confirmation_visite',
+                    leadType: 'buyer',
+                    leadData: {
+                        first_name: firstName,
+                        last_name: lastName,
+                        phone: visit.buyers?.phone || visit.visitor_phone || '',
+                        address
+                    },
+                    agentName,
+                    agencyName,
+                    tone: 'vous',
+                    customPrompt: `Date du RDV : ${dateLabel}${timeLabel ? ' à ' + timeLabel : ''}. Adresse du bien : ${address || 'non précisée'}.`
+                })
+            });
+            const data = await resp.json();
+            output.value = data.message || 'Erreur de génération';
+            output.style.display = '';
+            actions.style.display = '';
+        } catch (err) {
+            console.error('[VisitConfirmMsg] Erreur:', err);
+            output.value = 'Erreur lors de la génération du message.';
+            output.style.display = '';
+        } finally {
+            loading.style.display = 'none';
+            genBtn.style.display = '';
+            genBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Régénérer';
+        }
+    }
+
+    function copyVisitMsg() {
+        const text = document.getElementById('visitMsgOutput').value;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Message copié');
+        });
+    }
+
+    function sendVisitMsg(channel) {
+        const modal = document.getElementById('visitConfirmMsgModal');
+        const phone = (modal.dataset.phone || '').replace(/\s/g, '');
+        const email = modal.dataset.email || '';
+        const text = document.getElementById('visitMsgOutput').value;
+
+        if (channel === 'sms') {
+            if (!phone) { alert('Pas de numéro de téléphone'); return; }
+            window.open(`sms:${phone}?body=${encodeURIComponent(text)}`, '_blank');
+        } else if (channel === 'whatsapp') {
+            let waPhone = phone;
+            if (waPhone.startsWith('0')) waPhone = '33' + waPhone.slice(1);
+            if (waPhone) {
+                window.open(`https://wa.me/${waPhone}?text=${encodeURIComponent(text)}`, '_blank');
+            } else {
+                window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+            }
+        } else if (channel === 'email') {
+            if (!email) { alert('Pas d\'adresse email'); return; }
+            window.open(`mailto:${email}?subject=${encodeURIComponent('Confirmation de visite')}&body=${encodeURIComponent(text)}`, '_blank');
         }
     }
 
