@@ -552,10 +552,17 @@
                 // Associer au bon agent si venant d'un lien auto-reply
                 if (agentId) buyerData.user_id = agentId;
 
-                const { error } = await supabaseClient.from('buyers').insert([buyerData]);
-
-                if (error) {
-                    console.error('Erreur:', error);
+                // Envoyer via l'API (bypass RLS pour les soumissions publiques)
+                try {
+                    const resp = await fetch('/api/submit-form', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(buyerData)
+                    });
+                    const result = await resp.json();
+                    if (!resp.ok) throw new Error(result.error || 'Erreur serveur');
+                } catch (err) {
+                    console.error('Erreur:', err);
                     alert('Une erreur est survenue. Veuillez réessayer.');
                     btn.disabled = false;
                     btn.textContent = 'Envoyer ma recherche';

@@ -586,8 +586,13 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
             agent_id: userId,
             source: 'site_annonce'
         });
-        if (parsed.visitor_first_name) formParams.set('first_name', parsed.visitor_first_name);
-        if (parsed.visitor_last_name) formParams.set('last_name', parsed.visitor_last_name);
+        // Nom : utiliser first/last si dispo, sinon découper visitor_name
+        const vFirstName = parsed.visitor_first_name || (parsed.visitor_name || '').split(' ')[0] || '';
+        const vLastName = parsed.visitor_last_name || (parsed.visitor_name || '').split(' ').slice(1).join(' ') || '';
+        if (vFirstName) formParams.set('first_name', vFirstName);
+        if (vLastName) formParams.set('last_name', vLastName);
+        // Source portail
+        if (parsed.portal_name) formParams.set('source', portalToBuyerSource(parsed.portal_name));
         if (visitorEmail) formParams.set('email', visitorEmail);
         if (parsed.visitor_phone) formParams.set('phone', parsed.visitor_phone);
         // Infos agent pour personnaliser le formulaire
