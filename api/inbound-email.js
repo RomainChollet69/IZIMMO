@@ -536,15 +536,18 @@ function normalizeAddress(address) {
 // =================================================================
 
 const EXCLUDED_EMAIL_DOMAINS = [
-    'privaterelay.appleid.com', 'seloger.com', 'leboncoin.fr',
-    'bienici.com', 'pap.fr', 'logic-immo.com', 'jinka.fr',
-    'meilleursagents.com', 'noreply', 'no-reply'
+    'privaterelay.appleid.com',
+    'noreply', 'no-reply', 'mailer-daemon'
 ];
 
 async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
     try {
         const visitorEmail = parsed.visitor_email;
-        if (!visitorEmail) return;
+        console.log('[AutoReply] Début — email:', visitorEmail, '| userId:', userId);
+        if (!visitorEmail) {
+            console.log('[AutoReply] Pas d\'email visiteur, skip');
+            return;
+        }
 
         // Exclure les emails de service/relay
         const emailLower = visitorEmail.toLowerCase();
@@ -560,7 +563,11 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
             .eq('id', userId)
             .maybeSingle();
 
-        if (!profile || !profile.auto_reply_enabled) return;
+        console.log('[AutoReply] Profile auto_reply_enabled:', profile?.auto_reply_enabled);
+        if (!profile || !profile.auto_reply_enabled) {
+            console.log('[AutoReply] Auto-reply désactivé, skip');
+            return;
+        }
 
         // Construire l'URL du formulaire avec pré-remplissage
         const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
