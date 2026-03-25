@@ -1,7 +1,7 @@
 <!--
   Léon — Formulaire Acquéreur public (formulaire.html)
-  Formulaire accessible sans authentification, destiné aux acquéreurs.
-  Insère directement dans la table Supabase : buyers.
+  Formulaire étape par étape, accessible sans authentification.
+  Insère via /api/submit-form dans la table Supabase : buyers.
 -->
 <!DOCTYPE html>
 <html lang="fr">
@@ -14,446 +14,291 @@
     <meta property="og:image" content="/img/F.png">
     <meta property="og:type" content="website">
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --text-dark: #2C3E50;
-            --text-light: #7F8C8D;
-            --border-color: #E1E8ED;
-        }
+        :root { --text-dark: #2C3E50; --text-light: #7F8C8D; --border: #E1E8ED; --primary: #667eea; --primary-end: #764ba2; }
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 20px;
-            color: var(--text-dark);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-end) 100%);
+            min-height: 100vh; display: flex; justify-content: center; align-items: center;
+            padding: 20px; color: var(--text-dark);
         }
 
         .form-container {
-            background: white;
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            margin: 20px auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-            animation: slideIn 0.5s ease;
+            background: white; border-radius: 24px; padding: 40px; max-width: 520px; width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2); position: relative; overflow: hidden; min-height: 400px;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Header */
+        .form-header { text-align: center; margin-bottom: 24px; }
+        .form-logo img { height: 50px; margin-bottom: 8px; max-width: 200px; object-fit: contain; }
+        .form-agent-photo { margin-bottom: 12px; }
+        .form-agent-photo img { width: 64px; height: 64px; border-radius: 50%; border: 3px solid #E0E0E0; object-fit: cover; }
+        .form-agent-name { font-size: 14px; font-weight: 700; color: var(--text-dark); margin-top: 6px; }
+        .form-agency-name { font-size: 12px; color: var(--text-light); margin-top: 2px; }
+
+        /* Progress bar */
+        .progress-bar { height: 4px; background: #F0F0F0; border-radius: 2px; margin-bottom: 32px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-end)); border-radius: 2px; transition: width 0.4s ease; }
+
+        /* Steps */
+        .step { display: none; animation: fadeIn 0.3s ease; }
+        .step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .step-question {
+            font-family: 'Barlow Semi Condensed', sans-serif; font-size: 22px; font-weight: 700;
+            color: var(--text-dark); margin-bottom: 24px; text-align: center; line-height: 1.3;
         }
+        .step-subtitle { font-size: 14px; color: var(--text-light); text-align: center; margin: -16px 0 24px; }
 
-        .form-header {
-            text-align: center;
-            margin-bottom: 32px;
+        /* Option cards (type de bien, typologie) */
+        .option-cards { display: grid; gap: 12px; }
+        .option-cards.grid-2 { grid-template-columns: 1fr 1fr; }
+        .option-cards.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .option-card {
+            padding: 18px 16px; border: 2px solid var(--border); border-radius: 14px;
+            text-align: center; cursor: pointer; transition: all 0.2s; font-size: 15px; font-weight: 600;
         }
+        .option-card:hover { border-color: var(--primary); background: #F8F7FF; }
+        .option-card.selected { border-color: var(--primary); background: linear-gradient(135deg, var(--primary), var(--primary-end)); color: white; }
+        .option-card-icon { font-size: 28px; margin-bottom: 8px; display: block; }
 
-        .form-logo img {
-            height: 50px;
-            margin-bottom: 8px;
+        /* Chips (critères) */
+        .chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .chip {
+            padding: 12px 20px; border: 2px solid var(--border); border-radius: 24px;
+            cursor: pointer; transition: all 0.2s; font-size: 15px; font-weight: 500;
         }
+        .chip:hover { border-color: var(--primary); }
+        .chip.selected { background: linear-gradient(135deg, var(--primary), var(--primary-end)); color: white; border-color: transparent; }
 
-        .form-subtitle {
-            font-size: 16px;
-            color: var(--text-light);
-            line-height: 1.5;
+        /* Inputs */
+        .step-input {
+            width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: 14px;
+            font-size: 18px; font-family: 'Inter', sans-serif; text-align: center; transition: all 0.2s;
+            -webkit-appearance: none; background: white;
         }
+        .step-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .step-input::placeholder { color: #ccc; }
+        .step-label { font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 8px; text-align: center; }
+        .step-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        .form-section {
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
+        /* Select styled */
+        .step-select {
+            width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: 14px;
+            font-size: 16px; font-family: 'Inter', sans-serif; transition: all 0.2s;
+            background: white; -webkit-appearance: none; cursor: pointer;
         }
+        .step-select:focus { outline: none; border-color: var(--primary); }
 
-        .form-section:last-of-type { border-bottom: none; }
-
-        .form-section-title {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #667eea;
-            margin-bottom: 16px;
-            letter-spacing: 0.5px;
+        /* Navigation */
+        .step-nav { display: flex; gap: 12px; margin-top: 28px; }
+        .btn-next {
+            flex: 1; padding: 16px; background: linear-gradient(135deg, var(--primary), var(--primary-end));
+            color: white; border: none; border-radius: 14px; font-size: 16px; font-weight: 700;
+            cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
         }
-
-        .form-group { margin-bottom: 20px; }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-dark);
-            font-size: 14px;
+        .btn-next:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(102,126,234,0.35); }
+        .btn-next:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-back {
+            padding: 16px 20px; background: #F5F5F5; color: var(--text-light); border: none; border-radius: 14px;
+            font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
         }
+        .btn-skip { background: none; border: none; color: var(--text-light); font-size: 13px; cursor: pointer; margin-top: 12px; width: 100%; text-align: center; font-family: 'Inter', sans-serif; }
+        .btn-skip:hover { color: var(--primary); }
 
-        .form-input,
-        .form-select,
-        .form-textarea {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 16px;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.3s ease;
-            background: white;
-            -webkit-appearance: none;
-        }
-
-        .form-input:focus,
-        .form-select:focus,
-        .form-textarea:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-textarea { resize: vertical; min-height: 80px; }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        /* Critères toggles */
-        .criteria-toggles {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .criteria-toggle input { display: none; }
-
-        .criteria-toggle span {
-            display: inline-block;
-            padding: 10px 18px;
-            border-radius: 24px;
-            border: 2px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 15px;
-            font-weight: 500;
-        }
-
-        .criteria-toggle input:checked + span {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-color: transparent;
-        }
-
-        .criteria-toggle span:hover { border-color: #667eea; }
-
-        /* Toggle vendeur */
-        .seller-toggle-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .toggle-switch {
-            position: relative;
-            width: 52px;
-            height: 28px;
-            flex-shrink: 0;
-        }
-
-        .toggle-switch input { display: none; }
-
-        .toggle-slider {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: #ccc;
-            border-radius: 28px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-slider::before {
-            content: '';
-            position: absolute;
-            width: 22px;
-            height: 22px;
-            left: 3px;
-            bottom: 3px;
-            background: white;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .toggle-switch input:checked + .toggle-slider {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .toggle-switch input:checked + .toggle-slider::before {
-            transform: translateX(24px);
-        }
-
-        .seller-fields {
-            background: #F3E5F5;
-            border-radius: 12px;
-            padding: 16px;
-            margin-top: 12px;
-            border: 2px solid #E1BEE7;
-        }
-
-        .submit-btn {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 14px;
-            font-weight: 700;
-            font-size: 18px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            margin-top: 10px;
-        }
-
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        }
-
-        .submit-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* Message de confirmation */
-        .success-message {
-            display: none;
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        .success-message.active { display: block; }
-
-        .success-icon {
-            font-size: 72px;
-            margin-bottom: 20px;
-            animation: bounceIn 0.6s ease;
-        }
-
-        @keyframes bounceIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .success-title {
-            font-family: 'Barlow Semi Condensed', sans-serif;
-            font-size: 28px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-        }
-
-        .success-text {
-            font-size: 16px;
-            color: var(--text-light);
-            line-height: 1.6;
-        }
-
-        /* Sector tags autocomplete */
-        .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s; background: white; }
-        .sector-tags-wrap:focus-within { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
-        .sector-tag { display: inline-flex; align-items: center; gap: 4px; background: #E8EAF6; color: #283593; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 500; }
-        .sector-tag-remove { background: none; border: none; color: #5C6BC0; cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; }
-        .sector-tag-remove:hover { color: #C62828; }
-        .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 14px; padding: 4px 0; background: transparent; }
-        .sector-tags-input::placeholder { color: #bbb; }
+        /* Sector autocomplete */
+        .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border: 2px solid var(--border); border-radius: 14px; min-height: 48px; cursor: text; transition: all 0.2s; background: white; }
+        .sector-tags-wrap:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(102,126,234,0.1); }
+        .sector-tag { display: inline-flex; align-items: center; gap: 4px; background: #E8EAF6; color: #283593; padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: 500; }
+        .sector-tag-remove { background: none; border: none; color: #5C6BC0; cursor: pointer; font-size: 14px; padding: 0 2px; }
+        .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 16px; padding: 4px 0; background: transparent; }
+        .sector-tags-input::placeholder { color: #ccc; }
         .addr-wrapper { position: relative; }
-        .addr-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; display: none; overflow: hidden; margin-top: 4px; }
+        .addr-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; display: none; overflow: hidden; margin-top: 4px; }
         .addr-dropdown.active { display: block; }
-        .addr-option { padding: 10px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
+        .addr-option { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
         .addr-option:hover, .addr-option.addr-sel { background: #F0F0FF; }
         .addr-option:last-child { border-bottom: none; }
 
+        /* Success */
+        .success-message { display: none; text-align: center; padding: 40px 20px; }
+        .success-message.active { display: block; }
+        .success-icon { font-size: 72px; margin-bottom: 20px; animation: bounceIn 0.6s ease; }
+        @keyframes bounceIn { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .success-title { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 28px; font-weight: 800; text-transform: uppercase; color: var(--text-dark); margin-bottom: 12px; }
+        .success-text { font-size: 16px; color: var(--text-light); line-height: 1.6; }
+
         @media (max-width: 768px) {
-            .form-container { padding: 24px; margin: 10px; }
-            .form-row { grid-template-columns: 1fr; }
-            .form-logo { font-size: 28px; }
+            .form-container { padding: 28px 20px; margin: 10px; }
+            .step-question { font-size: 20px; }
+            .option-cards.grid-3 { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="form-container">
-        <!-- Formulaire -->
-        <div id="formView">
-            <div class="form-header" id="formHeader">
-                <div class="form-logo"><img src="img/Logo_leon.svg" alt="Léon" id="formLogoImg"></div>
-                <div id="formAgentPhoto" style="display:none; margin-bottom:12px">
-                    <img id="formAgentPhotoImg" src="" style="width:72px; height:72px; border-radius:50%; border:3px solid #E0E0E0; object-fit:cover" referrerpolicy="no-referrer">
-                    <div id="formAgentName" style="font-size:15px; font-weight:700; color:#2C3E50; margin-top:8px"></div>
-                    <div id="formAgencyName" style="font-size:13px; color:#78909C; margin-top:2px"></div>
-                </div>
-                <div class="form-subtitle">Décrivez votre recherche immobilière.<br>Nous trouverons le bien qui vous correspond.</div>
+        <!-- Header -->
+        <div class="form-header">
+            <div class="form-logo"><img src="img/Logo_leon.svg" alt="Léon" id="formLogoImg"></div>
+            <div class="form-agent-photo" id="formAgentPhoto" style="display:none">
+                <img id="formAgentPhotoImg" src="" referrerpolicy="no-referrer">
+                <div class="form-agent-name" id="formAgentName"></div>
+                <div class="form-agency-name" id="formAgencyName"></div>
             </div>
+        </div>
 
-            <form id="publicForm">
-                <!-- Contact -->
-                <div class="form-section">
-                    <div class="form-section-title">📇 Vos coordonnées</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Prénom *</label>
-                            <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Nom *</label>
-                            <input type="text" class="form-input" id="lastName" placeholder="Dupont" required>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Téléphone *</label>
-                            <input type="tel" class="form-input" id="phone" placeholder="06 12 34 56 78" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-input" id="email" placeholder="jean@email.com">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Comment nous avez-vous connu ?</label>
-                        <select class="form-select" id="source">
-                            <option value="">Sélectionnez</option>
-                            <option value="leboncoin">🟠 Le Bon Coin</option>
-                            <option value="seloger">🔵 SeLoger</option>
-                            <option value="autre_plateforme">🌐 Autres plateformes</option>
-                            <option value="efficity">🏢 Efficity</option>
-                            <option value="recommandation">🤝 Recommandation</option>
-                            <option value="appel_entrant">📞 Appel entrant</option>
-                            <option value="reseaux_sociaux">📱 Réseaux sociaux</option>
-                            <option value="autre">📌 Autre</option>
-                        </select>
-                    </div>
+        <!-- Progress -->
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:12%"></div></div>
+
+        <!-- Étape 1 : Type de bien -->
+        <div class="step active" data-step="1">
+            <div class="step-question">Quel type de bien recherchez-vous ?</div>
+            <div class="option-cards grid-2" data-field="propertyType">
+                <div class="option-card" data-value="appartement">
+                    <span class="option-card-icon">🏢</span> Appartement
                 </div>
-
-                <!-- Recherche -->
-                <div class="form-section">
-                    <div class="form-section-title">🔍 Votre recherche</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Type de bien *</label>
-                            <select class="form-select" id="propertyType" required>
-                                <option value="">Sélectionnez</option>
-                                <option value="appartement">Appartement</option>
-                                <option value="maison">Maison</option>
-                                <option value="terrain">Terrain</option>
-                                <option value="immeuble">Immeuble</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Typologie</label>
-                            <select class="form-select" id="rooms">
-                                <option value="">—</option>
-                                <option value="T1">T1</option>
-                                <option value="T2">T2</option>
-                                <option value="T3">T3</option>
-                                <option value="T4">T4</option>
-                                <option value="T5+">T5+</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Secteur / Villes souhaitées *</label>
-                        <div class="sector-tags-wrap" id="sectorTagsWrap" onclick="document.getElementById('sectorInput').focus()">
-                            <input type="text" class="sector-tags-input" id="sectorInput" placeholder="Tapez une ville..." autocomplete="off">
-                        </div>
-                        <input type="hidden" id="sector">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Budget maximum (€)</label>
-                        <input type="number" class="form-input" id="budgetMax" placeholder="350 000">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Surface minimum (m²)</label>
-                        <input type="number" class="form-input" id="surfaceMin" placeholder="60">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Critères importants</label>
-                        <div class="criteria-toggles">
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="jardin"><span>🌿 Jardin</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="parking"><span>🅿️ Parking</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="ascenseur"><span>🛗 Ascenseur</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="balcon_terrasse"><span>☀️ Balcon/Terrasse</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="calme"><span>🤫 Calme</span></label>
-                            <label class="criteria-toggle"><input type="checkbox" name="criteria" value="neuf_renove"><span>✨ Neuf/Rénové</span></label>
-                        </div>
-                    </div>
+                <div class="option-card" data-value="maison">
+                    <span class="option-card-icon">🏡</span> Maison
                 </div>
-
-                <!-- Situation -->
-                <div class="form-section">
-                    <div class="form-section-title">📊 Votre situation</div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Délai du projet</label>
-                            <select class="form-select" id="timeline">
-                                <option value="">—</option>
-                                <option value="immediat">🚀 Immédiat</option>
-                                <option value="court_terme">📅 Court terme (1-3 mois)</option>
-                                <option value="moyen_terme">📆 Moyen terme (3-6 mois)</option>
-                                <option value="long_terme">🗓️ Long terme (6 mois+)</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Pré-accord bancaire</label>
-                            <select class="form-select" id="bankApproval">
-                                <option value="">—</option>
-                                <option value="oui">✅ Oui</option>
-                                <option value="non">❌ Non</option>
-                                <option value="en_cours">⏳ En cours</option>
-                                <option value="ne_sait_pas">❓ Je ne sais pas</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div class="seller-toggle-group">
-                            <label class="toggle-switch">
-                                <input type="checkbox" id="isSeller">
-                                <span class="toggle-slider"></span>
-                            </label>
-                            <span style="font-weight:600;font-size:14px;">Je suis aussi vendeur d'un bien</span>
-                        </div>
-                        <div class="seller-fields" id="sellerFields" style="display:none;">
-                            <div class="form-group" style="margin-bottom:12px;">
-                                <label class="form-label">Adresse du bien à vendre</label>
-                                <input type="text" class="form-input" id="sellerAddress" placeholder="123 rue de la Paix, Lyon">
-                            </div>
-                            <div class="form-group" style="margin-bottom:0;">
-                                <label class="form-label">Prix de vente souhaité</label>
-                                <input type="text" class="form-input" id="sellerPrice" placeholder="350 000 €">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Éléments rédhibitoires</label>
-                        <textarea class="form-textarea" id="dealbreakers" placeholder="Y a-t-il des choses que vous refusez absolument ? (Ex : rez-de-chaussée, proximité voie ferrée...)"></textarea>
-                    </div>
+                <div class="option-card" data-value="terrain">
+                    <span class="option-card-icon">🌳</span> Terrain
                 </div>
+                <div class="option-card" data-value="immeuble">
+                    <span class="option-card-icon">🏗️</span> Immeuble
+                </div>
+            </div>
+        </div>
 
-                <button type="button" class="submit-btn" id="submitBtn">Envoyer ma recherche</button>
-            </form>
+        <!-- Étape 2 : Typologie -->
+        <div class="step" data-step="2">
+            <div class="step-question">Combien de pièces ?</div>
+            <div class="option-cards grid-3" data-field="rooms">
+                <div class="option-card" data-value="T1">T1</div>
+                <div class="option-card" data-value="T2">T2</div>
+                <div class="option-card" data-value="T3">T3</div>
+                <div class="option-card" data-value="T4">T4</div>
+                <div class="option-card" data-value="T5+">T5+</div>
+            </div>
+            <button class="btn-skip" onclick="goNext()">Pas de préférence →</button>
+        </div>
+
+        <!-- Étape 3 : Secteur -->
+        <div class="step" data-step="3">
+            <div class="step-question">Dans quel secteur ?</div>
+            <div class="step-subtitle">Ajoutez une ou plusieurs villes</div>
+            <div class="form-group">
+                <div class="sector-tags-wrap" id="sectorTagsWrap" onclick="document.getElementById('sectorInput').focus()">
+                    <input type="text" class="sector-tags-input" id="sectorInput" placeholder="Tapez une ville..." autocomplete="off">
+                </div>
+                <input type="hidden" id="sector">
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" id="btnSector" onclick="goNext()" disabled>Continuer</button>
+            </div>
+        </div>
+
+        <!-- Étape 4 : Budget -->
+        <div class="step" data-step="4">
+            <div class="step-question">Quel est votre budget maximum ?</div>
+            <input type="number" class="step-input" id="budgetMax" placeholder="350 000 €" inputmode="numeric">
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" onclick="goNext()">Continuer</button>
+            </div>
+            <button class="btn-skip" onclick="goNext()">Passer cette étape</button>
+        </div>
+
+        <!-- Étape 5 : Surface -->
+        <div class="step" data-step="5">
+            <div class="step-question">Surface minimum souhaitée ?</div>
+            <input type="number" class="step-input" id="surfaceMin" placeholder="60 m²" inputmode="numeric">
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" onclick="goNext()">Continuer</button>
+            </div>
+            <button class="btn-skip" onclick="goNext()">Passer cette étape</button>
+        </div>
+
+        <!-- Étape 6 : Critères -->
+        <div class="step" data-step="6">
+            <div class="step-question">Vos critères importants</div>
+            <div class="step-subtitle">Sélectionnez ce qui compte pour vous</div>
+            <div class="chips" data-field="criteria">
+                <div class="chip" data-value="jardin">🌿 Jardin</div>
+                <div class="chip" data-value="parking">🅿️ Parking</div>
+                <div class="chip" data-value="ascenseur">🛗 Ascenseur</div>
+                <div class="chip" data-value="balcon_terrasse">☀️ Balcon/Terrasse</div>
+                <div class="chip" data-value="calme">🤫 Calme</div>
+                <div class="chip" data-value="neuf_renove">✨ Neuf/Rénové</div>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" onclick="goNext()">Continuer</button>
+            </div>
+        </div>
+
+        <!-- Étape 7 : Situation -->
+        <div class="step" data-step="7">
+            <div class="step-question">Votre projet</div>
+            <div class="step-label">Délai du projet</div>
+            <select class="step-select" id="timeline">
+                <option value="">—</option>
+                <option value="immediat">🚀 Immédiat</option>
+                <option value="court_terme">📅 1 à 3 mois</option>
+                <option value="moyen_terme">📆 3 à 6 mois</option>
+                <option value="long_terme">🗓️ Plus de 6 mois</option>
+            </select>
+            <div style="height:16px"></div>
+            <div class="step-label">Pré-accord bancaire</div>
+            <select class="step-select" id="bankApproval">
+                <option value="">—</option>
+                <option value="oui">✅ Oui</option>
+                <option value="non">❌ Non</option>
+                <option value="en_cours">⏳ En cours</option>
+                <option value="ne_sait_pas">❓ Je ne sais pas</option>
+            </select>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" onclick="goNext()">Continuer</button>
+            </div>
+        </div>
+
+        <!-- Étape 8 : Coordonnées -->
+        <div class="step" data-step="8">
+            <div class="step-question">Vos coordonnées</div>
+            <div class="step-subtitle">Pour que nous puissions vous recontacter</div>
+            <div class="step-row" style="margin-bottom:12px">
+                <div>
+                    <div class="step-label" style="text-align:left">Prénom *</div>
+                    <input type="text" class="step-input" id="firstName" placeholder="Jean" style="text-align:left" required>
+                </div>
+                <div>
+                    <div class="step-label" style="text-align:left">Nom *</div>
+                    <input type="text" class="step-input" id="lastName" placeholder="Dupont" style="text-align:left" required>
+                </div>
+            </div>
+            <div style="margin-bottom:12px">
+                <div class="step-label" style="text-align:left">Téléphone *</div>
+                <input type="tel" class="step-input" id="phone" placeholder="06 12 34 56 78" style="text-align:left" required>
+            </div>
+            <div style="margin-bottom:12px">
+                <div class="step-label" style="text-align:left">Email</div>
+                <input type="email" class="step-input" id="email" placeholder="jean@email.com" style="text-align:left">
+            </div>
+            <input type="hidden" id="source">
+            <div class="step-nav">
+                <button class="btn-back" onclick="goBack()"><i class="fa-solid fa-arrow-left"></i></button>
+                <button class="btn-next" id="submitBtn" onclick="submitForm()">
+                    <i class="fa-solid fa-paper-plane"></i> Envoyer
+                </button>
+            </div>
         </div>
 
         <!-- Confirmation -->
@@ -463,131 +308,171 @@
             <div class="success-text">
                 Merci pour votre confiance.<br>
                 Nous avons bien reçu vos critères de recherche.<br>
-                Nous reviendrons vers vous très rapidement avec des biens correspondant à vos attentes.
+                Nous reviendrons vers vous très rapidement.
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Lire les paramètres URL pour pré-remplir le formulaire
-            const urlParams = new URLSearchParams(window.location.search);
-            const prefillFields = {
-                'first_name': 'firstName',
-                'last_name': 'lastName',
-                'phone': 'phone',
-                'email': 'email',
-                'source': 'source'
-            };
-            for (const [param, fieldId] of Object.entries(prefillFields)) {
-                const val = urlParams.get(param);
-                if (val) {
-                    const el = document.getElementById(fieldId);
-                    if (el) el.value = decodeURIComponent(val);
-                }
+    document.addEventListener('DOMContentLoaded', () => {
+        const TOTAL_STEPS = 8;
+        let currentStep = 1;
+        const formData = {};
+
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Pré-remplir depuis URL
+        ['first_name:firstName', 'last_name:lastName', 'phone:phone', 'email:email', 'source:source'].forEach(pair => {
+            const [param, id] = pair.split(':');
+            const val = urlParams.get(param);
+            if (val) { const el = document.getElementById(id); if (el) el.value = decodeURIComponent(val); }
+        });
+
+        // Personnalisation header
+        const agentLogo = urlParams.get('logo');
+        const agentPhoto = urlParams.get('photo');
+        const agentFullName = urlParams.get('agent_name');
+        const agencyLabel = urlParams.get('agency');
+
+        if (agentLogo || agentPhoto || agentFullName) {
+            if (agentLogo) {
+                document.getElementById('formLogoImg').src = decodeURIComponent(agentLogo);
+            } else if (agencyLabel) {
+                document.querySelector('.form-logo').innerHTML = `<span style="font-family:'Barlow Semi Condensed',sans-serif; font-size:26px; font-weight:800; color:var(--text-dark)">${decodeURIComponent(agencyLabel)}</span>`;
             }
-
-            // Personnalisation header avec infos agent (passées via URL params)
-            const agentLogo = urlParams.get('logo');
-            const agentPhoto = urlParams.get('photo');
-            const agentFullName = urlParams.get('agent_name');
-            const agencyLabel = urlParams.get('agency');
-
-            if (agentLogo || agentPhoto || agentFullName) {
-                const logoEl = document.querySelector('.form-logo');
-                // Logo agence
-                if (agentLogo) {
-                    document.getElementById('formLogoImg').src = decodeURIComponent(agentLogo);
-                    document.getElementById('formLogoImg').style.height = '50px';
-                    document.getElementById('formLogoImg').style.maxWidth = '200px';
-                } else if (agencyLabel) {
-                    logoEl.innerHTML = `<span style="font-family:'Barlow Semi Condensed',sans-serif; font-size:28px; font-weight:800; color:#2C3E50">${decodeURIComponent(agencyLabel)}</span>`;
-                }
-                // Photo agent
-                if (agentPhoto) {
-                    document.getElementById('formAgentPhotoImg').src = decodeURIComponent(agentPhoto);
-                    document.getElementById('formAgentPhoto').style.display = '';
-                    if (agentFullName) document.getElementById('formAgentName').textContent = decodeURIComponent(agentFullName);
-                    if (agencyLabel) document.getElementById('formAgencyName').textContent = decodeURIComponent(agencyLabel);
-                }
+            if (agentPhoto) {
+                document.getElementById('formAgentPhotoImg').src = decodeURIComponent(agentPhoto);
+                document.getElementById('formAgentPhoto').style.display = '';
+                if (agentFullName) document.getElementById('formAgentName').textContent = decodeURIComponent(agentFullName);
+                if (agencyLabel) document.getElementById('formAgencyName').textContent = decodeURIComponent(agencyLabel);
             }
+        }
 
-            // Autocomplete villes
-            if (typeof setupSectorAutocomplete === 'function') setupSectorAutocomplete();
+        // Autocomplete villes
+        if (typeof setupSectorAutocomplete === 'function') setupSectorAutocomplete();
 
-            // Toggle vendeur
-            document.getElementById('isSeller').addEventListener('change', function() {
-                document.getElementById('sellerFields').style.display = this.checked ? 'block' : 'none';
-            });
+        // Observer le champ sector hidden pour activer le bouton
+        const sectorObs = new MutationObserver(() => {
+            const btn = document.getElementById('btnSector');
+            if (btn) btn.disabled = !document.getElementById('sector').value;
+        });
+        const sectorHidden = document.getElementById('sector');
+        sectorObs.observe(sectorHidden, { attributes: true, attributeFilter: ['value'] });
+        // Aussi surveiller via interval (le MutationObserver ne capte pas les .value changes)
+        setInterval(() => {
+            const btn = document.getElementById('btnSector');
+            if (btn) btn.disabled = !document.getElementById('sector').value;
+        }, 500);
 
-            // Soumission
-            document.getElementById('submitBtn').addEventListener('click', async () => {
-                const firstName = document.getElementById('firstName').value.trim();
-                const lastName = document.getElementById('lastName').value.trim();
-                const phone = document.getElementById('phone').value.trim();
-                const propertyType = document.getElementById('propertyType').value;
-                const sector = document.getElementById('sector').value.trim();
-
-                if (!firstName || !lastName || !phone || !propertyType || !sector) {
-                    alert('Veuillez remplir les champs obligatoires (*)');
-                    return;
-                }
-
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true;
-                btn.textContent = 'Envoi en cours...';
-
-                const criteria = Array.from(document.querySelectorAll('input[name="criteria"]:checked')).map(cb => cb.value);
-
-                const agentId = urlParams.get('agent_id');
-                const refId = urlParams.get('ref');
-
-                const buyerData = {
-                    first_name: firstName,
-                    last_name: lastName,
-                    phone,
-                    email: document.getElementById('email').value.trim() || null,
-                    source: document.getElementById('source').value || null,
-                    property_type: propertyType,
-                    rooms: document.getElementById('rooms').value || null,
-                    sector,
-                    surface_min: document.getElementById('surfaceMin').value ? parseInt(document.getElementById('surfaceMin').value) : null,
-                    budget_max: document.getElementById('budgetMax').value ? parseInt(document.getElementById('budgetMax').value) : null,
-                    criteria,
-                    bank_approval: document.getElementById('bankApproval').value || null,
-                    timeline: document.getElementById('timeline').value || null,
-                    is_seller: document.getElementById('isSeller').checked,
-                    seller_address: document.getElementById('sellerAddress').value.trim() || null,
-                    seller_price: document.getElementById('sellerPrice').value.trim() || null,
-                    dealbreakers: document.getElementById('dealbreakers').value.trim() || null,
-                    status: 'nouveau'
-                };
-
-                // Associer au bon agent si venant d'un lien auto-reply
-                if (agentId) buyerData.user_id = agentId;
-
-                // Envoyer via l'API (bypass RLS pour les soumissions publiques)
-                try {
-                    const resp = await fetch('/api/submit-form', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(buyerData)
-                    });
-                    const result = await resp.json();
-                    if (!resp.ok) throw new Error(result.error || 'Erreur serveur');
-                } catch (err) {
-                    console.error('Erreur:', err);
-                    alert('Une erreur est survenue. Veuillez réessayer.');
-                    btn.disabled = false;
-                    btn.textContent = 'Envoyer ma recherche';
-                    return;
-                }
-
-                // Afficher la confirmation
-                document.getElementById('formView').style.display = 'none';
-                document.getElementById('successView').classList.add('active');
+        // Option cards : clic = sélection + auto-next
+        document.querySelectorAll('.option-cards').forEach(container => {
+            container.querySelectorAll('.option-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    const field = container.dataset.field;
+                    const isMulti = container.dataset.multi === 'true';
+                    if (!isMulti) {
+                        container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+                    }
+                    card.classList.toggle('selected');
+                    formData[field] = isMulti
+                        ? Array.from(container.querySelectorAll('.option-card.selected')).map(c => c.dataset.value)
+                        : card.dataset.value;
+                    // Auto-next après sélection (single select)
+                    if (!isMulti) setTimeout(() => goNext(), 300);
+                });
             });
         });
+
+        // Chips : toggle
+        document.querySelectorAll('.chips').forEach(container => {
+            container.querySelectorAll('.chip').forEach(chip => {
+                chip.addEventListener('click', () => {
+                    chip.classList.toggle('selected');
+                    formData[container.dataset.field] = Array.from(container.querySelectorAll('.chip.selected')).map(c => c.dataset.value);
+                });
+            });
+        });
+
+        // Navigation
+        window.goNext = function() {
+            if (currentStep >= TOTAL_STEPS) return;
+            currentStep++;
+            showStep(currentStep);
+        };
+
+        window.goBack = function() {
+            if (currentStep <= 1) return;
+            currentStep--;
+            showStep(currentStep);
+        };
+
+        function showStep(n) {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            const step = document.querySelector(`.step[data-step="${n}"]`);
+            if (step) step.classList.add('active');
+            document.getElementById('progressFill').style.width = `${(n / TOTAL_STEPS) * 100}%`;
+            // Focus le premier input de l'étape
+            const firstInput = step?.querySelector('input:not([type=hidden]), select');
+            if (firstInput) setTimeout(() => firstInput.focus(), 100);
+        }
+
+        // Submit
+        window.submitForm = async function() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+
+            if (!firstName || !lastName || !phone) {
+                alert('Veuillez remplir les champs obligatoires (Prénom, Nom, Téléphone)');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi...';
+
+            const agentId = urlParams.get('agent_id');
+
+            const buyerData = {
+                first_name: firstName,
+                last_name: lastName,
+                phone,
+                email: document.getElementById('email').value.trim() || null,
+                source: document.getElementById('source').value || null,
+                property_type: formData.propertyType || null,
+                rooms: formData.rooms || null,
+                sector: document.getElementById('sector').value || null,
+                surface_min: document.getElementById('surfaceMin').value ? parseInt(document.getElementById('surfaceMin').value) : null,
+                budget_max: document.getElementById('budgetMax').value ? parseInt(document.getElementById('budgetMax').value) : null,
+                criteria: formData.criteria || null,
+                bank_approval: document.getElementById('bankApproval').value || null,
+                timeline: document.getElementById('timeline').value || null,
+                status: 'nouveau'
+            };
+
+            if (agentId) buyerData.user_id = agentId;
+
+            try {
+                const resp = await fetch('/api/submit-form', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(buyerData)
+                });
+                const result = await resp.json();
+                if (!resp.ok) throw new Error(result.error || 'Erreur serveur');
+
+                // Masquer le formulaire, afficher la confirmation
+                document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+                document.querySelector('.progress-bar').style.display = 'none';
+                document.getElementById('successView').classList.add('active');
+            } catch (err) {
+                console.error('Erreur:', err);
+                alert('Une erreur est survenue. Veuillez réessayer.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Envoyer';
+            }
+        };
+    });
     </script>
 </body>
 </html>
