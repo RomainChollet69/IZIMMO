@@ -381,15 +381,9 @@
                         </div>
                         <input type="hidden" id="sector">
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Budget min (€)</label>
-                            <input type="number" class="form-input" id="budgetMin" placeholder="200 000">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Budget max (€)</label>
-                            <input type="number" class="form-input" id="budgetMax" placeholder="350 000">
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Budget maximum (€)</label>
+                        <input type="number" class="form-input" id="budgetMax" placeholder="350 000">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Surface minimum (m²)</label>
@@ -557,9 +551,8 @@
                     property_type: propertyType,
                     rooms: document.getElementById('rooms').value || null,
                     sector,
-                    surface_min: parseInt(document.getElementById('surfaceMin').value) || null,
-                    budget_min: parseInt(document.getElementById('budgetMin').value) || null,
-                    budget_max: parseInt(document.getElementById('budgetMax').value) || null,
+                    surface_min: document.getElementById('surfaceMin').value ? parseInt(document.getElementById('surfaceMin').value) : null,
+                    budget_max: document.getElementById('budgetMax').value ? parseInt(document.getElementById('budgetMax').value) : null,
                     criteria,
                     bank_approval: document.getElementById('bankApproval').value || null,
                     timeline: document.getElementById('timeline').value || null,
