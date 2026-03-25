@@ -559,7 +559,7 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
         // Vérifier si l'auto-reply est activé pour cet agent
         const { data: profile } = await supabaseAdmin
             .from('profiles')
-            .select('auto_reply_enabled')
+            .select('auto_reply_enabled, full_name, agency_name, avatar_url, auto_reply_logo, auto_reply_show_photo, auto_reply_show_logo')
             .eq('id', userId)
             .maybeSingle();
 
@@ -568,6 +568,14 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
             console.log('[AutoReply] Auto-reply désactivé, skip');
             return;
         }
+
+        // Charger les infos agent pour personnaliser l'email
+        const agentName = profile.full_name || '';
+        const agencyName = profile.agency_name || '';
+        const avatarUrl = profile.avatar_url || '';
+        const logoUrl = profile.auto_reply_logo || '';
+        const showPhoto = profile.auto_reply_show_photo !== false;
+        const showLogo = profile.auto_reply_show_logo || false;
 
         // Construire l'URL du formulaire avec pré-remplissage
         const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
@@ -586,12 +594,19 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
         const formUrl = `${baseUrl}/formulaire.html?${formParams.toString()}`;
         const firstName = parsed.visitor_first_name || parsed.visitor_name || '';
 
-        const html = buildAutoReplyHtml(firstName, formUrl);
+        const html = buildAutoReplyHtml(firstName, formUrl, {
+            agentName, agencyName, avatarUrl, logoUrl, showPhoto, showLogo
+        });
+
+        // Expéditeur personnalisé
+        const domain = process.env.MAILGUN_DOMAIN || 'inbound.avecleon.fr';
+        const fromName = agentName && agencyName ? `${agentName} — ${agencyName}` : agentName || agencyName || 'Léon';
 
         const result = await sendEmail({
             to: visitorEmail,
             subject: 'Merci pour votre intérêt — Définissons votre projet ensemble',
-            html
+            html,
+            from: `${fromName} <noreply@${domain}>`
         });
 
         if (result.success) {
@@ -605,8 +620,29 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
     }
 }
 
-function buildAutoReplyHtml(firstName, formUrl) {
+function buildAutoReplyHtml(firstName, formUrl, opts = {}) {
+    const { agentName, agencyName, avatarUrl, logoUrl, showPhoto, showLogo } = opts;
     const greeting = firstName ? `Bonjour ${firstName},` : 'Bonjour,';
+    const signatureName = agentName || 'Votre conseiller';
+    const signatureAgency = agencyName ? `<br><span style="color:#78909C">${agencyName}</span>` : '';
+
+    // Header : logo agence ou gradient simple
+    let headerContent = '';
+    if (showLogo && logoUrl) {
+        headerContent = `<img src="${logoUrl}" alt="${agencyName || ''}" height="50" style="max-width:250px">`;
+    } else if (agencyName) {
+        headerContent = `<span style="font-size:22px;font-weight:700;color:white;letter-spacing:0.5px">${agencyName}</span>`;
+    }
+
+    // Photo de l'agent
+    let agentPhotoHtml = '';
+    if (showPhoto && avatarUrl) {
+        agentPhotoHtml = `<tr><td style="padding:24px 40px 0" align="center">
+            <img src="${avatarUrl}" alt="${agentName || ''}" width="72" height="72" style="border-radius:50%;border:3px solid #E0E0E0;object-fit:cover" referrerpolicy="no-referrer">
+            <p style="font-size:15px;font-weight:700;color:#2C3E50;margin:10px 0 0">${agentName || ''}</p>
+            ${agencyName ? `<p style="font-size:13px;color:#78909C;margin:2px 0 0">${agencyName}</p>` : ''}
+        </td></tr>`;
+    }
 
     return `<!DOCTYPE html>
 <html lang="fr">
@@ -616,13 +652,16 @@ function buildAutoReplyHtml(firstName, formUrl) {
 <tr><td align="center">
 <table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
 
-<!-- Header gradient -->
-<tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:32px 40px;text-align:center">
-    <img src="https://avecleon.fr/img/logo_leon_white.svg" alt="Léon" height="36" style="margin-bottom:8px">
+<!-- Header -->
+<tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:28px 40px;text-align:center">
+    ${headerContent}
 </td></tr>
 
+<!-- Photo agent -->
+${agentPhotoHtml}
+
 <!-- Body -->
-<tr><td style="padding:36px 40px 20px">
+<tr><td style="padding:${showPhoto && avatarUrl ? '16px' : '36px'} 40px 20px">
     <p style="font-size:16px;color:#2C3E50;line-height:1.7;margin:0 0 20px">
         ${greeting}
     </p>
@@ -645,9 +684,9 @@ function buildAutoReplyHtml(firstName, formUrl) {
 
 <!-- Footer -->
 <tr><td style="padding:20px 40px 28px;border-top:1px solid #f0f0f0">
-    <p style="font-size:14px;color:#7F8C8D;line-height:1.6;margin:0">
+    <p style="font-size:14px;color:#2C3E50;line-height:1.6;margin:0">
         À bientôt,<br>
-        <strong>L'équipe Léon</strong>
+        <strong>${signatureName}</strong>${signatureAgency}
     </p>
 </td></tr>
 

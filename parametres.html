@@ -1856,13 +1856,35 @@
                 Quand un acquéreur vous contacte via un portail (SeLoger, LeBonCoin...), un email est envoyé automatiquement
                 avec un lien vers votre formulaire de qualification. L'acquéreur remplit ses critères et apparaît directement dans votre pipeline.
             </p>
-            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; padding:14px 16px; background:#F9FAFB; border-radius:12px; border:1.5px solid #E1E8ED">
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; padding:14px 16px; background:#F9FAFB; border-radius:12px; border:1.5px solid #E1E8ED; margin-bottom:16px">
                 <input type="checkbox" id="autoReplyToggle" style="width:18px; height:18px; accent-color:#667eea">
                 <div>
                     <div style="font-size:14px; font-weight:600; color:#2C3E50">Activer la réponse automatique</div>
                     <div style="font-size:12px; color:#78909C; margin-top:2px">Un email de qualification sera envoyé à chaque nouvelle demande portail</div>
                 </div>
             </label>
+
+            <div style="margin-top:8px; font-size:13px; font-weight:600; color:#2C3E50; margin-bottom:10px">Personnalisation de l'email</div>
+
+            <div class="form-group" style="margin-bottom:12px">
+                <label class="form-label">Logo de l'agence (URL de l'image)</label>
+                <input type="url" class="form-input" id="autoReplyLogo" placeholder="https://monagence.com/logo.png">
+            </div>
+
+            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#2C3E50">
+                    <input type="checkbox" id="autoReplyShowPhoto" style="accent-color:#667eea"> Afficher ma photo de profil
+                </label>
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; color:#2C3E50">
+                    <input type="checkbox" id="autoReplyShowLogo" style="accent-color:#667eea"> Afficher le logo de l'agence
+                </label>
+            </div>
+
+            <button type="button" onclick="saveAutoReplySettings()" style="
+                padding:10px 20px; background:linear-gradient(135deg,#667eea,#764ba2);
+                color:white; border:none; border-radius:10px; font-size:13px; font-weight:600;
+                cursor:pointer; font-family:Inter,sans-serif;
+            ">Enregistrer</button>
         </div>
 
         <!-- Section Tutoriel Import Contacts -->
@@ -2115,6 +2137,16 @@
             const parts = fullName.trim().split(/\s+/);
             document.getElementById('profileFirstName').value = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
             document.getElementById('profileLastName').value = parts.length > 1 ? parts[parts.length - 1] : '';
+
+            // Sauvegarder avatar + nom dans profiles (pour l'auto-reply backend)
+            const profileSync = {};
+            if (avatar) profileSync.avatar_url = avatar;
+            if (fullName) profileSync.full_name = fullName;
+            if (Object.keys(profileSync).length > 0) {
+                supabaseClient.from('profiles')
+                    .update(profileSync)
+                    .eq('id', currentUserId).then(() => {});
+            }
 
             await loadProfile();
             await loadContacts();
@@ -2513,6 +2545,23 @@
         }
 
         // ===== PROFILE CRUD =====
+        async function saveAutoReplySettings() {
+            const updateData = {
+                auto_reply_logo: document.getElementById('autoReplyLogo').value.trim() || null,
+                auto_reply_show_photo: document.getElementById('autoReplyShowPhoto').checked,
+                auto_reply_show_logo: document.getElementById('autoReplyShowLogo').checked
+            };
+            const { error } = await supabaseClient.from('profiles')
+                .update(updateData)
+                .eq('id', currentUserId);
+            if (error) {
+                console.error('[Params] Save auto-reply settings error:', error);
+                alert('Erreur de sauvegarde');
+            } else {
+                alert('Paramètres email enregistrés');
+            }
+        }
+
         async function loadProfile() {
             // Essayer d'abord avec 'id' (table Supabase standard), sinon 'user_id'
             let { data, error } = await supabaseClient
@@ -2533,9 +2582,12 @@
             if (data) {
                 document.getElementById('phonePro').value = data.phone_pro || '';
                 document.getElementById('agencyName').value = data.agency_name || '';
-                // Auto-reply toggle
+                // Auto-reply settings
                 const autoReplyToggle = document.getElementById('autoReplyToggle');
                 if (autoReplyToggle) autoReplyToggle.checked = data.auto_reply_enabled || false;
+                document.getElementById('autoReplyLogo').value = data.auto_reply_logo || '';
+                document.getElementById('autoReplyShowPhoto').checked = data.auto_reply_show_photo !== false;
+                document.getElementById('autoReplyShowLogo').checked = data.auto_reply_show_logo || false;
             }
         }
 
