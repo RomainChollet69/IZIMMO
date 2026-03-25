@@ -590,6 +590,11 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
         if (parsed.visitor_last_name) formParams.set('last_name', parsed.visitor_last_name);
         if (visitorEmail) formParams.set('email', visitorEmail);
         if (parsed.visitor_phone) formParams.set('phone', parsed.visitor_phone);
+        // Infos agent pour personnaliser le formulaire
+        if (agentName) formParams.set('agent_name', agentName);
+        if (agencyName) formParams.set('agency', agencyName);
+        if (showPhoto && avatarUrl) formParams.set('photo', avatarUrl);
+        if (showLogo && logoUrl) formParams.set('logo', logoUrl);
 
         const formUrl = `${baseUrl}/formulaire.html?${formParams.toString()}`;
         const firstName = parsed.visitor_first_name || parsed.visitor_name || '';
