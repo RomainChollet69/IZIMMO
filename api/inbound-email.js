@@ -631,7 +631,7 @@ function buildAutoReplyHtml(firstName, formUrl, opts = {}) {
     if (showLogo && logoUrl) {
         headerContent = `<img src="${logoUrl}" alt="${agencyName || ''}" height="50" style="max-width:250px">`;
     } else if (agencyName) {
-        headerContent = `<span style="font-size:22px;font-weight:700;color:white;letter-spacing:0.5px">${agencyName}</span>`;
+        headerContent = `<span style="font-size:22px;font-weight:700;color:#2C3E50;letter-spacing:0.5px">${agencyName}</span>`;
     }
 
     // Photo de l'agent
@@ -653,7 +653,7 @@ function buildAutoReplyHtml(firstName, formUrl, opts = {}) {
 <table width="600" cellpadding="0" cellspacing="0" style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)">
 
 <!-- Header -->
-<tr><td style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);padding:28px 40px;text-align:center">
+<tr><td style="background:#F5F5F7;padding:28px 40px;text-align:center;border-bottom:1px solid #E8E8ED">
     ${headerContent}
 </td></tr>
 
@@ -666,8 +666,11 @@ ${agentPhotoHtml}
         ${greeting}
     </p>
     <p style="font-size:16px;color:#2C3E50;line-height:1.7;margin:0 0 20px">
-        Merci de l'intérêt que vous portez à notre bien immobilier. Afin de vous offrir le meilleur service
-        et de personnaliser notre accompagnement, nous aurions besoin que vous complétiez le formulaire ci-dessous.
+        Merci de l'intérêt que vous portez à notre bien immobilier.
+    </p>
+    <p style="font-size:16px;color:#2C3E50;line-height:1.7;margin:0 0 20px">
+        Afin de vous offrir le meilleur service et de personnaliser notre accompagnement,
+        nous aurions besoin que vous complétiez le formulaire ci-dessous.
     </p>
 </td></tr>
 
