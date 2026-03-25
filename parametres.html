@@ -1867,8 +1867,22 @@
             <div style="margin-top:8px; font-size:13px; font-weight:600; color:#2C3E50; margin-bottom:10px">Personnalisation de l'email</div>
 
             <div class="form-group" style="margin-bottom:12px">
-                <label class="form-label">Logo de l'agence (URL de l'image)</label>
-                <input type="url" class="form-input" id="autoReplyLogo" placeholder="https://monagence.com/logo.png">
+                <label class="form-label">Logo de l'agence</label>
+                <div style="display:flex; gap:8px; align-items:center">
+                    <div id="autoReplyLogoPreview" style="display:none; width:48px; height:48px; border-radius:8px; border:1px solid #E1E8ED; overflow:hidden; flex-shrink:0">
+                        <img id="autoReplyLogoImg" src="" style="width:100%; height:100%; object-fit:contain">
+                    </div>
+                    <div style="flex:1">
+                        <input type="file" id="autoReplyLogoFile" accept="image/*" style="display:none"
+                            onchange="uploadAgencyLogo(this.files[0])">
+                        <button type="button" onclick="document.getElementById('autoReplyLogoFile').click()" style="
+                            padding:8px 16px; background:#F9FAFB; border:1.5px solid #E1E8ED; border-radius:8px;
+                            font-size:13px; color:#2C3E50; cursor:pointer; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-upload"></i> Charger un logo</button>
+                        <div id="autoReplyLogoStatus" style="font-size:11px; color:#78909C; margin-top:4px"></div>
+                    </div>
+                </div>
+                <input type="hidden" id="autoReplyLogo">
             </div>
 
             <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px">
@@ -2545,6 +2559,48 @@
         }
 
         // ===== PROFILE CRUD =====
+        async function uploadAgencyLogo(file) {
+            if (!file) return;
+            const status = document.getElementById('autoReplyLogoStatus');
+            status.textContent = 'Upload en cours...';
+
+            try {
+                // Compresser si trop gros
+                const toUpload = file.size > 500000 && typeof compressImage === 'function'
+                    ? await compressImage(file, 400, 0.8)
+                    : file;
+
+                const ext = file.name.split('.').pop() || 'png';
+                const path = `logos/${currentUserId}/logo.${ext}`;
+
+                // Upload dans Supabase Storage
+                const { error: uploadErr } = await supabaseClient.storage
+                    .from('lead-files')
+                    .upload(path, toUpload, { cacheControl: '31536000', upsert: true });
+
+                if (uploadErr) throw uploadErr;
+
+                // Récupérer l'URL publique
+                const { data: urlData } = supabaseClient.storage
+                    .from('lead-files')
+                    .getPublicUrl(path);
+
+                const publicUrl = urlData?.publicUrl || '';
+                if (!publicUrl) throw new Error('URL non générée');
+
+                // Sauvegarder dans le champ caché + preview
+                document.getElementById('autoReplyLogo').value = publicUrl;
+                document.getElementById('autoReplyLogoImg').src = publicUrl;
+                document.getElementById('autoReplyLogoPreview').style.display = '';
+                status.textContent = 'Logo chargé';
+                status.style.color = '#2E7D32';
+            } catch (err) {
+                console.error('[Upload] Logo error:', err);
+                status.textContent = 'Erreur : ' + (err.message || 'upload échoué');
+                status.style.color = '#C62828';
+            }
+        }
+
         async function saveAutoReplySettings() {
             const updateData = {
                 auto_reply_logo: document.getElementById('autoReplyLogo').value.trim() || null,
@@ -2585,7 +2641,13 @@
                 // Auto-reply settings
                 const autoReplyToggle = document.getElementById('autoReplyToggle');
                 if (autoReplyToggle) autoReplyToggle.checked = data.auto_reply_enabled || false;
-                document.getElementById('autoReplyLogo').value = data.auto_reply_logo || '';
+                const logoUrl = data.auto_reply_logo || '';
+                document.getElementById('autoReplyLogo').value = logoUrl;
+                if (logoUrl) {
+                    document.getElementById('autoReplyLogoImg').src = logoUrl;
+                    document.getElementById('autoReplyLogoPreview').style.display = '';
+                    document.getElementById('autoReplyLogoStatus').textContent = 'Logo actuel';
+                }
                 document.getElementById('autoReplyShowPhoto').checked = data.auto_reply_show_photo !== false;
                 document.getElementById('autoReplyShowLogo').checked = data.auto_reply_show_logo || false;
             }
