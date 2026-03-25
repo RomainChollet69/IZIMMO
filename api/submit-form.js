@@ -41,7 +41,7 @@ export default async function handler(req, res) {
         bank_approval: body.bank_approval || null,
         timeline: body.timeline || null,
         dealbreakers: body.dealbreakers || null,
-        status: 'new'
+        status: 'nouveau'
     };
 
     // Associer au bon agent
