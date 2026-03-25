@@ -2580,12 +2580,13 @@
 
                 if (uploadErr) throw uploadErr;
 
-                // Récupérer l'URL publique
-                const { data: urlData } = supabaseClient.storage
+                // Récupérer une URL signée longue durée (1 an)
+                const { data: urlData, error: urlErr } = await supabaseClient.storage
                     .from('lead-files')
-                    .getPublicUrl(path);
+                    .createSignedUrl(path, 31536000); // 1 an
 
-                const publicUrl = urlData?.publicUrl || '';
+                if (urlErr) throw urlErr;
+                const publicUrl = urlData?.signedUrl || '';
                 if (!publicUrl) throw new Error('URL non générée');
 
                 // Sauvegarder dans le champ caché + preview
