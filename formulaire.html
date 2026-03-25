@@ -272,6 +272,21 @@
             line-height: 1.6;
         }
 
+        /* Sector tags autocomplete */
+        .sector-tags-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; border: 1px solid #ddd; border-radius: 10px; min-height: 44px; cursor: text; transition: border-color 0.2s; background: white; }
+        .sector-tags-wrap:focus-within { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15); }
+        .sector-tag { display: inline-flex; align-items: center; gap: 4px; background: #E8EAF6; color: #283593; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 500; }
+        .sector-tag-remove { background: none; border: none; color: #5C6BC0; cursor: pointer; font-size: 14px; padding: 0 2px; line-height: 1; }
+        .sector-tag-remove:hover { color: #C62828; }
+        .sector-tags-input { border: none; outline: none; flex: 1; min-width: 120px; font-family: 'Inter', sans-serif; font-size: 14px; padding: 4px 0; background: transparent; }
+        .sector-tags-input::placeholder { color: #bbb; }
+        .addr-wrapper { position: relative; }
+        .addr-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 100; display: none; overflow: hidden; margin-top: 4px; }
+        .addr-dropdown.active { display: block; }
+        .addr-option { padding: 10px 14px; font-size: 13px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
+        .addr-option:hover, .addr-option.addr-sel { background: #F0F0FF; }
+        .addr-option:last-child { border-bottom: none; }
+
         @media (max-width: 768px) {
             .form-container { padding: 24px; margin: 10px; }
             .form-row { grid-template-columns: 1fr; }
@@ -361,7 +376,10 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">Secteur / Villes souhaitées *</label>
-                        <input type="text" class="form-input" id="sector" placeholder="Lyon 3, Villeurbanne, Bron..." required>
+                        <div class="sector-tags-wrap" id="sectorTagsWrap" onclick="document.getElementById('sectorInput').focus()">
+                            <input type="text" class="sector-tags-input" id="sectorInput" placeholder="Tapez une ville..." autocomplete="off">
+                        </div>
+                        <input type="hidden" id="sector">
                     </div>
                     <div class="form-row">
                         <div class="form-group">
@@ -499,6 +517,9 @@
                     if (agencyLabel) document.getElementById('formAgencyName').textContent = decodeURIComponent(agencyLabel);
                 }
             }
+
+            // Autocomplete villes
+            if (typeof setupSectorAutocomplete === 'function') setupSectorAutocomplete();
 
             // Toggle vendeur
             document.getElementById('isSeller').addEventListener('change', function() {
