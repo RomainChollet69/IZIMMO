@@ -2017,11 +2017,13 @@
 
         const buyerName = visit.buyers ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim() : '';
         const visitorName = buyerName || visit.buyer_name || 'Visiteur';
+        const visitorPhone = visit.buyers?.phone || visit.visitor_phone || '';
+        const visitorEmail = visit.buyers?.email || visit.visitor_email || '';
         const address = seller?.address || '';
         const dateObj = new Date(visit.visit_date + 'T12:00:00');
         const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
         const timeLabel = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
-        const title = `Visite — ${visitorName}${address ? ', ' + address : ''}`;
+        const title = `Visite — ${visitorName}${visitorPhone ? ' — ' + visitorPhone : ''}${address ? ', ' + address : ''}`;
 
         // Normaliser visit_time (peut être HH:MM:SS depuis PG)
         const startTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
@@ -2062,9 +2064,18 @@
                 </div>
             </div>`;
 
+        // Description avec infos contact
+        const descParts = [];
+        descParts.push(`Visiteur : ${visitorName}`);
+        if (visitorPhone) descParts.push(`Tél : ${visitorPhone}`);
+        if (visitorEmail) descParts.push(`Email : ${visitorEmail}`);
+        if (visit.notes) descParts.push(`\nNotes : ${visit.notes.substring(0, 300)}`);
+        const description = descParts.join('\n');
+
         // Stocker les données pour la confirmation
         modal.dataset.title = title;
         modal.dataset.location = address;
+        modal.dataset.description = description;
         document.body.appendChild(modal);
     }
 
@@ -2072,6 +2083,7 @@
         const modal = document.getElementById('calendarSyncModal');
         const title = modal.dataset.title;
         const location = modal.dataset.location;
+        const description = modal.dataset.description || null;
 
         // Normaliser les heures en HH:MM (pas HH:MM:SS)
         const normalizeTime = t => t ? t.slice(0, 5) : t;
@@ -2089,7 +2101,8 @@
                     date,
                     start_time: normalizeTime(startTime) || '09:00',
                     end_time: normalizeTime(endTime) || '10:00',
-                    location: location || null
+                    location: location || null,
+                    description
                 })
             });
             if (!resp.ok) throw new Error('Erreur création événement');
