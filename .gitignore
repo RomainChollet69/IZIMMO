@@ -2,3 +2,10 @@ node_modules/
 .DS_Store
 .env
 wayimmo_infos.rtf
+
+# Capacitor — dossier de build mobile (généré par scripts/build-mobile.sh)
+www/
+
+# Capacitor — builds natifs (générés par cap sync)
+ios/App/App/public/
+android/app/src/main/assets/public/

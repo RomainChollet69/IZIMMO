@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mobile:build": "bash scripts/build-mobile.sh",
+    "mobile:sync": "bash scripts/build-mobile.sh && npx cap sync",
+    "mobile:ios": "bash scripts/build-mobile.sh && npx cap sync ios && npx cap open ios",
+    "mobile:android": "bash scripts/build-mobile.sh && npx cap sync android && npx cap open android"
   },
   "repository": {
     "type": "git",
@@ -19,7 +23,29 @@
   },
   "homepage": "https://github.com/RomainChollet69/IZIMMO#readme",
   "dependencies": {
+    "@capacitor-community/contacts": "^7.1.0",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/camera": "^8.0.2",
+    "@capacitor/cli": "^8.3.0",
+    "@capacitor/clipboard": "^8.0.1",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/geolocation": "^8.1.0",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/keyboard": "^8.0.2",
+    "@capacitor/network": "^8.0.1",
+    "@capacitor/push-notifications": "^8.0.3",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
+    "@capawesome/capacitor-badge": "^8.0.1",
     "@supabase/supabase-js": "^2.97.0",
     "busboy": "^1.6.0"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2"
   }
 }
