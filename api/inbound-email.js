@@ -630,6 +630,16 @@ async function sendAutoReplyIfEnabled(supabaseAdmin, userId, parsed) {
     }
 }
 
+function portalToBuyerSource(portalName) {
+    const p = (portalName || '').toLowerCase();
+    if (p.includes('leboncoin') || p.includes('lbc')) return 'site_annonce';
+    if (p.includes('seloger') || p.includes('logic')) return 'site_annonce';
+    if (p.includes('bien') && p.includes('ici')) return 'site_annonce';
+    if (p.includes('figaro')) return 'site_annonce';
+    if (p.includes('jinka')) return 'site_annonce';
+    return 'site_annonce';
+}
+
 function buildAutoReplyHtml(firstName, formUrl, opts = {}) {
     const { agentName, agencyName, avatarUrl, logoUrl, showPhoto, showLogo } = opts;
     const greeting = firstName ? `Bonjour ${firstName},` : 'Bonjour,';
