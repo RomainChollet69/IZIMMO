@@ -58,11 +58,13 @@ export default async function handler(req, res) {
     const buyerId = data[0]?.id;
     console.log('[SubmitForm] Buyer créé:', buyerId, first_name, last_name);
 
-    // Notification email à l'agent (non-bloquant)
+    // Notification email à l'agent (bloquant — Vercel coupe sinon)
     if (body.user_id) {
-        notifyAgent(supabaseAdmin, body.user_id, { first_name, last_name, phone, email: body.email, property_type: body.property_type, sector: body.sector, budget_max: body.budget_max, surface_min: body.surface_min, criteria: body.criteria, bank_approval: body.bank_approval, timeline: body.timeline }).catch(err => {
+        try {
+            await notifyAgent(supabaseAdmin, body.user_id, { first_name, last_name, phone, email: body.email, property_type: body.property_type, sector: body.sector, budget_max: body.budget_max, surface_min: body.surface_min, criteria: body.criteria, bank_approval: body.bank_approval, timeline: body.timeline });
+        } catch (err) {
             console.error('[SubmitForm] Erreur notification agent:', err.message);
-        });
+        }
     }
 
     return res.status(200).json({ success: true, id: buyerId });
