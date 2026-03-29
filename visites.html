@@ -731,8 +731,39 @@
             margin-top: 8px;
         }
 
-        /* ===== FEEDBACK MODAL ===== */
-        .feedback-title {
+        /* ===== FEEDBACK WIZARD ===== */
+        .feedback-wizard {
+            max-width: 400px;
+            width: 92%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            padding: 28px 24px 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .feedback-progress {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+        }
+        .feedback-progress-dot {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: #E5E7EB;
+            transition: background 0.3s;
+        }
+        .feedback-progress-dot.done { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .feedback-progress-dot.current { background: #667eea; }
+        .feedback-step {
+            animation: fbStepIn 0.25s ease;
+        }
+        @keyframes fbStepIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .feedback-question {
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-size: 18px;
             font-weight: 700;
@@ -740,52 +771,73 @@
             margin-bottom: 16px;
             text-align: center;
         }
-        .feedback-section { margin-bottom: 14px; }
-        .feedback-label { font-size: 13px; font-weight: 600; color: #546E7A; margin-bottom: 6px; }
-        .feedback-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .feedback-chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
         .feedback-chip {
-            padding: 7px 12px;
-            border-radius: 20px;
-            border: 1px solid #E0E0E0;
+            padding: 9px 16px;
+            border-radius: 24px;
+            border: 1.5px solid #E0E0E0;
             background: white;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             transition: all 0.2s;
         }
         .feedback-chip:hover { border-color: #667eea; background: #f0f0ff; }
         .feedback-chip.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
-        .feedback-chip-multi.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-color: transparent; }
         .feedback-notes {
             width: 100%;
-            padding: 8px 10px;
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
-            font-size: 13px;
+            padding: 12px 14px;
+            border: 1.5px solid #E0E0E0;
+            border-radius: 12px;
+            font-size: 14px;
             font-family: 'Inter', sans-serif;
             resize: vertical;
             box-sizing: border-box;
+            min-height: 80px;
         }
-        .feedback-actions { display: flex; gap: 8px; margin-top: 4px; }
+        .feedback-notes:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.08); }
+        .feedback-nav {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .feedback-skip-link {
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            padding: 8px 16px;
+            transition: color 0.2s;
+        }
+        .feedback-skip-link:hover { color: #667eea; }
         .feedback-save-btn {
-            flex: 1;
-            padding: 10px;
+            width: 100%;
+            padding: 12px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 15px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
+            margin-top: 16px;
+            transition: transform 0.15s, box-shadow 0.15s;
         }
-        .feedback-skip-btn {
-            padding: 10px 16px;
-            background: #f8f9fa;
-            color: #78909C;
-            border: 1px solid #E0E0E0;
-            border-radius: 8px;
+        .feedback-save-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3); }
+        .feedback-close-btn {
+            position: absolute;
+            top: 12px;
+            right: 14px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #9CA3AF;
             cursor: pointer;
-            font-family: 'Inter', sans-serif;
+            line-height: 1;
         }
+        .feedback-close-btn:hover { color: #667eea; }
 
         /* ===== DEMANDER UN RETOUR POPUP ===== */
         .visit-retour-popup { background: white; border-radius: 14px; box-shadow: 0 8px 30px rgba(0,0,0,0.2); padding: 20px 24px; max-width: 420px; width: 92%; }
@@ -1097,38 +1149,693 @@
         @media (max-width: 768px) {
             .m-todo-fab { display: none !important; }
             .header { display: none; }
-            .page-title-bar { padding: 16px 16px 0; margin-top: calc(var(--m-header-h, 56px) + 8px); }
-            .page-title { font-size: 22px; }
-            .stats-bar {
-                flex-direction: row;
+            .page-title-bar { display: none; }
+            .stats-bar { display: none; }
+            .filters-bar { display: none; }
+            .portal-banner { display: none; }
+            .processed-requests-view { display: none !important; }
+
+            /* ===== MV-CONTAINER ===== */
+            .mv-container {
+                padding: 0 var(--m-page-x, 16px);
+                margin-top: calc(var(--m-header-h, 56px) + 8px);
+                padding-bottom: calc(var(--m-bottom-bar-h, 64px) + 80px + env(safe-area-inset-bottom, 0px));
+            }
+
+            /* ===== MV-TODAY HERO ===== */
+            .mv-today {
+                width: 100%;
+                background: var(--m-gradient);
+                border-radius: 16px;
+                padding: 20px;
+                color: white;
+            }
+            .mv-today-count {
+                font-family: 'Barlow Semi Condensed', sans-serif;
+                font-weight: 800;
+                font-size: 48px;
+                line-height: 1;
+            }
+            .mv-today-label {
+                font-size: var(--m-font-body);
+                opacity: 0.85;
+            }
+            .mv-today-timeline {
+                display: flex;
+                gap: 16px;
+                margin-top: 16px;
                 overflow-x: auto;
-                padding: 12px 16px 0;
-                gap: 8px;
                 -webkit-overflow-scrolling: touch;
             }
-            .stat-card { min-width: 130px; flex-shrink: 0; padding: 14px 16px; }
-            .stat-value { font-size: 26px; }
-            .filters-bar {
-                padding: 12px 16px 0;
-                flex-wrap: nowrap;
-                overflow-x: auto;
+            .mv-today-timeline::-webkit-scrollbar { display: none; }
+            .mv-today-dot {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .mv-dot-circle {
+                width: 10px;
+                height: 10px;
+                background: white;
+                border-radius: 50%;
+            }
+            .mv-dot-time {
+                font-size: 11px;
+                opacity: 0.8;
+                margin-top: 4px;
+                white-space: nowrap;
+            }
+            .mv-stats-row {
+                display: flex;
+                gap: 8px;
+                margin-top: 12px;
+            }
+            .mv-stat-chip {
+                flex: 1;
+                background: var(--m-surface-1);
+                border-radius: 12px;
+                padding: 12px;
+                text-align: center;
+            }
+            .mv-stat-chip-value {
+                font-weight: 700;
+                font-size: 20px;
+                color: var(--m-text-primary);
+            }
+            .mv-stat-chip-label {
+                font-size: var(--m-font-caption);
+                color: var(--m-text-secondary);
+            }
+            .mv-stat-chip.alert {
+                border: 2px solid var(--m-warning);
+            }
+
+            /* ===== MV-PORTAL ALERT ===== */
+            .mv-portal-alert {
+                background: var(--m-surface-0);
+                border-radius: 16px;
+                margin-top: 12px;
+                overflow: hidden;
+                box-shadow: var(--m-shadow-sm);
+            }
+            .mv-portal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 14px 16px;
+                cursor: pointer;
+            }
+            .mv-portal-header-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+                font-size: var(--m-font-body);
+                color: var(--m-text-primary);
+            }
+            .mv-portal-badge {
+                background: #EF4444;
+                color: white;
+                font-size: 11px;
+                font-weight: 700;
+                padding: 2px 8px;
+                border-radius: 10px;
+                min-width: 20px;
+                text-align: center;
+                animation: mv-pulse 2s ease-in-out infinite;
+            }
+            @keyframes mv-pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.6; }
+            }
+            .mv-portal-chevron {
+                font-size: 12px;
+                color: var(--m-text-tertiary);
+                transition: transform 0.2s;
+            }
+            .mv-portal-alert.open .mv-portal-chevron {
+                transform: rotate(180deg);
+            }
+            .mv-portal-list {
+                display: none;
+            }
+            .mv-portal-alert.open .mv-portal-list {
+                display: block;
+            }
+            .mv-portal-item {
+                display: flex;
+                padding: 12px 16px;
+                border-top: 1px solid var(--m-surface-2);
+                align-items: center;
+                gap: 12px;
+            }
+            .mv-portal-bar {
+                width: 4px;
+                align-self: stretch;
+                border-radius: 2px;
+                flex-shrink: 0;
+            }
+            .mv-portal-bar.seloger { background: #0055FF; }
+            .mv-portal-bar.leboncoin { background: #FF6E14; }
+            .mv-portal-bar.bienici { background: #B388FF; }
+            .mv-portal-bar.pap { background: #FF5A5F; }
+            .mv-portal-bar.jinka { background: #00BCD4; }
+            .mv-portal-bar.other { background: #6B7280; }
+            .mv-portal-content {
+                flex: 1;
+                min-width: 0;
+            }
+            .mv-portal-name {
+                font-weight: 600;
+                font-size: var(--m-font-body);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .mv-portal-property {
+                font-size: var(--m-font-caption);
+                color: var(--m-text-secondary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .mv-portal-time {
+                font-size: var(--m-font-micro);
+                color: var(--m-text-tertiary);
+            }
+            .mv-portal-actions {
+                display: flex;
                 gap: 8px;
             }
-            .filter-search { min-width: 160px; }
-            .new-visit-btn { padding: 9px 14px; font-size: 13px; }
-            .new-visit-btn span { display: none; }
-            .visits-container { padding: 0 16px; margin-bottom: calc(var(--m-bottom-bar-h, 64px) + 20px); }
-            .property-accordion-header { padding: 14px 16px; gap: 10px; }
-            .accordion-badges { flex-wrap: wrap; gap: 4px; }
-            .accordion-body-inner { padding: 0 16px 14px; }
-            .visit-cards-grid { grid-template-columns: 1fr; }
-            .visit-card { padding: 12px 14px; }
-            .modal-card { padding: 20px; width: 95%; }
-            .portal-banner { padding: 0 16px; margin-top: 12px; }
-            .portal-request-item { flex-wrap: wrap; padding: 12px 16px; }
-            .portal-request-actions { width: 100%; margin-top: 8px; }
-            .portal-request-message { max-width: 100%; }
-            .accordion-portal-stats { gap: 6px; }
+            .mv-portal-action-btn {
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                background: var(--m-surface-2);
+                color: var(--m-text-secondary);
+                transition: all 0.15s;
+            }
+            .mv-portal-action-btn:active { transform: scale(0.92); }
+
+            /* ===== MV-FILTERS ===== */
+            .mv-filters {
+                position: sticky;
+                top: var(--m-header-h, 56px);
+                z-index: 50;
+                background: var(--m-surface-1);
+                padding: 8px var(--m-page-x, 16px);
+                margin: 0 calc(var(--m-page-x, 16px) * -1);
+                display: flex;
+                gap: 8px;
+                align-items: center;
+            }
+            .mv-search-btn {
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--m-surface-2);
+                border-radius: 12px;
+                border: none;
+                cursor: pointer;
+                font-size: 16px;
+                color: var(--m-text-secondary);
+                flex-shrink: 0;
+            }
+            .mv-pills {
+                display: flex;
+                gap: 6px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                flex: 1;
+            }
+            .mv-pills::-webkit-scrollbar { display: none; }
+            .mv-pill {
+                padding: 8px 14px;
+                border-radius: 20px;
+                font-size: var(--m-font-caption);
+                font-weight: 600;
+                background: var(--m-surface-2);
+                color: var(--m-text-secondary);
+                white-space: nowrap;
+                border: none;
+                cursor: pointer;
+                transition: all 0.15s;
+            }
+            .mv-pill.active { background: var(--m-primary-medium); color: var(--m-primary); }
+            .mv-pill.active[data-status="demande"] { background: rgba(139,92,246,0.12); color: #7B1FA2; }
+            .mv-pill.active[data-status="planifiee"] { background: rgba(63,81,181,0.12); color: #3F51B5; }
+            .mv-pill.active[data-status="effectuee"] { background: rgba(46,125,50,0.12); color: #2E7D32; }
+            .mv-pill.active[data-status="annulee"] { background: rgba(158,158,158,0.12); color: #616161; }
+
+            /* ===== MV-VIEW TOGGLE ===== */
+            .mv-view-toggle {
+                display: flex;
+                background: var(--m-surface-2);
+                border-radius: 10px;
+                padding: 3px;
+                margin-top: 12px;
+            }
+            .mv-view-btn {
+                flex: 1;
+                padding: 8px;
+                text-align: center;
+                font-size: var(--m-font-caption);
+                font-weight: 600;
+                border-radius: 8px;
+                color: var(--m-text-secondary);
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .mv-view-btn.active {
+                background: white;
+                color: var(--m-text-primary);
+                box-shadow: var(--m-shadow-sm);
+            }
+
+            /* ===== MV-DAY HEADER ===== */
+            .mv-day-header {
+                padding: 16px 0 8px;
+                font-size: var(--m-font-caption);
+                font-weight: 700;
+                color: var(--m-text-tertiary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            /* ===== MV-VISIT ITEM ===== */
+            .mv-visit-item {
+                display: flex;
+                background: var(--m-surface-0);
+                border-radius: 14px;
+                padding: 14px;
+                margin-bottom: 8px;
+                gap: 12px;
+                align-items: center;
+                box-shadow: var(--m-shadow-sm);
+                cursor: pointer;
+                transition: transform 0.1s;
+            }
+            .mv-visit-item:active { transform: scale(0.98); }
+            .mv-visit-bar {
+                width: 4px;
+                align-self: stretch;
+                border-radius: 2px;
+                flex-shrink: 0;
+            }
+            .mv-visit-bar.planifiee { background: var(--visit-planned); }
+            .mv-visit-bar.effectuee { background: var(--visit-done); }
+            .mv-visit-bar.annulee { background: var(--visit-cancelled); }
+            .mv-visit-bar.demande { background: #7B1FA2; }
+            .mv-visit-content {
+                flex: 1;
+                min-width: 0;
+            }
+            .mv-visit-time {
+                font-weight: 700;
+                font-size: var(--m-font-body);
+                color: var(--m-text-primary);
+            }
+            .mv-visit-visitor {
+                font-size: var(--m-font-caption);
+                color: var(--m-text-secondary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .mv-visit-property {
+                font-size: var(--m-font-micro);
+                color: var(--m-text-tertiary);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .mv-visit-badges {
+                display: flex;
+                gap: 4px;
+                margin-top: 4px;
+                flex-wrap: wrap;
+            }
+            .mv-badge {
+                font-size: 10px;
+                padding: 2px 8px;
+                border-radius: 6px;
+                font-weight: 600;
+            }
+            .mv-badge.feedback-pending { background: #FFF3E0; color: #E65100; }
+            .mv-badge.libre { background: #F3E5F5; color: #7B1FA2; }
+            .mv-badge.feedback-done { background: #E8F5E9; color: #2E7D32; }
+            .mv-badge.contact-badge { background: #F3E5F5; color: #7B1FA2; }
+            .mv-visit-action {
+                flex-shrink: 0;
+                width: 44px;
+                height: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 12px;
+                font-size: 18px;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                color: var(--m-text-tertiary);
+            }
+            .mv-visit-action:active { background: var(--m-surface-2); }
+
+            /* ===== MV-PROPERTY SECTION ===== */
+            .mv-property-section { margin-bottom: 12px; }
+            .mv-property-header {
+                display: flex;
+                background: var(--m-surface-0);
+                border-radius: 14px;
+                padding: 14px;
+                gap: 12px;
+                align-items: center;
+                box-shadow: var(--m-shadow-sm);
+                cursor: pointer;
+            }
+            .mv-property-photo {
+                width: 48px;
+                height: 48px;
+                border-radius: 10px;
+                object-fit: cover;
+                flex-shrink: 0;
+                background: var(--m-surface-2);
+            }
+            .mv-property-info {
+                flex: 1;
+                min-width: 0;
+            }
+            .mv-property-address {
+                font-weight: 600;
+                font-size: var(--m-font-body);
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .mv-property-seller {
+                font-size: var(--m-font-caption);
+                color: var(--m-text-secondary);
+            }
+            .mv-property-badges {
+                display: flex;
+                gap: 4px;
+                margin-top: 4px;
+                flex-wrap: wrap;
+            }
+            .mv-property-chevron {
+                font-size: 12px;
+                color: var(--m-text-tertiary);
+                transition: transform 0.2s;
+                flex-shrink: 0;
+            }
+            .mv-property-section.open .mv-property-chevron {
+                transform: rotate(180deg);
+            }
+            .mv-property-visits {
+                display: none;
+                padding-left: 0;
+                margin-top: 8px;
+            }
+            .mv-property-section.open .mv-property-visits {
+                display: block;
+            }
+
+            /* ===== MV-FAB ===== */
+            .mv-fab {
+                position: fixed;
+                bottom: calc(var(--m-bottom-bar-h, 64px) + 12px + env(safe-area-inset-bottom, 0px));
+                right: 16px;
+                width: 56px;
+                height: 56px;
+                border-radius: 50%;
+                background: var(--m-gradient);
+                color: white;
+                font-size: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: none;
+                cursor: pointer;
+                box-shadow: var(--m-shadow-fab);
+                z-index: 9000;
+                transition: transform 0.15s;
+            }
+            .mv-fab:active { transform: scale(0.9); }
+
+            /* ===== MV-FAB MENU ===== */
+            .mv-fab-menu {
+                position: fixed;
+                bottom: calc(var(--m-bottom-bar-h, 64px) + 80px + env(safe-area-inset-bottom, 0px));
+                right: 16px;
+                background: var(--m-surface-0);
+                border-radius: 16px;
+                box-shadow: var(--m-shadow-lg);
+                padding: 8px;
+                z-index: 9001;
+                display: none;
+            }
+            .mv-fab-menu.active { display: block; }
+            .mv-fab-item {
+                display: flex;
+                gap: 12px;
+                padding: 12px 16px;
+                border-radius: 12px;
+                align-items: center;
+                font-size: var(--m-font-body);
+                font-weight: 500;
+                color: var(--m-text-primary);
+                white-space: nowrap;
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            .mv-fab-item:active { background: var(--m-surface-2); }
+
+            /* ===== BOTTOM SHEET OVERRIDES ===== */
+            .modal-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 10001;
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+                display: flex;
+                align-items: flex-end;
+                justify-content: center;
+            }
+            .modal-card {
+                position: relative;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                top: auto;
+                max-width: none;
+                width: 100%;
+                border-radius: 20px 20px 0 0;
+                max-height: 92vh;
+                overflow-y: auto;
+                padding: 24px;
+                padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+                animation: mv-slide-up 0.3s var(--m-ease-decelerate);
+            }
+            @keyframes mv-slide-up {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+
+            /* ===== MV-SEARCH OVERLAY ===== */
+            .mv-search-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: var(--m-surface-0);
+                z-index: 10002;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+            }
+            .mv-search-bar {
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                margin-bottom: 16px;
+            }
+            .mv-search-input {
+                flex: 1;
+                padding: 12px 16px;
+                border: 2px solid var(--m-surface-3);
+                border-radius: 12px;
+                font-size: var(--m-font-body);
+                font-family: 'Inter', sans-serif;
+                color: var(--m-text-primary);
+                background: var(--m-surface-1);
+                outline: none;
+            }
+            .mv-search-input:focus {
+                border-color: var(--m-primary);
+            }
+            .mv-search-cancel {
+                font-size: var(--m-font-body);
+                font-weight: 600;
+                color: var(--m-primary);
+                background: none;
+                border: none;
+                cursor: pointer;
+                padding: 8px;
+                white-space: nowrap;
+            }
+            .mv-search-results {
+                flex: 1;
+                overflow-y: auto;
+            }
+
+            /* ===== MV-EMPTY ===== */
+            .mv-empty {
+                text-align: center;
+                padding: 40px 20px;
+                color: var(--m-text-tertiary);
+            }
+            .mv-empty i {
+                font-size: 48px;
+                opacity: 0.4;
+                display: block;
+                margin-bottom: 12px;
+            }
+
+            /* ===== MV-SHEET (detail bottom sheet) ===== */
+            .mv-sheet-overlay {
+                position: fixed;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.4);
+                z-index: 10003;
+                backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
+            }
+            .mv-sheet {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: var(--m-surface-0);
+                border-radius: 20px 20px 0 0;
+                max-height: 85vh;
+                overflow-y: auto;
+                z-index: 10004;
+                padding: 0 20px 20px;
+                padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+                animation: mv-slide-up 0.3s var(--m-ease-decelerate);
+            }
+            .mv-sheet-handle {
+                width: 40px;
+                height: 4px;
+                background: var(--m-surface-3);
+                border-radius: 2px;
+                margin: 12px auto 16px;
+            }
+            .mv-sheet-status {
+                display: inline-block;
+                padding: 4px 12px;
+                border-radius: 8px;
+                font-size: var(--m-font-caption);
+                font-weight: 600;
+                margin-bottom: 12px;
+            }
+            .mv-sheet-status.planifiee { background: #E8EAF6; color: var(--visit-planned); }
+            .mv-sheet-status.effectuee { background: #E8F5E9; color: var(--visit-done); }
+            .mv-sheet-status.annulee { background: #F5F5F5; color: var(--visit-cancelled); }
+            .mv-sheet-status.demande { background: #F3E5F5; color: #7B1FA2; }
+            .mv-sheet-section {
+                margin-top: 16px;
+            }
+            .mv-sheet-label {
+                font-size: var(--m-font-micro);
+                font-weight: 600;
+                color: var(--m-text-tertiary);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                margin-bottom: 6px;
+            }
+            .mv-sheet-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 8px 0;
+            }
+            .mv-sheet-row i {
+                width: 20px;
+                text-align: center;
+                color: var(--m-text-tertiary);
+                font-size: 14px;
+            }
+            .mv-sheet-row span {
+                font-size: var(--m-font-body);
+                color: var(--m-text-primary);
+            }
+            .mv-sheet-row a {
+                font-size: var(--m-font-body);
+                color: var(--m-primary);
+                text-decoration: none;
+                font-weight: 500;
+            }
+            .mv-sheet-actions {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                margin-top: 20px;
+            }
+            .mv-sheet-btn {
+                width: 100%;
+                padding: 14px;
+                border-radius: 12px;
+                font-size: var(--m-font-body);
+                font-weight: 600;
+                font-family: 'Inter', sans-serif;
+                cursor: pointer;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: opacity 0.15s;
+            }
+            .mv-sheet-btn:active { opacity: 0.8; }
+            .mv-sheet-btn.primary {
+                background: var(--m-gradient);
+                color: white;
+            }
+            .mv-sheet-btn.secondary {
+                background: var(--m-surface-2);
+                color: var(--m-text-primary);
+            }
+            .mv-sheet-btn.danger {
+                background: #FFEBEE;
+                color: #C62828;
+            }
+            .mv-sheet-feedback {
+                background: var(--m-surface-1);
+                border-radius: 12px;
+                padding: 12px;
+                margin-top: 8px;
+            }
+            .mv-sheet-feedback-title {
+                font-size: var(--m-font-caption);
+                font-weight: 600;
+                color: var(--m-text-secondary);
+                margin-bottom: 6px;
+            }
+            .mv-sheet-feedback-item {
+                font-size: var(--m-font-caption);
+                color: var(--m-text-primary);
+                padding: 2px 0;
+            }
         }
     </style>
 </head>
@@ -1250,6 +1957,16 @@
         </div>
     </main>
 
+    <!-- ===== MOBILE VISITES ===== -->
+    <div class="mv-container" id="mobileVisitsContainer" style="display:none"></div>
+    <button class="mv-fab" id="mobileFab" onclick="openMobileFABMenu()" style="display:none">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+    <div class="mv-fab-menu" id="mobileFabMenu">
+        <div class="mv-fab-item" onclick="openVisitModal()"><i class="fa-solid fa-calendar-plus" style="color:var(--visit-planned)"></i> Nouvelle visite</div>
+        <div class="mv-fab-item" onclick="openMobileAddContactModal()"><i class="fa-solid fa-user-plus" style="color:#7B1FA2"></i> Ajouter un contact</div>
+    </div>
+
     <script>
     /**
      * visites.html — Script principal
@@ -1322,6 +2039,16 @@
     let portalRequests = [];      // Demandes de visite portails (pending)
     let processedRequests = [];   // Demandes traitées (processed/accepted/dismissed)
     let visitRequestStats = {};   // Stats par seller_id : { contacts, processed }
+
+    // ===== MOBILE STATE =====
+    let mobileActiveStatus = '';
+    let mobileSearchQuery = '';
+    let mobileViewMode = 'timeline'; // 'timeline' or 'property'
+    let mobileOpenSections = new Set();
+
+    function isMobile() {
+        return window.innerWidth <= 768;
+    }
 
     /** Charge le nom d'agence depuis la table profiles (cache en mémoire) */
     async function getAgencyName() {
@@ -1484,6 +2211,14 @@
     }
 
     function getFilters() {
+        if (isMobile()) {
+            return {
+                status: mobileActiveStatus || '',
+                dateFrom: '',
+                dateTo: '',
+                search: mobileSearchQuery || ''
+            };
+        }
         return {
             status: document.getElementById('filterStatus').value,
             dateFrom: document.getElementById('filterDateFrom').value,
@@ -1522,12 +2257,643 @@
         document.getElementById('statFeedback').textContent = stats.pendingFeedback;
     }
 
+    // ===== MOBILE RENDERING =====
+
+    /** Orchestrateur principal mobile */
+    function renderMobileVisitsPage(filtered, stats, groups) {
+        const container = document.getElementById('mobileVisitsContainer');
+        if (!container) return;
+
+        let html = '';
+        html += renderMobileTodayHero(stats);
+        html += renderMobilePortalBanner();
+        html += renderMobileFilters();
+        html += renderMobileViewToggle();
+
+        if (mobileViewMode === 'timeline') {
+            html += renderMobileTimeline(filtered);
+        } else {
+            html += renderMobilePropertyGroups(groups);
+        }
+
+        container.innerHTML = html;
+    }
+
+    /** Hero card avec stats du jour */
+    function renderMobileTodayHero(stats) {
+        const today = new Date().toISOString().split('T')[0];
+        const todayVisits = allVisits.filter(v => v.status === 'planifiee' && v.visit_date === today);
+        todayVisits.sort((a, b) => (a.visit_time || '').localeCompare(b.visit_time || ''));
+
+        const dotsHtml = todayVisits.map(v => {
+            const time = v.visit_time ? v.visit_time.slice(0, 5) : '?';
+            return `<div class="mv-today-dot">
+                <div class="mv-dot-circle"></div>
+                <div class="mv-dot-time">${time}</div>
+            </div>`;
+        }).join('');
+
+        const timelineHtml = todayVisits.length > 0
+            ? `<div class="mv-today-timeline">${dotsHtml}</div>`
+            : '';
+
+        return `<div class="mv-today">
+            <div class="mv-today-count">${stats.todayCount}</div>
+            <div class="mv-today-label">visite${stats.todayCount > 1 ? 's' : ''} aujourd'hui</div>
+            ${timelineHtml}
+        </div>
+        <div class="mv-stats-row">
+            <div class="mv-stat-chip">
+                <div class="mv-stat-chip-value">${stats.weekCount}</div>
+                <div class="mv-stat-chip-label">Cette semaine</div>
+            </div>
+            <div class="mv-stat-chip${stats.pendingFeedback > 0 ? ' alert' : ''}">
+                <div class="mv-stat-chip-value">${stats.pendingFeedback}</div>
+                <div class="mv-stat-chip-label">Retours en attente</div>
+            </div>
+        </div>`;
+    }
+
+    /** Bandeau demandes portail mobile */
+    function renderMobilePortalBanner() {
+        if (portalRequests.length === 0) return '';
+
+        const PORTAL_BAR_COLORS = {
+            seloger: 'seloger', leboncoin: 'leboncoin', bienici: 'bienici',
+            pap: 'pap', jinka: 'jinka'
+        };
+
+        const itemsHtml = portalRequests.map(req => {
+            const portal = req.portal_name || 'autre';
+            const barClass = PORTAL_BAR_COLORS[portal] || 'other';
+            const visitorName = req.visitor_name || 'Visiteur';
+            const seller = req.sellers;
+            const sellerAddr = seller ? (seller.address || 'Adresse ?') : (req.property_address || 'Bien non identifié');
+            const phone = req.visitor_phone || '';
+            const dateStr = req.email_date
+                ? new Date(req.email_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+                : '';
+
+            const phoneBtn = phone
+                ? `<button class="mv-portal-action-btn" onclick="event.stopPropagation();window.location.href='tel:${escapeHtml(phone)}'"><i class="fa-solid fa-phone"></i></button>`
+                : '';
+
+            return `<div class="mv-portal-item" onclick="openPortalPlanModal('${req.id}')">
+                <div class="mv-portal-bar ${barClass}"></div>
+                <div class="mv-portal-content">
+                    <div class="mv-portal-name">${escapeHtml(visitorName)}</div>
+                    <div class="mv-portal-property">${escapeHtml(sellerAddr)}</div>
+                    ${dateStr ? `<div class="mv-portal-time">${dateStr}</div>` : ''}
+                </div>
+                <div class="mv-portal-actions">
+                    ${phoneBtn}
+                    <button class="mv-portal-action-btn" onclick="event.stopPropagation();openPortalPlanModal('${req.id}')" style="background:var(--m-primary-soft);color:var(--m-primary)"><i class="fa-solid fa-calendar-plus"></i></button>
+                </div>
+            </div>`;
+        }).join('');
+
+        return `<div class="mv-portal-alert" id="mobilePortalAlert">
+            <div class="mv-portal-header" onclick="document.getElementById('mobilePortalAlert').classList.toggle('open')">
+                <div class="mv-portal-header-left">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>${portalRequests.length} demande${portalRequests.length > 1 ? 's' : ''}</span>
+                    <span class="mv-portal-badge">${portalRequests.length}</span>
+                </div>
+                <i class="fa-solid fa-chevron-down mv-portal-chevron"></i>
+            </div>
+            <div class="mv-portal-list">${itemsHtml}</div>
+        </div>`;
+    }
+
+    /** Barre de filtres mobile avec pills */
+    function renderMobileFilters() {
+        const pills = [
+            { label: 'Tous', status: '' },
+            { label: 'Contacts', status: 'demande' },
+            { label: 'Planifiées', status: 'planifiee' },
+            { label: 'Effectuées', status: 'effectuee' },
+            { label: 'Annulées', status: 'annulee' }
+        ];
+
+        const pillsHtml = pills.map(p => {
+            const active = mobileActiveStatus === p.status ? ' active' : '';
+            return `<button class="mv-pill${active}" data-status="${p.status}" onclick="filterMobileVisits('${p.status}')">${p.label}</button>`;
+        }).join('');
+
+        return `<div class="mv-filters">
+            <button class="mv-search-btn" onclick="openMobileSearch()"><i class="fa-solid fa-magnifying-glass"></i></button>
+            <div class="mv-pills">${pillsHtml}</div>
+        </div>`;
+    }
+
+    /** Segmented control timeline / par bien */
+    function renderMobileViewToggle() {
+        return `<div class="mv-view-toggle">
+            <button class="mv-view-btn${mobileViewMode === 'timeline' ? ' active' : ''}" onclick="switchMobileView('timeline')"><i class="fa-solid fa-clock"></i> Chronologique</button>
+            <button class="mv-view-btn${mobileViewMode === 'property' ? ' active' : ''}" onclick="switchMobileView('property')"><i class="fa-solid fa-house"></i> Par bien</button>
+        </div>`;
+    }
+
+    /** Vue chronologique : visites groupées par jour */
+    function renderMobileTimeline(visits) {
+        // Séparer contacts et visites datées
+        const contacts = visits.filter(v => v.status === 'demande');
+        const dated = visits.filter(v => v.status !== 'demande');
+
+        // Trier par date ASC
+        dated.sort((a, b) => (a.visit_date || '').localeCompare(b.visit_date || '') || (a.visit_time || '').localeCompare(b.visit_time || ''));
+
+        // Grouper par jour
+        const days = {};
+        dated.forEach(v => {
+            const key = v.visit_date || 'no_date';
+            if (!days[key]) days[key] = [];
+            days[key].push(v);
+        });
+
+        const today = new Date().toISOString().split('T')[0];
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+        let html = '';
+
+        // Contacts en premier (si pas de filtre status ou filtre demande)
+        if (contacts.length > 0 && (mobileActiveStatus === '' || mobileActiveStatus === 'demande')) {
+            html += `<div class="mv-day-header"><i class="fa-solid fa-user-plus"></i> Contacts (${contacts.length})</div>`;
+            contacts.forEach(v => { html += renderMobileVisitItem(v); });
+        }
+
+        // Jours triés
+        const sortedDays = Object.keys(days).sort();
+        sortedDays.forEach(dayKey => {
+            let label;
+            if (dayKey === today) label = "Aujourd'hui";
+            else if (dayKey === tomorrowStr) label = 'Demain';
+            else {
+                const d = new Date(dayKey + 'T12:00:00');
+                label = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            }
+            html += `<div class="mv-day-header">${label}</div>`;
+            days[dayKey].forEach(v => { html += renderMobileVisitItem(v); });
+        });
+
+        if (html === '') {
+            html = `<div class="mv-empty">
+                <i class="fa-solid fa-calendar-check"></i>
+                <div>${allVisits.length === 0 ? 'Aucune visite' : 'Aucun résultat'}</div>
+            </div>`;
+        }
+
+        return html;
+    }
+
+    /** Vue par bien : sections dépliables */
+    function renderMobilePropertyGroups(groups) {
+        const sortedKeys = Object.keys(groups).sort((a, b) => {
+            const ga = groups[a], gb = groups[b];
+            if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
+            if (gb.plannedCount > 0 && ga.plannedCount === 0) return 1;
+            const totalA = ga.visits.length + ga.contactCount;
+            const totalB = gb.visits.length + gb.contactCount;
+            if (totalA > 0 && totalB === 0) return -1;
+            if (totalB > 0 && totalA === 0) return 1;
+            return totalB - totalA;
+        });
+
+        if (sortedKeys.length === 0) {
+            return `<div class="mv-empty">
+                <i class="fa-solid fa-house"></i>
+                <div>Aucun bien avec des visites</div>
+            </div>`;
+        }
+
+        let html = '';
+        sortedKeys.forEach(key => {
+            const group = groups[key];
+            const seller = group.seller;
+            const isOpen = mobileOpenSections.has(key);
+            const address = seller ? (seller.address || 'Adresse inconnue') : 'Bien non renseigné';
+            const sellerName = seller ? [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') : '';
+            const photo = seller ? getSellerPhoto(seller) : null;
+
+            const photoHtml = photo
+                ? `<img class="mv-property-photo" src="${escapeHtml(photo)}" onerror="this.style.display='none'" alt="">`
+                : `<div class="mv-property-photo" style="display:flex;align-items:center;justify-content:center;color:var(--m-text-tertiary)"><i class="fa-solid fa-house"></i></div>`;
+
+            // Badges
+            let badges = '';
+            const totalVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee').length + group.contactCount;
+            if (group.plannedCount > 0) badges += `<span class="mv-badge" style="background:#E8EAF6;color:var(--visit-planned)">${group.plannedCount} planifiée${group.plannedCount > 1 ? 's' : ''}</span>`;
+            if (group.doneCount > 0) badges += `<span class="mv-badge feedback-done">${group.doneCount} effectuée${group.doneCount > 1 ? 's' : ''}</span>`;
+            if (group.contactCount > 0) badges += `<span class="mv-badge contact-badge">${group.contactCount} contact${group.contactCount > 1 ? 's' : ''}</span>`;
+
+            // Visits inside
+            const allGroupVisits = [...group.contacts, ...group.visits];
+            allGroupVisits.sort((a, b) => {
+                if (a.status === 'demande' && b.status !== 'demande') return -1;
+                if (b.status === 'demande' && a.status !== 'demande') return 1;
+                return (a.visit_date || '').localeCompare(b.visit_date || '');
+            });
+
+            let visitsHtml = '';
+            allGroupVisits.forEach(v => { visitsHtml += renderMobileVisitItem(v); });
+
+            html += `<div class="mv-property-section${isOpen ? ' open' : ''}" data-seller-id="${key}">
+                <div class="mv-property-header" onclick="toggleMobilePropertySection('${key}')">
+                    ${photoHtml}
+                    <div class="mv-property-info">
+                        <div class="mv-property-address">${escapeHtml(address)}</div>
+                        <div class="mv-property-seller">${escapeHtml(sellerName)}</div>
+                        <div class="mv-property-badges">${badges}</div>
+                    </div>
+                    <i class="fa-solid fa-chevron-down mv-property-chevron"></i>
+                </div>
+                <div class="mv-property-visits">${visitsHtml}</div>
+            </div>`;
+        });
+
+        return html;
+    }
+
+    /** Rend un item de visite mobile (utilisé dans les deux vues) */
+    function renderMobileVisitItem(visit) {
+        const isContact = visit.status === 'demande';
+        const visitorName = getVisitorName(visit);
+        const phone = getVisitorPhone(visit);
+        const linked = isLinkedBuyer(visit);
+        const seller = visit.sellers;
+        const address = seller ? (seller.address || '') : '';
+
+        // Time display
+        let timeDisplay = '';
+        if (isContact) {
+            const source = visit.contact_source || 'manual';
+            const sourceLabel = CONTACT_SOURCE_LABELS[source] || source;
+            timeDisplay = sourceLabel;
+        } else {
+            const dateStr = visit.visit_date
+                ? new Date(visit.visit_date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' })
+                : '';
+            const timeStr = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+            timeDisplay = timeStr ? timeStr : dateStr;
+        }
+
+        // Badges
+        let badges = '';
+        if (!linked && !isContact) badges += '<span class="mv-badge libre">Libre</span>';
+        if (isContact && visit.contact_treated) badges += '<span class="mv-badge feedback-done">Traité</span>';
+        if (visit.status === 'effectuee' && !visit.feedback_rating) badges += '<span class="mv-badge feedback-pending">Retour en attente</span>';
+        if (visit.status === 'effectuee' && visit.feedback_rating) {
+            const fb = FEEDBACK_LABELS[visit.feedback_rating];
+            if (fb) badges += `<span class="mv-badge feedback-done">${fb.emoji} ${fb.label}</span>`;
+        }
+
+        // Action button
+        let actionBtn = '';
+        if (phone) {
+            actionBtn = `<button class="mv-visit-action" onclick="event.stopPropagation();window.location.href='tel:${escapeHtml(phone)}'"><i class="fa-solid fa-phone"></i></button>`;
+        }
+
+        return `<div class="mv-visit-item" onclick="openMobileVisitDetail('${visit.id}')">
+            <div class="mv-visit-bar ${visit.status}"></div>
+            <div class="mv-visit-content">
+                <div class="mv-visit-time">${escapeHtml(timeDisplay)}</div>
+                <div class="mv-visit-visitor">${escapeHtml(visitorName)}</div>
+                ${address ? `<div class="mv-visit-property">${escapeHtml(address)}</div>` : ''}
+                ${badges ? `<div class="mv-visit-badges">${badges}</div>` : ''}
+            </div>
+            ${actionBtn}
+        </div>`;
+    }
+
+    /** Bottom sheet détail d'une visite */
+    function openMobileVisitDetail(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) return;
+
+        // Fermer sheet existant
+        closeMobileSheet();
+
+        const isContact = visit.status === 'demande';
+        const visitorName = getVisitorName(visit);
+        const phone = getVisitorPhone(visit);
+        const email = visit.buyers?.email || visit.visitor_email || '';
+        const linked = isLinkedBuyer(visit);
+        const seller = visit.sellers;
+        const address = seller ? (seller.address || '') : '';
+        const sellerName = seller ? [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') : '';
+
+        // Date/time
+        let dateTimeHtml = '';
+        if (!isContact && visit.visit_date) {
+            const d = new Date(visit.visit_date + 'T12:00:00');
+            const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            const timeStr = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+            dateTimeHtml = `<div class="mv-sheet-row"><i class="fa-regular fa-calendar"></i><span>${dateStr}${timeStr ? ' à ' + timeStr : ''}</span></div>`;
+        }
+
+        // Visitor info
+        let visitorHtml = `<div class="mv-sheet-row"><i class="fa-solid fa-user"></i><span>${escapeHtml(visitorName)}</span></div>`;
+        if (phone) {
+            visitorHtml += `<div class="mv-sheet-row"><i class="fa-solid fa-phone"></i><a href="tel:${escapeHtml(phone)}">${escapeHtml(phone)}</a></div>`;
+        }
+        if (email) {
+            visitorHtml += `<div class="mv-sheet-row"><i class="fa-solid fa-envelope"></i><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></div>`;
+        }
+
+        // Property info
+        let propertyHtml = '';
+        if (address || sellerName) {
+            propertyHtml = `<div class="mv-sheet-section">
+                <div class="mv-sheet-label">Bien</div>
+                ${address ? `<div class="mv-sheet-row"><i class="fa-solid fa-location-dot"></i><span>${escapeHtml(address)}</span></div>` : ''}
+                ${sellerName ? `<div class="mv-sheet-row"><i class="fa-solid fa-user-tie"></i><span>${escapeHtml(sellerName)}</span></div>` : ''}
+            </div>`;
+        }
+
+        // Feedback summary
+        let feedbackHtml = '';
+        if (visit.feedback_rating) {
+            const fb = FEEDBACK_LABELS[visit.feedback_rating];
+            const pp = visit.price_perception ? PRICE_LABELS[visit.price_perception] : null;
+            const dec = visit.buyer_decision && visit.buyer_decision !== 'en_attente' ? DECISION_LABELS[visit.buyer_decision] : null;
+            const pos = Array.isArray(visit.positive_points) && visit.positive_points.length > 0
+                ? visit.positive_points.map(v => { const p = POSITIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+                : '';
+            const neg = Array.isArray(visit.negative_points) && visit.negative_points.length > 0
+                ? visit.negative_points.map(v => { const p = NEGATIVE_POINTS.find(x => x.value === v); return p ? p.label : v; }).join(' ')
+                : '';
+
+            feedbackHtml = `<div class="mv-sheet-section">
+                <div class="mv-sheet-label">Retour de visite</div>
+                <div class="mv-sheet-feedback">
+                    ${fb ? `<div class="mv-sheet-feedback-item">${fb.emoji} ${fb.label}</div>` : ''}
+                    ${pp ? `<div class="mv-sheet-feedback-item">${pp}</div>` : ''}
+                    ${pos ? `<div class="mv-sheet-feedback-item" style="color:#2E7D32">${pos}</div>` : ''}
+                    ${neg ? `<div class="mv-sheet-feedback-item" style="color:#C62828">${neg}</div>` : ''}
+                    ${dec ? `<div class="mv-sheet-feedback-item" style="font-weight:600">${dec.emoji} ${dec.label}</div>` : ''}
+                </div>
+            </div>`;
+        }
+
+        // Notes
+        let notesHtml = '';
+        if (visit.notes) {
+            notesHtml = `<div class="mv-sheet-section">
+                <div class="mv-sheet-label">Notes</div>
+                <div style="font-size:var(--m-font-caption);color:var(--m-text-secondary);line-height:1.5;padding:4px 0">${escapeHtml(visit.notes)}</div>
+            </div>`;
+        }
+
+        // Actions
+        let actionsHtml = '<div class="mv-sheet-actions">';
+        if (visit.status === 'planifiee') {
+            actionsHtml += `<button class="mv-sheet-btn primary" onclick="closeMobileSheet();markVisitDone('${visit.id}')"><i class="fa-solid fa-check"></i> Marquer effectuée</button>`;
+            actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openVisitConfirmMessage('${visit.id}')"><i class="fa-solid fa-comment-sms"></i> Envoyer confirmation</button>`;
+            actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();addVisitToCalendar('${visit.id}')"><i class="fa-brands fa-google"></i> Ajouter à l'agenda</button>`;
+            actionsHtml += `<button class="mv-sheet-btn danger" onclick="closeMobileSheet();cancelVisit('${visit.id}')"><i class="fa-solid fa-xmark"></i> Annuler la visite</button>`;
+        } else if (visit.status === 'effectuee') {
+            const fbLabel = visit.feedback_rating ? 'Modifier le retour' : 'Donner un retour';
+            actionsHtml += `<button class="mv-sheet-btn primary" onclick="closeMobileSheet();openFeedbackForm('${visit.id}')"><i class="fa-solid fa-star"></i> ${fbLabel}</button>`;
+            actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openVisitRetourPopup('${visit.id}')"><i class="fa-solid fa-paper-plane"></i> Demander un retour</button>`;
+            if (!linked) actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openPromoteModal('${visit.id}')"><i class="fa-solid fa-arrow-up"></i> Promouvoir en acquéreur</button>`;
+        } else if (isContact) {
+            if (!visit.contact_treated) {
+                actionsHtml += `<button class="mv-sheet-btn primary" onclick="closeMobileSheet();openContactTraiteModal('${visit.id}')"><i class="fa-solid fa-check"></i> Marquer traité</button>`;
+            } else {
+                actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();unmarkContactTraite('${visit.id}')"><i class="fa-solid fa-rotate-left"></i> Remettre en non traité</button>`;
+            }
+            actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openPlanFromContact('${visit.id}')"><i class="fa-solid fa-calendar-plus"></i> Planifier une visite</button>`;
+            if (!linked) actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openPromoteModal('${visit.id}')"><i class="fa-solid fa-arrow-up"></i> Créer acquéreur</button>`;
+        }
+        // Lien acquéreur si lié
+        if (visit.buyer_id) {
+            actionsHtml += `<a href="acquereurs.html?openLead=${visit.buyer_id}" class="mv-sheet-btn secondary" style="text-decoration:none"><i class="fa-solid fa-key"></i> Voir la fiche acquéreur</a>`;
+        }
+        actionsHtml += `<button class="mv-sheet-btn danger" onclick="closeMobileSheet();confirmDeleteVisit('${visit.id}')"><i class="fa-solid fa-trash-can"></i> Supprimer</button>`;
+        actionsHtml += '</div>';
+
+        // Build sheet
+        const overlay = document.createElement('div');
+        overlay.className = 'mv-sheet-overlay';
+        overlay.id = 'mobileVisitSheet';
+        overlay.onclick = function(e) { if (e.target === overlay) closeMobileSheet(); };
+
+        const sheet = document.createElement('div');
+        sheet.className = 'mv-sheet';
+        sheet.innerHTML = `
+            <div class="mv-sheet-handle"></div>
+            <span class="mv-sheet-status ${visit.status}">${isContact ? 'Contact' : (visit.status === 'planifiee' ? 'Planifiée' : visit.status === 'effectuee' ? 'Effectuée' : 'Annulée')}</span>
+            <div class="mv-sheet-section">
+                <div class="mv-sheet-label">Visiteur</div>
+                ${visitorHtml}
+            </div>
+            ${dateTimeHtml ? `<div class="mv-sheet-section"><div class="mv-sheet-label">Date</div>${dateTimeHtml}</div>` : ''}
+            ${propertyHtml}
+            ${feedbackHtml}
+            ${notesHtml}
+            ${actionsHtml}
+        `;
+
+        document.body.appendChild(overlay);
+        document.body.appendChild(sheet);
+    }
+
+    function closeMobileSheet() {
+        const overlay = document.getElementById('mobileVisitSheet');
+        if (overlay) overlay.remove();
+        document.querySelectorAll('.mv-sheet').forEach(s => s.remove());
+    }
+
+    /** Filtre via pills mobile */
+    function filterMobileVisits(status) {
+        mobileActiveStatus = status;
+        renderVisitsPage();
+    }
+
+    /** Bascule vue timeline / par bien */
+    function switchMobileView(mode) {
+        mobileViewMode = mode;
+        renderVisitsPage();
+    }
+
+    /** Toggle section dans la vue par bien */
+    function toggleMobilePropertySection(sellerId) {
+        if (mobileOpenSections.has(sellerId)) {
+            mobileOpenSections.delete(sellerId);
+        } else {
+            mobileOpenSections.add(sellerId);
+        }
+        const section = document.querySelector(`.mv-property-section[data-seller-id="${sellerId}"]`);
+        if (section) section.classList.toggle('open');
+    }
+
+    /** FAB menu toggle */
+    function openMobileFABMenu() {
+        const menu = document.getElementById('mobileFabMenu');
+        menu.classList.toggle('active');
+    }
+
+    /** Fermer FAB menu au clic extérieur */
+    document.addEventListener('click', function(e) {
+        const fab = document.getElementById('mobileFab');
+        const menu = document.getElementById('mobileFabMenu');
+        if (menu && fab && !fab.contains(e.target) && !menu.contains(e.target)) {
+            menu.classList.remove('active');
+        }
+    });
+
+    /** Recherche mobile overlay */
+    function openMobileSearch() {
+        const overlay = document.createElement('div');
+        overlay.className = 'mv-search-overlay';
+        overlay.id = 'mobileSearchOverlay';
+        overlay.innerHTML = `
+            <div class="mv-search-bar">
+                <input class="mv-search-input" id="mobileSearchInput" type="text" placeholder="Rechercher visiteur, adresse..." autofocus value="${escapeHtml(mobileSearchQuery)}">
+                <button class="mv-search-cancel" onclick="closeMobileSearch()">Annuler</button>
+            </div>
+            <div class="mv-search-results" id="mobileSearchResults"></div>
+        `;
+        document.body.appendChild(overlay);
+
+        const input = document.getElementById('mobileSearchInput');
+        input.focus();
+
+        let debounce = null;
+        input.addEventListener('input', function() {
+            clearTimeout(debounce);
+            debounce = setTimeout(() => {
+                mobileSearchQuery = this.value.trim();
+                renderMobileSearchResults();
+            }, 200);
+        });
+
+        // Initial render si query existante
+        if (mobileSearchQuery) renderMobileSearchResults();
+    }
+
+    function closeMobileSearch() {
+        const overlay = document.getElementById('mobileSearchOverlay');
+        if (overlay) overlay.remove();
+        // Re-render avec la query
+        renderVisitsPage();
+    }
+
+    function renderMobileSearchResults() {
+        const container = document.getElementById('mobileSearchResults');
+        if (!container) return;
+
+        const filters = {
+            status: mobileActiveStatus,
+            dateFrom: '',
+            dateTo: '',
+            search: mobileSearchQuery
+        };
+        const filtered = filterVisits(allVisits, filters);
+        filtered.sort((a, b) => {
+            if (a.status === 'demande' && b.status !== 'demande') return -1;
+            if (b.status === 'demande' && a.status !== 'demande') return 1;
+            return (a.visit_date || '').localeCompare(b.visit_date || '');
+        });
+
+        if (filtered.length === 0) {
+            container.innerHTML = `<div class="mv-empty"><i class="fa-solid fa-magnifying-glass"></i><div>Aucun résultat</div></div>`;
+            return;
+        }
+
+        container.innerHTML = filtered.slice(0, 30).map(v => renderMobileVisitItem(v)).join('');
+    }
+
+    /** Modal ajout contact mobile (sélection du bien en premier) */
+    function openMobileAddContactModal() {
+        // Fermer le FAB menu
+        const menu = document.getElementById('mobileFabMenu');
+        if (menu) menu.classList.remove('active');
+
+        // Si un seul bien sous mandat, pré-sélectionner
+        const mandateSellers = activeSellers.filter(s => s.status === 'mandate');
+        if (mandateSellers.length === 1) {
+            openAddContactModal(mandateSellers[0].id);
+        } else if (mandateSellers.length > 0) {
+            // Montrer une liste pour sélectionner le bien
+            const overlay = document.createElement('div');
+            overlay.className = 'mv-sheet-overlay';
+            overlay.id = 'selectSellerSheet';
+            overlay.onclick = function(e) { if (e.target === overlay) { overlay.remove(); document.querySelectorAll('#selectSellerSheetContent').forEach(s => s.remove()); } };
+
+            const sheet = document.createElement('div');
+            sheet.className = 'mv-sheet';
+            sheet.id = 'selectSellerSheetContent';
+            sheet.innerHTML = `
+                <div class="mv-sheet-handle"></div>
+                <div class="mv-sheet-label" style="margin-bottom:12px">Sélectionner le bien</div>
+                ${activeSellers.filter(s => s.status === 'mandate' || s.status === 'commercialisation').map(s => {
+                    const addr = s.address || 'Adresse inconnue';
+                    const name = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ');
+                    return `<div class="mv-visit-item" onclick="document.getElementById('selectSellerSheet').remove();document.getElementById('selectSellerSheetContent')?.remove();openAddContactModal('${s.id}')">
+                        <div class="mv-visit-bar" style="background:var(--m-primary)"></div>
+                        <div class="mv-visit-content">
+                            <div class="mv-visit-time">${escapeHtml(addr)}</div>
+                            <div class="mv-visit-visitor">${escapeHtml(name)}</div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right" style="color:var(--m-text-tertiary)"></i>
+                    </div>`;
+                }).join('')}
+            `;
+            document.body.appendChild(overlay);
+            document.body.appendChild(sheet);
+        } else {
+            showToast('Aucun bien sous mandat');
+        }
+    }
+
+    /** Gestion visibilité mobile/desktop */
+    function updateMobileVisibility() {
+        const mobile = isMobile();
+        const mvContainer = document.getElementById('mobileVisitsContainer');
+        const mvFab = document.getElementById('mobileFab');
+        const desktopContainer = document.getElementById('visitsContainer');
+
+        if (mvContainer) mvContainer.style.display = mobile ? 'block' : 'none';
+        if (mvFab) mvFab.style.display = mobile ? 'flex' : 'none';
+        if (desktopContainer) desktopContainer.style.display = mobile ? 'none' : 'block';
+
+        // Hide desktop-only elements via JS as backup
+        document.querySelectorAll('.page-title-bar, .stats-bar, .filters-bar, .portal-banner, .processed-requests-view').forEach(el => {
+            el.style.display = mobile ? 'none' : '';
+        });
+    }
+
     // ===== RENDERING =====
 
     function renderVisitsPage() {
         const filters = getFilters();
         const filtered = filterVisits(allVisits, filters);
         const stats = computeQuickStats(allVisits); // Stats toujours sur toutes les visites
+
+        if (isMobile()) {
+            const groups = groupVisitsBySeller(filtered);
+            // Ajouter les biens sous mandat vides (property view)
+            const hasStatusFilter = filters.status && filters.status !== '';
+            if (!hasStatusFilter) {
+                activeSellers.forEach(s => {
+                    if (s.status !== 'mandate') return;
+                    if (!groups[s.id]) {
+                        groups[s.id] = {
+                            seller: s, visits: [], contacts: [],
+                            nextVisit: null, plannedCount: 0, doneCount: 0, contactCount: 0
+                        };
+                    }
+                });
+            }
+            renderMobileVisitsPage(filtered, stats, groups);
+            updateMobileVisibility();
+            return;
+        }
+
+        updateMobileVisibility();
         renderQuickStats(stats);
 
         const container = document.getElementById('visitsContainer');
@@ -2023,7 +3389,9 @@
         const dateObj = new Date(visit.visit_date + 'T12:00:00');
         const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
         const timeLabel = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
-        const title = `Visite — ${visitorName}${visitorPhone ? ' — ' + visitorPhone : ''}${address ? ', ' + address : ''}`;
+        const propertyType = seller?.property_type ? seller.property_type.charAt(0).toUpperCase() + seller.property_type.slice(1) : '';
+        const city = seller?.address ? extractCity(seller.address) : (seller?.city || '');
+        const title = `Visite${propertyType ? ' ' + propertyType : ''}${city ? ' ' + city : ''} - ${visitorName}`;
 
         // Normaliser visit_time (peut être HH:MM:SS depuis PG)
         const startTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
@@ -3156,122 +4524,215 @@
 
     // ===== MODAL: FEEDBACK =====
 
+    /**
+     * openFeedbackForm — Wizard étape par étape pour le retour de visite.
+     * Chaque question apparaît individuellement avec possibilité de passer.
+     * Les réponses sont collectées dans un objet avant sauvegarde finale.
+     */
     function openFeedbackForm(visitId) {
         closeModal('feedbackModal');
         const visit = allVisits.find(v => v.id === visitId);
         if (!visit) return;
 
-        const er = visit.feedback_rating || '';
-        const ep = visit.price_perception || '';
-        const ed = visit.buyer_decision || '';
-        const en = visit.notes || '';
-        const ePosArr = visit.positive_points || [];
-        const eNegArr = visit.negative_points || [];
-        const eNh = visit.neighborhood_feel || '';
+        // Réponses existantes (édition) ou vides
+        const answers = {
+            feedback_rating: visit.feedback_rating || null,
+            positive_points: visit.positive_points || [],
+            negative_points: visit.negative_points || [],
+            price_perception: visit.price_perception || null,
+            neighborhood_feel: visit.neighborhood_feel || null,
+            buyer_decision: visit.buyer_decision || null,
+            notes: visit.notes || ''
+        };
 
-        const posChips = POSITIVE_POINTS.map(p =>
-            `<span class="feedback-chip feedback-chip-multi${ePosArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
-        ).join('');
-        const negChips = NEGATIVE_POINTS.map(p =>
-            `<span class="feedback-chip feedback-chip-multi${eNegArr.includes(p.value) ? ' active' : ''}" data-value="${p.value}">${p.label}</span>`
-        ).join('');
+        // Définition des étapes du wizard
+        const STEPS = [
+            {
+                key: 'feedback_rating', question: 'Quel est le ressenti global ?', type: 'single',
+                options: [
+                    { value: 'coup_de_coeur', label: '😍 Coup de coeur' },
+                    { value: 'interessant', label: '😊 Intéressant' },
+                    { value: 'pas_convaincu', label: '😕 Pas convaincu' },
+                    { value: 'pas_du_tout', label: '😞 Pas du tout' }
+                ]
+            },
+            {
+                key: 'positive_points', question: 'Des points positifs ?', type: 'multi',
+                options: POSITIVE_POINTS.map(p => ({ value: p.value, label: p.label }))
+            },
+            {
+                key: 'negative_points', question: 'Des points négatifs ?', type: 'multi',
+                options: NEGATIVE_POINTS.map(p => ({ value: p.value, label: p.label }))
+            },
+            {
+                key: 'price_perception', question: 'Perception du prix ?', type: 'single',
+                options: [
+                    { value: 'adapte', label: '✅ Adapté' },
+                    { value: 'un_peu_eleve', label: '⚠️ Un peu élevé' },
+                    { value: 'trop_eleve', label: '🚫 Trop élevé' }
+                ]
+            },
+            {
+                key: 'neighborhood_feel', question: 'Le quartier ?', type: 'single',
+                options: [
+                    { value: 'connait_bien', label: '🏘️ Connaît bien' },
+                    { value: 'decouvre', label: '🗺️ Découvre' },
+                    { value: 'pas_convaincu', label: '😕 Pas convaincu' }
+                ]
+            },
+            {
+                key: 'buyer_decision', question: 'Décision du visiteur ?', type: 'single',
+                options: [
+                    { value: 'en_attente', label: '⏳ En attente' },
+                    { value: 'interesse', label: '👍 Intéressé' },
+                    { value: 'contre_visite', label: '🔄 Contre-visite' },
+                    { value: 'offre', label: '🎉 Offre' },
+                    { value: 'refus', label: '👎 Refus' }
+                ]
+            },
+            { key: 'notes', question: 'Une note à ajouter ?', type: 'textarea' }
+        ];
 
+        const TOTAL_STEPS = STEPS.length;
+        let currentStep = 0;
+
+        // Créer le conteneur modal
         const modal = document.createElement('div');
         modal.id = 'feedbackModal';
         modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-card" style="max-width:440px">
-                <div class="feedback-title">Retour de visite</div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Ressenti global</div>
-                    <div class="feedback-chips" id="feedbackRatingChips">
-                        <span class="feedback-chip${er === 'coup_de_coeur' ? ' active' : ''}" data-value="coup_de_coeur">😍 Coup de coeur</span>
-                        <span class="feedback-chip${er === 'interessant' ? ' active' : ''}" data-value="interessant">😊 Intéressant</span>
-                        <span class="feedback-chip${er === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
-                        <span class="feedback-chip${er === 'pas_du_tout' ? ' active' : ''}" data-value="pas_du_tout">😞 Pas du tout</span>
-                    </div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Points positifs</div>
-                    <div class="feedback-chips feedback-multi" id="feedbackPosChips">${posChips}</div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Points négatifs</div>
-                    <div class="feedback-chips feedback-multi" id="feedbackNegChips">${negChips}</div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Perception du prix</div>
-                    <div class="feedback-chips" id="feedbackPriceChips">
-                        <span class="feedback-chip${ep === 'adapte' ? ' active' : ''}" data-value="adapte">✅ Adapté</span>
-                        <span class="feedback-chip${ep === 'un_peu_eleve' ? ' active' : ''}" data-value="un_peu_eleve">⚠️ Un peu élevé</span>
-                        <span class="feedback-chip${ep === 'trop_eleve' ? ' active' : ''}" data-value="trop_eleve">🚫 Trop élevé</span>
-                    </div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Quartier</div>
-                    <div class="feedback-chips" id="feedbackNeighborhoodChips">
-                        <span class="feedback-chip${eNh === 'connait_bien' ? ' active' : ''}" data-value="connait_bien">🏘️ Connaît bien</span>
-                        <span class="feedback-chip${eNh === 'decouvre' ? ' active' : ''}" data-value="decouvre">🗺️ Découvre</span>
-                        <span class="feedback-chip${eNh === 'pas_convaincu' ? ' active' : ''}" data-value="pas_convaincu">😕 Pas convaincu</span>
-                    </div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Décision visiteur</div>
-                    <div class="feedback-chips" id="feedbackDecisionChips">
-                        <span class="feedback-chip${ed === 'en_attente' ? ' active' : ''}" data-value="en_attente">⏳ En attente</span>
-                        <span class="feedback-chip${ed === 'interesse' ? ' active' : ''}" data-value="interesse">👍 Intéressé</span>
-                        <span class="feedback-chip${ed === 'contre_visite' ? ' active' : ''}" data-value="contre_visite">🔄 Contre-visite</span>
-                        <span class="feedback-chip${ed === 'offre' ? ' active' : ''}" data-value="offre">🎉 Offre</span>
-                        <span class="feedback-chip${ed === 'refus' ? ' active' : ''}" data-value="refus">👎 Refus</span>
-                    </div>
-                </div>
-                <div class="feedback-section">
-                    <div class="feedback-label">Notes</div>
-                    <textarea class="feedback-notes" id="feedbackNotes" rows="2" placeholder="Observations...">${escapeHtml(en)}</textarea>
-                </div>
-                <div class="feedback-actions">
-                    <button class="feedback-save-btn" onclick="saveFeedback('${visitId}')">Enregistrer</button>
-                    <button class="feedback-skip-btn" onclick="closeModal('feedbackModal')">Plus tard</button>
-                </div>
-            </div>
-        `;
         document.body.appendChild(modal);
 
+        function renderStep() {
+            const step = STEPS[currentStep];
+            const isLast = currentStep === TOTAL_STEPS - 1;
 
-        // Chips mono-sélection
-        modal.querySelectorAll('.feedback-chip:not(.feedback-chip-multi)').forEach(chip => {
-            chip.addEventListener('click', function() {
-                this.parentElement.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
+            // Barre de progression
+            const progressHtml = STEPS.map((_, i) => {
+                const cls = i < currentStep ? 'done' : (i === currentStep ? 'current' : '');
+                return `<div class="feedback-progress-dot ${cls}"></div>`;
+            }).join('');
+
+            // Contenu selon le type d'étape
+            let contentHtml = '';
+            if (step.type === 'single') {
+                const selected = answers[step.key];
+                contentHtml = `<div class="feedback-chips">
+                    ${step.options.map(o =>
+                        `<span class="feedback-chip${selected === o.value ? ' active' : ''}" data-value="${o.value}">${o.label}</span>`
+                    ).join('')}
+                </div>`;
+            } else if (step.type === 'multi') {
+                const selectedArr = answers[step.key] || [];
+                contentHtml = `<div class="feedback-chips">
+                    ${step.options.map(o =>
+                        `<span class="feedback-chip${selectedArr.includes(o.value) ? ' active' : ''}" data-value="${o.value}">${o.label}</span>`
+                    ).join('')}
+                </div>`;
+            } else if (step.type === 'textarea') {
+                contentHtml = `<textarea class="feedback-notes" id="fbWizardNotes" rows="3" placeholder="Observations...">${escapeHtml(answers.notes)}</textarea>`;
+            }
+
+            // Bouton suivant pour multi-select et textarea
+            let nextBtnHtml = '';
+            if (step.type === 'multi' || step.type === 'textarea') {
+                const btnLabel = isLast ? 'Enregistrer' : 'Suivant';
+                nextBtnHtml = `<button class="feedback-save-btn" id="fbWizardNext">${btnLabel}</button>`;
+            }
+
+            modal.innerHTML = `
+                <div class="feedback-wizard">
+                    <button class="feedback-close-btn" id="fbWizardClose">&times;</button>
+                    <div class="feedback-progress">${progressHtml}</div>
+                    <div class="feedback-step">
+                        <div class="feedback-question">${step.question}</div>
+                        ${contentHtml}
+                        ${nextBtnHtml}
+                        <div class="feedback-nav">
+                            <button class="feedback-skip-link" id="fbWizardSkip">${isLast ? 'Passer et enregistrer' : 'Passer'}</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Fermer
+            modal.querySelector('#fbWizardClose').addEventListener('click', () => closeModal('feedbackModal'));
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('feedbackModal'); });
+
+            // Passer
+            modal.querySelector('#fbWizardSkip').addEventListener('click', () => {
+                if (isLast) {
+                    if (step.type === 'textarea') {
+                        const ta = document.getElementById('fbWizardNotes');
+                        if (ta) answers.notes = ta.value.trim();
+                    }
+                    saveFeedbackWizard(visitId, answers);
+                } else {
+                    currentStep++;
+                    renderStep();
+                }
             });
-        });
-        // Chips multi-sélection
-        modal.querySelectorAll('.feedback-chip-multi').forEach(chip => {
-            chip.addEventListener('click', function() {
-                this.classList.toggle('active');
-            });
-        });
+
+            // Chips : single-select avance automatiquement, multi-select toggle
+            if (step.type === 'single') {
+                modal.querySelectorAll('.feedback-chip').forEach(chip => {
+                    chip.addEventListener('click', function() {
+                        modal.querySelectorAll('.feedback-chip').forEach(c => c.classList.remove('active'));
+                        this.classList.add('active');
+                        answers[step.key] = this.dataset.value;
+                        // Avance auto après un court délai visuel
+                        setTimeout(() => {
+                            if (isLast) {
+                                saveFeedbackWizard(visitId, answers);
+                            } else {
+                                currentStep++;
+                                renderStep();
+                            }
+                        }, 200);
+                    });
+                });
+            } else if (step.type === 'multi') {
+                modal.querySelectorAll('.feedback-chip').forEach(chip => {
+                    chip.addEventListener('click', function() {
+                        this.classList.toggle('active');
+                        const val = this.dataset.value;
+                        const arr = answers[step.key];
+                        if (arr.includes(val)) {
+                            answers[step.key] = arr.filter(v => v !== val);
+                        } else {
+                            arr.push(val);
+                        }
+                    });
+                });
+                // Bouton Suivant pour multi
+                modal.querySelector('#fbWizardNext').addEventListener('click', () => {
+                    if (isLast) {
+                        saveFeedbackWizard(visitId, answers);
+                    } else {
+                        currentStep++;
+                        renderStep();
+                    }
+                });
+            } else if (step.type === 'textarea') {
+                modal.querySelector('#fbWizardNext').addEventListener('click', () => {
+                    const ta = document.getElementById('fbWizardNotes');
+                    if (ta) answers.notes = ta.value.trim();
+                    saveFeedbackWizard(visitId, answers);
+                });
+            }
+        }
+
+        renderStep();
     }
 
-    async function saveFeedback(visitId) {
-        const ratingChip = document.querySelector('#feedbackRatingChips .feedback-chip.active');
-        const priceChip = document.querySelector('#feedbackPriceChips .feedback-chip.active');
-        const decisionChip = document.querySelector('#feedbackDecisionChips .feedback-chip.active');
-        const neighborhoodChip = document.querySelector('#feedbackNeighborhoodChips .feedback-chip.active');
-        const posPoints = Array.from(document.querySelectorAll('#feedbackPosChips .feedback-chip.active')).map(c => c.dataset.value);
-        const negPoints = Array.from(document.querySelectorAll('#feedbackNegChips .feedback-chip.active')).map(c => c.dataset.value);
-        const notes = document.getElementById('feedbackNotes').value.trim();
-
-        if (!ratingChip) { alert('Sélectionnez un ressenti.'); return; }
-
+    async function saveFeedbackWizard(visitId, answers) {
         const updates = {
-            feedback_rating: ratingChip.dataset.value,
-            price_perception: priceChip ? priceChip.dataset.value : null,
-            buyer_decision: decisionChip ? decisionChip.dataset.value : null,
-            positive_points: posPoints.length > 0 ? posPoints : null,
-            negative_points: negPoints.length > 0 ? negPoints : null,
-            neighborhood_feel: neighborhoodChip ? neighborhoodChip.dataset.value : null,
-            notes: notes || null,
+            feedback_rating: answers.feedback_rating,
+            price_perception: answers.price_perception,
+            buyer_decision: answers.buyer_decision,
+            positive_points: answers.positive_points.length > 0 ? answers.positive_points : null,
+            negative_points: answers.negative_points.length > 0 ? answers.negative_points : null,
+            neighborhood_feel: answers.neighborhood_feel,
+            notes: answers.notes || null,
             updated_at: new Date().toISOString()
         };
 
@@ -4472,10 +5933,27 @@
 
         console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers,', portalRequests.length, 'portal requests,', processedRequests.length, 'processed');
 
+        updateMobileVisibility();
         renderVisitsPage();
-        renderPortalBanner();
-        document.getElementById('processedCount').textContent = processedRequests.length;
+        if (!isMobile()) {
+            renderPortalBanner();
+            document.getElementById('processedCount').textContent = processedRequests.length;
+        }
         setupFilterListeners();
+
+        // Resize handler pour basculer mobile/desktop
+        let resizeTimer = null;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                updateMobileVisibility();
+                renderVisitsPage();
+                if (!isMobile()) {
+                    renderPortalBanner();
+                    document.getElementById('processedCount').textContent = processedRequests.length;
+                }
+            }, 200);
+        });
     });
     </script>
 </body>
