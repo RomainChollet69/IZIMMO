@@ -4539,8 +4539,9 @@
                 const buyerName = buyer
                     ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim()
                     : (visit.buyer_name || 'Acquéreur');
+                const propertyType = seller?.property_type ? seller.property_type.charAt(0).toUpperCase() + seller.property_type.slice(1) : '';
                 const city = seller?.address ? (extractCity(seller.address) || '') : (seller?.city || '');
-                const title = `Visite${city ? ' ' + city : ''} — ${buyerName}`;
+                const title = `Visite${propertyType ? ' ' + propertyType : ''}${city ? ' ' + city : ''} - ${buyerName}`;
 
                 // Date et heures
                 const date = visit.visit_date;
@@ -6869,9 +6870,6 @@
             document.querySelector('.modal-title').textContent = "Modifier l'Acquéreur";
 
             openModal(initialTab);
-
-            // Load Léon popup
-            showLeonPopup(id, 'buyer');
 
             // Load notes
             loadBuyerNotes(id);
