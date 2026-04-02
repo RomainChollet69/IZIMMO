@@ -2979,15 +2979,13 @@
         const contacts = group.contacts || [];
         const isOpen = openAccordions.has(sellerId);
 
-        // Stats combinées : contacts manuels + visites converties + demandes portail visibles
-        // Compter les visites qui viennent d'un contact (ont un contact_source)
-        const visitsFromContacts = group.visits.filter(v => v.contact_source);
-        // Demandes portail visibles (pending + dismissed avec note, sans accepted pour éviter double-comptage avec visitsFromContacts)
+        // Stats : chaque visite est aussi un contact (une personne intéressée par le bien)
+        const activeVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee');
         const sellerPendingCount = portalRequests.filter(r => r.matched_seller_id === sellerId).length;
         const sellerProcessedCount = processedRequests.filter(r => r.matched_seller_id === sellerId && r.status !== 'accepted').length;
-        const totalContacts = contacts.length + visitsFromContacts.length + sellerPendingCount + sellerProcessedCount;
-        const treatedContacts = contacts.filter(c => c.contact_treated).length + visitsFromContacts.length + sellerProcessedCount;
-        const totalVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee').length;
+        const totalContacts = contacts.length + activeVisits.length + sellerPendingCount + sellerProcessedCount;
+        const treatedContacts = contacts.filter(c => c.contact_treated).length + activeVisits.length + sellerProcessedCount;
+        const totalVisits = activeVisits.length;
 
         // Badges droite : seulement les prochaines visites
         let badges = '';
