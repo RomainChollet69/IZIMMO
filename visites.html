@@ -4821,6 +4821,32 @@
         const userId = await getCurrentUserId();
         if (!userId) return;
 
+        // Vérifier si un acquéreur existe déjà avec le même email ou téléphone
+        if (email || phone) {
+            let dupeQuery = supabaseClient.from('buyers').select('id, first_name, last_name, phone, email').eq('user_id', userId);
+            const orClauses = [];
+            if (email) orClauses.push(`email.eq.${email}`);
+            if (phone) orClauses.push(`phone.eq.${phone}`);
+            dupeQuery = dupeQuery.or(orClauses.join(','));
+            const { data: dupes } = await dupeQuery.limit(1);
+            if (dupes && dupes.length > 0) {
+                const d = dupes[0];
+                const dupeName = `${d.first_name || ''} ${d.last_name || ''}`.trim();
+                const dupeInfo = [d.phone, d.email].filter(Boolean).join(' / ');
+                if (!confirm(`⚠️ Un acquéreur similaire existe déjà :\n${dupeName} (${dupeInfo})\n\nVoulez-vous quand même créer un doublon ?`)) {
+                    // Lier la visite à l'acquéreur existant
+                    await supabaseClient.from('visits')
+                        .update({ buyer_id: d.id, updated_at: new Date().toISOString() })
+                        .eq('id', visitId).eq('user_id', userId);
+                    closeModal('promoteModal');
+                    allVisits = await loadAllVisits();
+                    renderVisitsPage();
+                    showToast(`Visite liée à ${dupeName} (existant)`);
+                    return;
+                }
+            }
+        }
+
         // Créer le buyer
         const buyer = {
             user_id: userId,
