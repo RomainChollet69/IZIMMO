@@ -2095,7 +2095,24 @@
 
     function getVisitorPhone(visit) {
         if (visit.buyers && visit.buyers.phone) return visit.buyers.phone;
-        return visit.visitor_phone || '';
+        if (visit.visitor_phone) return visit.visitor_phone;
+        // Fallback : extraire le téléphone des notes (anciennes visites portail)
+        if (visit.notes) {
+            const m = visit.notes.match(/(?:Contact\s*:\s*|Tél\s*:\s*)(0[\d\s.]{9,})/);
+            if (m) return m[1].trim();
+        }
+        return '';
+    }
+
+    function getVisitorEmail(visit) {
+        if (visit.buyers && visit.buyers.email) return visit.buyers.email;
+        if (visit.visitor_email) return visit.visitor_email;
+        // Fallback : extraire l'email des notes (anciennes visites portail)
+        if (visit.notes) {
+            const m = visit.notes.match(/[\w.+-]+@[\w.-]+\.\w{2,}/);
+            if (m) return m[0];
+        }
+        return '';
     }
 
     function isLinkedBuyer(visit) {
@@ -2578,7 +2595,7 @@
         const isContact = visit.status === 'demande';
         const visitorName = getVisitorName(visit);
         const phone = getVisitorPhone(visit);
-        const email = visit.buyers?.email || visit.visitor_email || '';
+        const email = getVisitorEmail(visit);
         const linked = isLinkedBuyer(visit);
         const seller = visit.sellers;
         const address = seller ? (seller.address || '') : '';
@@ -3392,8 +3409,8 @@
 
         const buyerName = visit.buyers ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim() : '';
         const visitorName = buyerName || visit.buyer_name || 'Visiteur';
-        const visitorPhone = visit.buyers?.phone || visit.visitor_phone || '';
-        const visitorEmail = visit.buyers?.email || visit.visitor_email || '';
+        const visitorPhone = getVisitorPhone(visit);
+        const visitorEmail = getVisitorEmail(visit);
         const address = seller?.address || '';
         const dateObj = new Date(visit.visit_date + 'T12:00:00');
         const dayLabel = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -3502,8 +3519,8 @@
         const visitorName = visit.buyers
             ? `${visit.buyers.first_name || ''} ${visit.buyers.last_name || ''}`.trim()
             : visit.buyer_name || 'Visiteur';
-        const phone = visit.buyers?.phone || visit.visitor_phone || '';
-        const email = visit.buyers?.email || visit.visitor_email || '';
+        const phone = getVisitorPhone(visit);
+        const email = getVisitorEmail(visit);
         const seller = visit.sellers || activeSellers.find(s => s.id === visit.seller_id);
         const address = seller?.address || '';
 
@@ -3634,7 +3651,7 @@
                     leadData: {
                         first_name: firstName,
                         last_name: lastName,
-                        phone: visit.buyers?.phone || visit.visitor_phone || '',
+                        phone: getVisitorPhone(visit),
                         address
                     },
                     agentName,
@@ -4839,8 +4856,8 @@
         }
 
         const name = visit.buyer_name || '';
-        const phone = visit.visitor_phone || '';
-        const email = visit.visitor_email || '';
+        const phone = getVisitorPhone(visit);
+        const email = getVisitorEmail(visit);
 
         // Pré-découper le nom
         const parts = name.trim().split(/\s+/);
@@ -5021,7 +5038,7 @@
         // Infos du visiteur
         const visitorName = getVisitorName(visit);
         const visitorPhone = getVisitorPhone(visit);
-        const visitorEmail = visit.buyers?.email || visit.visitor_email || '';
+        const visitorEmail = getVisitorEmail(visit);
 
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
