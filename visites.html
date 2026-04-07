@@ -3396,12 +3396,14 @@
         // Normaliser visit_time (peut être HH:MM:SS depuis PG)
         const startTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
 
-        // Calculer end_time (1h par défaut)
+        // Calculer end_time (30 min par défaut)
         let endTime = '18:00';
         if (startTime) {
             const [h, m] = startTime.split(':').map(Number);
-            const endH = Math.min(h + 1, 23);
-            endTime = `${String(endH).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            const totalMin = h * 60 + m + 30;
+            const endH = Math.min(Math.floor(totalMin / 60), 23);
+            const endM = totalMin % 60;
+            endTime = `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
         }
 
         const modal = document.createElement('div');
