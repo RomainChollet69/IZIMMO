@@ -5487,8 +5487,9 @@
                 EXAMPLE_BUYERS.forEach(columnData => {
                     const container = containers[columnData.column];
                     if (container) {
+                        // insertAdjacentHTML au lieu de innerHTML += (évite le re-parse complet)
                         columnData.cards.forEach(card => {
-                            container.innerHTML += createExampleBuyerCard(card);
+                            container.insertAdjacentHTML('beforeend', createExampleBuyerCard(card));
                         });
                     }
                 });
@@ -5524,32 +5525,35 @@
             updateCounts();
         }
 
+        // Event delegation : un seul listener global au lieu d'un par carte
+        let _cardToggleAttached = false;
         function setupCardToggles() {
-            document.querySelectorAll('.lead-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('a, button')) return;
-                    const column = card.closest('.column');
-                    if (column) {
-                        const prev = column.querySelector('.lead-card.expanded');
-                        if (prev && prev !== card) {
-                            prev.classList.remove('expanded');
-                            prev.style.maxHeight = '120px';
-                            prev.querySelector('.card-expand-arrow').textContent = '▼';
-                        }
+            if (_cardToggleAttached) return;
+            _cardToggleAttached = true;
+            document.querySelector('.pipeline').addEventListener('click', (e) => {
+                const card = e.target.closest('.lead-card');
+                if (!card || e.target.closest('a, button')) return;
+                const column = card.closest('.column');
+                if (column) {
+                    const prev = column.querySelector('.lead-card.expanded');
+                    if (prev && prev !== card) {
+                        prev.classList.remove('expanded');
+                        prev.style.maxHeight = '120px';
+                        prev.querySelector('.card-expand-arrow').textContent = '▼';
                     }
-                    card.classList.toggle('expanded');
-                    const arrow = card.querySelector('.card-expand-arrow');
-                    if (card.classList.contains('expanded')) {
-                        card.style.maxHeight = card.scrollHeight + 'px';
-                        setTimeout(() => {
-                            if (card.classList.contains('expanded')) card.style.maxHeight = 'none';
-                        }, 350);
-                        if (arrow) arrow.textContent = '▲';
-                    } else {
-                        card.style.maxHeight = '120px';
-                        if (arrow) arrow.textContent = '▼';
-                    }
-                });
+                }
+                card.classList.toggle('expanded');
+                const arrow = card.querySelector('.card-expand-arrow');
+                if (card.classList.contains('expanded')) {
+                    card.style.maxHeight = card.scrollHeight + 'px';
+                    setTimeout(() => {
+                        if (card.classList.contains('expanded')) card.style.maxHeight = 'none';
+                    }, 350);
+                    if (arrow) arrow.textContent = '▲';
+                } else {
+                    card.style.maxHeight = '120px';
+                    if (arrow) arrow.textContent = '▼';
+                }
             });
         }
 
@@ -5715,10 +5719,12 @@
             const searchClear = document.getElementById('bottomSearchClear');
             if (!searchInput || !searchClear) return;
 
+            let _searchDebounce = null;
             searchInput.addEventListener('input', () => {
                 const val = searchInput.value;
                 searchClear.style.display = val ? '' : 'none';
-                filterBuyers(val);
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(() => filterBuyers(val), 200);
             });
 
             searchClear.addEventListener('click', () => {
@@ -7121,11 +7127,13 @@
                 buyer.status = newStatus;
                 await updateBuyer(buyerId, { status: newStatus });
                 awardPoints('move_stage', { lead_id: buyerId, lead_type: 'buyer', from: oldStatus, to: newStatus });
-                renderBuyers();
-                const newCard = container.querySelector(`.lead-card[data-id="${buyerId}"]`);
-                if (newCard && position.before && container.contains(position.before)) {
-                    container.insertBefore(newCard, position.before);
+                // Déplacement DOM chirurgical au lieu de re-render complet
+                if (position.before) {
+                    container.insertBefore(draggedCard, position.before);
+                } else {
+                    container.appendChild(draggedCard);
                 }
+                updateCounts();
                 await updatePositions(container, newStatus);
                 const oldContainer = document.getElementById(oldStatus + '-container');
                 if (oldContainer) await updatePositions(oldContainer, oldStatus);
@@ -7175,11 +7183,13 @@
             const cards = container.querySelectorAll('.lead-card');
             const userId = await getCurrentUserId();
             if (!userId) return;
+            // Map pour O(1) lookup au lieu de buyers.find() en boucle
+            const buyerMap = new Map(buyers.map(b => [b.id, b]));
             const updates = [];
             cards.forEach((card, index) => {
                 const id = card.dataset.id;
                 updates.push(supabaseClient.from('buyers').update({ position: index }).eq('id', id).eq('user_id', userId));
-                const buyer = buyers.find(b => b.id === id);
+                const buyer = buyerMap.get(id);
                 if (buyer) buyer.position = index;
             });
             await Promise.all(updates);
@@ -7625,14 +7635,24 @@
             });
         }
 
+        // Throttle dragover : limite les reflows à ~30fps au lieu de 60+
+        let _lastDragoverTime = 0;
+        const DRAGOVER_THROTTLE_MS = 32;
+
+        let _dragDropAttached = false;
         function setupDragAndDrop() {
             ensureDragDocumentListeners();
+            if (_dragDropAttached) return;
+            _dragDropAttached = true;
 
             // Écouter dragover/drop sur toute la colonne (pas seulement le cards-container)
             document.querySelectorAll('.column').forEach(column => {
                 column.addEventListener('dragover', e => {
                     e.preventDefault();
                     if (!draggedCard) return;
+                    const now = Date.now();
+                    if (now - _lastDragoverTime < DRAGOVER_THROTTLE_MS) return;
+                    _lastDragoverTime = now;
                     const container = column.querySelector('.cards-container');
                     if (!container) return;
                     const position = getDropPosition(container, e.clientY);
@@ -7658,6 +7678,9 @@
                 container.addEventListener('dragover', e => {
                     e.preventDefault();
                     if (!draggedCard) return;
+                    const now = Date.now();
+                    if (now - _lastDragoverTime < DRAGOVER_THROTTLE_MS) return;
+                    _lastDragoverTime = now;
                     const position = getDropPosition(container, e.clientY);
                     showDropIndicator(container, position);
                 });

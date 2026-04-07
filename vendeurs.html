@@ -6164,12 +6164,23 @@
             }
         }
 
+        // Throttle dragover : limite les reflows à ~30fps
+        let _lastDragoverTime = 0;
+        const DRAGOVER_THROTTLE_MS = 32;
+
         /** Ré-attache les handlers drag-and-drop sur les nouvelles colonnes */
+        let _dragDropHandlersAttached = false;
         function reattachDragDropHandlers() {
+            if (_dragDropHandlersAttached) return;
+            _dragDropHandlersAttached = true;
+
             document.querySelectorAll('.column').forEach(column => {
                 column.addEventListener('dragover', e => {
                     e.preventDefault();
                     if (!draggedCard) return;
+                    const now = Date.now();
+                    if (now - _lastDragoverTime < DRAGOVER_THROTTLE_MS) return;
+                    _lastDragoverTime = now;
                     const container = column.querySelector('.cards-container');
                     if (!container) return;
                     const position = getDropPosition(container, e.clientY);
@@ -8175,7 +8186,7 @@
                     const container = containers[columnData.column];
                     if (container) {
                         columnData.cards.forEach(card => {
-                            container.innerHTML += createExampleSellerCard(card);
+                            container.insertAdjacentHTML('beforeend', createExampleSellerCard(card));
                         });
                     }
                 });
@@ -8193,40 +8204,43 @@
             updateCounts();
         }
 
+        // Event delegation : un seul listener global au lieu d'un par carte
+        let _cardToggleAttached = false;
         function setupCardToggles() {
-            document.querySelectorAll('.lead-card').forEach(card => {
-                card.addEventListener('click', (e) => {
-                    if (e.target.closest('a, button, .card-commission')) return;
+            if (_cardToggleAttached) return;
+            _cardToggleAttached = true;
+            document.querySelector('.pipeline').addEventListener('click', (e) => {
+                const card = e.target.closest('.lead-card');
+                if (!card || e.target.closest('a, button, .card-commission')) return;
 
-                    // Mobile : ouvrir le detail overlay au lieu d'expand
-                    if (isMobile() && card.dataset.id) {
-                        openMobileDetail(card.dataset.id);
-                        return;
-                    }
+                // Mobile : ouvrir le detail overlay au lieu d'expand
+                if (isMobile() && card.dataset.id) {
+                    openMobileDetail(card.dataset.id);
+                    return;
+                }
 
-                    const column = card.closest('.column');
-                    if (column) {
-                        const prev = column.querySelector('.lead-card.expanded');
-                        if (prev && prev !== card) {
-                            prev.classList.remove('expanded');
-                            prev.style.maxHeight = '120px';
-                            prev.querySelector('.card-expand-arrow').textContent = '▼';
-                        }
+                const column = card.closest('.column');
+                if (column) {
+                    const prev = column.querySelector('.lead-card.expanded');
+                    if (prev && prev !== card) {
+                        prev.classList.remove('expanded');
+                        prev.style.maxHeight = '120px';
+                        prev.querySelector('.card-expand-arrow').textContent = '▼';
                     }
-                    card.classList.toggle('expanded');
-                    const arrow = card.querySelector('.card-expand-arrow');
-                    if (card.classList.contains('expanded')) {
-                        card.style.maxHeight = card.scrollHeight + 'px';
-                        // Après la transition, lever la contrainte pour ne rien couper
-                        setTimeout(() => {
-                            if (card.classList.contains('expanded')) card.style.maxHeight = 'none';
-                        }, 350);
-                        if (arrow) arrow.textContent = '▲';
-                    } else {
-                        card.style.maxHeight = '120px';
-                        if (arrow) arrow.textContent = '▼';
-                    }
-                });
+                }
+                card.classList.toggle('expanded');
+                const arrow = card.querySelector('.card-expand-arrow');
+                if (card.classList.contains('expanded')) {
+                    card.style.maxHeight = card.scrollHeight + 'px';
+                    // Après la transition, lever la contrainte pour ne rien couper
+                    setTimeout(() => {
+                        if (card.classList.contains('expanded')) card.style.maxHeight = 'none';
+                    }, 350);
+                    if (arrow) arrow.textContent = '▲';
+                } else {
+                    card.style.maxHeight = '120px';
+                    if (arrow) arrow.textContent = '▼';
+                }
             });
         }
 
@@ -8479,10 +8493,12 @@
             const searchClear = document.getElementById('bottomSearchClear');
             if (!searchInput || !searchClear) return;
 
+            let _searchDebounce = null;
             searchInput.addEventListener('input', () => {
                 const val = searchInput.value;
                 searchClear.style.display = val ? '' : 'none';
-                filterLeads(val);
+                clearTimeout(_searchDebounce);
+                _searchDebounce = setTimeout(() => filterLeads(val), 200);
             });
 
             searchClear.addEventListener('click', () => {
@@ -10035,11 +10051,13 @@
                     seller.status = newStatus;
                 }
                 await loadVisitCounts();
-                renderSellers();
-                const newCard = container.querySelector(`.lead-card[data-id="${sellerId}"]`);
-                if (newCard && position.before && container.contains(position.before)) {
-                    container.insertBefore(newCard, position.before);
+                // Déplacement DOM chirurgical au lieu de re-render complet
+                if (position.before) {
+                    container.insertBefore(draggedCard, position.before);
+                } else {
+                    container.appendChild(draggedCard);
                 }
+                updateCounts();
                 await updatePositions(container, newStatus);
                 const oldContainer = document.getElementById(oldStatus + '-container');
                 if (oldContainer) await updatePositions(oldContainer, oldStatus);
@@ -10106,12 +10124,14 @@
             const cards = container.querySelectorAll('.lead-card:not(.example-card)');
             const userId = await getCurrentUserId();
             if (!userId) return;
+            // Map pour O(1) lookup au lieu de sellers.find() en boucle
+            const sellerMap = new Map(sellers.map(s => [s.id, s]));
             const updates = [];
             cards.forEach((card, index) => {
                 const id = card.dataset.id;
-                if (!id) return; // Skip si pas d'ID (sécurité supplémentaire)
+                if (!id) return;
                 updates.push(supabaseClient.from('sellers').update({ position: index }).eq('id', id).eq('user_id', userId));
-                const seller = sellers.find(s => s.id === id);
+                const seller = sellerMap.get(id);
                 if (seller) seller.position = index;
             });
             await Promise.all(updates);
@@ -10877,7 +10897,10 @@
             await showBriefing();
         }
 
+        let _setupDragDone = false;
         function setupDragAndDrop() {
+            if (_setupDragDone) return;
+            _setupDragDone = true;
             // Handlers globaux (dragstart / dragend) — une seule fois sur document
             document.addEventListener('dragstart', e => {
                 if (e.target.classList.contains('lead-card')) {
