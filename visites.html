@@ -2652,6 +2652,7 @@
             actionsHtml += `<button class="mv-sheet-btn primary" onclick="closeMobileSheet();markVisitDone('${visit.id}')"><i class="fa-solid fa-check"></i> Marquer effectuée</button>`;
             actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openVisitConfirmMessage('${visit.id}')"><i class="fa-solid fa-comment-sms"></i> Envoyer confirmation</button>`;
             actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();addVisitToCalendar('${visit.id}')"><i class="fa-brands fa-google"></i> Ajouter à l'agenda</button>`;
+            actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openRescheduleModal('${visit.id}')"><i class="fa-solid fa-calendar-pen"></i> Reprogrammer</button>`;
             actionsHtml += `<button class="mv-sheet-btn danger" onclick="closeMobileSheet();cancelVisit('${visit.id}')"><i class="fa-solid fa-xmark"></i> Annuler la visite</button>`;
         } else if (visit.status === 'effectuee') {
             const fbLabel = visit.feedback_rating ? 'Modifier le retour' : 'Donner un retour';
@@ -2666,6 +2667,9 @@
             }
             actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openPlanFromContact('${visit.id}')"><i class="fa-solid fa-calendar-plus"></i> Planifier une visite</button>`;
             if (!linked) actionsHtml += `<button class="mv-sheet-btn secondary" onclick="closeMobileSheet();openPromoteModal('${visit.id}')"><i class="fa-solid fa-arrow-up"></i> Créer acquéreur</button>`;
+        }
+        if (visit.status === 'annulee') {
+            actionsHtml += `<button class="mv-sheet-btn primary" onclick="closeMobileSheet();openRescheduleModal('${visit.id}')"><i class="fa-solid fa-calendar-pen"></i> Reprogrammer</button>`;
         }
         // Lien acquéreur si lié
         if (visit.buyer_id) {
@@ -3115,6 +3119,7 @@
         if (visit.status === 'planifiee') {
             actions = `<div class="visit-card-actions">
                 <button type="button" class="visit-action-btn done" onclick="event.stopPropagation();markVisitDone('${visit.id}')">Effectuée</button>
+                <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation();openRescheduleModal('${visit.id}')">Reprogrammer</button>
                 <button type="button" class="visit-action-btn cancel" onclick="event.stopPropagation();cancelVisit('${visit.id}')">Annuler</button>
                 ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation();openPromoteModal('${visit.id}')">Créer un acquéreur</button>` : ''}
             </div>`;
@@ -3124,6 +3129,10 @@
                 <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation();openFeedbackForm('${visit.id}')">${btnLabel}</button>
                 <button type="button" class="visit-action-btn promote" style="background:#F3E5F5;color:#7B1FA2" onclick="event.stopPropagation();openVisitRetourPopup('${visit.id}')">Demander un retour</button>
                 ${!linked ? `<button type="button" class="visit-action-btn promote" onclick="event.stopPropagation();openPromoteModal('${visit.id}')">Promouvoir en acquéreur</button>` : ''}
+            </div>`;
+        } else if (visit.status === 'annulee') {
+            actions = `<div class="visit-card-actions">
+                <button type="button" class="visit-action-btn feedback" onclick="event.stopPropagation();openRescheduleModal('${visit.id}')">Reprogrammer</button>
             </div>`;
         }
 
@@ -3721,6 +3730,70 @@
         renderVisitsPage();
         openFeedbackForm(visitId);
         showToast('Visite marquée effectuée');
+    }
+
+    function openRescheduleModal(visitId) {
+        const visit = allVisits.find(v => v.id === visitId);
+        if (!visit) return;
+        const currentDate = visit.visit_date || '';
+        const currentTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
+        const visitorName = getVisitorName(visit);
+
+        const modal = document.createElement('div');
+        modal.id = 'rescheduleModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:380px">
+                <h3 style="margin:0 0 4px; font-size:16px; font-weight:700; color:var(--text-dark)">Reprogrammer la visite</h3>
+                <div style="font-size:13px; color:#78909C; margin-bottom:16px">${escapeHtml(visitorName)}</div>
+                <div class="form-group" style="margin-bottom:12px">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="rescheduleDate" class="form-input" value="${currentDate}">
+                </div>
+                <div class="form-group" style="margin-bottom:20px">
+                    <label class="form-label">Heure</label>
+                    <input type="time" id="rescheduleTime" class="form-input" value="${currentTime}">
+                </div>
+                <div style="display:flex; gap:10px">
+                    <button type="button" id="rescheduleBtn" onclick="confirmReschedule('${visitId}')" style="
+                        flex:1; padding:12px; background:linear-gradient(135deg,#667eea,#764ba2);
+                        color:white; border:none; border-radius:12px; font-size:14px; font-weight:700;
+                        cursor:pointer; font-family:Inter,sans-serif;
+                    ">Confirmer</button>
+                    <button type="button" onclick="closeModal('rescheduleModal')" style="
+                        padding:12px 20px; background:#F1F5F9; color:#64748b; border:none; border-radius:12px;
+                        font-size:14px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Annuler</button>
+                </div>
+            </div>`;
+        document.body.appendChild(modal);
+    }
+
+    async function confirmReschedule(visitId) {
+        const newDate = document.getElementById('rescheduleDate').value;
+        if (!newDate) { alert('Veuillez renseigner une date.'); return; }
+        const newTime = document.getElementById('rescheduleTime').value || null;
+
+        const btn = document.getElementById('rescheduleBtn');
+        btn.disabled = true;
+        btn.textContent = 'Mise à jour...';
+
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { error } = await supabaseClient.from('visits')
+            .update({ visit_date: newDate, visit_time: newTime, status: 'planifiee', updated_at: new Date().toISOString() })
+            .eq('id', visitId).eq('user_id', userId);
+        if (error) { console.error('[Visites] Reschedule error:', error); alert('Erreur'); return; }
+
+        const visit = allVisits.find(v => v.id === visitId);
+        if (visit) {
+            visit.visit_date = newDate;
+            visit.visit_time = newTime;
+            visit.status = 'planifiee';
+        }
+        closeModal('rescheduleModal');
+        renderVisitsPage();
+        showToast('Visite reprogrammée');
     }
 
     async function cancelVisit(visitId) {
