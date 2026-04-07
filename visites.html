@@ -3222,6 +3222,10 @@
             ? contact.notes.split('[Traité]').pop().trim()
             : '';
 
+        const leadBtn = linked
+            ? `<a href="acquereurs.html?openLead=${contact.buyer_id}" class="visit-cal-btn" onclick="event.stopPropagation()" title="Voir la fiche acquéreur" style="color:#7B1FA2; border-color:#E1BEE7; text-decoration:none; font-weight:700; font-size:13px">L</a>`
+            : '';
+
         return `<div class="visit-card demande${isTraite ? ' treated' : ''}" draggable="true" data-contact-id="${contact.id}"
                     ondragstart="handleContactDragStart(event, '${contact.id}')"
                     onclick="toggleVisitCardExpand(this)">
@@ -3229,6 +3233,7 @@
                 ${statusBadge}
                 <span class="contact-source-badge">${CONTACT_SOURCE_LABELS[source] || source}</span>
                 <span class="visit-card-date">${dateStr}</span>
+                ${leadBtn}
             </div>
             <div class="contact-card-info">
                 <div class="contact-card-name-row">
@@ -3273,12 +3278,16 @@
         const statusColor = req.status === 'accepted' ? '#2E7D32' : '#3F51B5';
         const note = req.processing_note || '';
         const dateStr = req.updated_at ? new Date(req.updated_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) : '';
+        const leadBtn = req.created_buyer_id
+            ? `<a href="acquereurs.html?openLead=${req.created_buyer_id}" class="visit-cal-btn" onclick="event.stopPropagation()" title="Voir la fiche acquéreur" style="color:#7B1FA2; border-color:#E1BEE7; text-decoration:none; font-weight:700; font-size:13px">L</a>`
+            : '';
 
         return `<div class="visit-card demande treated" onclick="toggleVisitCardExpand(this)">
             <div class="visit-card-top">
                 <span class="visit-status-badge" style="background:${statusColor}15; color:${statusColor}">${statusLabel}</span>
                 <span class="contact-source-badge">${escapeHtml(shortLabel)}</span>
                 <span class="visit-card-date">${dateStr}</span>
+                ${leadBtn}
             </div>
             <div class="contact-card-info">
                 <div class="contact-card-name-row">
