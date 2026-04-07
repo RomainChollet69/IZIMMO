@@ -5644,6 +5644,7 @@
 
             // Actions
             ext += `<div class="card-actions">
+                <button class="card-btn" onclick="event.stopPropagation(); shareBuyer('${buyer.id}')" title="Partager"><i class="fa-solid fa-arrow-up-from-bracket" style="font-size:12px"></i></button>
                 <button class="card-btn mobile-move-btn" onclick="openMovePopup('${buyer.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="editBuyer('${buyer.id}')" title="Modifier">✏️</button>
                 <button class="card-btn" onclick="confirmDeleteBuyer('${buyer.id}')" title="Supprimer">🗑️</button>
@@ -6897,6 +6898,109 @@
             document.body.appendChild(t);
             requestAnimationFrame(() => t.style.opacity = '1');
             setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+        }
+
+        // ===== PARTAGE FICHE ACQUÉREUR =====
+
+        async function shareBuyer(id) {
+            const buyer = buyers.find(b => b.id === id);
+            if (!buyer) return;
+
+            const name = `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim();
+            const lines = [`📋 Acquéreur : ${name}`];
+            if (buyer.phone) lines.push(`📞 ${buyer.phone}`);
+            if (buyer.email) lines.push(`📧 ${buyer.email}`);
+
+            const searchParts = [];
+            if (buyer.property_type) {
+                const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble', appartement_ou_maison: 'Appart/Maison' };
+                searchParts.push(types[buyer.property_type] || buyer.property_type);
+            }
+            if (buyer.rooms) searchParts.push(buyer.rooms);
+            if (buyer.budget_max) searchParts.push(formatEuro(buyer.budget_max));
+            if (searchParts.length > 0) lines.push(`🏠 Recherche : ${searchParts.join(' · ')}`);
+
+            if (buyer.sector) lines.push(`📍 ${buyer.sector.replace(/ \| /g, ', ')}`);
+            if (buyer.surface_min) lines.push(`📐 ${buyer.surface_min} m² min`);
+            if (buyer.budget_max) lines.push(`💰 Budget max : ${formatEuro(buyer.budget_max)}`);
+
+            // Charger les notes
+            const userId = await getCurrentUserId();
+            if (userId) {
+                const { data: notes } = await supabaseClient
+                    .from('lead_notes')
+                    .select('content, created_at')
+                    .eq('user_id', userId)
+                    .eq('buyer_id', id)
+                    .order('created_at', { ascending: false })
+                    .limit(5);
+                if (notes && notes.length > 0) {
+                    lines.push('');
+                    lines.push('📝 Notes :');
+                    notes.forEach(n => {
+                        const d = new Date(n.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                        lines.push(`• ${d} — ${n.content.substring(0, 150)}`);
+                    });
+                }
+            }
+
+            const text = lines.join('\n');
+            const phone = buyer.phone ? buyer.phone.replace(/\s/g, '').replace(/^0/, '33') : '';
+
+            // Essayer le partage natif (mobile)
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: `Fiche ${name}`, text });
+                    return;
+                } catch (e) { /* Annulé ou non supporté → fallback popup */ }
+            }
+
+            // Popup de partage
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'shareModal';
+            modal.innerHTML = `
+                <div class="modal-card" style="max-width:440px">
+                    <h3 style="margin:0 0 12px; font-size:16px; font-weight:700; color:#2C3E50">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager la fiche
+                    </h3>
+                    <textarea id="shareText" readonly style="
+                        width:100%; min-height:180px; padding:12px; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
+                    ">${text}</textarea>
+                    <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+                        <button type="button" onclick="copyShareText()" style="
+                            flex:1; padding:10px; background:#F1F5F9; border:1.5px solid #E1E8ED; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:#334155; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-copy"></i> Copier</button>
+                        ${buyer.phone ? `<a href="sms:${escapeHtml(buyer.phone)}?body=${encodeURIComponent(text)}" style="
+                            flex:1; padding:10px; background:#22c55e; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-solid fa-comment-sms"></i> SMS</a>` : ''}
+                        ${phone ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(text)}" target="_blank" style="
+                            flex:1; padding:10px; background:#25D366; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ''}
+                        <a href="mailto:?subject=${encodeURIComponent('Fiche acquéreur — ' + name)}&body=${encodeURIComponent(text)}" style="
+                            flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-solid fa-envelope"></i> Email</a>
+                    </div>
+                    <button type="button" onclick="document.getElementById('shareModal').remove()" style="
+                        width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Fermer</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        function copyShareText() {
+            const ta = document.getElementById('shareText');
+            navigator.clipboard.writeText(ta.value).then(() => {
+                const btn = ta.closest('.modal-card').querySelector('button');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+                setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copier'; }, 2000);
+            });
         }
 
         async function confirmDeleteBuyer(id) {
