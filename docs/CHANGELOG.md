@@ -4,6 +4,112 @@
 
 ---
 
+## Session 2026-04-07 — Fixes visites : compteurs, téléphone portail, doublons, reprogrammation
+
+### Résumé
+Série de corrections et améliorations sur la page visites : compteurs contacts corrigés, téléphone/email des contacts portail (Bien'ici etc.) correctement transférés, détection automatique de doublons acquéreurs, reprogrammation de visites, lien acquéreur sur les cartes contacts, créneaux Calendar en 30 min.
+
+### Modifications
+
+**`visites.html`** :
+- Fix compteurs `totalContacts` / `treatedContacts` : chaque visite compte comme un contact (plus de double-comptage via `visitRequestStats`)
+- Fonctions `getVisitorPhone()` / `getVisitorEmail()` avec fallback parsing des notes (anciennes visites portail)
+- Tous les usages de `visit.visitor_phone` / `visit.visitor_email` remplacés par ces fonctions (promote modal, SMS, Calendar, bottom sheet)
+- Détection doublon acquéreur dans `confirmPromote()` : lie automatiquement à l'existant et complète ses infos manquantes
+- Bouton "Reprogrammer" sur visites planifiées et annulées (desktop + mobile) avec modale date/heure
+- Bouton "L" (lien acquéreur) sur les cartes contacts et demandes portail traitées
+- Modale retour de visite : ne se ferme plus au clic extérieur
+- Créneaux Calendar en 30 min (était 1h)
+
+**`api/assistant.js`** :
+- `handleProcessVisitRequest` (accept) : ajout `visitor_phone`, `visitor_email`, `contact_source` à la visite créée depuis un portail
+- Détection doublon acquéreur côté API (accept + processed) : lie à l'existant au lieu de créer un double
+- Durée par défaut `find_slots` : 30 min (était 60)
+- Prompt IA : durée visite/estimation à 30 min (était 120)
+
+### Fichiers créés/modifiés
+- `visites.html`
+- `api/assistant.js`
+
+### Points d'attention / bugs connus
+- `visitRequestStats` est toujours chargé en base mais n'est plus utilisé dans le rendering — pourrait être nettoyé à terme
+- Les anciennes visites portail (avant ce fix) n'ont pas `visitor_phone`/`visitor_email` en champ dédié → le fallback parsing des notes les récupère
+
+### Prochaines étapes prioritaires
+- Retour de visite en wizard étape par étape (au lieu d'une modale unique)
+
+---
+
+## Session 2026-03-29 — Contacts sur page visites, auto-reply email portail, format Calendar
+
+### Résumé
+Refonte de la page visites avec système de contacts (import screenshot, traitement, promotion acquéreur). Auto-reply Mailgun aux demandes portail avec email de qualification personnalisé (logo agence, photo agent). Correction du micro vocal pour les RDV vendeurs (create_event au lieu de find_slots). Nouveau format titre Calendar : "Visite Appartement Tassin - Emmanuel Debard".
+
+### Modifications
+
+**`visites.html`** :
+- Système de contacts sur les fiches biens : import copié-collé screenshot, modale traitement (visite virtuelle envoyée, message répondeur, SMS envoyé, mail envoyé, rappeler, ne convient pas, visite planifiée)
+- Tous les biens sous mandat s'affichent (exclusion off_market)
+- Icône message sur visites planifiées → modale SMS/WhatsApp/Email de confirmation
+- Icône Google Calendar sur visites planifiées → modal sync agenda
+- Stats portail sur les fiches biens (contacts, traités, visites)
+- Demandes portail matchées apparaissent aussi comme contacts dans les fiches biens
+- Format titre Calendar : "Visite Appartement Tassin - Emmanuel Debard"
+
+**`api/send-auto-reply.js`** (nouveau) :
+- Endpoint d'envoi d'email automatique de qualification via Mailgun
+- Template HTML personnalisé avec logo agence, photo agent, nom + réseau
+- Lien vers formulaire.html pré-rempli (nom, email, source, agent_id)
+
+**`api/inbound-email.js`** :
+- Intégration auto-reply après parsing de la demande portail
+
+**`formulaire.html`** :
+- Personnalisation avec logo agence, photo agent, nom agent via paramètres URL
+- Fix contrainte CHECK buyers_status (nouveau → valeur acceptée)
+
+**`parametres.html`** :
+- Upload logo agence (Supabase Storage) + aperçu + suppression
+- Toggle réponse automatique aux demandes portail
+
+**`micro.html`** :
+- Intent create_event pour RDV vendeur avec date+heure précise (plus de find_slots inutile)
+- Intent create_event_and_draft (RDV + SMS en une phrase)
+- Format titre Calendar unifié
+
+**`api/assistant.js`** :
+- Téléphone du visiteur dans description événement Calendar
+- Routage create_event pour dates précises
+
+**`api/generate-message.js`** :
+- Template SMS vendeur formel (M./Mme, adresse, signature Efficity)
+
+**`acquereurs.html`**, **`vendeurs.html`** :
+- Format titre Calendar unifié
+
+**`home.html`** :
+- Tuile Visites ajoutée
+
+### Fichiers créés/modifiés
+- api/send-auto-reply.js (nouveau)
+- visites.html, acquereurs.html, vendeurs.html, micro.html, home.html
+- api/assistant.js, api/inbound-email.js, api/generate-message.js
+- formulaire.html, parametres.html
+
+### Points d'attention / bugs connus
+- Matching des demandes portail à améliorer (utiliser référence annonce + prix + localisation)
+- Contacts convertis en visite restent parfois visibles comme contacts
+- Notes des contacts pas toujours reportées dans la fiche acquéreur
+- Variables Vercel : `MAILGUN_API_KEY` et `MAILGUN_DOMAIN` requises pour l'auto-reply
+
+### Prochaines étapes prioritaires
+- Améliorer le matching portail (référence annonce, prix, localisation)
+- Formulaire acquéreur en mode questions étape par étape (meilleur taux de conversion)
+- Drag & drop contacts → visites sur page visites
+- Lien "L" (Lead) sur fiches visites vers pipeline acquéreur
+
+---
+
 ## Session 2026-03-15 — Lancement communication, gel étude de marché, fix vocal agenda/WhatsApp
 
 ### Résumé
