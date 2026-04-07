@@ -819,7 +819,7 @@ RÈGLE event_type (CRITIQUE pour le titre et le SMS) :
 - "visite" avec un acquéreur → event_type = "visite"
 - "signature", "compromis", "acte" → event_type = "signature"
 - Par défaut si ambiguïté → "rdv_vendeur"
-- Le title doit refléter l'event_type : "RDV Vendeur — Philippe Fol, Lyon 4e" ou "Visite — 12 rue X, Lyon 3e"
+- Le title doit refléter l'event_type : "RDV Vendeur — Philippe Fol, Lyon 4e" ou "Visite Appartement Tassin - Emmanuel Debard" (format : Visite + type de bien + ville - nom du client)
 
 Pour create_event_and_draft (combine création événement + rédaction message) :
 {
@@ -1100,37 +1100,52 @@ async function handleProcessVisitRequest(res, user, params) {
     if (decision === 'accept') {
         const finalSellerId = seller_id || vr.matched_seller_id;
 
-        // Créer un buyer si demandé
+        // Créer un buyer si demandé (avec détection de doublon par email/téléphone)
         let buyerId = null;
         if (create_buyer && (vr.visitor_name || vr.visitor_phone)) {
-            const buyerData = {
-                user_id: user.id,
-                first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
-                last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
-                phone: vr.visitor_phone || null,
-                email: vr.visitor_email || null,
-                source: portalToBuyerSource(vr.portal_name),
-                status: 'nouveau',
-                contact_date: new Date().toISOString().split('T')[0],
-                notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
-            };
-            const { data: buyer, error: buyerErr } = await supabaseAdmin
-                .from('buyers')
-                .insert([buyerData])
-                .select();
-            if (!buyerErr && buyer?.[0]) {
-                buyerId = buyer[0].id;
+            // Vérifier si un acquéreur existe déjà
+            const orClauses = [];
+            if (vr.visitor_email) orClauses.push(`email.eq.${vr.visitor_email}`);
+            if (vr.visitor_phone) orClauses.push(`phone.eq.${vr.visitor_phone}`);
+            if (orClauses.length > 0) {
+                const { data: existing } = await supabaseAdmin.from('buyers')
+                    .select('id').eq('user_id', user.id).or(orClauses.join(',')).limit(1);
+                if (existing?.[0]) {
+                    buyerId = existing[0].id;
+                }
+            }
+            if (!buyerId) {
+                const buyerData = {
+                    user_id: user.id,
+                    first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
+                    last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
+                    phone: vr.visitor_phone || null,
+                    email: vr.visitor_email || null,
+                    source: portalToBuyerSource(vr.portal_name),
+                    status: 'nouveau',
+                    contact_date: new Date().toISOString().split('T')[0],
+                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+                };
+                const { data: buyer, error: buyerErr } = await supabaseAdmin
+                    .from('buyers')
+                    .insert([buyerData])
+                    .select();
+                if (!buyerErr && buyer?.[0]) {
+                    buyerId = buyer[0].id;
+                }
             }
         }
 
-        // Créer la visite (table visits n'a pas visitor_phone/visitor_email — infos dans notes)
-        const contactInfo = [vr.visitor_phone, vr.visitor_email].filter(Boolean).join(' / ');
-        const autoNotes = `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${contactInfo ? '\nContact : ' + contactInfo : ''}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`;
+        // Créer la visite avec coordonnées du visiteur
+        const autoNotes = `Demande ${vr.portal_name || 'portail'} du ${vr.email_date ? new Date(vr.email_date).toLocaleDateString('fr-FR') : '?'}${vr.visitor_message ? '\n' + vr.visitor_message : ''}`;
         const visitData = {
             user_id: user.id,
             seller_id: finalSellerId || null,
             buyer_id: buyerId || null,
             buyer_name: vr.visitor_name || 'Visiteur portail',
+            visitor_phone: vr.visitor_phone || null,
+            visitor_email: vr.visitor_email || null,
+            contact_source: vr.portal_name || 'portal',
             visit_date: visit_date || new Date().toISOString().split('T')[0],
             visit_time: visit_time || null,
             status: 'planifiee',
@@ -1174,26 +1189,39 @@ async function handleProcessVisitRequest(res, user, params) {
     }
 
     if (decision === 'processed') {
-        // Marquer comme traitée avec note, optionnellement créer un lead
+        // Marquer comme traitée avec note, optionnellement créer un lead (avec détection de doublon)
         let buyerId = null;
         if (create_buyer && (vr.visitor_name || vr.visitor_phone)) {
-            const buyerData = {
-                user_id: user.id,
-                first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
-                last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
-                phone: vr.visitor_phone || null,
-                email: vr.visitor_email || null,
-                source: portalToBuyerSource(vr.portal_name),
-                status: 'nouveau',
-                contact_date: new Date().toISOString().split('T')[0],
-                notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
-            };
-            const { data: buyer, error: buyerErr } = await supabaseAdmin
-                .from('buyers')
-                .insert([buyerData])
-                .select();
-            if (!buyerErr && buyer?.[0]) {
-                buyerId = buyer[0].id;
+            // Vérifier si un acquéreur existe déjà
+            const orClauses = [];
+            if (vr.visitor_email) orClauses.push(`email.eq.${vr.visitor_email}`);
+            if (vr.visitor_phone) orClauses.push(`phone.eq.${vr.visitor_phone}`);
+            if (orClauses.length > 0) {
+                const { data: existing } = await supabaseAdmin.from('buyers')
+                    .select('id').eq('user_id', user.id).or(orClauses.join(',')).limit(1);
+                if (existing?.[0]) {
+                    buyerId = existing[0].id;
+                }
+            }
+            if (!buyerId) {
+                const buyerData = {
+                    user_id: user.id,
+                    first_name: vr.visitor_first_name || (vr.visitor_name || '').split(' ')[0] || '',
+                    last_name: vr.visitor_last_name || (vr.visitor_name || '').split(' ').slice(1).join(' ') || '',
+                    phone: vr.visitor_phone || null,
+                    email: vr.visitor_email || null,
+                    source: portalToBuyerSource(vr.portal_name),
+                    status: 'nouveau',
+                    contact_date: new Date().toISOString().split('T')[0],
+                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+                };
+                const { data: buyer, error: buyerErr } = await supabaseAdmin
+                    .from('buyers')
+                    .insert([buyerData])
+                    .select();
+                if (!buyerErr && buyer?.[0]) {
+                    buyerId = buyer[0].id;
+                }
             }
         }
 
