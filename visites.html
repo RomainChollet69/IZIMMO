@@ -4729,9 +4729,8 @@
                 </div>
             `;
 
-            // Fermer
+            // Fermer (uniquement via le bouton X, pas le clic sur l'overlay — évite la perte de données)
             modal.querySelector('#fbWizardClose').addEventListener('click', () => closeModal('feedbackModal'));
-            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal('feedbackModal'); });
 
             // Passer
             modal.querySelector('#fbWizardSkip').addEventListener('click', () => {
