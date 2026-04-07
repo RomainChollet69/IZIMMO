@@ -4923,18 +4923,23 @@
             if (dupes && dupes.length > 0) {
                 const d = dupes[0];
                 const dupeName = `${d.first_name || ''} ${d.last_name || ''}`.trim();
-                const dupeInfo = [d.phone, d.email].filter(Boolean).join(' / ');
-                if (!confirm(`⚠️ Un acquéreur similaire existe déjà :\n${dupeName} (${dupeInfo})\n\nVoulez-vous quand même créer un doublon ?`)) {
-                    // Lier la visite à l'acquéreur existant
-                    await supabaseClient.from('visits')
-                        .update({ buyer_id: d.id, updated_at: new Date().toISOString() })
-                        .eq('id', visitId).eq('user_id', userId);
-                    closeModal('promoteModal');
-                    allVisits = await loadAllVisits();
-                    renderVisitsPage();
-                    showToast(`Visite liée à ${dupeName} (existant)`);
-                    return;
+                // Compléter les champs manquants de l'acquéreur existant
+                const updates = {};
+                if (!d.phone && phone) updates.phone = phone;
+                if (!d.email && email) updates.email = email;
+                if (Object.keys(updates).length > 0) {
+                    updates.updated_at = new Date().toISOString();
+                    await supabaseClient.from('buyers').update(updates).eq('id', d.id).eq('user_id', userId);
                 }
+                // Lier la visite à l'acquéreur existant
+                await supabaseClient.from('visits')
+                    .update({ buyer_id: d.id, updated_at: new Date().toISOString() })
+                    .eq('id', visitId).eq('user_id', userId);
+                closeModal('promoteModal');
+                allVisits = await loadAllVisits();
+                renderVisitsPage();
+                showToast(`Visite liée à ${dupeName} (acquéreur existant)`);
+                return;
             }
         }
 
