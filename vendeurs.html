@@ -6518,6 +6518,7 @@
 
             // ===== ACTIONS =====
             html += `<div class="mc-actions">
+                <button class="card-btn" onclick="event.stopPropagation(); shareSeller('${seller.id}')" title="Partager"><i class="fa-solid fa-arrow-up-from-bracket" style="font-size:12px"></i></button>
                 <button class="card-btn" onclick="event.stopPropagation(); openMovePopup('${seller.id}')" title="Déplacer">📂</button>
                 <button class="card-btn" onclick="event.stopPropagation(); editSeller('${seller.id}')" title="Modifier">✏️</button>
                 <button class="card-btn" onclick="event.stopPropagation(); confirmDeleteSeller('${seller.id}')" title="Supprimer">🗑️</button>
@@ -9643,6 +9644,75 @@
                 fullNameGroup.style.display = 'none';
                 link.innerHTML = '↩️ Revenir au champ unique';
             }
+        }
+
+        // ===== PARTAGE FICHE VENDEUR =====
+
+        function shareSeller(id) {
+            const seller = sellers.find(s => s.id === id);
+            if (!seller) return;
+
+            const name = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
+            const lines = [`📋 Vendeur : ${name}`];
+            if (seller.phone) lines.push(`📞 ${seller.phone}`);
+            if (seller.email) lines.push(`📧 ${seller.email}`);
+            if (seller.address) lines.push(`📍 ${seller.address}`);
+
+            const propParts = [];
+            if (seller.property_type) {
+                const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble' };
+                propParts.push(types[seller.property_type] || seller.property_type);
+            }
+            if (seller.surface) propParts.push(`${seller.surface} m²`);
+            if (seller.rooms) propParts.push(seller.rooms);
+            if (propParts.length > 0) lines.push(`🏠 ${propParts.join(' · ')}`);
+            if (seller.budget) lines.push(`💰 ${formatEuro(seller.budget)}`);
+
+            const text = lines.join('\n');
+            const phone = seller.phone ? seller.phone.replace(/\s/g, '').replace(/^0/, '33') : '';
+
+            if (navigator.share) {
+                navigator.share({ title: `Fiche ${name}`, text }).catch(() => {});
+                return;
+            }
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'shareModal';
+            modal.innerHTML = `
+                <div class="modal-card" style="max-width:440px">
+                    <h3 style="margin:0 0 12px; font-size:16px; font-weight:700; color:#2C3E50">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager la fiche
+                    </h3>
+                    <textarea id="shareText" readonly style="
+                        width:100%; min-height:140px; padding:12px; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
+                    ">${text}</textarea>
+                    <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+                        <button type="button" onclick="copyShareText()" style="
+                            flex:1; padding:10px; background:#F1F5F9; border:1.5px solid #E1E8ED; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:#334155; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-copy"></i> Copier</button>
+                        <a href="mailto:?subject=${encodeURIComponent('Fiche vendeur — ' + name)}&body=${encodeURIComponent(text)}" style="
+                            flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-solid fa-envelope"></i> Email</a>
+                    </div>
+                    <button type="button" onclick="document.getElementById('shareModal').remove()" style="
+                        width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Fermer</button>
+                </div>`;
+            document.body.appendChild(modal);
+        }
+
+        function copyShareText() {
+            const ta = document.getElementById('shareText');
+            navigator.clipboard.writeText(ta.value).then(() => {
+                const btn = ta.closest('.modal-card').querySelector('button');
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+                setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-copy"></i> Copier'; }, 2000);
+            });
         }
 
         async function confirmDeleteSeller(id) {
