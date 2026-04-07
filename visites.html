@@ -3426,7 +3426,7 @@
         const timeLabel = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
         const propertyType = seller?.property_type ? seller.property_type.charAt(0).toUpperCase() + seller.property_type.slice(1) : '';
         const city = seller?.address ? extractCity(seller.address) : (seller?.city || '');
-        const title = `Visite${propertyType ? ' ' + propertyType : ''}${city ? ' ' + city : ''} - ${visitorName}${visitorPhone ? ' ' + visitorPhone : ''}`;
+        const title = `Visite${propertyType ? ' ' + propertyType : ''}${city ? ' ' + city : ''} - ${visitorName}`;
 
         // Normaliser visit_time (peut être HH:MM:SS depuis PG)
         const startTime = visit.visit_time ? visit.visit_time.slice(0, 5) : '';
