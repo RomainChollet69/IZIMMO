@@ -429,7 +429,7 @@ async function handleFindSlots(res, accessToken, calendarId, params, integration
         return res.status(400).json({ error: 'date_from et date_to requis' });
     }
 
-    const duration = duration_minutes || integration.default_meeting_duration || 60;
+    const duration = duration_minutes || integration.default_meeting_duration || 30;
     const workingDays = integration.working_days || [1, 2, 3, 4, 5];
 
     const workStart = parseTime(integration.work_start || '08:30');
@@ -883,10 +883,10 @@ Créneaux (slot_type) :
 - Pas de contexte horaire → "any"
 
 Durées (duration_minutes) :
-- Par défaut : 60
+- Par défaut : 30
 - "déjeuner" : 90
 - "appel", "call", "coup de fil" : 30
-- "visite", "estimation", "rendez-vous terrain" : 120
+- "visite", "estimation", "rendez-vous terrain" : 30
 - Si l'agent précise une durée ("2 heures") : respecter
 
 Relations (who_relationship) :
