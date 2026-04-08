@@ -5147,8 +5147,8 @@
                 .order('created_at', { ascending: false });
             if (error) { console.error('Erreur chargement:', error); return; }
             buyers = data || [];
-            await loadBuyerNotePreviews();
-            await loadFileCounts();
+            // Paralléliser notes + fichiers au lieu de séquentiel
+            await Promise.all([loadBuyerNotePreviews(), loadFileCounts()]);
             renderBuyers();
         }
 
@@ -8192,10 +8192,17 @@
 
         // ===== INITIALISATION =====
         document.addEventListener('DOMContentLoaded', () => {
-            // Charger la config pipeline depuis Supabase AVANT le rendu
-            initBuyerPipeline().then(() => {
-                // Initialiser la vue pipeline (status ou property_type)
+            // Charger config pipeline + buyers en parallèle
+            Promise.all([initBuyerPipeline(), loadBuyers()]).then(() => {
                 switchPipelineView(currentPipelineView);
+                const params = new URLSearchParams(window.location.search);
+                const openLeadId = params.get('openLead');
+                if (openLeadId && typeof editBuyer === 'function') {
+                    editBuyer(openLeadId);
+                    history.replaceState(null, '', window.location.pathname);
+                }
+                // Matching en arrière-plan après le premier render
+                computeBuyerMatchCounts().then(() => renderBuyers()).catch(() => {});
             });
 
             // Handler toggle vue (bottom bar)
@@ -8209,17 +8216,6 @@
             document.getElementById('colSettingsSave').addEventListener('click', saveColumnSettings);
             document.getElementById('colSettingsOverlay').addEventListener('click', e => {
                 if (e.target === e.currentTarget) closeColumnSettings();
-            });
-
-            loadBuyers().then(() => {
-                const params = new URLSearchParams(window.location.search);
-                const openLeadId = params.get('openLead');
-                if (openLeadId && typeof editBuyer === 'function') {
-                    editBuyer(openLeadId);
-                    history.replaceState(null, '', window.location.pathname);
-                }
-                // Compute match counts in background, then re-render
-                computeBuyerMatchCounts().then(() => renderBuyers()).catch(() => {});
             });
             setupSearchToolbar();
             injectExportToUserDropdown();
