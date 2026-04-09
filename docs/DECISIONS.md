@@ -1356,3 +1356,98 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives rejetées** :
 - **Garder 50%** : Trop de bruit, les agents ignorent les matchs
 - **Seuil à 90%** : Trop restrictif, très peu de matchs affichés
+
+---
+
+## D064 — Auto-reply email via Mailgun (pas SendGrid ni SES)
+
+**Date** : 2026-03-29
+**Statut** : Actif
+
+**Contexte** : Envoi automatique d'un email de qualification aux contacts portail (SeLoger, LeBonCoin) dès réception de leur demande.
+
+**Décision** : Utiliser Mailgun (déjà configuré pour la réception inbound) pour l'envoi, avec template HTML personnalisé par agent.
+
+**Pourquoi** :
+- Mailgun déjà en place pour la réception des emails portail (inbound routing)
+- Domaine `inbound.avecleon.fr` déjà vérifié → pas de config DNS supplémentaire
+- Plan Foundation 50k Trial → 50 000 emails/mois largement suffisant
+- API simple : un seul appel HTTP POST avec form-data
+
+**Alternatives rejetées** :
+- **SendGrid** : Aurait nécessité un second service + config DNS séparée
+- **Amazon SES** : Plus complexe à configurer, overkill pour le volume
+
+---
+
+## D065 — Email de qualification avec formulaire (inspiration Bakarra/SweepBright)
+
+**Date** : 2026-03-29
+**Statut** : Actif
+
+**Contexte** : Quand un contact portail arrive, l'agent doit le qualifier manuellement. Bakarra Immobilier envoie automatiquement un formulaire de critères aux contacts entrants.
+
+**Décision** : Envoyer automatiquement un email personnalisé (logo agence, photo agent) avec lien vers `formulaire.html` pré-rempli. Le formulaire crée une fiche acquéreur enrichie.
+
+**Pourquoi** :
+- L'agent n'a plus besoin de rappeler chaque contact pour connaître ses critères
+- Le contact se qualifie lui-même → gain de temps
+- Les données arrivent structurées dans le pipeline acquéreur
+- Toggle on/off dans les paramètres pour laisser le choix à l'agent
+
+---
+
+## D067 — Partage fiche lead en texte formaté (pas d'image ni de page publique)
+
+**Date** : 2026-04-09
+**Statut** : Actif
+
+**Contexte** : Les agents ont besoin de partager rapidement les infos d'un lead avec un confrère, un acheteur potentiel, ou un partenaire. Trois formats étaient envisageables : texte formaté, screenshot HTML→PNG, page publique avec URL.
+
+**Décision** : Texte formaté avec emojis (📋 📞 📧 🏠 📍) + partage natif `navigator.share()` sur mobile, popup desktop avec Copier/SMS/WhatsApp/Email. Pour les acquéreurs, inclure les 5 dernières notes.
+
+**Pourquoi** :
+- 80% de la valeur en 30 min de dev (pas besoin de lib externe)
+- Compatible avec tous les canaux (SMS, WhatsApp, Email, copier-coller)
+- Pas de question de confidentialité (pas de page publique)
+- L'agent contrôle ce qui est partagé via le textarea avant envoi
+
+**Alternatives rejetées** :
+- **Screenshot HTML→PNG** : Nécessite html2canvas, plus complexe, moins universel
+- **Page publique `/lead/abc123`** : Question de confidentialité (URL leakable), nécessite gestion d'expiration
+
+---
+
+## D068 — Notification agent : appel bloquant (await) dans Vercel serverless
+
+**Date** : 2026-04-09
+**Statut** : Actif
+
+**Contexte** : La notification email à l'agent (après submit du formulaire) était lancée en `.catch()` non-bloquant pour ne pas ralentir la réponse HTTP. Mais Vercel coupe la fonction serverless dès que `res.send()` est appelé → la promesse n'avait jamais le temps de s'exécuter.
+
+**Décision** : Utiliser `await notifyAgent(...)` dans un try/catch — la réponse HTTP est légèrement plus lente (~500ms supplémentaires) mais la notification part fiablement.
+
+**Pourquoi** :
+- Vercel serverless ne supporte pas les promesses post-réponse (sauf via `waitUntil` qui n'est pas disponible partout)
+- 500ms de latence supplémentaire est acceptable pour un formulaire (l'utilisateur attend déjà)
+- Le try/catch protège contre les échecs Mailgun (la création du buyer reste prioritaire)
+
+**Alternatives rejetées** :
+- **Promesse non-await** : Ne fonctionne pas sur Vercel (testé, échec confirmé par les logs)
+- **Queue asynchrone** : Overkill pour un volume aussi faible
+
+---
+
+## D066 — Format titre Calendar : "Visite Type Ville - Nom" (pas de tiret long ni téléphone)
+
+**Date** : 2026-03-29
+**Statut** : Actif
+
+**Contexte** : Retour testeur — le titre de l'événement Calendar contenait trop d'infos (nom + téléphone + adresse complète), peu lisible dans la vue agenda.
+
+**Décision** : Titre = `Visite Appartement Tassin - Emmanuel Debard`. Téléphone, email et notes dans la description.
+
+**Pourquoi** :
+- Le titre doit être lisible d'un coup d'œil dans l'agenda
+- Les détails (téléphone, adresse complète) sont dans la description et le champ lieu
+- Cohérent avec l'usage réel des agents qui consultent l'agenda en mobilité

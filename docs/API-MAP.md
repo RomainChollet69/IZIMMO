@@ -463,6 +463,44 @@ Endpoint unifié de l'assistant organisationnel. Routage par champ `action`.
 
 ---
 
+### POST `/api/send-auto-reply`
+
+Envoi automatique d'un email de qualification au contact portail via Mailgun.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Appelé en interne par `inbound-email.js` (pas d'auth externe) |
+| **Body** | `{ visitorEmail, visitorName, agentUserId }` |
+| **Service** | Mailgun (EU) |
+| **Env vars** | `MAILGUN_API_KEY`, `MAILGUN_DOMAIN` |
+
+**Flow** :
+1. Vérifie que `auto_reply_enabled` est activé dans le profil de l'agent
+2. Récupère les infos agent (nom, agence, photo Google, logo Supabase Storage)
+3. Génère un email HTML personnalisé avec lien vers `formulaire.html` pré-rempli
+4. Envoie via Mailgun depuis `noreply@{MAILGUN_DOMAIN}`
+
+**Réponse** : `{ success: true }` ou `{ error: string }`
+
+---
+
+### POST `/api/submit-form`
+
+Soumission du formulaire public de qualification acquéreur.
+
+| Champ | Valeur |
+|-------|--------|
+| **Auth** | Aucune (formulaire public) |
+| **Body** | `{ user_id, first_name, last_name, phone, email, source, property_type, sector, budget_max, surface_min, rooms, criteria, bank_approval, timeline, dealbreakers }` |
+
+**Flow** :
+1. Crée un buyer dans Supabase avec `user_id` et `status = 'nouveau'`
+2. Envoie une notification email à l'agent (récupère l'email via `auth.admin.getUserById()`)
+3. L'email contient un résumé des critères + bouton vers `acquereurs.html`
+4. Appel bloquant (`await`) pour garantir l'envoi avant la réponse HTTP (Vercel coupe sinon)
+
+---
+
 ## 2. APIs externes (serveur — generate-study)
 
 ### Overpass API (OpenStreetMap)
