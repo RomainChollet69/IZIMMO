@@ -1451,3 +1451,31 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Le titre doit être lisible d'un coup d'œil dans l'agenda
 - Les détails (téléphone, adresse complète) sont dans la description et le champ lieu
 - Cohérent avec l'usage réel des agents qui consultent l'agenda en mobilité
+
+---
+
+## D069 — Optimisation SEO + LLM de la landing (zéro impact UX)
+
+**Date** : 2026-04-09
+**Statut** : Actif
+
+**Contexte** : Aucun fichier `robots.txt`, `sitemap.xml`, `llms.txt`. La landing (`landing-v2.html`) n'avait ni canonical, ni Twitter Card, ni JSON-LD, et l'`og:image` était relative (cassée sur LinkedIn/WhatsApp). Les pages applicatives derrière auth (`vendeurs.html`, `acquereurs.html`...) étaient indexables et polluaient potentiellement l'index Google. Enfin `/landing-v2.html` était accessible directement en plus de `/` (contenu dupliqué).
+
+**Décision** :
+1. Création de `robots.txt` autorisant explicitement les crawlers IA (GPTBot, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended) et bloquant toutes les pages applicatives.
+2. Création de `sitemap.xml` (homepage + formulaire + cgu + confidentialite uniquement).
+3. Création de `llms.txt` à la racine au format llmstxt.org : pitch produit factuel, cible, différenciation, liens — destiné aux LLM (ChatGPT, Claude, Perplexity).
+4. Patch du `<head>` de `landing-v2.html` : canonical absolu, OG complet (URL absolue de l'image), Twitter Card, theme-color, et 3 blocs JSON-LD (`SoftwareApplication` + `Organization` + `FAQPage` avec 7 questions).
+5. Redirect 301 dans `vercel.json` : `/landing-v2.html` → `/` (anti-doublon).
+6. `<meta name="robots" content="noindex, nofollow">` ajouté à toutes les pages app : `vendeurs`, `acquereurs`, `visites`, `micro`, `home`, `dvf`, `etude-marche`, `social`, `bonmatin`, `tutoriels`, `aide-vocale`, `parametres`, `login`, `landing` (ancienne).
+
+**Pourquoi** :
+- Le FAQPage JSON-LD permet de cibler les "answer engines" (Google AI Overviews, Perplexity) sans modifier l'UI visible — rend le produit citable même sans contenu marketing additionnel.
+- `llms.txt` est le standard émergent (équivalent `robots.txt` pour les LLM) — coût quasi nul, gain potentiel énorme sur les citations dans ChatGPT/Claude/Perplexity.
+- L'`og:image` absolue corrige les aperçus cassés sur LinkedIn (réseau principal de la cible mandataire).
+- Le `noindex` sur les pages app évite l'indexation accidentelle de pages d'erreur "session expirée" ou de captures partielles du Kanban.
+- Le 301 anti-doublon évite que Google indexe `/landing-v2.html` comme URL distincte de `/` (perte de PageRank).
+
+**Alternatives rejetées** :
+- **Ajouter une vraie section FAQ visible** : Romain a explicitement demandé zéro changement d'interface. Le JSON-LD seul est suffisant pour Google et les LLM.
+- **Bloquer les crawlers IA via robots.txt** : Choix inverse fait — on les autorise explicitement car le but est justement d'être citable par eux.

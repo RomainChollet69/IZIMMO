@@ -4,6 +4,41 @@
 
 ---
 
+## Session 2026-04-09 — Optimisation SEO + LLM (zéro impact UX)
+
+### Résumé
+Audit SEO/LLM complet de la landing et mise en place des fondations manquantes : `robots.txt`, `sitemap.xml`, `llms.txt` (standard llmstxt.org pour ChatGPT/Claude/Perplexity), JSON-LD `SoftwareApplication`/`Organization`/`FAQPage`, OG/Twitter Cards complets, canonical, redirect 301 anti-doublon, et `noindex` sur 13 pages applicatives. Aucune modification visible de l'interface — tout est en `<head>` ou dans des fichiers à la racine.
+
+### Modifications
+- **landing-v2.html** : `<head>` enrichi (canonical, OG complet avec URL absolue, Twitter Card, theme-color, 3 blocs JSON-LD dont FAQPage 7 questions)
+- **vercel.json** : redirect 301 `/landing-v2.html` → `/` et `/landing.html` → `/`
+- **13 pages app** : ajout de `<meta name="robots" content="noindex, nofollow">`
+- **docs/DECISIONS.md** : nouvelle entrée D069
+
+### Fichiers créés
+- `robots.txt`
+- `sitemap.xml`
+- `llms.txt`
+
+### Fichiers modifiés
+- `landing-v2.html`
+- `vercel.json`
+- `acquereurs.html`, `vendeurs.html`, `visites.html`, `micro.html`, `home.html`, `dvf.html`, `etude-marche.html`, `social.html`, `bonmatin.html`, `tutoriels.html`, `aide-vocale.html`, `parametres.html`, `login.html`, `landing.html`
+- `docs/DECISIONS.md`
+
+### Points d'attention
+- Après déploiement, **soumettre le sitemap dans Google Search Console** : `https://www.avecleon.fr/sitemap.xml`
+- **Tester le rendu OG** sur LinkedIn Post Inspector + Twitter Card Validator (l'`og:image` était cassée auparavant en URL relative)
+- Le redirect 301 prend effet au prochain deploy Vercel — Google peut mettre quelques semaines à dédupliquer l'ancien `/landing-v2.html`
+- Mettre à jour le `llms.txt` quand la tarification ou les fonctionnalités évoluent
+
+### Prochaines étapes prioritaires
+- Soumettre sitemap dans Google Search Console (+ Bing Webmaster Tools)
+- Vérifier l'aperçu OG sur LinkedIn / WhatsApp
+- Envisager une page `/blog/` ou `/glossaire/` pour ranker sur de la longue traîne ("CRM mandataire IAD", "dictée vocale immobilier"...)
+
+---
+
 ## Session 2026-04-07 — Fixes visites : compteurs, téléphone portail, doublons, reprogrammation
 
 ### Résumé

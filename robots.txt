@@ -1,0 +1,52 @@
+# robots.txt — avecleon.fr
+# Léon — CRM immobilier voice-first
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /_archive/
+Disallow: /home.html
+Disallow: /micro.html
+Disallow: /vendeurs.html
+Disallow: /acquereurs.html
+Disallow: /visites.html
+Disallow: /social.html
+Disallow: /dvf.html
+Disallow: /etude-marche.html
+Disallow: /bonmatin.html
+Disallow: /tutoriels.html
+Disallow: /aide-vocale.html
+Disallow: /parametres.html
+Disallow: /login.html
+Disallow: /landing.html
+Disallow: /landing-v2.html
+
+# Crawlers IA — explicitement autorisés (pour citation dans les LLM)
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+Sitemap: https://www.avecleon.fr/sitemap.xml

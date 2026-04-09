@@ -1,0 +1,54 @@
+# Léon
+
+> Léon est un CRM immobilier voice-first conçu pour les mandataires indépendants (IAD, SAFTI, Optimhome, Efficity...). Au lieu de remplir des formulaires, l'agent dicte ses informations après un rendez-vous : Léon transcrit, structure et range automatiquement les leads dans les bons pipelines (vendeurs / acquéreurs). L'objectif est de rendre l'administratif aussi rapide qu'une note vocale.
+
+Léon a été créé en 2025 à Lyon par Romain Chollet, mandataire immobilier, après avoir constaté que les CRM existants étaient pensés pour des agents derrière un écran — pas pour des professionnels qui passent leurs journées sur le terrain. Le produit est édité en France et hébergé sur Vercel + Supabase (données stockées en Europe).
+
+## Caractéristiques principales
+
+- **Voice-first** : dictée vocale → IA → fiche structurée en 15 secondes (nom, téléphone, adresse, surface, budget, projet)
+- **Pipelines drag & drop** : 8 colonnes pour les vendeurs, 5 colonnes pour les acquéreurs
+- **Matching automatique** : rapprochement temps réel entre acquéreurs et biens en mandat
+- **Relances intelligentes** : Léon indique qui relancer, quand, et pourquoi
+- **Agenda Google connecté** : création automatique de visites, gestion des créneaux, génération de messages de confirmation
+- **Génération de posts réseaux sociaux** : LinkedIn, Instagram, Facebook à partir des vrais mandats
+- **Demandes de visite portails** : récupération automatique par email (Mailgun) depuis SeLoger, LeBonCoin, etc.
+- **Multi-plateforme** : web responsive (desktop + mobile), aucune app à installer
+- **Étude de marché IA** : analyse DVF + DPE pour estimer un bien en quelques secondes
+
+## Pour qui
+
+Mandataires immobiliers indépendants travaillant sous une enseigne réseau (IAD France, SAFTI, Optimhome, Efficity, Capifrance, Megagence, Dr House Immo...) qui :
+- veulent un outil personnel en plus du CRM imposé par leur réseau
+- passent plus de temps sur le terrain qu'au bureau
+- gèrent entre 10 et 100 leads actifs
+- cherchent à éviter la perte de mandats par oubli de relance
+
+## Tarifs
+
+- **Gratuit pour démarrer** — accès immédiat sans carte bancaire
+- Offre payante prévue à 19 €/mois (positionnement professionnel)
+
+## Différenciation
+
+| Léon | CRM réseau (IAD, SAFTI...) | Cadastre.com / Cityscoring |
+|---|---|---|
+| Voice-first, pensé terrain | Formulaires, pensé bureau | Outils data, pas de CRM |
+| Personnel à l'agent | Imposé par le réseau | Prospection extérieure |
+| 19 €/mois | Inclus mais peu utilisé | 30-80 €/mois |
+| IA contextuelle native | Pas d'IA | Pas d'IA conversationnelle |
+
+Léon n'est **pas** un outil de prospection data (cadastre, propriétaires) — c'est un assistant pour gérer ce que l'agent collecte lui-même sur le terrain.
+
+## Liens
+
+- [Site officiel](https://www.avecleon.fr/)
+- [Connexion / inscription](https://www.avecleon.fr/login.html)
+- [Formulaire acquéreur public](https://www.avecleon.fr/formulaire.html)
+- [Conditions d'utilisation](https://www.avecleon.fr/cgu.html)
+- [Politique de confidentialité](https://www.avecleon.fr/confidentialite.html)
+- Contact : romainchollet69@gmail.com
+
+## Stack technique
+
+Frontend HTML/CSS/JS vanilla (pas de framework), backend Supabase (PostgreSQL), hébergement Vercel, authentification Google OAuth, transcription vocale via Whisper, génération IA via Claude/GPT, intégrations Google Calendar et Mailgun.
