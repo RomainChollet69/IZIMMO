@@ -1988,6 +1988,29 @@
                     })
                 });
                 if (!resp.ok) throw new Error('Erreur création événement');
+                const eventData = await resp.json().catch(() => ({}));
+
+                // Si c'est une visite acquéreur avec buyer + seller identifiés → insérer en table visits
+                if (pendingCreateEvent.isVisite && (pendingCreateEvent.buyerId || pendingCreateEvent.sellerId)) {
+                    try {
+                        const visitRow = {
+                            user_id: userId,
+                            visit_date: pendingCreateEvent.date,
+                            visit_time: pendingCreateEvent.start_time || null,
+                            status: 'planifiee',
+                            notes: pendingCreateEvent.description || null,
+                            google_event_id: eventData.event?.id || null
+                        };
+                        if (pendingCreateEvent.buyerId) visitRow.buyer_id = pendingCreateEvent.buyerId;
+                        if (pendingCreateEvent.sellerId) visitRow.seller_id = pendingCreateEvent.sellerId;
+                        const { error: visitErr } = await supabaseClient.from('visits').insert([visitRow]);
+                        if (visitErr) console.error('[Micro:CreateEvent] Erreur insert visite:', visitErr);
+                        else console.log('[Micro:CreateEvent] Visite insérée en DB');
+                    } catch (e) {
+                        console.error('[Micro:CreateEvent] Insert visite échoué:', e);
+                    }
+                }
+
                 btn.innerHTML = '<i class="fa-solid fa-check"></i> RDV confirmé !';
                 btn.style.background = '#22c55e';
                 pendingCreateEvent = null;
@@ -2172,6 +2195,33 @@
                 }
             }
 
+            // Détecter si c'est une visite acquéreur (pour aussi insérer en table visits)
+            const isVisiteAcquereur = (p.event_type || '').match(/^visite$/i)
+                || (p.title || '').toLowerCase().includes('visite');
+            let visitBuyerId = null, visitSellerId = null;
+            if (isVisiteAcquereur && p.who) {
+                // Chercher le buyer par nom
+                const leads = await loadUserLeads();
+                const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                const searchName = norm(p.who);
+                const buyer = leads.find(l => l.type === 'buyer' && (() => {
+                    const full = norm(`${l.first_name || ''} ${l.last_name || ''}`);
+                    return full.includes(searchName) || (l.last_name && searchName.includes(norm(l.last_name)));
+                })());
+                if (buyer) visitBuyerId = buyer.id;
+
+                // Chercher le seller par adresse (location)
+                if (p.location) {
+                    const locNorm = norm(p.location).replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                    const seller = leads.find(l => l.type === 'seller' && l.address && (() => {
+                        const addrNorm = norm(l.address).replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+                        // Match si une partie significative est commune (numéro + rue)
+                        return addrNorm.includes(locNorm) || locNorm.includes(addrNorm);
+                    })());
+                    if (seller) visitSellerId = seller.id;
+                }
+            }
+
             // Stocker l'événement en attente de confirmation
             pendingCreateEvent = {
                 title: p.title,
@@ -2180,7 +2230,10 @@
                 end_time: p.end_time,
                 location: p.location || null,
                 description: p.description || null,
-                headers
+                headers,
+                isVisite: isVisiteAcquereur,
+                buyerId: visitBuyerId,
+                sellerId: visitSellerId
             };
 
             showLeonCmdResult({
@@ -2574,8 +2627,9 @@
                 const buyerName = buyer
                     ? `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim()
                     : 'Acquéreur';
+                const propertyType = seller?.property_type ? seller.property_type.charAt(0).toUpperCase() + seller.property_type.slice(1) : '';
                 const city = extractCityFromAddress(seller?.address);
-                const title = `Visite${city ? ' ' + city : ''} — ${buyerName}`;
+                const title = `Visite${propertyType ? ' ' + propertyType : ''}${city ? ' ' + city : ''} - ${buyerName}`;
 
                 const date = visit.visit_date;
                 const startTime = visit.visit_time
