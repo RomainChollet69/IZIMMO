@@ -4203,8 +4203,8 @@
                 <a href="dvf.html" class="nav-tab">
                     <i class="fa-solid fa-chart-simple"></i> Marché
                 </a>
-                <a href="social.html" class="nav-tab">
-                    <i class="fa-solid fa-share-nodes"></i> Social
+                <a href="visites.html" class="nav-tab">
+                    <i class="fa-solid fa-calendar-check"></i> Visites
                 </a>
             </nav>
 
@@ -6961,9 +6961,12 @@
                 .order('created_at', { ascending: false });
             if (error) { console.error('[loadSellers] Erreur chargement:', error); return; }
             sellers = data || [];
-            try { await loadVisitCounts(); } catch(e) { console.error('[loadSellers] loadVisitCounts error:', e); }
-            try { await loadNotePreviews(); } catch(e) { console.error('[loadSellers] loadNotePreviews error:', e); }
-            try { await loadFileCounts(); } catch(e) { console.error('[loadSellers] loadFileCounts error:', e); }
+            // Paralléliser visites + notes + fichiers au lieu de séquentiel
+            await Promise.all([
+                loadVisitCounts().catch(e => console.error('[loadSellers] loadVisitCounts error:', e)),
+                loadNotePreviews().catch(e => console.error('[loadSellers] loadNotePreviews error:', e)),
+                loadFileCounts().catch(e => console.error('[loadSellers] loadFileCounts error:', e))
+            ]);
             renderSellers();
             // Recompute matching badges (non-blocking)
             if (matchBuyers !== null) computeMatchCounts().then(() => renderSellers()).catch(() => {});

@@ -24,7 +24,6 @@
     const MORE_ITEMS = [
         { href: 'visites.html',     icon: 'fa-solid fa-calendar-check',         label: 'Visites' },
         { href: 'aide-vocale.html', icon: 'fa-solid fa-wand-magic-sparkles',     label: 'Guide vocal' },
-        { href: 'social.html',      icon: 'fa-solid fa-share-nodes',             label: 'Social' },
         { href: 'parametres.html',  icon: 'fa-solid fa-gear',                    label: 'Paramètres' },
     ];
 

@@ -1856,8 +1856,8 @@
                 <a href="dvf.html" class="nav-tab">
                     <i class="fa-solid fa-chart-simple"></i> Marché
                 </a>
-                <a href="social.html" class="nav-tab">
-                    <i class="fa-solid fa-share-nodes"></i> Social
+                <a href="visites.html" class="nav-tab active">
+                    <i class="fa-solid fa-calendar-check"></i> Visites
                 </a>
                 <a href="micro.html" class="nav-tab">
                     <i class="fa-solid fa-microphone"></i> Vocal
@@ -1948,6 +1948,27 @@
             <span>Nouvelle visite</span>
         </button>
     </section>
+
+    <!-- ===== EMAIL FORWARDING SETUP BANNER (si non configuré) ===== -->
+    <div id="emailFwdSetupBanner" style="display:none; background:linear-gradient(135deg,#FFF7ED,#FEF3C7); border:1.5px solid #FBBF24; border-radius:14px; padding:18px 22px; margin:12px 24px 0; box-shadow:0 2px 10px rgba(251,191,36,0.15);">
+        <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+            <div style="flex-shrink:0; width:42px; height:42px; background:#FBBF24; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:20px;">
+                <i class="fa-solid fa-envelope-circle-check"></i>
+            </div>
+            <div style="flex:1; min-width:240px;">
+                <div style="font-size:15px; font-weight:700; color:#92400E; margin-bottom:4px;">Reçois automatiquement les demandes des portails</div>
+                <div style="font-size:13px; color:#78350F; line-height:1.5;">Connecte ton Gmail à Léon pour que les demandes Bien'ici, SeLoger, LeBonCoin etc. apparaissent automatiquement ici.</div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="openEmailFwdTutoVideo()" style="padding:10px 16px; background:white; color:#92400E; border:1.5px solid #FBBF24; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-play-circle"></i> Voir le tuto
+                </button>
+                <a href="parametres.html#email-forwarding" style="padding:10px 16px; background:linear-gradient(135deg,#F59E0B,#D97706); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; text-decoration:none; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-cog"></i> Configurer
+                </a>
+            </div>
+        </div>
+    </div>
 
     <!-- ===== MAIN CONTENT ===== -->
     <main class="visits-container" id="visitsContainer">
@@ -5283,13 +5304,25 @@
             const reqName = normalizeName(req.visitor_name);
             if (!reqEmail && !reqPhone && !reqName) continue;
 
+            // Lister les visites candidates (même seller)
+            const candidates = allVisits.filter(v => v.seller_id === req.matched_seller_id);
+            console.log(`[AutoProcess] "${req.visitor_name}" → ${candidates.length} visite(s) sur ce seller:`,
+                candidates.map(v => ({
+                    id: v.id.slice(0, 8),
+                    status: v.status,
+                    treated: v.contact_treated,
+                    name: v.buyer_name,
+                    phone: v.visitor_phone || v.buyers?.phone,
+                    email: v.visitor_email || v.buyers?.email
+                })));
+
             // 1. Chercher une visite planifiée/effectuée pour ce seller avec visiteur matchant
-            // 2. OU un contact manuel traité pour ce seller avec visiteur matchant
+            // 2. OU un contact manuel (même non traité) pour ce seller avec visiteur matchant
             const matchingVisit = allVisits.find(v => {
                 if (v.seller_id !== req.matched_seller_id) return false;
                 const isPlanifiedOrDone = v.status === 'planifiee' || v.status === 'effectuee';
-                const isTreatedContact = v.status === 'demande' && v.contact_treated === true;
-                if (!isPlanifiedOrDone && !isTreatedContact) return false;
+                const isContact = v.status === 'demande'; // tous les contacts (traités ou non)
+                if (!isPlanifiedOrDone && !isContact) return false;
                 const vEmail = (v.buyers?.email || v.visitor_email || '').toLowerCase().trim();
                 const vPhone = normalizePhone(v.buyers?.phone || v.visitor_phone);
                 const vName = normalizeName(v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : ''));
@@ -5298,9 +5331,9 @@
                 const notesEmail = !vEmail && v.notes ? ((v.notes.match(/[\w.+-]+@[\w.-]+\.\w{2,}/) || [])[0] || '').toLowerCase() : '';
                 const finalEmail = vEmail || notesEmail;
                 const finalPhone = vPhone || notesPhone;
-                if (reqEmail && finalEmail && reqEmail === finalEmail) return true;
-                if (reqPhone && finalPhone && reqPhone === finalPhone) return true;
-                if (reqName && vName && reqName === vName) return true;
+                if (reqEmail && finalEmail && reqEmail === finalEmail) { console.log(`  ✓ match email: ${reqEmail}`); return true; }
+                if (reqPhone && finalPhone && reqPhone === finalPhone) { console.log(`  ✓ match phone: ${reqPhone}`); return true; }
+                if (reqName && vName && reqName === vName) { console.log(`  ✓ match name: ${reqName}`); return true; }
                 return false;
             });
 
@@ -5308,7 +5341,7 @@
                 console.log(`[AutoProcess] MATCH "${req.visitor_name}" → visite ${matchingVisit.id} (status=${matchingVisit.status})`);
                 toProcess.push({ req, visit: matchingVisit });
             } else {
-                console.log(`[AutoProcess] Pas de match pour "${req.visitor_name}" (seller=${req.matched_seller_id}, email=${reqEmail}, phone=${reqPhone})`);
+                console.log(`[AutoProcess] ❌ Pas de match pour "${req.visitor_name}"`);
             }
         }
 
@@ -6144,10 +6177,42 @@
         document.getElementById('newVisitBtn').addEventListener('click', () => openVisitModal());
     }
 
+    // ===== EMAIL FORWARDING SETUP CHECK =====
+
+    async function checkEmailForwardingSetup() {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+        const { data: integration } = await supabaseClient
+            .from('user_integrations')
+            .select('email_forwarding_active')
+            .eq('user_id', userId)
+            .maybeSingle();
+        const isActive = integration?.email_forwarding_active === true;
+        const banner = document.getElementById('emailFwdSetupBanner');
+        if (banner) banner.style.display = isActive ? 'none' : 'block';
+    }
+
+    function openEmailFwdTutoVideo() {
+        const overlay = document.createElement('div');
+        overlay.id = 'tutoVideoOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:30000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div style="position:relative; width:100%; max-width:900px; aspect-ratio:16/9; background:black; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                <button onclick="document.getElementById('tutoVideoOverlay').remove()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:18px; z-index:1; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <iframe src="https://www.youtube.com/embed/BHU4n1_9cCg?autoplay=1" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
     // ===== INITIALIZATION =====
 
     document.addEventListener('DOMContentLoaded', async function() {
         console.log('[Visites] Initializing...');
+        checkEmailForwardingSetup();
 
         // Charger les données en parallèle
         const [visits, sellers] = await Promise.all([
