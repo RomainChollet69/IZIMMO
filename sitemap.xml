@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemap.org/schemas/sitemap/0.9">
+    <url>
+        <loc>https://www.avecleon.fr/</loc>
+        <lastmod>2026-04-09</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>https://www.avecleon.fr/formulaire.html</loc>
+        <lastmod>2026-04-09</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    <url>
+        <loc>https://www.avecleon.fr/cgu.html</loc>
+        <lastmod>2026-04-09</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>https://www.avecleon.fr/confidentialite.html</loc>
+        <lastmod>2026-04-09</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.3</priority>
+    </url>
+</urlset>
