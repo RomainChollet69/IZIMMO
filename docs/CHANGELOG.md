@@ -40,6 +40,56 @@ Série de corrections et améliorations sur la page visites : compteurs contacts
 
 ---
 
+## Session 2026-04-09 — Notification agent, partage fiche lead, fixes UX
+
+### Résumé
+Notification email à l'agent quand un acquéreur complète le formulaire public. Bouton de partage des fiches lead (texte formaté avec emojis, partage natif mobile + popup desktop). Suppression des popups Léon workflow à chaque ouverture de fiche. Fixes : analyse IA documents (boutons type=button), routage create_event Calendar.
+
+### Modifications
+
+**`api/submit-form.js`** :
+- Notification email à l'agent dès qu'un acquéreur soumet le formulaire public
+- Email avec résumé des critères (type, secteur, budget, surface, financement, délai)
+- Bouton "Voir dans le pipeline" → acquereurs.html
+- Récupère l'email agent via `auth.users` (pas profiles)
+- Appel bloquant (await) pour éviter que Vercel coupe la fonction avant l'envoi
+
+**`api/inbound-email.js`** :
+- Fix `portalToBuyerSource is not defined` (fonction ajoutée)
+
+**`acquereurs.html`** :
+- Bouton partage sur les cartes : nom, tél, email, recherche, secteur, surface, budget + 5 dernières notes
+- Partage natif `navigator.share()` sur mobile, popup desktop avec Copier/SMS/WhatsApp/Email
+- Suppression du popup Léon workflow à l'ouverture des fiches
+
+**`vendeurs.html`** :
+- Bouton partage sur les cartes (sans les notes)
+- Fix boutons documents (`type="button"`) → l'analyse IA fonctionne désormais (le bouton submitait le formulaire et fermait la modale)
+- Suppression du popup Léon workflow à l'ouverture des fiches
+
+**`visites.html`**, **`acquereurs.html`**, **`vendeurs.html`**, **`micro.html`** :
+- Format titre événement Calendar : `Visite Appartement Tassin - Emmanuel Debard`
+- Téléphone du visiteur ajouté dans la description Calendar (pas le titre)
+
+**`api/assistant.js`** :
+- Prompt orchestrateur mis à jour pour le nouveau format de titre Calendar
+
+### Fichiers créés/modifiés
+- api/submit-form.js, api/inbound-email.js, api/assistant.js
+- acquereurs.html, vendeurs.html, visites.html, micro.html
+
+### Points d'attention / bugs connus
+- Variables Vercel requises pour notification : `MAILGUN_API_KEY`, `MAILGUN_DOMAIN`
+- Notification non envoyée tant que le formulaire n'est pas effectivement complété (pas dès la demande portail)
+
+### Prochaines étapes prioritaires
+- Améliorer le matching portail (référence annonce, prix, localisation)
+- Formulaire acquéreur en mode questions étape par étape
+- Drag & drop contacts → visites sur page visites
+- Lien "L" sur fiches visites vers pipeline acquéreur
+
+---
+
 ## Session 2026-03-29 — Contacts sur page visites, auto-reply email portail, format Calendar
 
 ### Résumé
