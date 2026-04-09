@@ -5255,6 +5255,75 @@
         }
     }
 
+    /**
+     * autoProcessPortalRequestsWithVisits()
+     * Marque automatiquement comme "traitée" toute demande portail pending qui a
+     * déjà une visite planifiée/effectuée avec un acquéreur dont l'email ou le
+     * téléphone matche. Cas typique : le client a rempli le formulaire auto-reply
+     * (lead créé) et une visite a été planifiée depuis le pipeline acquéreur,
+     * mais la demande portail d'origine reste affichée comme "à traiter".
+     */
+    async function autoProcessPortalRequestsWithVisits() {
+        if (!portalRequests || portalRequests.length === 0) return;
+
+        const normalizePhone = (p) => (p || '').replace(/[\s.\-]/g, '').replace(/^(?:\+33|0033)/, '0');
+
+        const toProcess = [];
+        for (const req of portalRequests) {
+            if (!req.matched_seller_id) continue;
+            const reqEmail = (req.visitor_email || '').toLowerCase().trim();
+            const reqPhone = normalizePhone(req.visitor_phone);
+            if (!reqEmail && !reqPhone) continue;
+
+            // Chercher une visite planifiée/effectuée pour ce seller avec un visiteur matchant
+            const matchingVisit = allVisits.find(v => {
+                if (v.seller_id !== req.matched_seller_id) return false;
+                if (v.status !== 'planifiee' && v.status !== 'effectuee') return false;
+                const vEmail = (v.buyers?.email || v.visitor_email || '').toLowerCase().trim();
+                const vPhone = normalizePhone(v.buyers?.phone || v.visitor_phone);
+                if (reqEmail && vEmail && reqEmail === vEmail) return true;
+                if (reqPhone && vPhone && reqPhone === vPhone) return true;
+                return false;
+            });
+
+            if (matchingVisit) {
+                toProcess.push({ req, visit: matchingVisit });
+            }
+        }
+
+        if (toProcess.length === 0) return;
+        console.log(`[Visites] Auto-processing ${toProcess.length} portal requests with existing visits`);
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        // Marquer chaque demande comme traitée avec une note référence à la visite
+        await Promise.all(toProcess.map(async ({ req, visit }) => {
+            const dateStr = visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('fr-FR') : '';
+            const note = `Visite déjà planifiée${dateStr ? ' le ' + dateStr : ''}`;
+            try {
+                await fetch('/api/assistant', {
+                    method: 'POST',
+                    headers: { ...headers, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'process_visit_request',
+                        request_id: req.id,
+                        decision: 'processed',
+                        seller_id: req.matched_seller_id,
+                        processing_note: note,
+                        create_buyer: false
+                    })
+                });
+            } catch (e) {
+                console.error('[Visites] Auto-process error:', e);
+            }
+        }));
+
+        // Recharger les listes pour refléter les changements
+        await Promise.all([loadPortalRequests(), loadProcessedRequests()]);
+    }
+
     async function loadProcessedRequests() {
         const userId = await getCurrentUserId();
         if (!userId) return;
@@ -6061,6 +6130,9 @@
 
         // Re-matching frontend pour les demandes sans match
         applyFrontendMatching();
+
+        // Auto-traiter les demandes portail qui ont déjà une visite planifiée
+        await autoProcessPortalRequestsWithVisits();
 
         console.log('[Visites] Loaded:', allVisits.length, 'visits,', activeSellers.length, 'sellers,', portalRequests.length, 'portal requests,', processedRequests.length, 'processed');
 
