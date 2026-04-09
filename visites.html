@@ -5268,13 +5268,20 @@
         if (!portalRequests || portalRequests.length === 0) return;
 
         const normalizePhone = (p) => (p || '').replace(/[\s.\-]/g, '').replace(/^(?:\+33|0033)/, '0');
+        const normalizeName = (n) => (n || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z\s]/g, '').trim();
+
+        console.log(`[AutoProcess] ${portalRequests.length} demandes portail à analyser`);
 
         const toProcess = [];
         for (const req of portalRequests) {
-            if (!req.matched_seller_id) continue;
+            if (!req.matched_seller_id) {
+                console.log(`[AutoProcess] Skip "${req.visitor_name}" — pas de seller matché`);
+                continue;
+            }
             const reqEmail = (req.visitor_email || '').toLowerCase().trim();
             const reqPhone = normalizePhone(req.visitor_phone);
-            if (!reqEmail && !reqPhone) continue;
+            const reqName = normalizeName(req.visitor_name);
+            if (!reqEmail && !reqPhone && !reqName) continue;
 
             // 1. Chercher une visite planifiée/effectuée pour ce seller avec visiteur matchant
             // 2. OU un contact manuel traité pour ce seller avec visiteur matchant
@@ -5285,18 +5292,23 @@
                 if (!isPlanifiedOrDone && !isTreatedContact) return false;
                 const vEmail = (v.buyers?.email || v.visitor_email || '').toLowerCase().trim();
                 const vPhone = normalizePhone(v.buyers?.phone || v.visitor_phone);
+                const vName = normalizeName(v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : ''));
                 // Fallback : parser les notes pour les anciennes visites portail
-                const notesPhone = !vPhone && v.notes ? normalizePhone((v.notes.match(/(?:Contact\s*:\s*|Tél\s*:\s*)(0[\d\s.]{9,})/) || [])[1]) : '';
+                const notesPhone = !vPhone && v.notes ? normalizePhone((v.notes.match(/(?:Contact\s*:\s*|Tél\s*:\s*)(0[\d\s.]{9,})/) || [])[1] || '') : '';
                 const notesEmail = !vEmail && v.notes ? ((v.notes.match(/[\w.+-]+@[\w.-]+\.\w{2,}/) || [])[0] || '').toLowerCase() : '';
                 const finalEmail = vEmail || notesEmail;
                 const finalPhone = vPhone || notesPhone;
                 if (reqEmail && finalEmail && reqEmail === finalEmail) return true;
                 if (reqPhone && finalPhone && reqPhone === finalPhone) return true;
+                if (reqName && vName && reqName === vName) return true;
                 return false;
             });
 
             if (matchingVisit) {
+                console.log(`[AutoProcess] MATCH "${req.visitor_name}" → visite ${matchingVisit.id} (status=${matchingVisit.status})`);
                 toProcess.push({ req, visit: matchingVisit });
+            } else {
+                console.log(`[AutoProcess] Pas de match pour "${req.visitor_name}" (seller=${req.matched_seller_id}, email=${reqEmail}, phone=${reqPhone})`);
             }
         }
 
@@ -5317,7 +5329,7 @@
                 note = `Visite déjà planifiée${dateStr ? ' le ' + dateStr : ''}`;
             }
             try {
-                await fetch('/api/assistant', {
+                const r = await fetch('/api/assistant', {
                     method: 'POST',
                     headers: { ...headers, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -5329,6 +5341,12 @@
                         create_buyer: false
                     })
                 });
+                if (!r.ok) {
+                    const err = await r.text();
+                    console.error(`[AutoProcess] API error pour "${req.visitor_name}":`, r.status, err);
+                } else {
+                    console.log(`[AutoProcess] OK "${req.visitor_name}" → ${note}`);
+                }
             } catch (e) {
                 console.error('[Visites] Auto-process error:', e);
             }
@@ -5336,6 +5354,7 @@
 
         // Recharger les listes pour refléter les changements
         await Promise.all([loadPortalRequests(), loadProcessedRequests()]);
+        applyFrontendMatching();
     }
 
     async function loadProcessedRequests() {
