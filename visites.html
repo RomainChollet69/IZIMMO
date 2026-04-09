@@ -5258,10 +5258,11 @@
     /**
      * autoProcessPortalRequestsWithVisits()
      * Marque automatiquement comme "traitée" toute demande portail pending qui a
-     * déjà une visite planifiée/effectuée avec un acquéreur dont l'email ou le
-     * téléphone matche. Cas typique : le client a rempli le formulaire auto-reply
-     * (lead créé) et une visite a été planifiée depuis le pipeline acquéreur,
-     * mais la demande portail d'origine reste affichée comme "à traiter".
+     * déjà soit une visite planifiée/effectuée, soit un contact manuel traité,
+     * pour le même bien et avec un email/téléphone matchant.
+     * Cas typiques :
+     *  - Le client a rempli le formulaire auto-reply puis une visite a été planifiée
+     *  - Le contact a déjà été ajouté manuellement et traité
      */
     async function autoProcessPortalRequestsWithVisits() {
         if (!portalRequests || portalRequests.length === 0) return;
@@ -5275,14 +5276,22 @@
             const reqPhone = normalizePhone(req.visitor_phone);
             if (!reqEmail && !reqPhone) continue;
 
-            // Chercher une visite planifiée/effectuée pour ce seller avec un visiteur matchant
+            // 1. Chercher une visite planifiée/effectuée pour ce seller avec visiteur matchant
+            // 2. OU un contact manuel traité pour ce seller avec visiteur matchant
             const matchingVisit = allVisits.find(v => {
                 if (v.seller_id !== req.matched_seller_id) return false;
-                if (v.status !== 'planifiee' && v.status !== 'effectuee') return false;
+                const isPlanifiedOrDone = v.status === 'planifiee' || v.status === 'effectuee';
+                const isTreatedContact = v.status === 'demande' && v.contact_treated === true;
+                if (!isPlanifiedOrDone && !isTreatedContact) return false;
                 const vEmail = (v.buyers?.email || v.visitor_email || '').toLowerCase().trim();
                 const vPhone = normalizePhone(v.buyers?.phone || v.visitor_phone);
-                if (reqEmail && vEmail && reqEmail === vEmail) return true;
-                if (reqPhone && vPhone && reqPhone === vPhone) return true;
+                // Fallback : parser les notes pour les anciennes visites portail
+                const notesPhone = !vPhone && v.notes ? normalizePhone((v.notes.match(/(?:Contact\s*:\s*|Tél\s*:\s*)(0[\d\s.]{9,})/) || [])[1]) : '';
+                const notesEmail = !vEmail && v.notes ? ((v.notes.match(/[\w.+-]+@[\w.-]+\.\w{2,}/) || [])[0] || '').toLowerCase() : '';
+                const finalEmail = vEmail || notesEmail;
+                const finalPhone = vPhone || notesPhone;
+                if (reqEmail && finalEmail && reqEmail === finalEmail) return true;
+                if (reqPhone && finalPhone && reqPhone === finalPhone) return true;
                 return false;
             });
 
@@ -5298,10 +5307,15 @@
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
 
-        // Marquer chaque demande comme traitée avec une note référence à la visite
+        // Marquer chaque demande comme traitée avec une note référence à la visite/contact
         await Promise.all(toProcess.map(async ({ req, visit }) => {
-            const dateStr = visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('fr-FR') : '';
-            const note = `Visite déjà planifiée${dateStr ? ' le ' + dateStr : ''}`;
+            let note;
+            if (visit.status === 'demande') {
+                note = 'Contact déjà traité';
+            } else {
+                const dateStr = visit.visit_date ? new Date(visit.visit_date).toLocaleDateString('fr-FR') : '';
+                note = `Visite déjà planifiée${dateStr ? ' le ' + dateStr : ''}`;
+            }
             try {
                 await fetch('/api/assistant', {
                     method: 'POST',
