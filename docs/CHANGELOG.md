@@ -4,6 +4,49 @@
 
 ---
 
+## Session 2026-04-11 — Refonte UX import CSV/Excel + annulation
+
+### Contexte
+L'utilisateur a importé un CSV de démo (200 contacts anciens clients) et s'est retrouvé avec tous les leads marqués `hot` sans confirmation préalable. Nettoyage d'urgence via SQL (DELETE par `created_at`), puis refonte complète du flux d'import pour éviter la récidive.
+
+### Modifications
+- **parametres.html** :
+  - Ajout `<script src="js/pipeline-config.js">` pour charger les vraies colonnes user
+  - Étape 3 du wizard refondue : **choix radio explicite** (colonne existante vs nouvelle colonne temporaire), aucun défaut présélectionné → impossible de zapper
+  - Colonne « existante » : dropdown peuplé dynamiquement depuis `PipelineConfig.getEffectiveColumns()` (plus des listes hardcodées obsolètes)
+  - Colonne « temporaire » : saisie du nom, création à la volée en utilisant un slot `custom_1/2/3` libre + sauvegarde via `PipelineConfig.save()`
+  - **Modale de confirmation finale** avant `INSERT` (compte, destination, doublons estimés)
+  - **Bannière "Annuler le dernier import"** persistée via localStorage (`leon_last_import`), affichée en tête de section
+  - `runImportWithAI()` (ex-`importWithAI`) : génère un `crypto.randomUUID()` comme `import_batch_id`, stampé sur chaque lead inséré
+  - Fonction `undoLastImport()` : `DELETE WHERE import_batch_id = ?` + suppression des notes liées + restauration de la colonne éphémère masquée
+  - Aperçu IA étape 2 : **5 leads** au lieu de 1, sous forme de tableau (vérification visuelle du mapping)
+  - Remap des statuts legacy IA pour acquéreurs (`new`→`nouveau`, `active`→`actif`, `closed`→`achete_avec_moi`, `lost`→`abandon`) — corrige un bug pré-existant où les leads acquéreurs importés devenaient "ghost" (status invalide vs pipeline_configs)
+
+### Fichiers modifiés
+- `parametres.html` (HTML wizard étape 3 + modale + bannière + ~300 lignes JS)
+- `docs/CHANGELOG.md` (cette entrée)
+
+### Migration SQL requise (à lancer dans Supabase SQL Editor)
+```sql
+ALTER TABLE sellers ADD COLUMN IF NOT EXISTS import_batch_id UUID;
+ALTER TABLE buyers  ADD COLUMN IF NOT EXISTS import_batch_id UUID;
+CREATE INDEX IF NOT EXISTS idx_sellers_import_batch ON sellers(import_batch_id) WHERE import_batch_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_buyers_import_batch  ON buyers(import_batch_id)  WHERE import_batch_id IS NOT NULL;
+```
+
+### Points d'attention / limitations
+- **3 slots de colonnes temporaires max** (`custom_1/2/3` par pipeline) — au-delà, l'option "nouvelle colonne" est grisée avec un warning
+- La colonne éphémère ne s'auto-supprime PAS quand elle devient vide — l'utilisateur doit la masquer via la personnalisation du pipeline OU utiliser "Annuler cet import"
+- `localStorage` ne garde qu'UN SEUL dernier import (pas d'historique) — un deuxième import écrase le premier dans la bannière, mais les `batch_id` restent en DB
+- `renderLastImportBanner` n'affiche l'âge que lors du chargement initial — pas de tick temps réel
+
+### Prochaines étapes possibles
+- Historique des 5 derniers imports annulables (au lieu d'un seul)
+- Auto-archivage des colonnes éphémères vides
+- Détection auto du statut "sold" quand la colonne "Date de la vente" est présente dans le CSV
+
+---
+
 ## Session 2026-04-09 — Optimisation SEO + LLM (zéro impact UX)
 
 ### Résumé

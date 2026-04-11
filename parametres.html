@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/pipeline-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1959,6 +1960,17 @@
         <div class="settings-section" id="excelImportSection">
             <h2 class="section-title">Importer des Leads (Excel / CSV)</h2>
 
+            <!-- Bannière annulation dernier import -->
+            <div id="lastImportBanner" style="display:none;background:#FFF8E1;border:2px solid #FFB300;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:200px;">
+                        <div style="font-weight:700;color:#E65100;font-size:14px;margin-bottom:2px;">↩️ Dernier import</div>
+                        <div id="lastImportDetails" style="font-size:13px;color:#5D4037;"></div>
+                    </div>
+                    <button onclick="undoLastImport()" style="background:#E65100;color:white;border:none;padding:10px 18px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px;white-space:nowrap;">Annuler cet import</button>
+                </div>
+            </div>
+
             <div id="excelImportStart">
                 <div class="drop-zone" id="dropZone">
                     <div class="drop-zone-icon">📊</div>
@@ -2019,20 +2031,39 @@
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label class="form-label" id="defaultStatusLabel">Colonne par défaut</label>
-                                <select class="form-input" id="importDefaultStatus"></select>
+                                <label class="form-label">Source par défaut (si non renseignée)</label>
+                                <select class="form-input" id="importDefaultSource">
+                                    <option value="">— Aucune —</option>
+                                </select>
                             </div>
                         </div>
+
                         <div class="form-group">
-                            <label class="form-label">Source par défaut (si non renseignée)</label>
-                            <select class="form-input" id="importDefaultSource">
-                                <option value="">— Aucune —</option>
-                            </select>
+                            <label class="form-label" style="font-size:15px;font-weight:700;margin-bottom:10px;">🎯 Où placer ces leads ?</label>
+                            <p style="font-size:13px;color:var(--text-light);margin:0 0 14px;">Choisis explicitement la destination — aucun défaut n'est appliqué.</p>
+
+                            <div class="dest-choice" style="border:2px solid #E0E0E0;border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all 0.2s;" id="destExistingWrapper" onclick="selectDestination('existing')">
+                                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                    <input type="radio" name="importDestination" value="existing" id="destExisting" style="width:18px;height:18px;cursor:pointer;">
+                                    <span style="font-weight:600;">📁 Dans une colonne existante</span>
+                                </label>
+                                <select class="form-input" id="importDefaultStatus" disabled onchange="updateImportButtonState()" onclick="event.stopPropagation()" style="margin-top:10px;margin-left:28px;width:calc(100% - 28px);"></select>
+                            </div>
+
+                            <div class="dest-choice" style="border:2px solid #E0E0E0;border-radius:10px;padding:14px;cursor:pointer;transition:all 0.2s;" id="destNewWrapper" onclick="selectDestination('new')">
+                                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+                                    <input type="radio" name="importDestination" value="new" id="destNew" style="width:18px;height:18px;cursor:pointer;">
+                                    <span style="font-weight:600;">✨ Dans une nouvelle colonne temporaire</span>
+                                </label>
+                                <input type="text" class="form-input" id="importNewColumnName" disabled oninput="updateImportButtonState()" onclick="event.stopPropagation()" placeholder="Ex: À classer — Import du 11/04" style="margin-top:10px;margin-left:28px;width:calc(100% - 28px);" maxlength="40">
+                                <p style="font-size:12px;color:var(--text-light);margin:8px 0 0 28px;line-height:1.4;">ℹ️ Une nouvelle colonne apparaîtra dans ton pipeline avec tous ces leads. Tu pourras les déplacer progressivement, puis supprimer la colonne quand elle sera vide.</p>
+                                <p id="destNewWarning" style="display:none;font-size:12px;color:#E65100;margin:8px 0 0 28px;font-weight:600;">⚠️ Les 3 slots de colonnes temporaires sont déjà utilisés. Libère-en un via <a href="#" onclick="event.stopPropagation();">la personnalisation du pipeline</a> ou choisis une colonne existante.</p>
+                            </div>
                         </div>
                     </div>
                     <div class="wizard-actions">
                         <button class="wizard-btn" onclick="goToStep(2)">← Retour</button>
-                        <button class="wizard-btn primary" id="importBtn" onclick="importWithAI()">Importer</button>
+                        <button class="wizard-btn primary" id="importBtn" onclick="showImportConfirmation()" disabled>Importer</button>
                     </div>
                 </div>
 
@@ -2047,6 +2078,19 @@
                     <div id="importResultContainer"></div>
                     <div class="wizard-actions" id="wizardStep4Actions" style="display:none;">
                         <button class="wizard-btn primary" onclick="cancelImportWizard()">Terminé</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modale de confirmation finale avant insertion DB -->
+            <div id="importConfirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:10000;align-items:center;justify-content:center;padding:20px;">
+                <div style="background:white;border-radius:16px;max-width:480px;width:100%;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="font-size:22px;font-weight:800;margin-bottom:6px;color:#1a1a1a;">⚠️ Confirmer l'import</div>
+                    <div style="font-size:13px;color:var(--text-light);margin-bottom:20px;">Vérifie bien les infos ci-dessous avant de lancer l'import dans Supabase.</div>
+                    <div id="confirmModalDetails" style="background:#F5F7FA;border-radius:10px;padding:16px;margin-bottom:20px;font-size:14px;line-height:1.7;"></div>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button onclick="closeImportConfirmation()" style="padding:12px 22px;background:#E0E0E0;color:#333;border:none;border-radius:10px;font-weight:600;cursor:pointer;">Annuler</button>
+                        <button onclick="confirmImportAndRun()" style="padding:12px 22px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;">✓ Confirmer l'import</button>
                     </div>
                 </div>
             </div>
@@ -2138,6 +2182,9 @@
 
         // ===== INIT =====
         document.addEventListener('DOMContentLoaded', async () => {
+            // Afficher la bannière "annuler dernier import" si présente
+            renderLastImportBanner();
+
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) return;
 
@@ -3627,9 +3674,9 @@
         async function fetchAIPreview() {
             const previewDiv = document.getElementById('aiPreviewLead');
             previewDiv.style.display = 'block';
-            previewDiv.innerHTML = '<div class="mapping-analyzing" style="display:flex;"><span class="loading-spinner">&#x23F3;</span> Aper&ccedil;u IA du premier lead...</div>';
+            previewDiv.innerHTML = '<div class="mapping-analyzing" style="display:flex;"><span class="loading-spinner">&#x23F3;</span> Aper&ccedil;u IA des 5 premiers leads...</div>';
 
-            const firstRowData = excelRows.slice(0, 1).map(row => {
+            const sampleRows = excelRows.slice(0, 5).map(row => {
                 return excelHeaders.map(h => {
                     const colIdx = headerColIndex[h];
                     let cell = colIdx !== undefined && row[colIdx] !== undefined ? row[colIdx] : '';
@@ -3646,7 +3693,7 @@
                     headers: await getAuthHeaders(),
                     body: JSON.stringify({
                         headers: excelHeaders,
-                        rows: firstRowData,
+                        rows: sampleRows,
                         leadType: document.getElementById('importType').value
                     })
                 });
@@ -3655,57 +3702,136 @@
                 const data = await resp.json();
 
                 if (data.leads && data.leads.length > 0) {
-                    const lead = data.leads[0];
-                    let html = '<div class="ai-preview-title">Aper&ccedil;u du premier lead pars&eacute; par l\'IA :</div>';
-                    const displayFields = [
-                        ['Pr\u00e9nom', lead.first_name],
-                        ['Nom', lead.last_name],
-                        ['T\u00e9l\u00e9phone', lead.phone],
-                        ['Email', lead.email],
-                        ['Adresse', lead.address],
-                        ['Budget', lead.budget ? Number(lead.budget).toLocaleString('fr-FR') + ' \u20ac' : null],
-                        ['Surface', lead.surface ? lead.surface + ' m\u00b2' : null],
-                        ['Type de bien', lead.property_type],
-                        ['Statut', lead.status],
-                        ['Date', lead.date],
-                        ['Notes', lead.notes]
-                    ];
-                    displayFields.forEach(([label, value]) => {
-                        if (value) {
-                            html += `<div class="ai-preview-field">
-                                <span class="label">${label}</span>
-                                <span class="value">${escapeHtml(String(value))}</span>
-                            </div>`;
-                        }
+                    let html = '<div class="ai-preview-title">Aper&ccedil;u des ' + data.leads.length + ' premiers leads pars&eacute;s par l\'IA :</div>';
+                    html += '<div style="overflow-x:auto;margin-top:8px;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+                    html += '<thead><tr style="background:#F5F7FA;"><th style="padding:8px;text-align:left;border:1px solid #E0E0E0;">Pr&eacute;nom</th><th style="padding:8px;text-align:left;border:1px solid #E0E0E0;">Nom</th><th style="padding:8px;text-align:left;border:1px solid #E0E0E0;">T&eacute;l&eacute;phone</th><th style="padding:8px;text-align:left;border:1px solid #E0E0E0;">Email</th><th style="padding:8px;text-align:left;border:1px solid #E0E0E0;">Adresse / Secteur</th></tr></thead><tbody>';
+                    data.leads.forEach(lead => {
+                        html += '<tr>';
+                        html += `<td style="padding:8px;border:1px solid #E0E0E0;">${escapeHtml(lead.first_name || '—')}</td>`;
+                        html += `<td style="padding:8px;border:1px solid #E0E0E0;">${escapeHtml(lead.last_name || '—')}</td>`;
+                        html += `<td style="padding:8px;border:1px solid #E0E0E0;">${escapeHtml(lead.phone || '—')}</td>`;
+                        html += `<td style="padding:8px;border:1px solid #E0E0E0;">${escapeHtml(lead.email || '—')}</td>`;
+                        html += `<td style="padding:8px;border:1px solid #E0E0E0;">${escapeHtml(lead.address || lead.sector || '—')}</td>`;
+                        html += '</tr>';
                     });
+                    html += '</tbody></table></div>';
+                    html += '<p style="font-size:12px;color:var(--text-light);margin-top:8px;">V&eacute;rifie que les noms, t&eacute;l&eacute;phones et adresses sont correctement extraits. Si le mapping est faux, reviens &agrave; l\'&eacute;tape pr&eacute;c&eacute;dente.</p>';
                     previewDiv.innerHTML = html;
                 } else {
-                    previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">L\'IA n\'a pas pu extraire de lead depuis la premi\u00e8re ligne.</p>';
+                    previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">L\'IA n\'a pas pu extraire de leads depuis les premi&egrave;res lignes.</p>';
                 }
             } catch (err) {
                 console.error('[AI Preview]', err);
-                previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">Erreur lors de l\'aper\u00e7u IA. L\'import fonctionnera quand m\u00eame.</p>';
+                previewDiv.innerHTML = '<p style="color:#E65100;font-size:13px;">Erreur lors de l\'aper&ccedil;u IA. L\'import fonctionnera quand m&ecirc;me.</p>';
             }
         }
 
-        function updateImportOptions() {
+        // Cache des colonnes effectives du pipeline user (chargées depuis PipelineConfig)
+        let _effectiveColumnsCache = { sellers: null, buyers: null };
+
+        async function loadEffectiveColumns(pipeline) {
+            if (_effectiveColumnsCache[pipeline]) return _effectiveColumnsCache[pipeline];
+            try {
+                await PipelineConfig.load(pipeline);
+                const cols = PipelineConfig.getEffectiveColumns(pipeline, pipeline === 'buyers' ? 'status' : undefined);
+                _effectiveColumnsCache[pipeline] = cols;
+                return cols;
+            } catch (e) {
+                console.error('[Import] loadEffectiveColumns error:', e);
+                return PipelineConfig.getDefaults(pipeline, pipeline === 'buyers' ? 'status' : undefined).map(c => ({ ...c, visible: !c.hiddenByDefault }));
+            }
+        }
+
+        // État de destination sélectionnée par l'utilisateur à l'étape 3
+        let importDestinationChoice = null; // 'existing' | 'new' | null
+
+        async function updateImportOptions() {
             const type = document.getElementById('importType').value;
             const statusSelect = document.getElementById('importDefaultStatus');
             const sourceSelect = document.getElementById('importDefaultSource');
 
-            const statuses = type === 'sellers' ? SELLER_STATUSES : BUYER_STATUSES;
+            // Reset destination choice au changement d'étape
+            importDestinationChoice = null;
+            document.getElementById('destExisting').checked = false;
+            document.getElementById('destNew').checked = false;
+            document.getElementById('importDefaultStatus').disabled = true;
+            document.getElementById('importNewColumnName').disabled = true;
+            document.getElementById('importBtn').disabled = true;
+            document.getElementById('destExistingWrapper').style.borderColor = '#E0E0E0';
+            document.getElementById('destNewWrapper').style.borderColor = '#E0E0E0';
+
+            // Charger les colonnes réelles du pipeline user
+            const cols = await loadEffectiveColumns(type);
+            const visibleCols = cols.filter(c => c.visible && !c.key.startsWith('custom_'));
+            statusSelect.innerHTML = '<option value="">— Choisis une colonne —</option>' +
+                visibleCols.map(c => `<option value="${c.key}">${c.icon || ''} ${escapeHtml(c.label)}</option>`).join('');
+
+            // Vérifier les slots custom disponibles
+            const freeCustomSlot = cols.find(c => c.key.startsWith('custom_') && !c.visible);
+            const newColWrapper = document.getElementById('destNewWrapper');
+            const newColWarning = document.getElementById('destNewWarning');
+            const newColInput = document.getElementById('importNewColumnName');
+            if (!freeCustomSlot) {
+                newColWrapper.style.opacity = '0.5';
+                newColWrapper.style.pointerEvents = 'none';
+                newColWarning.style.display = 'block';
+                newColInput.style.display = 'none';
+            } else {
+                newColWrapper.style.opacity = '1';
+                newColWrapper.style.pointerEvents = '';
+                newColWarning.style.display = 'none';
+                newColInput.style.display = '';
+                // Suggestion de nom par défaut
+                const today = new Date().toLocaleDateString('fr-FR');
+                newColInput.placeholder = `Ex: À classer — Import du ${today}`;
+            }
+
+            // Sources
             const sources = type === 'sellers' ? SELLER_SOURCES : BUYER_SOURCES;
-
-            statusSelect.innerHTML = statuses.map(s =>
-                `<option value="${s.value}">${s.label}</option>`
-            ).join('');
-
             sourceSelect.innerHTML = '<option value="">— Aucune —</option>' +
                 sources.map(s => `<option value="${s.value}">${s.label}</option>`).join('');
+        }
 
-            // Update label if status column detected
-            const label = document.getElementById('defaultStatusLabel');
-            label.textContent = hasStatusColumn ? 'Colonne par défaut (si statut non détecté)' : 'Colonne par défaut';
+        // Sélection d'une option de destination
+        function selectDestination(choice) {
+            importDestinationChoice = choice;
+            const existingWrapper = document.getElementById('destExistingWrapper');
+            const newWrapper = document.getElementById('destNewWrapper');
+
+            if (choice === 'existing') {
+                document.getElementById('destExisting').checked = true;
+                document.getElementById('destNew').checked = false;
+                document.getElementById('importDefaultStatus').disabled = false;
+                document.getElementById('importNewColumnName').disabled = true;
+                existingWrapper.style.borderColor = '#667eea';
+                existingWrapper.style.background = '#F5F7FF';
+                newWrapper.style.borderColor = '#E0E0E0';
+                newWrapper.style.background = '';
+            } else {
+                document.getElementById('destNew').checked = true;
+                document.getElementById('destExisting').checked = false;
+                document.getElementById('importDefaultStatus').disabled = true;
+                document.getElementById('importNewColumnName').disabled = false;
+                newWrapper.style.borderColor = '#667eea';
+                newWrapper.style.background = '#F5F7FF';
+                existingWrapper.style.borderColor = '#E0E0E0';
+                existingWrapper.style.background = '';
+                setTimeout(() => document.getElementById('importNewColumnName').focus(), 100);
+            }
+            updateImportButtonState();
+        }
+
+        function updateImportButtonState() {
+            const btn = document.getElementById('importBtn');
+            if (importDestinationChoice === 'existing') {
+                const val = document.getElementById('importDefaultStatus').value;
+                btn.disabled = !val;
+            } else if (importDestinationChoice === 'new') {
+                const name = document.getElementById('importNewColumnName').value.trim();
+                btn.disabled = name.length < 2;
+            } else {
+                btn.disabled = true;
+            }
         }
 
         function goToStep(step) {
@@ -3722,6 +3848,208 @@
             // Initialize options when entering step 3
             if (step === 3) {
                 updateImportOptions();
+            }
+        }
+
+        // ===== CONFIRMATION MODAL =====
+        // Stocke les paramètres prêts à être utilisés par confirmImportAndRun()
+        let _pendingImportParams = null;
+
+        async function showImportConfirmation() {
+            const type = document.getElementById('importType').value;
+            const defaultSource = document.getElementById('importDefaultSource').value;
+            const tableName = type === 'sellers' ? 'sellers' : 'buyers';
+            let destinationLabel = '';
+            let destinationKey = null;
+            let newColumnName = null;
+
+            if (importDestinationChoice === 'existing') {
+                const select = document.getElementById('importDefaultStatus');
+                destinationKey = select.value;
+                destinationLabel = select.options[select.selectedIndex].text;
+            } else if (importDestinationChoice === 'new') {
+                newColumnName = document.getElementById('importNewColumnName').value.trim();
+                destinationLabel = `✨ Nouvelle colonne « ${newColumnName} »`;
+            } else {
+                return;
+            }
+
+            // Estimation doublons (check phones)
+            const { data: existing } = await supabaseClient
+                .from(tableName)
+                .select('phone')
+                .eq('user_id', currentUserId);
+            const existingPhones = new Set(
+                (existing || []).map(l => l.phone ? l.phone.replace(/[\s\-\.]/g, '') : null).filter(Boolean)
+            );
+
+            let potentialDupes = 0;
+            excelRows.forEach(row => {
+                const phoneColHeaders = Object.keys(columnMapping).filter(h => columnMapping[h] === 'phone');
+                for (const h of phoneColHeaders) {
+                    const colIdx = headerColIndex[h];
+                    if (colIdx === undefined) continue;
+                    const raw = row[colIdx];
+                    if (!raw) continue;
+                    const norm = String(raw).replace(/[\s\-\.\+]/g, '').replace(/^33/, '0');
+                    if (norm && existingPhones.has(norm)) { potentialDupes++; break; }
+                }
+            });
+
+            const totalRows = excelRows.length;
+            const estimatedImport = totalRows - potentialDupes;
+
+            _pendingImportParams = { type, tableName, destinationKey, newColumnName, defaultSource };
+
+            const details = document.getElementById('confirmModalDetails');
+            details.innerHTML = `
+                <div><strong>📊 Lignes du fichier :</strong> ${totalRows}</div>
+                <div><strong>✅ À importer :</strong> ~${estimatedImport} lead${estimatedImport > 1 ? 's' : ''}</div>
+                ${potentialDupes > 0 ? `<div><strong>⚠️ Doublons ignorés :</strong> ~${potentialDupes}</div>` : ''}
+                <div><strong>🎯 Destination :</strong> ${escapeHtml(destinationLabel)}</div>
+                <div><strong>📁 Table :</strong> <code>${tableName}</code></div>
+                ${defaultSource ? `<div><strong>📌 Source par défaut :</strong> ${escapeHtml(defaultSource)}</div>` : ''}
+            `;
+            document.getElementById('importConfirmModal').style.display = 'flex';
+        }
+
+        function closeImportConfirmation() {
+            document.getElementById('importConfirmModal').style.display = 'none';
+            _pendingImportParams = null;
+        }
+
+        async function confirmImportAndRun() {
+            document.getElementById('importConfirmModal').style.display = 'none';
+            if (!_pendingImportParams) return;
+            const params = _pendingImportParams;
+            _pendingImportParams = null;
+            await runImportWithAI(params);
+        }
+
+        // ===== EPHEMERAL COLUMN CREATION =====
+        /**
+         * Crée une colonne éphémère dans le pipeline user en utilisant un slot custom_N libre.
+         * Retourne { key: 'custom_1', label: '...' } ou null si aucun slot libre.
+         */
+        async function createEphemeralColumn(pipeline, name) {
+            await PipelineConfig.load(pipeline);
+            const view = pipeline === 'buyers' ? 'status' : undefined;
+            const currentCols = PipelineConfig.getEffectiveColumns(pipeline, view);
+            const freeSlot = currentCols.find(c => c.key.startsWith('custom_') && !c.visible);
+            if (!freeSlot) return null;
+
+            // Construire une nouvelle config qui rend cette colonne visible avec le nom choisi
+            const newCols = currentCols.map(col => {
+                if (col.key === freeSlot.key) {
+                    return { key: col.key, label: name, visible: true, title: 'Colonne d\'import temporaire' };
+                }
+                return {
+                    key: col.key,
+                    label: col.label,
+                    visible: col.visible,
+                    title: col.title,
+                    headerImage: col.headerImage
+                };
+            });
+
+            const config = {};
+            if (pipeline === 'buyers') {
+                // Préserver les autres vues (property_columns)
+                const existing = await PipelineConfig.load('buyers') || {};
+                config.status_columns = newCols;
+                if (existing.property_columns) config.property_columns = existing.property_columns;
+            } else {
+                config.columns = newCols;
+            }
+
+            await PipelineConfig.save(pipeline, config);
+            _effectiveColumnsCache[pipeline] = null; // invalidate cache
+            return { key: freeSlot.key, label: name };
+        }
+
+        // ===== LAST IMPORT BANNER & UNDO =====
+        const LAST_IMPORT_KEY = 'leon_last_import';
+
+        function saveLastImport(info) {
+            try {
+                localStorage.setItem(LAST_IMPORT_KEY, JSON.stringify(info));
+                renderLastImportBanner();
+            } catch (e) { console.error('[Import] saveLastImport:', e); }
+        }
+
+        function getLastImport() {
+            try {
+                const raw = localStorage.getItem(LAST_IMPORT_KEY);
+                return raw ? JSON.parse(raw) : null;
+            } catch { return null; }
+        }
+
+        function renderLastImportBanner() {
+            const info = getLastImport();
+            const banner = document.getElementById('lastImportBanner');
+            if (!info) { banner.style.display = 'none'; return; }
+            const ago = Math.round((Date.now() - info.timestamp) / 60000);
+            const agoText = ago < 1 ? 'à l\'instant' : ago < 60 ? `il y a ${ago} min` : ago < 1440 ? `il y a ${Math.round(ago / 60)}h` : `il y a ${Math.round(ago / 1440)}j`;
+            document.getElementById('lastImportDetails').innerHTML =
+                `<strong>${info.count}</strong> ${info.type === 'sellers' ? 'vendeur' : 'acquéreur'}${info.count > 1 ? 's' : ''} importé${info.count > 1 ? 's' : ''} — ${escapeHtml(info.destinationLabel)} — <em>${agoText}</em>`;
+            banner.style.display = 'block';
+        }
+
+        async function undoLastImport() {
+            const info = getLastImport();
+            if (!info) return;
+            if (!confirm(`Annuler l'import de ${info.count} ${info.type === 'sellers' ? 'vendeur(s)' : 'acquéreur(s)'} ?\n\nCette action va supprimer définitivement ces leads de la base de données.`)) return;
+
+            try {
+                // 1. Supprimer les notes liées
+                const leadIdField = info.type === 'sellers' ? 'seller_id' : 'buyer_id';
+                const { data: leadsToDelete } = await supabaseClient
+                    .from(info.type)
+                    .select('id')
+                    .eq('user_id', currentUserId)
+                    .eq('import_batch_id', info.batchId);
+
+                if (leadsToDelete && leadsToDelete.length > 0) {
+                    const ids = leadsToDelete.map(l => l.id);
+                    await supabaseClient.from('lead_notes').delete().in(leadIdField, ids);
+                }
+
+                // 2. Supprimer les leads
+                const { error } = await supabaseClient
+                    .from(info.type)
+                    .delete()
+                    .eq('user_id', currentUserId)
+                    .eq('import_batch_id', info.batchId);
+
+                if (error) { alert('Erreur suppression : ' + error.message); return; }
+
+                // 3. Si colonne éphémère créée, la masquer à nouveau
+                if (info.ephemeralColumnKey) {
+                    await PipelineConfig.load(info.type);
+                    const view = info.type === 'buyers' ? 'status' : undefined;
+                    const cols = PipelineConfig.getEffectiveColumns(info.type, view);
+                    const newCols = cols.map(c => c.key === info.ephemeralColumnKey
+                        ? { key: c.key, label: null, visible: false, title: null }
+                        : { key: c.key, label: c.label, visible: c.visible, title: c.title, headerImage: c.headerImage });
+                    const config = {};
+                    if (info.type === 'buyers') {
+                        const existing = await PipelineConfig.load('buyers') || {};
+                        config.status_columns = newCols;
+                        if (existing.property_columns) config.property_columns = existing.property_columns;
+                    } else {
+                        config.columns = newCols;
+                    }
+                    await PipelineConfig.save(info.type, config);
+                    _effectiveColumnsCache[info.type] = null;
+                }
+
+                // 4. Clear localStorage
+                localStorage.removeItem(LAST_IMPORT_KEY);
+                renderLastImportBanner();
+                alert(`✓ ${info.count} lead${info.count > 1 ? 's' : ''} supprimé${info.count > 1 ? 's' : ''}. Recharge la page Vendeurs ou Acquéreurs pour voir le résultat.`);
+            } catch (e) {
+                console.error('[Undo Import] error:', e);
+                alert('Erreur : ' + e.message);
             }
         }
 
@@ -3742,6 +4070,8 @@
             headerColIndex = {};
             hasStatusColumn = false;
             skippedHeaderRows = 0;
+            importDestinationChoice = null;
+            _pendingImportParams = null;
             // Reset steps
             document.querySelectorAll('.wizard-step').forEach((el, i) => {
                 el.classList.remove('active', 'done');
@@ -4189,12 +4519,42 @@
         }
 
         // ===== AI-POWERED IMPORT =====
-        async function importWithAI() {
-            const importType = document.getElementById('importType').value;
-            const defaultStatus = document.getElementById('importDefaultStatus').value;
-            const defaultSource = document.getElementById('importDefaultSource').value;
-            const table = importType === 'sellers' ? 'sellers' : 'buyers';
+        async function runImportWithAI(params) {
+            const importType = params.type;
+            const defaultSource = params.defaultSource;
+            const table = params.tableName;
             const leadIdField = importType === 'sellers' ? 'seller_id' : 'buyer_id';
+
+            // Générer un batch_id pour pouvoir annuler plus tard
+            const batchId = (crypto.randomUUID ? crypto.randomUUID() :
+                ('xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                    const r = Math.random() * 16 | 0;
+                    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+                })));
+
+            // Préparer la destination : colonne existante OU création d'une colonne éphémère
+            let defaultStatus;
+            let ephemeralColumnKey = null;
+            let destinationLabel;
+
+            if (params.destinationKey) {
+                defaultStatus = params.destinationKey;
+                destinationLabel = params.destinationKey;
+            } else if (params.newColumnName) {
+                goToStep(4);
+                document.getElementById('progressText').textContent = 'Création de la colonne temporaire...';
+                const created = await createEphemeralColumn(importType, params.newColumnName);
+                if (!created) {
+                    alert('❌ Impossible de créer une colonne temporaire : les 3 slots sont déjà utilisés. Libère-en un via la personnalisation du pipeline.');
+                    return;
+                }
+                defaultStatus = created.key;
+                ephemeralColumnKey = created.key;
+                destinationLabel = `✨ ${created.label}`;
+            } else {
+                alert('Aucune destination choisie.');
+                return;
+            }
 
             goToStep(4);
 
@@ -4291,8 +4651,18 @@
                     const data = await resp.json();
                     console.log('[AI Import] Batch ' + batchNum + ' result:', (data.leads || []).length + ' leads, ' + (data.ignored || []).length + ' ignored');
 
+                    // Remap des statuts legacy IA → clés réelles du pipeline
+                    const BUYER_STATUS_REMAP = {
+                        new: 'nouveau', active: 'actif', offer: 'actif',
+                        closed: 'achete_avec_moi', lost: 'abandon'
+                    };
+
                     if (data.leads) {
                         data.leads.forEach(aiLead => {
+                            // Appliquer le remap si acquéreur et que l'IA retourne une clé legacy
+                            if (importType === 'buyers' && aiLead.status && BUYER_STATUS_REMAP[aiLead.status]) {
+                                aiLead.status = BUYER_STATUS_REMAP[aiLead.status];
+                            }
                             const status = aiLead.status || defaultStatus;
                             const source = aiLead.source || defaultSource || null;
 
@@ -4325,7 +4695,8 @@
                                 phone: aiLead.phone || null,
                                 email: aiLead.email || null,
                                 status: status,
-                                source: source
+                                source: source,
+                                import_batch_id: batchId
                             };
 
                             if (aiLead.property_type) lead.property_type = aiLead.property_type;
@@ -4464,6 +4835,19 @@
             progressBar.style.width = '100%';
             progressText.textContent = 'Import terminé !';
             console.log('[AI Import] Terminé: ' + inserted + ' insérés, ' + notesInserted + ' notes, ' + allSkipped.length + ' ignorés');
+
+            // Sauvegarder le batch pour l'annulation possible
+            if (inserted > 0) {
+                saveLastImport({
+                    batchId: batchId,
+                    type: importType,
+                    count: inserted,
+                    destinationLabel: destinationLabel,
+                    ephemeralColumnKey: ephemeralColumnKey,
+                    timestamp: Date.now()
+                });
+            }
+
             showImportResult(inserted, allSkipped, statusCounts, importType, notesInserted, 0);
         }
     </script>
