@@ -799,6 +799,7 @@
         .feedback-nav {
             display: flex;
             justify-content: center;
+            gap: 8px;
             margin-top: 20px;
         }
         .feedback-skip-link {
@@ -812,6 +813,20 @@
             transition: color 0.2s;
         }
         .feedback-skip-link:hover { color: #667eea; }
+        .feedback-back-link {
+            background: none;
+            border: none;
+            color: #9CA3AF;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            padding: 8px 16px;
+            transition: color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .feedback-back-link:hover { color: #667eea; }
         .feedback-save-btn {
             width: 100%;
             padding: 12px;
@@ -4774,6 +4789,7 @@
                         ${contentHtml}
                         ${nextBtnHtml}
                         <div class="feedback-nav">
+                            ${currentStep > 0 ? '<button class="feedback-back-link" id="fbWizardBack"><i class="fa-solid fa-arrow-left"></i> Précédent</button>' : ''}
                             <button class="feedback-skip-link" id="fbWizardSkip">${isLast ? 'Passer et enregistrer' : 'Passer'}</button>
                         </div>
                     </div>
@@ -4796,6 +4812,19 @@
                     renderStep();
                 }
             });
+
+            // Précédent (sauvegarde la saisie textarea avant de revenir en arrière)
+            const backBtn = modal.querySelector('#fbWizardBack');
+            if (backBtn) {
+                backBtn.addEventListener('click', () => {
+                    if (step.type === 'textarea') {
+                        const ta = document.getElementById('fbWizardNotes');
+                        if (ta) answers.notes = ta.value.trim();
+                    }
+                    currentStep--;
+                    renderStep();
+                });
+            }
 
             // Chips : single-select avance automatiquement, multi-select toggle
             if (step.type === 'single') {
