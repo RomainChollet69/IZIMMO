@@ -327,7 +327,12 @@
             await supabaseClient.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: window.location.origin + '/home.html'
+                    redirectTo: window.location.origin + '/home.html',
+                    // Force l'affichage du sélecteur de compte Google
+                    // sinon Google réutilise automatiquement la session Chrome active
+                    queryParams: {
+                        prompt: 'select_account'
+                    }
                 }
             });
         }
