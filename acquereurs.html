@@ -6818,18 +6818,22 @@
             document.getElementById('propertyType').value = buyer.property_type || '';
             document.getElementById('rooms').value = buyer.rooms || '';
             document.getElementById('surfaceMin').value = buyer.surface_min || '';
-            // Sector tags
+            // Sector tags — toujours splitter le champ sector par ' | ' (séparateur multi-villes).
+            // city/postal_code peuvent être vides (ex: leads venant du formulaire public),
+            // dans ce cas chaque pill est restaurée avec juste le label.
             const sectorEntries = [];
-            if (buyer.city && buyer.city.includes(',')) {
-                const cities = buyer.city.split(',');
-                const postals = (buyer.postal_code || '').split(',');
-                const labels = (buyer.sector || '').split(' | ');
-                cities.forEach((c, i) => {
-                    sectorEntries.push({ label: labels[i] || c, city: c, postalCode: postals[i] || '', lat: i === 0 ? buyer.latitude : null, lng: i === 0 ? buyer.longitude : null });
+            const sectorLabels = (buyer.sector || '').split(' | ').map(s => s.trim()).filter(Boolean);
+            const cityList = (buyer.city || '').split(',').map(s => s.trim());
+            const postalList = (buyer.postal_code || '').split(',').map(s => s.trim());
+            sectorLabels.forEach((label, i) => {
+                sectorEntries.push({
+                    label,
+                    city: cityList[i] || '',
+                    postalCode: postalList[i] || '',
+                    lat: i === 0 ? buyer.latitude : null,
+                    lng: i === 0 ? buyer.longitude : null
                 });
-            } else if (buyer.sector) {
-                sectorEntries.push({ label: buyer.sector, city: buyer.city || '', postalCode: buyer.postal_code || '', lat: buyer.latitude, lng: buyer.longitude });
-            }
+            });
             if (typeof setSectorEntries === 'function') setSectorEntries(sectorEntries);
             document.getElementById('sector').value = buyer.sector || '';
             document.getElementById('budgetMax').value = buyer.budget_max || '';

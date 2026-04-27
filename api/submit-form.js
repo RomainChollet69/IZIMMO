@@ -27,6 +27,8 @@ export default async function handler(req, res) {
     const supabaseAdmin = getSupabaseAdmin();
 
     // Construire le buyer
+    // contact_date set côté serveur = date de soumission du formulaire public
+    // (l'agent voit ainsi la date de prise de contact réelle sur la fiche lead)
     const buyerData = {
         first_name,
         last_name,
@@ -42,6 +44,7 @@ export default async function handler(req, res) {
         bank_approval: body.bank_approval || null,
         timeline: body.timeline || null,
         dealbreakers: body.dealbreakers || null,
+        contact_date: new Date().toISOString().split('T')[0],
         status: 'nouveau'
     };
 
