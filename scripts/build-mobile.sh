@@ -36,7 +36,8 @@ cp "$PROJECT_ROOT"/*.webp "$WWW_DIR/" 2>/dev/null || true
 # Ajoute native-bridge.js avant </head> si pas déjà présent
 for html_file in "$WWW_DIR"/*.html; do
   if [ -f "$html_file" ] && ! grep -q 'native-bridge.js' "$html_file"; then
-    sed -i 's|</head>|<script src="/js/native-bridge.js"></script>\n</head>|' "$html_file"
+    sed -i '' 's|</head>|<script src="/js/native-bridge.js"></script>\
+</head>|' "$html_file"
   fi
 done
 
