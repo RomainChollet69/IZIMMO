@@ -1005,6 +1005,24 @@
         .match-tag.high { background: #E8F5E9; color: #2E7D32; }
         .match-tag.medium { background: #FFF8E1; color: #F57F17; }
         .match-tag.low, .match-tag.none { background: #FFF3E0; color: #E65100; }
+        .portal-change-match-btn { margin-left: 6px; padding: 3px 7px; background: white; border: 1px solid #CBD5E1; border-radius: 6px; cursor: pointer; color: #64748b; transition: all .15s; vertical-align: middle; }
+        .portal-change-match-btn:hover { background: #F1F5F9; color: #1e293b; border-color: #94A3B8; }
+        .change-match-modal { padding: 18px 20px 14px; }
+        .change-match-modal h3 { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 17px; font-weight: 700; color: #2C3E50; margin: 0 0 4px; }
+        .change-match-modal .change-match-sub { font-size: 12px; color: #6B7280; margin-bottom: 12px; }
+        .change-match-modal .change-match-search { width: 100%; padding: 10px 12px; border: 1.5px solid #E1E8ED; border-radius: 10px; font-size: 14px; font-family: 'Inter', sans-serif; margin-bottom: 10px; }
+        .change-match-modal .change-match-search:focus { outline: none; border-color: #667eea; }
+        .change-match-modal .change-match-list { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .change-match-option { padding: 10px 12px; border: 1px solid #E1E8ED; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all .15s; }
+        .change-match-option:hover { background: #F0F0FF; border-color: #667eea; }
+        .change-match-option.active { background: #E8EAF6; border-color: #667eea; }
+        .change-match-option-info { flex: 1; min-width: 0; }
+        .change-match-option-title { font-size: 13px; font-weight: 600; color: #2C3E50; }
+        .change-match-option-sub { font-size: 12px; color: #6B7280; margin-top: 2px; }
+        .change-match-empty { text-align: center; padding: 24px 16px; color: #9CA3AF; font-size: 13px; }
+        .change-match-actions { display: flex; gap: 8px; margin-top: 12px; }
+        .change-match-actions .btn-cancel { flex: 1; padding: 10px; background: #F1F5F9; border: 1.5px solid #E1E8ED; border-radius: 10px; font-weight: 600; color: #475569; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; }
+        .change-match-actions .btn-unmatch { padding: 10px 14px; background: #FEF2F2; border: 1.5px solid #FECACA; border-radius: 10px; font-weight: 600; color: #B91C1C; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; }
         .portal-request-message {
             font-size: 12px;
             color: #9CA3AF;
@@ -5006,6 +5024,13 @@
             }
         }
 
+        // Récupérer le seller de la visite pour tracer le bien d'origine
+        const visit = allVisits.find(v => v.id === visitId);
+        const visitSeller = visit ? (visit.sellers || activeSellers.find(s => s.id === visit.seller_id)) : null;
+        const originLabel = visitSeller
+            ? (visitSeller.address || `${visitSeller.first_name || ''} ${visitSeller.last_name || ''}`.trim() || null)
+            : null;
+
         // Créer le buyer
         const buyer = {
             user_id: userId,
@@ -5015,7 +5040,10 @@
             email: email || null,
             status: 'nouveau',
             source: 'autre',
-            notes: `Promu depuis visite du ${new Date().toLocaleDateString('fr-FR')}`
+            notes: `Promu depuis visite du ${new Date().toLocaleDateString('fr-FR')}`,
+            origin_seller_id: visit?.seller_id || null,
+            origin_property_label: originLabel,
+            origin_contact_date: visit?.visit_date || visit?.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]
         };
 
         const { data, error } = await supabaseClient.from('buyers').insert([buyer]).select();
@@ -5026,7 +5054,6 @@
         }
 
         const newBuyerId = data[0].id;
-        const visit = allVisits.find(v => v.id === visitId);
 
         // Lier cette visite au buyer créé
         await supabaseClient.from('visits')
@@ -5602,41 +5629,9 @@
             }
         }
 
-        // 3. Fallback : type + prix (pour LeBonCoin etc. qui n'envoient pas l'adresse)
-        if (req.property_type) {
-            const reqType = (req.property_type || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-            let candidates = matchableSellers.filter(s => {
-                if (!s.property_type) return false;
-                const sellerType = s.property_type.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return sellerType.includes(reqType) || reqType.includes(sellerType);
-            });
-
-            // Filtrer par proximité prix ±15%
-            if (reqPrice) {
-                const priceFiltered = candidates.filter(s => {
-                    if (!s.budget) return false;
-                    return Math.abs(s.budget - reqPrice) <= reqPrice * 0.15;
-                });
-                if (priceFiltered.length > 0) candidates = priceFiltered;
-            }
-
-            // Avec prix : prendre le plus proche
-            if (reqPrice && candidates.length >= 1) {
-                candidates.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
-                req.matched_seller_id = candidates[0].id;
-                req.sellers = candidates[0];
-                req.match_confidence = candidates.length === 1 ? 'medium' : 'low';
-                return;
-            }
-
-            // Sans prix : matcher seulement s'il n'y a qu'UN SEUL bien de ce type
-            if (!reqPrice && candidates.length === 1) {
-                req.matched_seller_id = candidates[0].id;
-                req.sellers = candidates[0];
-                req.match_confidence = 'low';
-            }
-        }
+        // 3. Fallback type + prix : DÉSACTIVÉ (cf. api/inbound-email.js).
+        // Trop de faux positifs sur bienici/SeLoger/Gingka — on préfère
+        // afficher "Aucun bien matché" et laisser l'agent matcher à la main.
     }
 
     function normalizeAddressFront(address) {
@@ -5709,10 +5704,12 @@
             const matchLabel = matchConf === 'high' ? 'Bien matché' : matchConf === 'medium' ? 'Match partiel' : '';
             const matchTag = matchLabel ? `<span class="match-tag ${matchConf}">${matchLabel}</span>` : '';
             const noMatchTag = !seller ? '<span class="match-tag none">Aucun bien matché</span>' : '';
+            // Bouton "changer le bien matché" — toujours présent pour permettre la correction manuelle
+            const changeMatchBtn = `<button class="portal-change-match-btn" onclick="event.stopPropagation();openChangeMatchModal('${req.id}')" title="${seller ? 'Changer le bien matché' : 'Associer un bien'}"><i class="fa-solid fa-pen" style="font-size:11px"></i></button>`;
 
             const propertyLine = sellerLabel
-                ? `${escapeHtml(req.property_type || '')} → ${escapeHtml(sellerLabel)} ${matchTag}`
-                : `${escapeHtml(req.property_address || req.property_type || 'Bien non identifié')} ${noMatchTag}`;
+                ? `${escapeHtml(req.property_type || '')} → ${escapeHtml(sellerLabel)} ${matchTag}${changeMatchBtn}`
+                : `${escapeHtml(req.property_address || req.property_type || 'Bien non identifié')} ${noMatchTag}${changeMatchBtn}`;
 
             const msgPreview = req.visitor_message
                 ? `<div class="portal-request-message">"${escapeHtml(req.visitor_message)}"</div>`
@@ -5792,6 +5789,120 @@
         } catch (e) {
             console.error('[Visites] Dismiss error:', e);
         }
+    }
+
+    // ===== CHANGER LE BIEN MATCHÉ (manuel) =====
+    // Ouvre une modal listant les sellers actifs sous mandat/commercialisation
+    // pour permettre à l'agent de corriger un mauvais match auto (bienici, SeLoger, etc.).
+    function openChangeMatchModal(requestId) {
+        const req = portalRequests.find(r => r.id === requestId) || processedRequests.find(r => r.id === requestId);
+        if (!req) return;
+
+        // Sellers candidats : ceux susceptibles d'être sur les portails
+        const MATCHABLE = new Set(['mandate', 'commercialisation']);
+        const candidates = activeSellers.filter(s => MATCHABLE.has(s.status));
+
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'changeMatchModal';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.45);z-index:25000;display:flex;align-items:center;justify-content:center;padding:20px';
+
+        const extracted = [req.property_address, req.property_type, req.property_price ? `${req.property_price} €` : null].filter(Boolean).join(' · ');
+        const currentLabel = req.sellers ? (req.sellers.address || 'Bien sans adresse') : 'Aucun bien associé';
+
+        overlay.innerHTML = `
+            <div class="change-match-modal" style="background:white;border-radius:14px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+                <h3>Associer un bien à la demande</h3>
+                <div class="change-match-sub">
+                    <strong>Demande :</strong> ${escapeHtml(extracted || 'aucune info extraite')}<br>
+                    <strong>Bien actuel :</strong> ${escapeHtml(currentLabel)}
+                </div>
+                <input type="text" class="change-match-search" id="changeMatchSearch" placeholder="Filtrer par adresse, ville, prix...">
+                <div class="change-match-list" id="changeMatchList"></div>
+                <div class="change-match-actions">
+                    <button class="btn-cancel" onclick="document.getElementById('changeMatchModal').remove()">Annuler</button>
+                    ${req.matched_seller_id ? `<button class="btn-unmatch" onclick="updatePortalMatch('${requestId}', null)">Détacher</button>` : ''}
+                </div>
+            </div>`;
+
+        overlay.addEventListener('click', () => overlay.remove());
+        document.body.appendChild(overlay);
+
+        renderChangeMatchList(candidates, '', requestId);
+        const searchEl = document.getElementById('changeMatchSearch');
+        searchEl.addEventListener('input', () => {
+            renderChangeMatchList(candidates, searchEl.value, requestId);
+        });
+        searchEl.focus();
+    }
+
+    function renderChangeMatchList(candidates, term, requestId) {
+        const list = document.getElementById('changeMatchList');
+        if (!list) return;
+
+        const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const q = norm(term).trim();
+        const filtered = !q ? candidates : candidates.filter(s => {
+            const blob = norm([s.address, s.city, s.postal_code, s.first_name, s.last_name, s.property_type, s.budget].filter(Boolean).join(' '));
+            return q.split(/\s+/).every(t => blob.includes(t));
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="change-match-empty">Aucun bien sous mandat ne correspond.</div>';
+            return;
+        }
+
+        list.innerHTML = filtered.map(s => {
+            const addr = s.address || `${s.first_name || ''} ${s.last_name || ''}`.trim() || 'Bien sans adresse';
+            const subParts = [];
+            if (s.property_type) subParts.push(s.property_type);
+            if (s.budget) subParts.push(`${parseInt(s.budget).toLocaleString('fr-FR')} €`);
+            if (s.surface) subParts.push(`${s.surface} m²`);
+            return `<div class="change-match-option" onclick="updatePortalMatch('${requestId}', '${s.id}')">
+                <div class="change-match-option-info">
+                    <div class="change-match-option-title">${escapeHtml(addr)}</div>
+                    <div class="change-match-option-sub">${escapeHtml(subParts.join(' · ') || '—')}</div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:#9CA3AF;font-size:12px"></i>
+            </div>`;
+        }).join('');
+    }
+
+    async function updatePortalMatch(requestId, sellerId) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        const update = {
+            matched_seller_id: sellerId,
+            match_confidence: sellerId ? 'high' : 'none', // match manuel = haute confiance
+            updated_at: new Date().toISOString()
+        };
+
+        const { error } = await supabaseClient
+            .from('visit_requests')
+            .update(update)
+            .eq('id', requestId)
+            .eq('user_id', userId);
+
+        if (error) {
+            console.error('[Visites] Update match error:', error);
+            alert('Erreur : ' + error.message);
+            return;
+        }
+
+        // Mise à jour locale
+        const req = portalRequests.find(r => r.id === requestId) || processedRequests.find(r => r.id === requestId);
+        if (req) {
+            req.matched_seller_id = sellerId;
+            req.match_confidence = update.match_confidence;
+            req.sellers = sellerId ? activeSellers.find(s => s.id === sellerId) : null;
+        }
+
+        const modal = document.getElementById('changeMatchModal');
+        if (modal) modal.remove();
+        renderPortalBanner();
+        if (typeof renderProcessedView === 'function') renderProcessedView();
+        showToast(sellerId ? 'Bien matché mis à jour' : 'Bien détaché');
     }
 
     // ===== VUE DEMANDES TRAITÉES =====

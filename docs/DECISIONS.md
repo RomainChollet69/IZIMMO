@@ -1479,3 +1479,55 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives rejetées** :
 - **Ajouter une vraie section FAQ visible** : Romain a explicitement demandé zéro changement d'interface. Le JSON-LD seul est suffisant pour Google et les LLM.
 - **Bloquer les crawlers IA via robots.txt** : Choix inverse fait — on les autorise explicitement car le but est justement d'être citable par eux.
+
+
+---
+
+## D070 — Désactivation du fallback type+prix dans le matching des demandes portail
+
+**Date** : 2026-05-26
+**Statut** : Actif
+
+**Contexte** : Le matching `visit_requests` ↔ `sellers` a 3 étages : (1) référence d'annonce, (2) adresse normalisée + ville/CP, (3) fallback `property_type` + `property_price ±10%`. Le 3e étage retournait un match `confidence: 'low'` quand l'adresse était absente de l'email portail (cas fréquent sur bienici, SeLoger, Gingka — qui n'envoient parfois que « Caluire, 220 000 € »).
+
+**Décision** : Supprimer l'étape 3. Quand seuls type et prix sont connus, retourner `null` → la demande s'affiche en « Aucun bien matché » avec l'adresse extraite, l'agent matche à la main via le nouveau bouton ✏️.
+
+**Pourquoi** :
+- Cas réel observé : un T3 à 220k€ tirait à lui toutes les demandes portail dans la fourchette 200–240k€ (« tout match avec le 1 rue Edouard Branly »). Les agents finissaient par traiter de mauvais biens, ou par ignorer le tag « Match partiel » devenu peu fiable.
+- Le coût de l'absence de match est faible (3 clics pour matcher manuellement) ; le coût d'un faux match est élevé (visite organisée sur le mauvais bien, perte de confiance dans le système).
+- LeBonCoin envoie l'adresse complète dans 99 % des cas → l'étape 2 (adresse) suffit. Les portails qui n'envoient pas l'adresse n'ont, de fait, pas assez d'information pour un match fiable.
+
+**Alternatives rejetées** :
+- **Garder le fallback mais durcir les seuils** (prix ±5 %, type exact strict) : marge d'erreur réduite mais pas éliminée — un seul faux match suffit à casser la confiance.
+- **Ajouter une confirmation manuelle obligatoire pour les matchs `low`** : alourdit le flow pour rien — autant ne pas matcher du tout.
+- **Étendre le matching aux sellers en `prospection`** (Option B du plan) : risque de polluer le résultat avec des biens pas encore officiellement à la vente. Rejeté.
+
+**Conséquences** :
+- Code mort dans `frontendMatchSeller` (variables `reqPrice`, `reqRef`, etc. en début de fonction) qui ne sert plus que pour les étages 1 et 2 — laissé en place car réutilisé. Pas de cleanup nécessaire.
+- Match manuel via bouton ✏️ enregistre `match_confidence='high'` (intervention humaine = source de vérité) — ne sera pas écrasé par le re-matching automatique au prochain chargement (car `frontendMatchSeller` retourne tôt si déjà matché).
+
+---
+
+## D071 — Colonnes `origin_*` dédiées sur `buyers` plutôt que `lead_notes` ou jointure via `visit_requests`
+
+**Date** : 2026-05-26
+**Statut** : Actif
+
+**Contexte** : Besoin de tracer le bien d'origine sur chaque fiche acquéreur (« A contacté pour le T3 — 1 rue Branly le 24 mai 2026 »). 3 options :
+1. **Colonnes dédiées** sur `buyers` (`origin_seller_id`, `origin_property_label`, `origin_contact_date`)
+2. **Type spécial dans `lead_notes`** (`type='origin_property'` + payload texte)
+3. **Jointure implicite** via `visit_requests.created_buyer_id` ou `visits.buyer_id`
+
+**Décision** : Option 1 — colonnes dédiées.
+
+**Pourquoi** :
+- L'info est **structurée et reine** : 1 acquéreur = 1 bien d'origine au max, affichée systématiquement dans la fiche, et idéalement requêtable pour stats ultérieures (« combien d'acquéreurs convertis par bien ? »).
+- `lead_notes` est un journal libre — y mettre une info structurée brouille la sémantique (notes vs métadonnées) et complique le rendu (parser le contenu de la note pour extraire le seller).
+- Jointure via `visit_requests`/`visits` : ne couvre pas le cas formulaire public (3e flux) et nécessite un JOIN à chaque affichage.
+- Le label cache `origin_property_label` survit à la suppression du seller (FK `ON DELETE SET NULL` + texte conservé) — pas possible avec les options 2/3 sans logique custom.
+
+**Alternatives rejetées** : voir contexte ci-dessus.
+
+**Conséquences** :
+- Les 342 acquéreurs existants ont les colonnes à NULL. Pas de backfill automatique — l'historique est perdu côté UI sauf rétro-action manuelle.
+- L'agent doit penser à utiliser le bouton « Lien formulaire pré-rempli » (sur la fiche vendeur) plutôt que le lien formulaire générique de paramètres.html pour capturer le bien d'origine sur les formulaires soumis. À documenter dans l'onboarding.

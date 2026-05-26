@@ -8,6 +8,29 @@
 
 _(rien en cours)_
 
+## À tester après déploiement (session 2026-05-26)
+
+### Bien d'origine acquéreur (chantier A)
+- [ ] Promouvoir une visite en acquéreur → vérifier la section "📍 Premier contact" affichée
+- [ ] Accepter une demande portail avec création d'acquéreur → vérifier capture origin_seller_id
+- [ ] Tester le lien formulaire pré-rempli : copier depuis la popup share d'un seller, ouvrir l'URL dans un onglet privé, soumettre, vérifier que le buyer créé a bien origin_seller_id
+- [ ] Supprimer un seller et rouvrir un acquéreur qui pointait dessus → vérifier que le label cache s'affiche (FK SET NULL)
+
+### Sélection multiple (chantier C)
+- [ ] Cliquer "Sélectionner" → vérifier checkboxes visibles + neutralisation des autres boutons
+- [ ] Sélectionner 3 acquéreurs et partager → vérifier le texte concaténé
+- [ ] Filtrer par recherche pendant la sélection → vérifier que la sélection persiste
+
+### Recherche multi-critères (chantier D)
+- [ ] Tester "maison Caluire" — doit retourner les maisons à Caluire uniquement
+- [ ] Tester "T3" — doit retourner les acquéreurs avec rooms=T3
+- [ ] Tester "200k" — doit matcher budget_max entre 200000 et 209999
+
+### Matching demandes visite (chantier E)
+- [ ] Recevoir une nouvelle demande sans adresse claire → vérifier tag "Aucun bien matché"
+- [ ] Cliquer ✏️ sur une demande mal matchée → vérifier la modale + recherche live + match manuel
+- [ ] Détacher un match → vérifier que le tag repasse à "Aucun bien matché"
+
 ## À faire
 
 ### Matching / Visites

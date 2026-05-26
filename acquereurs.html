@@ -78,6 +78,87 @@
         .search-bar-section .add-btn:hover {
             transform: translateY(-50%);
         }
+        .search-bar-section .select-btn {
+            position: absolute;
+            left: calc(50% + 290px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            border: 1.5px solid #E5E7EB;
+            color: #374151;
+            border-radius: 10px;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .search-bar-section .select-btn:hover { background: #F3F4F6; border-color: #9CA3AF; }
+        .search-bar-section .select-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        @media (max-width: 768px) {
+            .search-bar-section .select-btn { left: auto; right: 70px; position: absolute; }
+        }
+        /* Mode sélection : checkbox visible sur chaque carte, clic = toggle */
+        .lead-card .select-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #CBD5E1;
+            background: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 11px;
+            z-index: 5;
+            cursor: pointer;
+            transition: all .15s;
+        }
+        body.selection-mode .lead-card .select-checkbox { display: flex; }
+        body.selection-mode .lead-card { cursor: pointer; user-select: none; }
+        body.selection-mode .lead-card .card-actions,
+        body.selection-mode .lead-card .badge-alert,
+        body.selection-mode .lead-card .card-expand-arrow,
+        body.selection-mode .lead-card .mobile-move-btn { pointer-events: none; opacity: .35; }
+        body.selection-mode .lead-card.selected .select-checkbox { background: #667eea; border-color: #667eea; }
+        body.selection-mode .lead-card.selected { box-shadow: 0 0 0 2px #667eea; }
+
+        .selection-bar {
+            position: fixed;
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: 24px;
+            background: white;
+            border-radius: 14px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 14000;
+            border: 1px solid #E5E7EB;
+            animation: selBarUp .2s ease;
+        }
+        @keyframes selBarUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        .selection-bar-count { font-weight: 600; font-size: 14px; color: #2C3E50; margin-right: 4px; }
+        .selection-bar-btn { padding: 9px 14px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; }
+        .selection-bar-share { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .selection-bar-share:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(102,126,234,0.35); }
+        .selection-bar-share:disabled { opacity: .45; cursor: not-allowed; }
+        .selection-bar-clear { background: #F1F5F9; color: #475569; }
+        .selection-bar-clear:hover { background: #E2E8F0; }
+        .selection-bar-cancel { background: none; color: #64748b; }
+        .selection-bar-cancel:hover { color: #1e293b; }
+        @media (max-width: 768px) {
+            .selection-bar { bottom: 80px; padding: 8px 10px; gap: 6px; flex-wrap: wrap; max-width: 95vw; }
+            .selection-bar-btn { padding: 8px 10px; font-size: 12px; }
+        }
         .search-bar-section-inner {
             max-width: 600px;
             margin: 0 auto;
@@ -1677,6 +1758,22 @@
 
         /* Section liens */
         .links-section { margin-top: 12px; }
+        .origin-property-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, #F0F4FF 0%, #FAF0FF 100%);
+            border: 1px solid #C7D2FE;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+        .origin-property-card .opc-icon { font-size: 22px; flex-shrink: 0; }
+        .origin-property-card .opc-text { flex: 1; min-width: 0; }
+        .origin-property-card .opc-label { font-size: 14px; font-weight: 600; color: #2C3E50; line-height: 1.3; }
+        .origin-property-card .opc-date { font-size: 12px; color: #6B7280; margin-top: 3px; }
+        .origin-property-card .opc-link { padding: 6px 10px; background: white; border: 1px solid #C7D2FE; border-radius: 8px; color: #4F46E5; text-decoration: none; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+        .origin-property-card .opc-link:hover { background: #EEF2FF; }
 
         .link-item {
             display: flex;
@@ -3141,11 +3238,22 @@
         <div class="search-bar-section-inner">
             <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
             <input type="text" id="bottomSearchInput" class="search-input"
-                   placeholder="Rechercher un acquéreur (nom, secteur, téléphone…)">
+                   placeholder="Rechercher (nom, ville, T3, maison, budget…)">
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
+        <button class="select-btn" id="toggleSelectBtn" title="Sélectionner plusieurs acquéreurs"><i class="fa-regular fa-square-check"></i></button>
         <button class="add-btn" id="addBuyerBtn">+ Lead</button>
+    </div>
+
+    <!-- Barre flottante mode sélection -->
+    <div class="selection-bar" id="selectionBar" style="display:none">
+        <span class="selection-bar-count" id="selectionBarCount">0 sélectionné</span>
+        <button class="selection-bar-btn selection-bar-share" id="selectionBarShare">
+            <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager
+        </button>
+        <button class="selection-bar-btn selection-bar-clear" id="selectionBarClear">Tout désélectionner</button>
+        <button class="selection-bar-btn selection-bar-cancel" id="selectionBarCancel">Fermer</button>
     </div>
 
     <div class="mobile-tabs" id="mobileTabs">
@@ -3578,6 +3686,12 @@
                             </select>
                         </div>
                     </div>
+                </div>
+
+                <!-- Section Premier contact (bien d'origine) — affichée uniquement si renseigné -->
+                <div class="form-section" id="originPropertySection" style="display:none">
+                    <div class="form-section-title">📍 Premier contact</div>
+                    <div class="origin-property-card" id="originPropertyCard"></div>
                 </div>
 
                 <!-- Section Biens Proposés -->
@@ -5656,7 +5770,9 @@
             </div>`;
             ext += '</div>';
 
-            card.innerHTML = alertBadge + compact + ext + '<div class="card-expand-arrow">▼</div>';
+            const selectCheckbox = '<div class="select-checkbox"><i class="fa-solid fa-check"></i></div>';
+            card.innerHTML = selectCheckbox + alertBadge + compact + ext + '<div class="card-expand-arrow">▼</div>';
+            if (selectedBuyerIds.has(buyer.id)) card.classList.add('selected');
 
             // Click handler on match indicator → open modal on matching tab
             const matchEl = card.querySelector('.match-indicator-inline');
@@ -5671,14 +5787,31 @@
         }
 
         // ===== RECHERCHE / FILTRE =====
+        // Normalise une chaîne : minuscules + suppression des accents.
+        // Permet de matcher "caluire" sur "Caluire-et-Cuire", "T3" sur "t3", etc.
+        function normalizeSearch(s) {
+            return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        }
+
+        // Libellés humains pour le type de bien — la recherche doit matcher "maison", "appart"...
+        const PROPERTY_TYPE_LABELS = {
+            appartement: 'appartement appart',
+            maison: 'maison',
+            terrain: 'terrain',
+            immeuble: 'immeuble',
+            appartement_ou_maison: 'appartement maison appart'
+        };
+
         function filterBuyers(searchTerm) {
-            const term = searchTerm.toLowerCase().trim();
+            // Découper le terme en mots normalisés : "maison caluire" → ["maison", "caluire"]
+            // Tous les mots doivent matcher (AND) pour valider la carte.
+            const terms = normalizeSearch(searchTerm).trim().split(/\s+/).filter(Boolean);
             const cards = document.querySelectorAll('.pipeline .lead-card');
             let matchCount = 0;
             const totalCount = buyers.length;
 
             cards.forEach(card => {
-                if (!term) {
+                if (terms.length === 0) {
                     card.style.display = '';
                     return;
                 }
@@ -5690,13 +5823,23 @@
                     return;
                 }
 
-                const searchable = [
+                const typeLabel = buyer.property_type ? PROPERTY_TYPE_LABELS[buyer.property_type] || buyer.property_type : '';
+                const budgetLabel = buyer.budget_max ? `${buyer.budget_max} ${Math.round(buyer.budget_max / 1000)}k` : '';
+                const surfaceLabel = buyer.surface_min ? `${buyer.surface_min}m2 ${buyer.surface_min}m²` : '';
+                const criteriaLabel = Array.isArray(buyer.criteria) ? buyer.criteria.join(' ') : (buyer.criteria || '');
+
+                const searchable = normalizeSearch([
                     buyer.first_name, buyer.last_name,
                     buyer.phone, buyer.email,
-                    buyer.sector, buyer.source, buyer.referrer_name
-                ].filter(Boolean).join(' ').toLowerCase();
+                    buyer.sector, buyer.city, buyer.postal_code,
+                    buyer.source, buyer.referrer_name,
+                    typeLabel, buyer.rooms,
+                    budgetLabel, surfaceLabel,
+                    criteriaLabel, buyer.notes,
+                    buyer.bank_approval, buyer.timeline
+                ].filter(Boolean).join(' '));
 
-                const match = searchable.includes(term);
+                const match = terms.every(t => searchable.includes(t));
                 card.style.display = match ? '' : 'none';
                 if (match) matchCount++;
             });
@@ -5713,6 +5856,169 @@
             }
 
             updateCounts();
+        }
+
+        // ===== SÉLECTION MULTIPLE =====
+        // Permet de sélectionner plusieurs acquéreurs et de partager leurs fiches en bloc
+        // (ex : envoyer 4 acquéreurs en recherche d'une maison à Caluire à un consultant).
+        const selectedBuyerIds = new Set();
+        let selectionModeActive = false;
+
+        function setSelectionMode(active) {
+            selectionModeActive = active;
+            document.body.classList.toggle('selection-mode', active);
+            document.getElementById('toggleSelectBtn').classList.toggle('active', active);
+            if (!active) {
+                selectedBuyerIds.clear();
+                document.querySelectorAll('.lead-card.selected').forEach(c => c.classList.remove('selected'));
+            }
+            updateSelectionBar();
+        }
+
+        function toggleBuyerSelected(buyerId, cardEl) {
+            if (selectedBuyerIds.has(buyerId)) {
+                selectedBuyerIds.delete(buyerId);
+                cardEl.classList.remove('selected');
+            } else {
+                selectedBuyerIds.add(buyerId);
+                cardEl.classList.add('selected');
+            }
+            updateSelectionBar();
+        }
+
+        function updateSelectionBar() {
+            const bar = document.getElementById('selectionBar');
+            const count = selectedBuyerIds.size;
+            if (!selectionModeActive) {
+                bar.style.display = 'none';
+                return;
+            }
+            bar.style.display = 'flex';
+            document.getElementById('selectionBarCount').textContent = `${count} sélectionné${count > 1 ? 's' : ''}`;
+            document.getElementById('selectionBarShare').disabled = count === 0;
+        }
+
+        function setupSelectionMode() {
+            const btn = document.getElementById('toggleSelectBtn');
+            if (!btn) return;
+            btn.addEventListener('click', () => setSelectionMode(!selectionModeActive));
+            document.getElementById('selectionBarCancel').addEventListener('click', () => setSelectionMode(false));
+            document.getElementById('selectionBarClear').addEventListener('click', () => {
+                selectedBuyerIds.clear();
+                document.querySelectorAll('.lead-card.selected').forEach(c => c.classList.remove('selected'));
+                updateSelectionBar();
+            });
+            document.getElementById('selectionBarShare').addEventListener('click', shareSelectedBuyers);
+
+            // Intercepte le clic carte en mode sélection (avant le toggle expand)
+            // capture=true pour passer avant le listener pipeline classique
+            document.querySelector('.pipeline').addEventListener('click', (e) => {
+                if (!selectionModeActive) return;
+                const card = e.target.closest('.lead-card');
+                if (!card) return;
+                const id = card.dataset.id;
+                if (!id || !buyers.find(b => b.id === id)) return; // skip exemple
+                e.stopPropagation();
+                e.preventDefault();
+                toggleBuyerSelected(id, card);
+            }, true);
+        }
+
+        async function shareSelectedBuyers() {
+            if (selectedBuyerIds.size === 0) return;
+            const selected = buyers.filter(b => selectedBuyerIds.has(b.id));
+            if (selected.length === 0) return;
+
+            // Charger les notes de tous les acquéreurs sélectionnés
+            const userId = await getCurrentUserId();
+            const notesByBuyer = {};
+            if (userId) {
+                const { data } = await supabaseClient
+                    .from('lead_notes')
+                    .select('content, created_at, buyer_id')
+                    .eq('user_id', userId)
+                    .in('buyer_id', selected.map(b => b.id))
+                    .order('created_at', { ascending: false });
+                (data || []).forEach(n => {
+                    if (!notesByBuyer[n.buyer_id]) notesByBuyer[n.buyer_id] = [];
+                    if (notesByBuyer[n.buyer_id].length < 3) notesByBuyer[n.buyer_id].push(n);
+                });
+            }
+
+            const blocks = selected.map(buyer => {
+                const name = `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim();
+                const lines = [`📋 ${name}`];
+                if (buyer.phone) lines.push(`📞 ${buyer.phone}`);
+                if (buyer.email) lines.push(`📧 ${buyer.email}`);
+
+                const searchParts = [];
+                if (buyer.property_type) {
+                    const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble', appartement_ou_maison: 'Appart/Maison' };
+                    searchParts.push(types[buyer.property_type] || buyer.property_type);
+                }
+                if (buyer.rooms) searchParts.push(buyer.rooms);
+                if (buyer.budget_max) searchParts.push(formatEuro(buyer.budget_max));
+                if (searchParts.length > 0) lines.push(`🏠 ${searchParts.join(' · ')}`);
+                if (buyer.sector) lines.push(`📍 ${buyer.sector.replace(/ \| /g, ', ')}`);
+                if (buyer.surface_min) lines.push(`📐 ${buyer.surface_min} m² min`);
+
+                const ns = notesByBuyer[buyer.id] || [];
+                if (ns.length > 0) {
+                    lines.push('📝 Notes :');
+                    ns.forEach(n => {
+                        const d = new Date(n.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                        lines.push(`• ${d} — ${n.content.substring(0, 120)}`);
+                    });
+                }
+                return lines.join('\n');
+            });
+
+            const text = `${selected.length} acquéreur${selected.length > 1 ? 's' : ''}\n\n` + blocks.join('\n\n─────────\n\n');
+            openSharePopup(text, `${selected.length} acquéreurs`);
+        }
+
+        // Popup de partage générique (utilisée par shareBuyer ET shareSelectedBuyers)
+        function openSharePopup(text, title) {
+            // Désactive le mode sélection pour ne pas confondre l'overlay popup
+            const existing = document.getElementById('shareModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'shareModal';
+            modal.innerHTML = `
+                <div class="modal-card" style="max-width:460px">
+                    <h3 style="margin:0 0 12px; font-size:16px; font-weight:700; color:#2C3E50">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager — ${escapeHtml(title)}
+                    </h3>
+                    <textarea id="shareText" readonly style="
+                        width:100%; min-height:220px; padding:12px; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
+                    ">${escapeHtml(text)}</textarea>
+                    <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+                        <button type="button" onclick="copyShareText()" style="
+                            flex:1; padding:10px; background:#F1F5F9; border:1.5px solid #E1E8ED; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:#334155; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-copy"></i> Copier</button>
+                        <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" style="
+                            flex:1; padding:10px; background:#25D366; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                        <a href="sms:?body=${encodeURIComponent(text)}" style="
+                            flex:1; padding:10px; background:#22c55e; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-solid fa-comment-sms"></i> SMS</a>
+                        <a href="mailto:?subject=${encodeURIComponent('Fiches acquéreurs')}&body=${encodeURIComponent(text)}" style="
+                            flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-solid fa-envelope"></i> Email</a>
+                    </div>
+                    <button type="button" onclick="document.getElementById('shareModal').remove()" style="
+                        width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Fermer</button>
+                </div>`;
+            document.body.appendChild(modal);
         }
 
         function setupSearchToolbar() {
@@ -6754,6 +7060,55 @@
             closeAiConfirm();
         }
 
+        // ===== PREMIER CONTACT (BIEN D'ORIGINE) =====
+        // Affiche le bien pour lequel l'acquéreur a initialement contacté l'agent.
+        // Données : buyer.origin_seller_id (FK) + origin_property_label (cache) + origin_contact_date.
+        async function renderOriginProperty(buyer) {
+            const section = document.getElementById('originPropertySection');
+            const card = document.getElementById('originPropertyCard');
+            if (!section || !card) return;
+
+            // Rien à afficher si aucune info d'origine
+            if (!buyer.origin_seller_id && !buyer.origin_property_label) {
+                section.style.display = 'none';
+                return;
+            }
+
+            // Préférer le seller vivant (adresse à jour) ; fallback sur le label cache
+            let label = buyer.origin_property_label || '';
+            let propertyTypeIcon = '🏠';
+            let sellerExists = false;
+            if (buyer.origin_seller_id) {
+                const sellers = await loadSellersForMatching();
+                const seller = sellers.find(s => s.id === buyer.origin_seller_id);
+                if (seller) {
+                    sellerExists = true;
+                    label = seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || label;
+                    const typeIcons = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️' };
+                    propertyTypeIcon = typeIcons[seller.property_type] || '🏠';
+                }
+            }
+
+            const dateStr = buyer.origin_contact_date
+                ? new Date(buyer.origin_contact_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                : '';
+
+            // Lien deep-link vers la fiche vendeur uniquement si le seller existe encore
+            const linkHtml = sellerExists
+                ? `<a class="opc-link" href="vendeurs.html?openLead=${buyer.origin_seller_id}" target="_blank" title="Voir le bien">Voir le bien</a>`
+                : '';
+
+            card.innerHTML = `
+                <div class="opc-icon">${propertyTypeIcon}</div>
+                <div class="opc-text">
+                    <div class="opc-label">A contacté pour : ${escapeHtml(label || 'bien sans adresse')}</div>
+                    ${dateStr ? `<div class="opc-date">📅 ${dateStr}</div>` : ''}
+                </div>
+                ${linkHtml}
+            `;
+            section.style.display = '';
+        }
+
         // ===== LIENS =====
         function renderLinks() {
             const container = document.getElementById('linksContainer');
@@ -6875,6 +7230,9 @@
             currentLinks = JSON.parse(JSON.stringify(buyer.links || []));
             renderLinks();
 
+            // Premier contact (bien d'origine) — vendeur(s) du CRM ou label cache
+            renderOriginProperty(buyer);
+
             // Mode édition
             const btn = document.getElementById('submitBtn');
             btn.dataset.editId = id;
@@ -6958,8 +7316,10 @@
             const text = lines.join('\n');
             const phone = buyer.phone ? buyer.phone.replace(/\s/g, '').replace(/^0/, '33') : '';
 
-            // Essayer le partage natif (mobile)
-            if (navigator.share) {
+            // Sur mobile (iOS/Android) on garde le share sheet natif (riche : Messages, WhatsApp, etc.).
+            // Sur desktop (macOS surtout) la share sheet ne propose pas WhatsApp → on force la popup interne.
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile && navigator.share) {
                 try {
                     await navigator.share({ title: `Fiche ${name}`, text });
                     return;
@@ -6988,10 +7348,10 @@
                             flex:1; padding:10px; background:#22c55e; border:none; border-radius:10px;
                             font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
                         "><i class="fa-solid fa-comment-sms"></i> SMS</a>` : ''}
-                        ${phone ? `<a href="https://wa.me/${phone}?text=${encodeURIComponent(text)}" target="_blank" style="
+                        <a href="https://wa.me/${phone || ''}?text=${encodeURIComponent(text)}" target="_blank" style="
                             flex:1; padding:10px; background:#25D366; border:none; border-radius:10px;
                             font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
-                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ''}
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
                         <a href="mailto:?subject=${encodeURIComponent('Fiche acquéreur — ' + name)}&body=${encodeURIComponent(text)}" style="
                             flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
                             font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
@@ -8223,6 +8583,7 @@
                 if (e.target === e.currentTarget) closeColumnSettings();
             });
             setupSearchToolbar();
+            setupSelectionMode();
             injectExportToUserDropdown();
             initMobileTabs();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');

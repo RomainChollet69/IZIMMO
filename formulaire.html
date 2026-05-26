@@ -452,6 +452,13 @@
 
             if (agentId) buyerData.user_id = agentId;
 
+            // Bien d'origine : si l'agent partage le formulaire depuis une fiche vendeur,
+            // l'URL contient ?seller_id=... → on trace le bien pour lequel l'acquéreur a postulé.
+            const sellerId = urlParams.get('seller_id');
+            if (sellerId) buyerData.origin_seller_id = sellerId;
+            const sellerLabel = urlParams.get('seller_label');
+            if (sellerLabel) buyerData.origin_property_label = decodeURIComponent(sellerLabel);
+
             try {
                 const resp = await fetch('/api/submit-form', {
                     method: 'POST',

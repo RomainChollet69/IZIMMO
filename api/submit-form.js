@@ -51,6 +51,13 @@ export default async function handler(req, res) {
     // Associer au bon agent
     if (body.user_id) buyerData.user_id = body.user_id;
 
+    // Bien d'origine (cf. ?seller_id=... dans formulaire.html)
+    if (body.origin_seller_id) {
+        buyerData.origin_seller_id = body.origin_seller_id;
+        buyerData.origin_contact_date = new Date().toISOString().split('T')[0];
+    }
+    if (body.origin_property_label) buyerData.origin_property_label = body.origin_property_label;
+
     const { data, error } = await supabaseAdmin.from('buyers').insert([buyerData]).select();
 
     if (error) {

@@ -9691,7 +9691,14 @@
             const text = lines.join('\n');
             const phone = seller.phone ? seller.phone.replace(/\s/g, '').replace(/^0/, '33') : '';
 
-            if (navigator.share) {
+            // URL formulaire acquéreur pré-renseigné avec ce bien → permet de tracer
+            // automatiquement le bien d'origine sur la fiche acquéreur créée.
+            const formLabel = seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
+            const formLink = `${location.origin}/formulaire.html?seller_id=${seller.id}&seller_label=${encodeURIComponent(formLabel)}`;
+
+            // Sur mobile uniquement on garde le share sheet natif (sinon : popup interne pour exposer WhatsApp)
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile && navigator.share) {
                 navigator.share({ title: `Fiche ${name}`, text }).catch(() => {});
                 return;
             }
@@ -9700,7 +9707,7 @@
             modal.className = 'modal-overlay';
             modal.id = 'shareModal';
             modal.innerHTML = `
-                <div class="modal-card" style="max-width:440px">
+                <div class="modal-card" style="max-width:480px">
                     <h3 style="margin:0 0 12px; font-size:16px; font-weight:700; color:#2C3E50">
                         <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager la fiche
                     </h3>
@@ -9713,17 +9720,43 @@
                             flex:1; padding:10px; background:#F1F5F9; border:1.5px solid #E1E8ED; border-radius:10px;
                             font-size:13px; font-weight:600; cursor:pointer; color:#334155; font-family:Inter,sans-serif;
                         "><i class="fa-solid fa-copy"></i> Copier</button>
+                        <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" style="
+                            flex:1; padding:10px; background:#25D366; border:none; border-radius:10px;
+                            font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
                         <a href="mailto:?subject=${encodeURIComponent('Fiche vendeur — ' + name)}&body=${encodeURIComponent(text)}" style="
                             flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
                             font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
                         "><i class="fa-solid fa-envelope"></i> Email</a>
                     </div>
+
+                    <div style="margin-top:14px; padding:12px; background:#F0F4FF; border:1px solid #C7D2FE; border-radius:10px">
+                        <div style="font-size:12px; font-weight:700; color:#4F46E5; margin-bottom:6px">
+                            <i class="fa-solid fa-link"></i> Lien formulaire pré-rempli
+                        </div>
+                        <div style="font-size:11px; color:#475569; margin-bottom:8px">
+                            Partage ce lien à un acquéreur intéressé : le bien sera automatiquement tracé sur sa fiche.
+                        </div>
+                        <button type="button" onclick="copyFormLinkForSeller('${formLink.replace(/'/g, '\\\'')}', this)" style="
+                            width:100%; padding:9px; background:#4F46E5; color:white; border:none; border-radius:8px;
+                            font-size:13px; font-weight:600; cursor:pointer; font-family:Inter,sans-serif;
+                        "><i class="fa-solid fa-copy"></i> Copier le lien</button>
+                    </div>
+
                     <button type="button" onclick="document.getElementById('shareModal').remove()" style="
                         width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
                         font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
                     ">Fermer</button>
                 </div>`;
             document.body.appendChild(modal);
+        }
+
+        function copyFormLinkForSeller(url, btn) {
+            navigator.clipboard.writeText(url).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Lien copié !';
+                setTimeout(() => { btn.innerHTML = orig; }, 2000);
+            });
         }
 
         function copyShareText() {

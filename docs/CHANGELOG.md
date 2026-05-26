@@ -4,6 +4,83 @@
 
 ---
 
+## Session 2026-05-26 — Bien d'origine acquéreur + matching portails + sélection multiple
+
+### Contexte
+5 chantiers indépendants demandés en bloc par l'utilisateur :
+1. Tracer le bien pour lequel un acquéreur a initialement contacté l'agent (formulaire / visite / portail)
+2. Forcer l'apparition de WhatsApp dans le partage de fiche depuis Mac desktop
+3. Permettre la sélection multiple d'acquéreurs et le partage groupé
+4. Élargir la recherche acquéreurs au type de bien + multi-mots AND
+5. Fiabiliser le matching des demandes de visite portail (faux positifs bienici/SeLoger/Gingka)
+
+### Modifications
+
+#### 🅐 Bien d'origine sur fiche acquéreur
+- **Migration SQL** sur `buyers` : `origin_seller_id` (FK sellers ON DELETE SET NULL) + `origin_property_label` (cache) + `origin_contact_date`
+- **Capture automatique** dans 3 flux :
+  - Promotion depuis visite (visites.html:confirmPromote) → seller_id de la visite
+  - Acceptation/traitement demande portail (api/assistant.js:handleProcessVisitRequest via nouveau helper `loadOriginInfo`) → matched_seller_id
+  - Formulaire public (formulaire.html + api/submit-form.js) → URL params `?seller_id=...&seller_label=...`
+- **Affichage** : nouvelle section « 📍 Premier contact » dans la modal fiche acquéreur (acquereurs.html:renderOriginProperty), affichée uniquement si renseigné. Lien deep-link vers la fiche vendeur si elle existe encore.
+- **Génération du lien formulaire pré-rempli** : bouton dans la popup share de la fiche vendeur (vendeurs.html:shareSeller) qui copie `formulaire.html?seller_id=X&seller_label=Y`
+
+#### 🅱️ WhatsApp depuis desktop
+- `navigator.share` ne fait remonter WhatsApp que sur mobile → détection user agent (`/Android|iPhone|iPad|iPod/i`), skip sur desktop pour afficher directement la popup interne qui contient déjà le bouton WhatsApp
+- Bouton WhatsApp désormais toujours présent (même sans téléphone) via `https://wa.me/?text=...` qui laisse choisir le destinataire
+- Appliqué dans acquereurs.html:shareBuyer et vendeurs.html:shareSeller
+
+#### 🅒 Sélection multiple acquéreurs
+- Nouveau bouton ☐ « Sélectionner » dans la search-bar (desktop uniquement, à côté du « + Lead »)
+- Classe `body.selection-mode` qui révèle une checkbox ronde en haut à gauche de chaque carte, neutralise les boutons d'action et le clic = toggle (state dans `Set selectedBuyerIds`)
+- Barre flottante en bas (`#selectionBar`) avec compteur + boutons Partager / Tout désélectionner / Fermer
+- Partage groupé : concatène les blocs « 📋 nom + critères + 3 notes max » séparés par `─────`, ouvre une popup générique `openSharePopup()` (Copier / WhatsApp / SMS / Email)
+- Persistance de la sélection à travers le filtrage de recherche
+
+#### 🅳 Recherche acquéreurs multi-critères
+- acquereurs.html:filterBuyers refondu : split du terme en mots (AND), normalisation accent/casse via `normalizeSearch()`
+- Champs ajoutés au blob recherchable : `property_type` mappé en libellés humains (« maison » / « appartement » / « appart »), `rooms`, `budget_max` (raw + format « XXXk »), `surface_min`, `criteria`, `notes`, `bank_approval`, `timeline`, `city`, `postal_code`
+- Désormais « maison Caluire » ou « T3 200k » filtrent correctement
+
+#### 🅴 Fiabilisation matching demandes de visite
+- **Suppression du fallback type+prix** qui matchait au hasard avec confidence `low` lorsque l'adresse était absente (cause des faux positifs bienici/SeLoger/Gingka : « tout matchait avec le 1 rue Edouard Branly à 220k€ »)
+  - api/inbound-email.js:matchSeller : étape 3 désactivée, return null à la place
+  - visites.html:frontendMatchSeller : étape 3 désactivée, lignes 5605-5639 remplacées par un commentaire
+- **Bouton ✏️ « Changer le bien matché »** sur chaque demande portail (matchée ou non) → ouvre une modale `openChangeMatchModal` avec recherche live parmi les sellers `mandate`+`commercialisation`
+- **`updatePortalMatch(reqId, sellerId)`** : met à jour `visit_requests.matched_seller_id` + `match_confidence='high'` (match manuel = haute confiance) ; sellerId=null permet de détacher
+- Tag « Aucun bien matché » déjà en orange visible — pas de changement CSS nécessaire
+
+### Fichiers modifiés
+- `acquereurs.html` — share, recherche, sélection multiple, section premier contact, renderOriginProperty
+- `visites.html` — suppression fallback matching, bouton change match + modale, capture origin_seller_id dans confirmPromote
+- `vendeurs.html` — popup share enrichie : WhatsApp + bouton « Lien formulaire pré-rempli »
+- `formulaire.html` — lecture URL params `seller_id` et `seller_label`, transmission au submit
+- `api/submit-form.js` — accepte `origin_seller_id` et `origin_property_label`, set `origin_contact_date` à today
+- `api/inbound-email.js` — suppression du fallback type+prix
+- `api/assistant.js` — nouveau helper `loadOriginInfo`, ajout des colonnes origin_* dans les 2 flux de création buyer (accept + processed)
+
+### Migration SQL appliquée
+```sql
+ALTER TABLE public.buyers
+  ADD COLUMN IF NOT EXISTS origin_seller_id UUID REFERENCES public.sellers(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS origin_property_label TEXT,
+  ADD COLUMN IF NOT EXISTS origin_contact_date DATE;
+CREATE INDEX IF NOT EXISTS idx_buyers_origin_seller_id ON public.buyers(origin_seller_id) WHERE origin_seller_id IS NOT NULL;
+```
+
+### Points d'attention / limitations
+- **Données historiques** : les 342 acquéreurs existants n'ont pas de `origin_seller_id`. La capture ne fonctionne qu'à partir de maintenant pour les NOUVELLES créations via les 3 flux ci-dessus.
+- **Sélection multiple desktop uniquement** : la search-bar-section est cachée en `< 768px`, donc le bouton « Sélectionner » l'est aussi. Le partage à 1 fiche reste accessible via le bouton 📤 de la carte.
+- **Matching plus strict** : certaines demandes qui matchaient (à tort) au type+prix vont maintenant tomber en « Aucun bien matché ». Use case : l'agent les corrige à la main via le nouveau bouton ✏️.
+- **Pas de re-matching auto post-correction** : si l'agent ajoute un bien en `mandate` après avoir reçu une demande déjà classée « non matchée », il devra cliquer ✏️ pour l'associer (option B du plan rejetée).
+
+### Prochaines étapes possibles
+- Backfill optionnel des `origin_seller_id` sur acquéreurs existants en croisant `lead_notes` contenant « 📋 Import visite — » avec les sellers
+- Sélection multiple sur mobile (via long-press ou action dans le menu user-dropdown)
+- Recherche acquéreurs avec opérateurs explicites (`budget:>200k`, `type:maison`) si la recherche libre devient ambiguë
+
+---
+
 ## Session 2026-04-11 — Refonte UX import CSV/Excel + annulation
 
 ### Contexte

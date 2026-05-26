@@ -504,18 +504,10 @@ async function matchSeller(userId, parsed) {
         }
     }
 
-    // 3. Fallback : type + prix à ±10%
-    if (parsed.property_type && parsed.property_price) {
-        const priceMargin = parsed.property_price * 0.1;
-        const match = sellers.find(s => {
-            if (!s.property_type || !s.budget) return false;
-            const typeMatch = s.property_type.toLowerCase().includes(parsed.property_type.toLowerCase());
-            const priceMatch = Math.abs(s.budget - parsed.property_price) <= priceMargin;
-            return typeMatch && priceMatch;
-        });
-
-        if (match) return { id: match.id, confidence: 'low' };
-    }
+    // 3. Fallback type + prix : DÉSACTIVÉ.
+    // Trop de faux positifs (bienici/SeLoger/Gingka envoient parfois sans adresse →
+    // toutes les demandes du même prix tombaient sur le même bien).
+    // Mieux vaut "Aucun bien matché" + matching manuel que mauvais match silencieux.
 
     return null;
 }

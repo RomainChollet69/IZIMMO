@@ -1070,6 +1070,26 @@ function portalToBuyerSource(portalName) {
     return 'autre_plateforme';
 }
 
+// Construit { label, date } pour les colonnes origin_* d'un futur buyer.
+// label = adresse du seller si dispo ; date = email_date de la demande sinon today.
+async function loadOriginInfo(supabaseAdmin, sellerId, visitRequest) {
+    const date = visitRequest?.email_date
+        ? visitRequest.email_date.split('T')[0]
+        : new Date().toISOString().split('T')[0];
+    if (!sellerId) {
+        return { label: visitRequest?.property_address || null, date };
+    }
+    const { data: seller } = await supabaseAdmin
+        .from('sellers')
+        .select('address, first_name, last_name')
+        .eq('id', sellerId)
+        .single();
+    const label = seller
+        ? (seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || null)
+        : (visitRequest?.property_address || null);
+    return { label, date };
+}
+
 async function handleProcessVisitRequest(res, user, params) {
     const supabaseAdmin = getSupabaseAdmin();
     const { request_id, decision, seller_id, create_buyer, visit_date, visit_time, note, processing_note } = params;
@@ -1099,6 +1119,8 @@ async function handleProcessVisitRequest(res, user, params) {
 
     if (decision === 'accept') {
         const finalSellerId = seller_id || vr.matched_seller_id;
+        // Charger le seller pour stocker origin_property_label sur le futur buyer
+        const originInfo = await loadOriginInfo(supabaseAdmin, finalSellerId, vr);
 
         // Créer un buyer si demandé (avec détection de doublon par email/téléphone)
         let buyerId = null;
@@ -1124,7 +1146,10 @@ async function handleProcessVisitRequest(res, user, params) {
                     source: portalToBuyerSource(vr.portal_name),
                     status: 'nouveau',
                     contact_date: new Date().toISOString().split('T')[0],
-                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`,
+                    origin_seller_id: finalSellerId || null,
+                    origin_property_label: originInfo.label,
+                    origin_contact_date: originInfo.date
                 };
                 const { data: buyer, error: buyerErr } = await supabaseAdmin
                     .from('buyers')
@@ -1191,6 +1216,8 @@ async function handleProcessVisitRequest(res, user, params) {
     if (decision === 'processed') {
         // Marquer comme traitée avec note, optionnellement créer un lead (avec détection de doublon)
         let buyerId = null;
+        const processedSellerId = seller_id || vr.matched_seller_id;
+        const originInfo = await loadOriginInfo(supabaseAdmin, processedSellerId, vr);
         if (create_buyer && (vr.visitor_name || vr.visitor_phone)) {
             // Vérifier si un acquéreur existe déjà
             const orClauses = [];
@@ -1213,7 +1240,10 @@ async function handleProcessVisitRequest(res, user, params) {
                     source: portalToBuyerSource(vr.portal_name),
                     status: 'nouveau',
                     contact_date: new Date().toISOString().split('T')[0],
-                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`
+                    notes: `Demande via ${vr.portal_name || 'portail'}${vr.visitor_message ? ' : "' + vr.visitor_message.substring(0, 200) + '"' : ''}`,
+                    origin_seller_id: processedSellerId || null,
+                    origin_property_label: originInfo.label,
+                    origin_contact_date: originInfo.date
                 };
                 const { data: buyer, error: buyerErr } = await supabaseAdmin
                     .from('buyers')
