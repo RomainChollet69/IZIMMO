@@ -552,6 +552,12 @@
             cursor: pointer; color: #7B1FA2; font-size: 14px; transition: all 0.15s; flex-shrink: 0;
         }
         .accordion-add-contact-btn:hover { background: #F3E5F5; border-color: #7B1FA2; }
+        .accordion-share-btn {
+            background: none; border: 2px solid #E1E8ED; border-radius: 8px;
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #667eea; font-size: 13px; transition: all 0.15s; flex-shrink: 0;
+        }
+        .accordion-share-btn:hover { background: #EEF2FF; border-color: #667eea; }
         .visits-drop-zone { min-height: 20px; transition: all 0.2s; border-radius: 8px; }
         .visits-drop-zone.drag-over { background: #F3E5F5; outline: 2px dashed #7B1FA2; outline-offset: -2px; }
         .contact-source-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #F3E5F5; color: #7B1FA2; }
@@ -3318,6 +3324,9 @@
                     ${portalStatsHtml}
                 </div>
                 <div class="accordion-badges">${badges}</div>
+                <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${sellerId}')" title="Partager le bien et ses contacts">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                </button>
                 <button class="accordion-add-contact-btn" onclick="event.stopPropagation(); openAddContactModal('${sellerId}')" title="Ajouter un contact">
                     <i class="fa-solid fa-user-plus"></i>
                 </button>
@@ -6278,6 +6287,9 @@
                         <div class="archive-seller-meta">${metaParts.map(p => `<span>${p}</span>`).join('')}</div>
                     </div>
                     <span style="font-size:11px; color:#6B7280; font-weight:600">${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>
+                    <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${seller.id}')" title="Partager le bien et ses contacts">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                    </button>
                     <i class="fa-solid fa-chevron-down archive-seller-toggle"></i>
                 </div>
                 <div class="archive-seller-body">
@@ -6352,6 +6364,165 @@
     function getFeedbackEmoji(rating) {
         const map = { coup_de_coeur: '❤️ coup de cœur', interesse: '👍 intéressé', mitige: '😐 mitigé', pas_convaincu: '👎 pas convaincu' };
         return map[rating] || rating;
+    }
+
+    // ===== PARTAGE BIEN + CONTACTS (page visites + archive) =====
+    // Construit un message structuré : titre du bien + liste des contacts, puis ouvre
+    // la popup standard (WhatsApp / SMS / Email / Copier). Cas d'usage : partager à
+    // un collègue tous les contacts qu'on a eu sur un bien (à vendre ou archivé).
+    async function shareSellerContacts(sellerId) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        // Chercher le seller dans activeSellers (page visites) ou en DB (archive d'un bien sorti)
+        let seller = activeSellers.find(s => s.id === sellerId);
+        if (!seller) {
+            const { data } = await supabaseClient
+                .from('sellers')
+                .select('id, first_name, last_name, address, budget, mandate_price, surface, rooms, property_type, status, postal_code, city, updated_at')
+                .eq('id', sellerId).eq('user_id', userId).maybeSingle();
+            seller = data;
+        }
+        if (!seller) { alert('Bien introuvable.'); return; }
+
+        // Charger visites + demandes portails pour ce bien
+        const [visitsRes, reqsRes] = await Promise.all([
+            supabaseClient
+                .from('visits')
+                .select('id, status, visit_date, visit_time, buyer_name, visitor_phone, visitor_email, feedback_rating, buyers(first_name, last_name, phone, email)')
+                .eq('user_id', userId).eq('seller_id', sellerId)
+                .order('visit_date', { ascending: false }),
+            supabaseClient
+                .from('visit_requests')
+                .select('id, visitor_name, visitor_phone, visitor_email, portal_name, email_date')
+                .eq('user_id', userId).eq('matched_seller_id', sellerId)
+                .order('email_date', { ascending: false })
+        ]);
+        const visits = visitsRes.data || [];
+        const requests = reqsRes.data || [];
+
+        // Construire le texte structuré
+        const lines = [];
+        const addr = seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || 'Bien sans adresse';
+        const titleParts = [];
+        if (seller.property_type) titleParts.push(seller.property_type);
+        if (seller.rooms) titleParts.push(seller.rooms);
+        const titleType = titleParts.join(' ');
+        lines.push(`🏠 ${titleType ? titleType + ' — ' : ''}${addr}`);
+
+        const subParts = [];
+        const price = seller.mandate_price || seller.budget;
+        if (price) subParts.push(`💰 ${parseInt(price).toLocaleString('fr-FR')} €`);
+        if (seller.surface) subParts.push(`📐 ${seller.surface} m²`);
+        if (subParts.length) lines.push(subParts.join(' · '));
+
+        // Statut + date d'événement (pour les biens archivés surtout)
+        const statusMeta = (typeof getArchiveStatusMeta === 'function') ? getArchiveStatusMeta(seller.status) : null;
+        const statusLabel = statusMeta ? statusMeta.label : seller.status;
+        const exitDate = seller.updated_at ? new Date(seller.updated_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '';
+        if (statusLabel) lines.push(`📌 ${statusLabel}${exitDate ? ' · ' + exitDate : ''}`);
+
+        const totalContacts = visits.length + requests.length;
+        if (totalContacts === 0) {
+            lines.push('');
+            lines.push('Aucun contact enregistré pour ce bien.');
+        } else {
+            lines.push('');
+            lines.push(`👥 ${totalContacts} contact${totalContacts > 1 ? 's' : ''} :`);
+            lines.push('');
+
+            visits.forEach(v => {
+                const name = v.buyer_name
+                    || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}`.trim() : '')
+                    || 'Visiteur';
+                const phone = v.visitor_phone || (v.buyers && v.buyers.phone) || '';
+                const email = v.visitor_email || (v.buyers && v.buyers.email) || '';
+                const dateStr = v.visit_date ? new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+                const statusFr = v.status === 'effectuee' ? 'Visite effectuée' : (v.status === 'annulee' ? 'Visite annulée' : 'Visite planifiée');
+                const feedback = v.feedback_rating ? ` · ${getFeedbackEmoji(v.feedback_rating)}` : '';
+                lines.push(`• ${name}${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
+                lines.push(`  ${statusFr} ${dateStr}${feedback}`);
+            });
+
+            requests.forEach(r => {
+                const name = r.visitor_name || 'Visiteur portail';
+                const phone = r.visitor_phone || '';
+                const email = r.visitor_email || '';
+                const dateStr = r.email_date ? new Date(r.email_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+                const portal = r.portal_name || 'portail';
+                lines.push(`• ${name}${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
+                lines.push(`  Demande via ${portal} ${dateStr}`);
+            });
+        }
+
+        const text = lines.join('\n');
+
+        // Sur mobile uniquement, utiliser le share sheet natif (qui propose WhatsApp/SMS/etc.)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMobile && navigator.share) {
+            try {
+                await navigator.share({ title: `Contacts — ${addr}`, text });
+                return;
+            } catch (e) { /* annulé → popup interne */ }
+        }
+
+        // Popup interne : WhatsApp / SMS / Email / Copier
+        showShareSellerPopup(text, addr);
+    }
+
+    function showShareSellerPopup(text, title) {
+        const existing = document.getElementById('shareSellerModal');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'shareSellerModal';
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:25500;display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = `
+            <div onclick="event.stopPropagation()" style="background:white; border-radius:14px; max-width:480px; width:100%; padding:20px; box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+                <h3 style="margin:0 0 12px; font-size:16px; font-weight:700; color:#2C3E50">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager — ${escapeHtml(title)}
+                </h3>
+                <textarea id="shareSellerText" readonly style="
+                    width:100%; min-height:220px; padding:12px; border:1.5px solid #E1E8ED; border-radius:10px;
+                    font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
+                ">${escapeHtml(text)}</textarea>
+                <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+                    <button type="button" onclick="copyShareSellerText()" style="
+                        flex:1; padding:10px; background:#F1F5F9; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-size:13px; font-weight:600; cursor:pointer; color:#334155; font-family:Inter,sans-serif;
+                    "><i class="fa-solid fa-copy"></i> Copier</button>
+                    <a href="https://wa.me/?text=${encodeURIComponent(text)}" target="_blank" style="
+                        flex:1; padding:10px; background:#25D366; border:none; border-radius:10px;
+                        font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                    "><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+                    <a href="sms:?body=${encodeURIComponent(text)}" style="
+                        flex:1; padding:10px; background:#22c55e; border:none; border-radius:10px;
+                        font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                    "><i class="fa-solid fa-comment-sms"></i> SMS</a>
+                    <a href="mailto:?subject=${encodeURIComponent('Contacts — ' + title)}&body=${encodeURIComponent(text)}" style="
+                        flex:1; padding:10px; background:#667eea; border:none; border-radius:10px;
+                        font-size:13px; font-weight:600; cursor:pointer; color:white; text-align:center; text-decoration:none;
+                    "><i class="fa-solid fa-envelope"></i> Email</a>
+                </div>
+                <button type="button" onclick="document.getElementById('shareSellerModal').remove()" style="
+                    width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
+                    font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
+                ">Fermer</button>
+            </div>`;
+        modal.addEventListener('click', () => modal.remove());
+        document.body.appendChild(modal);
+    }
+
+    function copyShareSellerText() {
+        const ta = document.getElementById('shareSellerText');
+        if (!ta) return;
+        navigator.clipboard.writeText(ta.value).then(() => {
+            const btn = ta.parentElement.querySelector('button');
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Copié !';
+            setTimeout(() => { btn.innerHTML = original; }, 2000);
+        });
     }
 
     // Met à jour le badge count d'archives sur le bouton (non bloquant)
