@@ -1707,6 +1707,25 @@
             .mv-property-section.open .mv-property-chevron {
                 transform: rotate(180deg);
             }
+            .mv-property-share-btn {
+                background: none;
+                border: 1.5px solid var(--m-surface-3, #E1E8ED);
+                border-radius: 8px;
+                width: 32px;
+                height: 32px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #667eea;
+                font-size: 12px;
+                cursor: pointer;
+                flex-shrink: 0;
+                margin-right: 6px;
+                transition: all 0.15s;
+            }
+            .mv-property-share-btn:active {
+                background: #EEF2FF;
+            }
             .mv-property-visits {
                 display: none;
                 padding-left: 0;
@@ -2747,6 +2766,12 @@
             let visitsHtml = '';
             allGroupVisits.forEach(v => { visitsHtml += renderMobileVisitItem(v); });
 
+            const shareBtnHtml = seller && key !== 'no_seller'
+                ? `<button class="mv-property-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${key}')" title="Partager le bien et ses contacts">
+                       <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                   </button>`
+                : '';
+
             html += `<div class="mv-property-section${isOpen ? ' open' : ''}" data-seller-id="${key}">
                 <div class="mv-property-header" onclick="toggleMobilePropertySection('${key}')">
                     ${photoHtml}
@@ -2755,6 +2780,7 @@
                         <div class="mv-property-seller">${escapeHtml(sellerName)}</div>
                         <div class="mv-property-badges">${badges}</div>
                     </div>
+                    ${shareBtnHtml}
                     <i class="fa-solid fa-chevron-down mv-property-chevron"></i>
                 </div>
                 <div class="mv-property-visits">${visitsHtml}</div>
