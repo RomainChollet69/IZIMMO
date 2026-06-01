@@ -368,6 +368,109 @@
         }
         .processed-delete-btn:hover { color: #E53935; background: #FFEBEE; }
 
+        /* ===== VUE ARCHIVE (modale plein écran biens vendus/perdus + contacts) ===== */
+        .archive-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            z-index: 25000; display: flex; align-items: center; justify-content: center; padding: 32px;
+            animation: archiveFadeIn 0.2s ease;
+        }
+        @keyframes archiveFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .archive-modal {
+            background: white; border-radius: 18px; width: 100%; max-width: 920px;
+            max-height: calc(100vh - 64px); display: flex; flex-direction: column;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.3); overflow: hidden;
+        }
+        .archive-header {
+            padding: 18px 24px; background: linear-gradient(135deg, #1F2937, #374151); color: white;
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .archive-header-title {
+            font-family: 'Barlow Semi Condensed', sans-serif; font-size: 20px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 10px;
+        }
+        .archive-close-btn {
+            background: rgba(255,255,255,0.12); border: none; color: white; width: 36px; height: 36px;
+            border-radius: 50%; cursor: pointer; font-size: 16px; transition: background 0.15s;
+        }
+        .archive-close-btn:hover { background: rgba(255,255,255,0.22); }
+        .archive-toolbar {
+            padding: 12px 24px; border-bottom: 1px solid #E5E7EB; background: #F9FAFB;
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+        }
+        .archive-search { flex: 1; min-width: 240px; position: relative; }
+        .archive-search input {
+            width: 100%; padding: 10px 12px 10px 36px; border: 1.5px solid #E1E8ED; border-radius: 10px;
+            font-size: 14px; font-family: 'Inter', sans-serif;
+        }
+        .archive-search input:focus { outline: none; border-color: #667eea; }
+        .archive-search i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9CA3AF; font-size: 13px; }
+        .archive-filter-chip {
+            padding: 7px 14px; border-radius: 999px; border: 1.5px solid #E1E8ED; background: white;
+            font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: all 0.15s;
+        }
+        .archive-filter-chip:hover { border-color: #94A3B8; }
+        .archive-filter-chip.active { background: #1F2937; color: white; border-color: #1F2937; }
+        .archive-body { flex: 1; overflow-y: auto; padding: 16px 24px 24px; }
+        .archive-empty { text-align: center; padding: 60px 20px; color: #9CA3AF; }
+        .archive-empty i { font-size: 42px; margin-bottom: 14px; opacity: 0.5; }
+        .archive-seller-card {
+            background: white; border: 1.5px solid #E5E7EB; border-radius: 14px; margin-bottom: 12px;
+            overflow: hidden; transition: border-color 0.15s;
+        }
+        .archive-seller-card:hover { border-color: #CBD5E1; }
+        .archive-seller-header {
+            padding: 14px 18px; display: flex; align-items: center; gap: 14px; cursor: pointer;
+            user-select: none;
+        }
+        .archive-seller-header:hover { background: #FAFBFC; }
+        .archive-status-badge {
+            padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.3px; flex-shrink: 0;
+        }
+        .archive-status-badge.sold { background: #F3E8FF; color: #7E22CE; }
+        .archive-status-badge.lost { background: #F1F5F9; color: #64748B; }
+        .archive-seller-info { flex: 1; min-width: 0; }
+        .archive-seller-address { font-size: 14px; font-weight: 700; color: #1F2937; }
+        .archive-seller-meta { font-size: 12px; color: #6B7280; margin-top: 2px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .archive-seller-toggle { color: #9CA3AF; font-size: 13px; transition: transform 0.2s; flex-shrink: 0; }
+        .archive-seller-card.open .archive-seller-toggle { transform: rotate(180deg); }
+        .archive-seller-body { display: none; padding: 0 18px 14px; border-top: 1px solid #F3F4F6; }
+        .archive-seller-card.open .archive-seller-body { display: block; }
+        .archive-contacts-title {
+            font-size: 12px; font-weight: 700; color: #6B7280; text-transform: uppercase;
+            letter-spacing: 0.5px; margin: 14px 0 8px;
+        }
+        .archive-contact-row {
+            display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #F3F4F6;
+        }
+        .archive-contact-row:last-child { border-bottom: none; }
+        .archive-contact-source {
+            font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 6px; flex-shrink: 0;
+        }
+        .archive-contact-source.visit { background: #DBEAFE; color: #1D4ED8; }
+        .archive-contact-source.visit-done { background: #D1FAE5; color: #065F46; }
+        .archive-contact-source.portal { background: #FEF3C7; color: #92400E; }
+        .archive-contact-name { font-size: 13px; font-weight: 600; color: #1F2937; flex: 1; min-width: 0; }
+        .archive-contact-detail { font-size: 12px; color: #6B7280; }
+        .archive-contact-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .archive-contact-actions a, .archive-contact-actions button {
+            background: #F1F5F9; border: 1px solid #E2E8F0; color: #475569; width: 30px; height: 30px;
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s; text-decoration: none; font-size: 13px;
+        }
+        .archive-contact-actions a:hover, .archive-contact-actions button:hover { background: #E2E8F0; color: #1F2937; }
+        .archive-contact-actions a.whatsapp { background: #DCFCE7; color: #166534; border-color: #BBF7D0; }
+        .archive-contact-actions a.whatsapp:hover { background: #BBF7D0; }
+        @media (max-width: 768px) {
+            .archive-overlay { padding: 0; }
+            .archive-modal { border-radius: 0; max-height: 100vh; max-width: 100%; }
+            .archive-toolbar { padding: 10px 14px; }
+            .archive-body { padding: 12px 14px 20px; }
+            .archive-seller-header { padding: 12px 14px; }
+            .archive-seller-body { padding: 0 14px 12px; }
+        }
+
         /* ===== VISITS CONTAINER ===== */
         .visits-container {
             max-width: 1200px;
@@ -1179,6 +1282,9 @@
         }
         .portal-stat-tag i { font-size: 10px; }
 
+        /* FAB mobile : caché par défaut (toutes tailles) — affiché dans la media mobile via .mv-fab-menu.active */
+        .mv-fab-menu { display: none; }
+
         /* ===== RESPONSIVE MOBILE ===== */
         @media (max-width: 768px) {
             .m-todo-fab { display: none !important; }
@@ -1977,6 +2083,11 @@
             <span>Demandes traitées</span>
             <span class="filter-toggle-count" id="processedCount">0</span>
         </button>
+        <button class="filter-toggle-btn" id="toggleArchiveBtn" onclick="openArchiveView()" title="Voir les biens archivés (vendus/perdus) et leurs contacts">
+            <i class="fa-solid fa-box-archive"></i>
+            <span>Archive</span>
+            <span class="filter-toggle-count" id="archiveCount">·</span>
+        </button>
         <button class="new-visit-btn" id="newVisitBtn">
             <i class="fa-solid fa-plus"></i>
             <span>Nouvelle visite</span>
@@ -2020,6 +2131,7 @@
     <div class="mv-fab-menu" id="mobileFabMenu">
         <div class="mv-fab-item" onclick="openVisitModal()"><i class="fa-solid fa-calendar-plus" style="color:var(--visit-planned)"></i> Nouvelle visite</div>
         <div class="mv-fab-item" onclick="openMobileAddContactModal()"><i class="fa-solid fa-user-plus" style="color:#7B1FA2"></i> Ajouter un contact</div>
+        <div class="mv-fab-item" onclick="document.getElementById('mobileFabMenu').classList.remove('active'); openArchiveView();"><i class="fa-solid fa-box-archive" style="color:#1F2937"></i> Voir l'archive</div>
     </div>
 
     <script>
@@ -2211,8 +2323,30 @@
             console.error('[Visites] Load sellers error:', error);
             return [];
         }
-        // Filtrer côté JS pour exclure les vendus/perdus
-        return (data || []).filter(s => s.status !== 'sold' && s.status !== 'lost');
+        // Page visites = biens actifs uniquement : sous mandat ou sous compromis.
+        // Les autres statuts (prospects, off_market, concurrents, vendus, perdus) sont consultables
+        // depuis la vue Archive (bouton dédié en haut de page).
+        return (data || []).filter(s => s.status === 'mandate' || s.status === 'compromis');
+    }
+
+    // Charge les biens archivés (sold/lost) avec un join visits+visit_requests pour la vue archive.
+    // Inclut tous les sellers terminés pour pouvoir retrouver l'historique des contacts.
+    async function loadArchivedSellers() {
+        const userId = await getCurrentUserId();
+        if (!userId) return [];
+
+        const { data, error } = await supabaseClient
+            .from('sellers')
+            .select('id, first_name, last_name, address, budget, mandate_price, surface, rooms, property_type, status, postal_code, city, mandate_start_date, updated_at, created_at')
+            .eq('user_id', userId)
+            .in('status', ['sold', 'lost'])
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            console.error('[Visites] Load archived sellers error:', error);
+            return [];
+        }
+        return data || [];
     }
 
     // ===== GROUPING & FILTERING =====
@@ -2888,8 +3022,8 @@
         const menu = document.getElementById('mobileFabMenu');
         if (menu) menu.classList.remove('active');
 
-        // Si un seul bien sous mandat, pré-sélectionner
-        const mandateSellers = activeSellers.filter(s => s.status === 'mandate');
+        // Si un seul bien actif (mandat ou compromis), pré-sélectionner
+        const mandateSellers = activeSellers.filter(s => s.status === 'mandate' || s.status === 'compromis');
         if (mandateSellers.length === 1) {
             openAddContactModal(mandateSellers[0].id);
         } else if (mandateSellers.length > 0) {
@@ -2905,7 +3039,7 @@
             sheet.innerHTML = `
                 <div class="mv-sheet-handle"></div>
                 <div class="mv-sheet-label" style="margin-bottom:12px">Sélectionner le bien</div>
-                ${activeSellers.filter(s => s.status === 'mandate' || s.status === 'commercialisation').map(s => {
+                ${activeSellers.filter(s => s.status === 'mandate' || s.status === 'compromis' || s.status === 'commercialisation').map(s => {
                     const addr = s.address || 'Adresse inconnue';
                     const name = [(s.first_name || ''), (s.last_name || '')].filter(Boolean).join(' ');
                     return `<div class="mv-visit-item" onclick="document.getElementById('selectSellerSheet').remove();document.getElementById('selectSellerSheetContent')?.remove();openAddContactModal('${s.id}')">
@@ -2951,11 +3085,11 @@
 
         if (isMobile()) {
             const groups = groupVisitsBySeller(filtered);
-            // Ajouter les biens sous mandat vides (property view)
+            // Ajouter les biens actifs (mandat OU compromis) vides (property view)
             const hasStatusFilter = filters.status && filters.status !== '';
             if (!hasStatusFilter) {
                 activeSellers.forEach(s => {
-                    if (s.status !== 'mandate') return;
+                    if (s.status !== 'mandate' && s.status !== 'compromis') return;
                     if (!groups[s.id]) {
                         groups[s.id] = {
                             seller: s, visits: [], contacts: [],
@@ -2976,11 +3110,11 @@
 
         const groups = groupVisitsBySeller(filtered);
 
-        // Ajouter les biens sous mandat sans visite ni contact (pour pouvoir ajouter des contacts)
+        // Ajouter les biens actifs (mandat ou compromis) sans visite ni contact (pour pouvoir ajouter des contacts)
         const hasStatusFilter = filters.status && filters.status !== '';
         if (!hasStatusFilter) {
             activeSellers.forEach(s => {
-                if (s.status !== 'mandate') return;
+                if (s.status !== 'mandate' && s.status !== 'compromis') return;
                 if (!groups[s.id]) {
                     groups[s.id] = {
                         seller: s,
@@ -5513,7 +5647,7 @@
         if (req.matched_seller_id && req.sellers) return; // Déjà matché
 
         // Seuls les biens sous mandat/commercialisation sont sur les portails
-        const MATCHABLE_STATUSES = new Set(['mandate', 'commercialisation']);
+        const MATCHABLE_STATUSES = new Set(['mandate', 'compromis', 'commercialisation']);
         const matchableSellers = activeSellers.filter(s => MATCHABLE_STATUSES.has(s.status));
         if (matchableSellers.length === 0) return;
 
@@ -5799,7 +5933,7 @@
         if (!req) return;
 
         // Sellers candidats : ceux susceptibles d'être sur les portails
-        const MATCHABLE = new Set(['mandate', 'commercialisation']);
+        const MATCHABLE = new Set(['mandate', 'compromis', 'commercialisation']);
         const candidates = activeSellers.filter(s => MATCHABLE.has(s.status));
 
         const overlay = document.createElement('div');
@@ -5903,6 +6037,272 @@
         renderPortalBanner();
         if (typeof renderProcessedView === 'function') renderProcessedView();
         showToast(sellerId ? 'Bien matché mis à jour' : 'Bien détaché');
+    }
+
+    // ===== VUE ARCHIVE — Biens vendus/perdus + leurs contacts =====
+    // Permet de retrouver les contacts qui ont visité ou demandé un bien aujourd'hui sorti
+    // du pipeline actif. Utile pour proposer un bien similaire qui revient à la vente.
+    let _archiveCache = null; // { sellers, visitsBySeller, requestsBySeller }
+    let _archiveFilter = 'all'; // 'all' | 'sold' | 'lost'
+
+    async function loadArchiveData() {
+        const userId = await getCurrentUserId();
+        if (!userId) return { sellers: [], visitsBySeller: {}, requestsBySeller: {} };
+
+        const sellers = await loadArchivedSellers();
+        if (sellers.length === 0) return { sellers: [], visitsBySeller: {}, requestsBySeller: {} };
+
+        const sellerIds = sellers.map(s => s.id);
+
+        // Charger les visites et demandes portails liées à ces biens archivés
+        const [visitsRes, reqsRes] = await Promise.all([
+            supabaseClient
+                .from('visits')
+                .select('id, seller_id, status, visit_date, visit_time, buyer_name, visitor_phone, visitor_email, feedback_rating, notes, buyer_id, buyers(id, first_name, last_name, phone, email)')
+                .eq('user_id', userId)
+                .in('seller_id', sellerIds)
+                .order('visit_date', { ascending: false }),
+            supabaseClient
+                .from('visit_requests')
+                .select('id, matched_seller_id, visitor_name, visitor_phone, visitor_email, portal_name, email_date, status')
+                .eq('user_id', userId)
+                .in('matched_seller_id', sellerIds)
+                .order('email_date', { ascending: false })
+        ]);
+
+        const visitsBySeller = {};
+        (visitsRes.data || []).forEach(v => {
+            (visitsBySeller[v.seller_id] = visitsBySeller[v.seller_id] || []).push(v);
+        });
+        const requestsBySeller = {};
+        (reqsRes.data || []).forEach(r => {
+            (requestsBySeller[r.matched_seller_id] = requestsBySeller[r.matched_seller_id] || []).push(r);
+        });
+
+        return { sellers, visitsBySeller, requestsBySeller };
+    }
+
+    async function openArchiveView() {
+        // Construire la modale en deux temps : squelette d'abord (réactif), puis données
+        const overlay = document.createElement('div');
+        overlay.className = 'archive-overlay';
+        overlay.id = 'archiveOverlay';
+        overlay.innerHTML = `
+            <div class="archive-modal" onclick="event.stopPropagation()">
+                <div class="archive-header">
+                    <div class="archive-header-title">
+                        <i class="fa-solid fa-box-archive"></i> Archive — biens passés
+                    </div>
+                    <button class="archive-close-btn" onclick="closeArchiveView()" title="Fermer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <div class="archive-toolbar">
+                    <div class="archive-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="archiveSearchInput" placeholder="Rechercher (adresse, ville, contact...)">
+                    </div>
+                    <button class="archive-filter-chip active" data-filter="all" onclick="setArchiveFilter('all')">Tous</button>
+                    <button class="archive-filter-chip" data-filter="sold" onclick="setArchiveFilter('sold')">Vendus</button>
+                    <button class="archive-filter-chip" data-filter="lost" onclick="setArchiveFilter('lost')">Perdus</button>
+                </div>
+                <div class="archive-body" id="archiveBody">
+                    <div class="archive-empty"><i class="fa-solid fa-spinner fa-spin"></i><div>Chargement...</div></div>
+                </div>
+            </div>`;
+        overlay.addEventListener('click', () => closeArchiveView());
+        document.body.appendChild(overlay);
+
+        // Charger les données (cache 60s pour éviter les rechargements répétés dans la session)
+        if (!_archiveCache) _archiveCache = await loadArchiveData();
+        renderArchiveBody();
+
+        const searchEl = document.getElementById('archiveSearchInput');
+        if (searchEl) {
+            let t = null;
+            searchEl.addEventListener('input', () => {
+                clearTimeout(t);
+                t = setTimeout(() => renderArchiveBody(), 150);
+            });
+            searchEl.focus();
+        }
+
+        // Mettre à jour le badge count sur le bouton principal
+        document.getElementById('archiveCount').textContent = _archiveCache.sellers.length;
+    }
+
+    function closeArchiveView() {
+        const overlay = document.getElementById('archiveOverlay');
+        if (overlay) overlay.remove();
+    }
+
+    function setArchiveFilter(filter) {
+        _archiveFilter = filter;
+        document.querySelectorAll('.archive-filter-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === filter);
+        });
+        renderArchiveBody();
+    }
+
+    function renderArchiveBody() {
+        const body = document.getElementById('archiveBody');
+        if (!body || !_archiveCache) return;
+
+        const term = (document.getElementById('archiveSearchInput')?.value || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+        const terms = term.split(/\s+/).filter(Boolean);
+
+        let filtered = _archiveCache.sellers;
+        if (_archiveFilter !== 'all') filtered = filtered.filter(s => s.status === _archiveFilter);
+
+        // Recherche : adresse + ville + nom vendeur + noms des contacts liés
+        if (terms.length > 0) {
+            const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+            filtered = filtered.filter(s => {
+                const contacts = [
+                    ...(_archiveCache.visitsBySeller[s.id] || []).map(v => v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : '')),
+                    ...(_archiveCache.requestsBySeller[s.id] || []).map(r => r.visitor_name || '')
+                ].join(' ');
+                const blob = norm([s.address, s.city, s.postal_code, s.first_name, s.last_name, s.property_type, contacts].filter(Boolean).join(' '));
+                return terms.every(t => blob.includes(t));
+            });
+        }
+
+        if (filtered.length === 0) {
+            body.innerHTML = `
+                <div class="archive-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <div>${term ? 'Aucun bien archivé ne correspond.' : 'Aucun bien archivé pour le moment.'}</div>
+                    <div style="font-size:12px; margin-top:8px; color:#9CA3AF">Les biens passent ici dès que tu les marques "Vendu" ou "Perdu" dans le pipeline.</div>
+                </div>`;
+            return;
+        }
+
+        body.innerHTML = filtered.map(seller => renderArchiveSellerCard(seller)).join('');
+    }
+
+    function renderArchiveSellerCard(seller) {
+        const addr = seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || 'Bien sans adresse';
+        const statusLabel = seller.status === 'sold' ? 'Vendu' : 'Perdu';
+        const finalPrice = seller.mandate_price || seller.budget;
+        const exitDate = seller.updated_at ? new Date(seller.updated_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '';
+
+        const metaParts = [];
+        if (finalPrice) metaParts.push(`💰 ${parseInt(finalPrice).toLocaleString('fr-FR')} €`);
+        if (seller.property_type) metaParts.push(`🏠 ${seller.property_type}`);
+        if (seller.surface) metaParts.push(`📐 ${seller.surface} m²`);
+        if (seller.rooms) metaParts.push(seller.rooms);
+        if (exitDate) metaParts.push(`📅 ${statusLabel} ${exitDate}`);
+
+        const visits = _archiveCache.visitsBySeller[seller.id] || [];
+        const requests = _archiveCache.requestsBySeller[seller.id] || [];
+        const totalContacts = visits.length + requests.length;
+
+        const contactRows = [
+            ...visits.map(v => renderArchiveVisitRow(v)),
+            ...requests.map(r => renderArchiveRequestRow(r))
+        ].join('');
+
+        return `
+            <div class="archive-seller-card" data-seller-id="${seller.id}">
+                <div class="archive-seller-header" onclick="this.parentElement.classList.toggle('open')">
+                    <span class="archive-status-badge ${seller.status}">${statusLabel}</span>
+                    <div class="archive-seller-info">
+                        <div class="archive-seller-address">${escapeHtml(addr)}</div>
+                        <div class="archive-seller-meta">${metaParts.map(p => `<span>${p}</span>`).join('')}</div>
+                    </div>
+                    <span style="font-size:11px; color:#6B7280; font-weight:600">${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>
+                    <i class="fa-solid fa-chevron-down archive-seller-toggle"></i>
+                </div>
+                <div class="archive-seller-body">
+                    ${totalContacts === 0
+                        ? '<div style="padding:14px 0; color:#9CA3AF; font-size:13px; text-align:center">Aucune visite ni demande enregistrée pour ce bien.</div>'
+                        : `<div class="archive-contacts-title">Contacts (${totalContacts})</div>${contactRows}`
+                    }
+                </div>
+            </div>`;
+    }
+
+    function renderArchiveVisitRow(v) {
+        const name = v.buyer_name
+            || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}`.trim() : '')
+            || 'Visiteur';
+        const phone = v.visitor_phone || (v.buyers && v.buyers.phone) || '';
+        const email = v.visitor_email || (v.buyers && v.buyers.email) || '';
+        const isDone = v.status === 'effectuee';
+        const sourceLabel = isDone ? 'Visite OK' : (v.status === 'annulee' ? 'Visite ann.' : 'Visite');
+        const sourceClass = isDone ? 'visit-done' : 'visit';
+        const dateStr = v.visit_date ? new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+        const feedback = v.feedback_rating ? ` · ${getFeedbackEmoji(v.feedback_rating)}` : '';
+        const detailParts = [dateStr, phone].filter(Boolean);
+
+        return `
+            <div class="archive-contact-row">
+                <span class="archive-contact-source ${sourceClass}">${sourceLabel}</span>
+                <div style="flex:1; min-width:0">
+                    <div class="archive-contact-name">${escapeHtml(name)}${feedback}</div>
+                    <div class="archive-contact-detail">${detailParts.map(escapeHtml).join(' · ')}</div>
+                </div>
+                ${renderArchiveContactActions(name, phone, email, v.buyer_id)}
+            </div>`;
+    }
+
+    function renderArchiveRequestRow(r) {
+        const name = r.visitor_name || 'Visiteur portail';
+        const phone = r.visitor_phone || '';
+        const email = r.visitor_email || '';
+        const dateStr = r.email_date ? new Date(r.email_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
+        const portal = r.portal_name || '?';
+        const detailParts = [`via ${portal}`, dateStr, phone].filter(Boolean);
+
+        return `
+            <div class="archive-contact-row">
+                <span class="archive-contact-source portal">Portail</span>
+                <div style="flex:1; min-width:0">
+                    <div class="archive-contact-name">${escapeHtml(name)}</div>
+                    <div class="archive-contact-detail">${detailParts.map(escapeHtml).join(' · ')}</div>
+                </div>
+                ${renderArchiveContactActions(name, phone, email, null)}
+            </div>`;
+    }
+
+    function renderArchiveContactActions(name, phone, email, buyerId) {
+        const whatsappPhone = phone ? phone.replace(/[\s.-]/g, '').replace(/^0/, '33') : '';
+        const parts = [];
+        if (phone) {
+            parts.push(`<a href="tel:${encodeURIComponent(phone)}" title="Appeler ${escapeHtml(name)}"><i class="fa-solid fa-phone"></i></a>`);
+            parts.push(`<a href="sms:${encodeURIComponent(phone)}" title="SMS"><i class="fa-solid fa-comment-sms"></i></a>`);
+            parts.push(`<a class="whatsapp" href="https://wa.me/${whatsappPhone}" target="_blank" title="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>`);
+        }
+        if (email) {
+            parts.push(`<a href="mailto:${encodeURIComponent(email)}" title="Email"><i class="fa-solid fa-envelope"></i></a>`);
+        }
+        if (buyerId) {
+            parts.push(`<a href="acquereurs.html?openLead=${buyerId}" title="Voir la fiche acquéreur" target="_blank"><i class="fa-solid fa-user"></i></a>`);
+        }
+        return parts.length > 0 ? `<div class="archive-contact-actions">${parts.join('')}</div>` : '';
+    }
+
+    function getFeedbackEmoji(rating) {
+        const map = { coup_de_coeur: '❤️ coup de cœur', interesse: '👍 intéressé', mitige: '😐 mitigé', pas_convaincu: '👎 pas convaincu' };
+        return map[rating] || rating;
+    }
+
+    // Met à jour le badge count d'archives sur le bouton (non bloquant)
+    async function updateArchiveCount() {
+        const el = document.getElementById('archiveCount');
+        if (!el) return;
+        try {
+            const userId = await getCurrentUserId();
+            if (!userId) return;
+            const { count } = await supabaseClient
+                .from('sellers')
+                .select('id', { count: 'exact', head: true })
+                .eq('user_id', userId)
+                .in('status', ['sold', 'lost']);
+            el.textContent = count || 0;
+        } catch (e) {
+            console.error('[Archive] Count error:', e);
+        }
     }
 
     // ===== VUE DEMANDES TRAITÉES =====
@@ -6385,6 +6785,9 @@
             document.getElementById('processedCount').textContent = processedRequests.length;
         }
         setupFilterListeners();
+
+        // Compteur d'archives (sold/lost) — async, non bloquant
+        updateArchiveCount();
 
         // Resize handler pour basculer mobile/desktop
         let resizeTimer = null;

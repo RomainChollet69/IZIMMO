@@ -937,6 +937,7 @@
         .column[data-status="cold"] .lead-card { border-left-color: #42A5F5; }
         .column[data-status="off_market"] .lead-card { border-left-color: #9B59B6; }
         .column[data-status="mandate"] .lead-card { border-left-color: #66BB6A; }
+        .column[data-status="compromis"] .lead-card { border-left-color: #FB8C00; }
         .column[data-status="competitor"] .lead-card { border-left-color: #78909C; }
         .column[data-status="sold"] .lead-card { border-left-color: #AB47BC; }
         .column[data-status="lost"] .lead-card { border-left-color: #BDBDBD; }
@@ -5318,8 +5319,8 @@
             const seller = sellers.find(s => s.id === editId);
             if (!seller) { container.innerHTML = '<div class="match-empty">Vendeur introuvable</div>'; return; }
 
-            // Visites uniquement si le bien est sous mandat ou off-market
-            const canPlanVisits = seller.status === 'mandate' || seller.status === 'off_market';
+            // Visites uniquement si le bien est sous mandat, sous compromis ou off-market
+            const canPlanVisits = seller.status === 'mandate' || seller.status === 'compromis' || seller.status === 'off_market';
             document.getElementById('visitsMatchSection').style.display = canPlanVisits ? '' : 'none';
 
             const allMatches = buyers
@@ -6460,7 +6461,7 @@
             let html = '';
 
             // Prix (calculé tôt car utilisé par commission ET property info)
-            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            const price = (seller.status === 'mandate' || seller.status === 'compromis') && seller.mandate_price ? seller.mandate_price : seller.budget;
 
             // ===== NIVEAU 1 — Centré, accrocheur =====
 
@@ -6765,7 +6766,7 @@
             html += '<div class="detail-section"><div class="detail-section-title">Bien</div>';
             if (seller.property_type) html += `<div class="detail-info-row"><span class="detail-label">${typeEmojis[seller.property_type] || '🏠'}</span>${seller.property_type}</div>`;
             if (seller.surface) html += `<div class="detail-info-row"><span class="detail-label">📐</span>${formatSurface(seller.surface)}</div>`;
-            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            const price = (seller.status === 'mandate' || seller.status === 'compromis') && seller.mandate_price ? seller.mandate_price : seller.budget;
             if (price) html += `<div class="detail-info-row"><span class="detail-label">💰</span>${formatEuro(price)}</div>`;
             if (city) html += `<div class="detail-info-row"><span class="detail-label">📍</span>${escapeHtml(city)}</div>`;
             if (street && street !== city) html += `<div class="detail-info-row"><span class="detail-label">🏠</span>${escapeHtml(street)}</div>`;
@@ -6792,8 +6793,8 @@
                 html += `<div style="margin-bottom:16px"><span class="mc-commission">💼 ${formatEuro(cAmount)} TTC (${cRate}%)</span></div>`;
             }
 
-            // Mandat (si applicable)
-            if (seller.status === 'mandate') {
+            // Mandat (si applicable) — affiché aussi quand le bien est sous compromis (mandat toujours actif)
+            if (seller.status === 'mandate' || seller.status === 'compromis') {
                 html += '<div class="detail-section"><div class="detail-section-title">Mandat</div>';
                 if (seller.mandate_type) html += `<div class="detail-info-row"><span class="detail-label">📄</span>${seller.mandate_type}</div>`;
                 if (seller.mandate_reference) html += `<div class="detail-info-row"><span class="detail-label">🔢</span>${escapeHtml(seller.mandate_reference)}</div>`;
@@ -8022,7 +8023,7 @@
             const div = event.currentTarget;
             if (div.classList.contains('editing')) return;
 
-            const budgetNum = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            const budgetNum = parseAmount((seller.status === 'mandate' || seller.status === 'compromis') && seller.mandate_price ? seller.mandate_price : seller.budget);
             const rate = seller.commission_rate || 4;
             const amount = seller.commission_amount || calcCommission(budgetNum, rate);
 
@@ -8353,7 +8354,7 @@
             if (typeIcon) compactParts.push(typeIcon);
             if (seller.rooms) compactParts.push(seller.rooms);
             if (seller.surface) compactParts.push(formatSurface(seller.surface));
-            const price = seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget;
+            const price = (seller.status === 'mandate' || seller.status === 'compromis') && seller.mandate_price ? seller.mandate_price : seller.budget;
             if (price) compactParts.push(formatEuro(price));
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
@@ -8385,7 +8386,7 @@
             // Email : retiré (visible uniquement dans la modale)
 
             // Commission
-            const priceForComm = parseAmount(seller.status === 'mandate' && seller.mandate_price ? seller.mandate_price : seller.budget);
+            const priceForComm = parseAmount((seller.status === 'mandate' || seller.status === 'compromis') && seller.mandate_price ? seller.mandate_price : seller.budget);
             if (priceForComm > 0) {
                 const cRate = seller.commission_rate || 4;
                 const cAmount = seller.commission_amount || calcCommission(priceForComm, cRate);
@@ -8617,7 +8618,7 @@
             const matchingTab = tabs.querySelector('[data-tab="matching"]');
             if (editId) {
                 tabs.style.display = 'flex';
-                mandateTab.style.display = status === 'mandate' ? '' : 'none';
+                mandateTab.style.display = (status === 'mandate' || status === 'compromis') ? '' : 'none';
                 messagesTab.style.display = '';
                 matchingTab.style.display = '';
             } else {
@@ -9591,8 +9592,8 @@
             loadNotes(id);
             loadFiles(id, 'seller');
 
-            // Load price history if mandate (visits are now in Matching tab)
-            if (seller.status === 'mandate') {
+            // Load price history if mandate or compromis (visits are now in Matching tab)
+            if (seller.status === 'mandate' || seller.status === 'compromis') {
                 loadPriceHistory(id);
                 updateMandateCountdown();
             }
@@ -9866,8 +9867,8 @@
                 document.getElementById('reminder').value = sellerData.reminder;
             }
 
-            // Inclure les champs mandat UNIQUEMENT si l'onglet est visible (status=mandate)
-            if (status === 'mandate') {
+            // Inclure les champs mandat si l'onglet est visible (status=mandate ou compromis)
+            if (status === 'mandate' || status === 'compromis') {
                 sellerData.mandate_type = document.getElementById('mandateType').value || null;
                 sellerData.mandate_reference = document.getElementById('mandateReference').value.trim() || null;
                 sellerData.mandate_start_date = document.getElementById('mandateStartDate').value || null;
@@ -9889,7 +9890,7 @@
 
             if (editId) {
                 // Premier enregistrement du prix de mise en vente → historique initial
-                if (status === 'mandate' && sellerData.mandate_price) {
+                if ((status === 'mandate' || status === 'compromis') && sellerData.mandate_price) {
                     const existingSeller = sellers.find(s => s.id === editId);
                     if (existingSeller && !existingSeller.mandate_price && currentPriceHistory.length === 0) {
                         await addPriceHistoryEntry(editId, null, parseAmount(sellerData.mandate_price));
@@ -10967,7 +10968,7 @@
         // ===== EXPORT CSV =====
         const SELLER_STATUS_LABELS = {
             hot: 'Lead Chaude', warm: 'Lead Tiède', cold: 'Lead Froide',
-            off_market: 'Off Market', mandate: 'Sous Mandat', competitor: 'Concurrents / PAP', sold: 'Vendu', lost: 'Perdu'
+            off_market: 'Off Market', mandate: 'Sous Mandat', compromis: 'Sous Compromis', competitor: 'Concurrents / PAP', sold: 'Vendu', lost: 'Perdu'
         };
 
         function exportToCSV(data, columns, filename) {

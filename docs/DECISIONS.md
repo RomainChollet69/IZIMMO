@@ -1534,6 +1534,63 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 
 ---
 
+## D073 — Statut `compromis` natif entre `mandate` et `competitor` plutôt qu'un sous-état du mandat
+
+**Date** : 2026-06-01
+**Statut** : Actif
+
+**Contexte** : L'utilisateur signalait que "sous compromis" est un jalon métier important (entre mandat actif et vente actée) et qu'il avait dû le créer manuellement via la fonction custom_1/2/3 du pipeline. Plusieurs options :
+1. **Nouvelle colonne native** dédiée `compromis` dans `DEFAULT_SELLER_COLUMNS`
+2. **Sous-état du mandat** : checkbox/badge "Compromis signé" sur la fiche d'un bien `mandate`
+3. **Custom column** : laisser le user le créer lui-même (statu quo)
+
+**Décision** : Option 1 — colonne native `compromis` entre `mandate` et `competitor`.
+
+**Pourquoi** :
+- Le compromis est un état où le bien n'est plus "à vendre activement" (pas de nouvelles visites) mais le mandat reste actif → comportement intermédiaire à modéliser, pas un simple flag
+- Une colonne dédiée permet une vue d'ensemble "Mes biens en cours de finalisation" qui devient un indicateur business
+- L'extension du metier `mandate` → `mandate || compromis` est faite ponctuellement aux endroits pertinents (canPlanVisits, mandate_price, section Mandat) plutôt que par fanout — garde la sémantique distincte
+- Forward-compatible : `getEffectiveColumns()` ajoute automatiquement les nouvelles colonnes default aux configs users existantes (cf. pipeline-config.js:202-207)
+
+**Alternatives rejetées** :
+- **Sous-état** : moins lisible, oblige à ouvrir chaque fiche pour savoir où en est le bien
+- **Custom column** : chaque user doit le créer → friction onboarding + pas de comportement métier hérité (visites planifiables, etc.)
+
+**Conséquences** :
+- Aucune migration SQL nécessaire (le champ `status` est TEXT libre)
+- Les users qui avaient créé une colonne custom "Compromis" auront un doublon temporaire jusqu'à ce qu'ils nettoient leur config personnelle (documenté dans CHANGELOG)
+- Si plus tard on veut un sous-état du compromis (ex: "Compromis signé / Acte en cours"), il faudra un champ séparé `compromis_step` plutôt que multiplier les colonnes
+
+---
+
+## D074 — Vue Archive : modale plein écran plutôt que page séparée ou section repliée
+
+**Date** : 2026-06-01
+**Statut** : Actif
+
+**Contexte** : Besoin de retrouver les contacts d'anciens biens vendus/perdus pour proposer un bien similaire qui reviendrait à la vente. 3 options de présentation :
+1. **Modale plein écran** ouverte depuis un bouton "Archive" sur la page visites
+2. **Page dédiée** (`archives.html`) avec son URL propre, accessible depuis la nav
+3. **Section repliée** toujours présente en bas de la page visites
+
+**Décision** : Option 1 — modale plein écran sur visites.html.
+
+**Pourquoi** :
+- L'usage est ponctuel ("j'ai un bien similaire, qui pourrait être intéressé ?") → pas besoin d'URL persistante ni de navigation principale
+- La modale garde le contexte de la page visites en arrière-plan → l'agent peut fermer et revenir aux biens actifs sans perte de scroll
+- L'overlay sombre + le header gradient `#1F2937` signalent visuellement que c'est un mode lecture/recherche, pas une vue de travail quotidien
+- Le pattern modale est déjà familier dans l'app (modales d'édition, de planification de visite)
+- L'option 3 (section repliée) polluerait visuellement la page principale (le bandeau "Demandes traitées" est déjà une section repliée — éviter d'en empiler)
+- L'option 2 (page dédiée) demanderait du routing + duplication des helpers Supabase
+
+**Alternatives rejetées** : voir contexte ci-dessus.
+
+**Conséquences** :
+- L'archive n'est pas indexable par moteur de recherche (mais c'est interne, pas grave)
+- Si plus tard on veut une vue archive plus riche (stats temporelles, conversion par bien, etc.), refactorer en page dédiée sera relativement simple — la logique métier (`loadArchivedSellers`, `loadArchiveData`) est déjà isolée
+
+---
+
 ## D072 — Durcissement RLS : 1 policy `auth.uid() = user_id` par table sensible
 
 **Date** : 2026-06-01

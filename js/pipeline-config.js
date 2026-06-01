@@ -21,6 +21,7 @@ const PipelineConfig = (function () {
         { key: 'cold', label: 'LEADS FROIDES', title: 'Prospects à 60 Jours et +', icon: '🔵', color: '#42A5F5', headerImage: 'img/froid_fond_carte_pipe_vente.png' },
         { key: 'off_market', label: '🔒 OFF MARKET', title: 'Biens visitables hors mandats', icon: '🔒', color: '#9B59B6', headerImage: 'img/offmarket.png' },
         { key: 'mandate', label: 'SOUS MANDATS', title: 'Mandats signés', icon: '📋', color: '#66BB6A', headerImage: 'img/mandat_fond_carte_pipe_vente.png' },
+        { key: 'compromis', label: 'SOUS COMPROMIS', title: 'Compromis signé, en attente d\'acte', icon: '📝', color: '#FB8C00' },
         { key: 'competitor', label: '🏢 CONCURRENTS / PAP', title: 'Biens chez la concurrence', icon: '🏢', color: '#78909C', headerImage: 'img/concurrence.png' },
         { key: 'sold', label: 'VENDUS', title: 'Biens vendus', icon: '✅', color: '#AB47BC', headerImage: 'img/vendu_fond_carte_pipe_vente.png' },
         { key: 'lost', label: 'PERDUS', title: 'Leads perdus / Abandonnés', icon: '❌', color: '#BDBDBD', headerImage: 'img/perdu_fond_carte_pipe_vente.png' },

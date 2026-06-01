@@ -4,6 +4,62 @@
 
 ---
 
+## Session 2026-06-01 (bis) — Colonne Compromis + Vue Archive + Fix FAB
+
+### Contexte
+L'utilisateur signalait 3 points :
+1. Les biens "sous compromis" (créés manuellement via paramétrage) devraient être natifs
+2. La page visites affichait les biens déjà vendus (filtre actuel trop permissif : tout sauf sold/lost incluait aussi prospects/off_market)
+3. Bug d'affichage : le FAB menu mobile (Nouvelle visite / Ajouter un contact) apparaissait en bas à gauche sur desktop
+
+### Modifications
+
+#### 🅰️ Colonne "Sous compromis" par défaut
+- Ajout de `{ key: 'compromis', label: 'SOUS COMPROMIS', icon: '📝', color: '#FB8C00' }` dans `DEFAULT_SELLER_COLUMNS` (js/pipeline-config.js) entre `mandate` et `competitor`
+- Propagation automatique aux users existants via la fonction `getEffectiveColumns()` (merge defaults forward-compatible, lignes 202-207)
+- Ajout du CSS de bordure colonne (vendeurs.html:940) + label dans `SELLER_STATUS_LABELS`
+- Extension des conditions métier `status === 'mandate'` à `mandate || compromis` aux endroits pertinents :
+  - `canPlanVisits` (5323) — un bien sous compromis garde ses visites planifiables
+  - `mandate_price` affichage prix (6464, 6769, 8026, 8357, 8389)
+  - Section "Mandat" dans le détail seller (6797)
+  - `loadPriceHistory` + `updateMandateCountdown` (9596)
+  - Tab "Gestion Mandat" affiché en édition (8621)
+  - Save form `mandate_*` fields (9871, 9893)
+
+#### 🅱️ Filtrage visites restreint à mandate + compromis
+- `loadActiveSellers()` filtre maintenant uniquement `status IN ('mandate', 'compromis')` (visites.html:2218)
+- `MATCHABLE_STATUSES` pour le matching demandes portails inclut `compromis` (5541, 5827)
+- Filtres internes (pré-sélection, sheet mobile, groups vides) étendus à mandate + compromis
+
+#### 🅲 Vue Archive — biens sortis + leurs contacts
+- Bouton "📦 Archive" dans la toolbar visites (à côté de "Demandes traitées") + entrée dans le FAB mobile
+- Compteur live `#archiveCount` mis à jour au chargement (count SQL via Supabase HEAD request)
+- Nouvelle fonction `loadArchivedSellers()` (visites.html:2222) : charge sellers `sold`/`lost`
+- Nouvelle fonction `loadArchiveData()` (5...): join visits + visit_requests par seller_id
+- Modale plein écran (`archive-overlay`) avec :
+  - Header sombre (gradient #1F2937) avec titre + close
+  - Toolbar : recherche multi-mots AND (adresse, ville, contact, type) + chips filtre `Tous|Vendus|Perdus`
+  - Liste cards expandables par bien : statut badge + prix final + meta + count contacts
+  - Section contacts par card : visites (avec feedback), demandes portails (avec source)
+  - Actions par contact : 📞 Appel, 💬 SMS, 🟢 WhatsApp, ✉️ Email, 👤 Voir fiche acquéreur (si buyer_id)
+
+#### 🅳 Fix bug FAB menu visible sur desktop
+- `.mv-fab-menu { display: none }` était défini uniquement dans `@media (max-width: 768px)` → en desktop la div div s'affichait par défaut (block) avec ses items "Nouvelle visite" / "Ajouter un contact"
+- Ajout d'une règle CSS globale `.mv-fab-menu { display: none }` hors media query, surchargée par `.mv-fab-menu.active { display: block }` en mobile
+
+### Fichiers touchés
+- `js/pipeline-config.js` (+1 ligne défaut compromis)
+- `vendeurs.html` (extensions mandate → mandate|compromis + label SELLER_STATUS_LABELS + CSS border compromis)
+- `visites.html` (filtres + vue archive + fix FAB, ~300 lignes ajoutées)
+- `docs/CHANGELOG.md`, `docs/DECISIONS.md` (D073, D074)
+
+### Note utilisateur (à appliquer manuellement)
+Si tu avais créé une colonne "Compromis" manuellement via le paramétrage (en renommant custom_1/2/3), tu vas voir 2 colonnes après ce déploiement. Ouvre Paramètres > Personnaliser pipeline et :
+- Soit masque ta colonne custom et déplace les biens existants vers la nouvelle colonne `compromis` native
+- Soit garde ta custom et masque la nouvelle (mais tu perds les comportements métier hérités de `mandate`)
+
+---
+
 ## Session 2026-06-01 — Durcissement RLS buyers + sellers
 
 ### Contexte
