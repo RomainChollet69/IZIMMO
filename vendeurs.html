@@ -37,7 +37,7 @@
             --warm-color: #FFA502;
             --cold-color: #2E86DE;
             --text-dark: #2C3E50;
-            --text-light: #7F8C8D;
+            --text-light: #64748B; /* slate-500 — WCAG AA (4.94:1) sur fond blanc */
             --border-color: #E1E8ED;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             --shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -874,14 +874,17 @@
             bottom: 0;
             left: 0;
             right: 0;
-            padding: 10px 14px;
+            padding: 16px 14px 10px;
             font-family: 'Barlow Semi Condensed', sans-serif;
             font-size: 18px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: white;
-            text-shadow: 1px 1px 6px rgba(0, 0, 0, 0.5);
+            /* Voile dégradé noir → transparent pour garantir le contraste WCAG AA
+               sur les bannières claires (warm/sold). Le text-shadow est aussi renforcé. */
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.35) 60%, transparent 100%);
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7), 0 0 12px rgba(0, 0, 0, 0.35);
             font-style: italic;
         }
 
@@ -942,7 +945,16 @@
         .column[data-status="sold"] .lead-card { border-left-color: #AB47BC; }
         .column[data-status="lost"] .lead-card { border-left-color: #BDBDBD; }
 
-        .card-expand-arrow { position: absolute; bottom: 4px; right: 8px; font-size: 10px; color: #aaa; pointer-events: none; }
+        /* Chevron d'ouverture : assez visible pour signaler que la carte est cliquable, sans dominer */
+        .card-expand-arrow {
+            position: absolute; bottom: 6px; right: 8px;
+            font-size: 11px; color: #667eea; font-weight: 700;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(102, 126, 234, 0.08);
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: none; transition: background 0.15s, transform 0.2s;
+        }
+        .lead-card:hover .card-expand-arrow { background: rgba(102, 126, 234, 0.18); }
 
         .card-compact .card-name { font-size: 15px; margin-bottom: 6px; }
         .card-compact .card-info { font-size: 13px; margin-bottom: 4px; }
@@ -8428,10 +8440,13 @@
             </div>`;
             ext += '</div>';
 
-            // Match indicator badge (absolute positioned)
+            // Match indicator badge (absolute positioned) — tooltip explicite
             const matchCount = sellerMatchCounts[seller.id] || 0;
+            const matchTooltip = matchCount > 0
+                ? `${matchCount} acquéreur${matchCount > 1 ? 's correspondent' : ' correspond'} à ce bien — cliquer pour voir`
+                : '';
             const matchIndicator = matchCount > 0
-                ? `<div class="match-indicator" data-match-seller="${seller.id}">🎯 ${matchCount}</div>`
+                ? `<div class="match-indicator" data-match-seller="${seller.id}" title="${escapeHtml(matchTooltip)}" aria-label="${escapeHtml(matchTooltip)}">🎯 ${matchCount}</div>`
                 : '';
 
             card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
