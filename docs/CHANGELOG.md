@@ -4,6 +4,35 @@
 
 ---
 
+## Session 2026-06-01 — Durcissement RLS buyers + sellers
+
+### Contexte
+Audit Supabase post-migration : `get_advisors` a remonté **17 policies RLS `USING (true)`** sur `buyers` et `sellers`, pour les rôles `anon` ET `authenticated`. En pratique :
+- N'importe qui (sans auth) pouvait DELETE/UPDATE/INSERT/SELECT toute la table `buyers` ou `sellers` via la clé anon publique
+- Un agent connecté pouvait modifier les fiches des autres agents (multi-tenancy cassée)
+
+### Modifications (DB uniquement, pas de code)
+
+#### Migration `harden_rls_buyers_sellers` appliquée en prod
+- **DROP** des 9 policies sur `buyers` (`Allow public *`, `Authenticated users can *`, `Public can insert buyers`)
+- **DROP** des 8 policies sur `sellers` (`Allow public * sellers`, `Authenticated users can * sellers`)
+- **CREATE** 1 policy par table : `Users can manage own X` pour `FOR ALL TO public` avec `USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)`
+- Pattern aligné sur les autres tables saines (`visits`, `lead_notes`, `contacts`, `user_integrations`)
+
+### Vérifications préalables
+- ✅ Tous les endpoints `api/*.js` utilisent `getSupabaseAdmin()` (service_role) → bypass RLS, pas impactés
+- ✅ `formulaire.html` n'accède pas directement à `buyers` (passe par `/api/submit-form` en service_role)
+- ✅ Tout le frontend authentifié filtre déjà par `.eq('user_id', userId)` → redondant avec RLS mais inoffensif
+
+### Vérification post-migration
+- `get_advisors` : plus aucun warning sur `buyers`/`sellers` (restent 3 warnings préexistants non-critiques : `update_updated_at` search_path, `oauth_states` policy permissive volontaire pour service_role, leaked password protection désactivée)
+
+### Fichiers touchés
+- Migration Supabase via MCP `apply_migration` — pas de fichier dans le repo (les migrations Supabase ne sont pas versionnées localement à date)
+- `docs/CHANGELOG.md`, `docs/DECISIONS.md`, `tasks/lessons.md`
+
+---
+
 ## Session 2026-05-26 — Bien d'origine acquéreur + matching portails + sélection multiple
 
 ### Contexte

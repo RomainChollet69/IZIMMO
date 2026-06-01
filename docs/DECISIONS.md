@@ -1531,3 +1531,30 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Conséquences** :
 - Les 342 acquéreurs existants ont les colonnes à NULL. Pas de backfill automatique — l'historique est perdu côté UI sauf rétro-action manuelle.
 - L'agent doit penser à utiliser le bouton « Lien formulaire pré-rempli » (sur la fiche vendeur) plutôt que le lien formulaire générique de paramètres.html pour capturer le bien d'origine sur les formulaires soumis. À documenter dans l'onboarding.
+
+---
+
+## D072 — Durcissement RLS : 1 policy `auth.uid() = user_id` par table sensible
+
+**Date** : 2026-06-01
+**Statut** : Actif
+
+**Contexte** : `get_advisors` Supabase a remonté 17 policies `USING (true)` sur `buyers` et `sellers`. Concrètement : la clé anon publique (exposée dans `js/supabase-config.js`) permettait à n'importe qui de faire `DELETE FROM buyers` sans authentification. La policy `authenticated` était à peine mieux : tout agent connecté pouvait modifier les fiches des autres agents.
+
+**Décision** : Pour `buyers` et `sellers`, supprimer **toutes** les policies historiques et les remplacer par une **unique** policy `FOR ALL TO public USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)`.
+
+**Pourquoi** :
+- Le rôle `public` couvre à la fois anon et authenticated → un seul filtre est appliqué quel que soit le contexte d'appel
+- `auth.uid()` retourne `NULL` pour anon → `NULL = user_id` est faux → anon n'accède à rien (effet recherché)
+- `auth.uid()` retourne le user_id du JWT pour authenticated → l'agent ne voit/modifie que ses propres fiches (multi-tenancy correcte)
+- Pattern aligné sur les tables déjà saines (`visits`, `lead_notes`, `contacts`, `user_integrations`...) — cohérence du code
+- Les endpoints publics qui doivent insérer sans auth (formulaire acquéreur) passent par `getSupabaseAdmin()` (service_role) qui bypass RLS → on n'a pas besoin de policy anon dédiée
+
+**Alternatives rejetées** :
+- **Garder une policy `anon INSERT` sur `buyers`** pour le formulaire public : rejeté car `/api/submit-form` utilise déjà le service_role, donc la policy anon est inutile et reste une surface d'attaque (un attaquant pourrait spammer des fiches sans passer par l'API).
+- **Une policy par opération** (SELECT/INSERT/UPDATE/DELETE) : pris en compte mais 1 policy `FOR ALL` est strictement équivalente pour ce filtre simple et plus lisible.
+
+**Conséquences** :
+- Tout endpoint serveur qui aurait utilisé la clé anon (au lieu du service_role) pour lire/écrire `buyers` ou `sellers` casse. Audit grep effectué avant migration → aucun cas trouvé.
+- Une éventuelle page publique de partage de fiche vendeur (non implémentée à date) nécessitera un endpoint API dédié en service_role plutôt qu'un accès direct anon.
+- Les autres tables sensibles (`profiles`, `oauth_states`) gardent leurs anciennes policies — à durcir séparément si besoin (oauth_states est volontairement permissif pour service_role, pas critique).

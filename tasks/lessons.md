@@ -98,3 +98,7 @@
 ### L017 — scrollIntoView avant getBoundingClientRect (2026-03-12)
 **Erreur** : Le tooltip d'onboarding se positionnait en bas de l'écran au lieu de côté de la carte, car `getBoundingClientRect()` retournait des coordonnées hors viewport (la carte n'était pas scrollée en vue dans le pipeline horizontal).
 **Règle** : Toujours appeler `element.scrollIntoView({ block: 'center', inline: 'center' })` AVANT de calculer la position avec `getBoundingClientRect()`. Ajouter un délai (400ms) après le scroll pour attendre la fin de l'animation avant de positionner.
+
+### L022 — RLS `USING (true)` = pas de RLS du tout (2026-06-01)
+**Erreur** : Les tables `buyers` et `sellers` avaient 17 policies historiques `USING (true)` / `WITH CHECK (true)` pour `anon` ET `authenticated`. Avec la clé anon exposée dans le frontend, n'importe qui pouvait DELETE/UPDATE/INSERT les fiches de tous les agents. La policy `authenticated` sans filtre `user_id` cassait aussi la multi-tenancy.
+**Règle** : Toute table avec un `user_id` doit avoir **une seule** policy `FOR ALL TO public USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id)`. Le rôle `public` couvre anon (auth.uid() = NULL → faux) et authenticated en une fois. Lancer `get_advisors` après chaque migration DDL pour détecter les régressions. Les endpoints publics qui doivent bypasser RLS utilisent `service_role`, pas une policy anon dédiée.
