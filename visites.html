@@ -6117,7 +6117,12 @@
             (requestsBySeller[r.matched_seller_id] = requestsBySeller[r.matched_seller_id] || []).push(r);
         });
 
-        return { sellers, visitsBySeller, requestsBySeller };
+        // Ne garder que les biens qui ont AU MOINS UN contact (visite ou demande).
+        // Proxy : un bien qui a eu des contacts a forcément été sous mandat à un moment.
+        // Exclut donc les prospects (hot/warm/cold) qui n'ont jamais reçu de visite.
+        const sellersWithContacts = sellers.filter(s => visitsBySeller[s.id] || requestsBySeller[s.id]);
+
+        return { sellers: sellersWithContacts, visitsBySeller, requestsBySeller };
     }
 
     async function openArchiveView() {
@@ -6356,12 +6361,25 @@
         try {
             const userId = await getCurrentUserId();
             if (!userId) return;
-            // Compteur = tous les biens NON-actifs (tout sauf mandate et compromis)
+            // Compteur = biens non-actifs ayant eu AU MOINS UN contact (visite ou demande portail).
+            // Proxy : "le bien a été sous mandat à un moment" → on l'archive avec ses contacts.
+            // Les prospects (hot/warm/cold) jamais visités ne polluent pas l'archive.
+            const [visitsRes, reqsRes] = await Promise.all([
+                supabaseClient.from('visits').select('seller_id').eq('user_id', userId).not('seller_id', 'is', null),
+                supabaseClient.from('visit_requests').select('matched_seller_id').eq('user_id', userId).not('matched_seller_id', 'is', null)
+            ]);
+            const sellerIdsWithContacts = new Set([
+                ...(visitsRes.data || []).map(v => v.seller_id),
+                ...(reqsRes.data || []).map(r => r.matched_seller_id)
+            ]);
+            if (sellerIdsWithContacts.size === 0) { el.textContent = 0; return; }
+
             const { count } = await supabaseClient
                 .from('sellers')
                 .select('id', { count: 'exact', head: true })
                 .eq('user_id', userId)
-                .not('status', 'in', '(mandate,compromis)');
+                .not('status', 'in', '(mandate,compromis)')
+                .in('id', Array.from(sellerIdsWithContacts));
             el.textContent = count || 0;
         } catch (e) {
             console.error('[Archive] Count error:', e);
