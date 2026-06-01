@@ -6058,7 +6058,9 @@
     // ===== VUE ARCHIVE — Biens vendus/perdus + leurs contacts =====
     // Permet de retrouver les contacts qui ont visité ou demandé un bien aujourd'hui sorti
     // du pipeline actif. Utile pour proposer un bien similaire qui revient à la vente.
-    let _archiveCache = null; // { sellers, visitsBySeller, requestsBySeller }
+    // Pas de cache : rechargé à chaque ouverture pour refléter les changements de statut
+    // (déplacement d'un bien mandate → vendu/perdu depuis la page vendeurs).
+    let _archiveData = null;
     let _archiveFilter = 'all'; // 'all' | 'sold' | 'lost'
 
     async function loadArchiveData() {
@@ -6129,8 +6131,9 @@
         overlay.addEventListener('click', () => closeArchiveView());
         document.body.appendChild(overlay);
 
-        // Charger les données (cache 60s pour éviter les rechargements répétés dans la session)
-        if (!_archiveCache) _archiveCache = await loadArchiveData();
+        // Recharger systématiquement : un bien peut avoir été déplacé vers sold/lost
+        // depuis la page vendeurs entre deux ouvertures de cette modale.
+        _archiveData = await loadArchiveData();
         renderArchiveBody();
 
         const searchEl = document.getElementById('archiveSearchInput');
@@ -6144,7 +6147,8 @@
         }
 
         // Mettre à jour le badge count sur le bouton principal
-        document.getElementById('archiveCount').textContent = _archiveCache.sellers.length;
+        const countEl = document.getElementById('archiveCount');
+        if (countEl) countEl.textContent = _archiveData.sellers.length;
     }
 
     function closeArchiveView() {
@@ -6162,12 +6166,12 @@
 
     function renderArchiveBody() {
         const body = document.getElementById('archiveBody');
-        if (!body || !_archiveCache) return;
+        if (!body || !_archiveData) return;
 
         const term = (document.getElementById('archiveSearchInput')?.value || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
         const terms = term.split(/\s+/).filter(Boolean);
 
-        let filtered = _archiveCache.sellers;
+        let filtered = _archiveData.sellers;
         if (_archiveFilter !== 'all') filtered = filtered.filter(s => s.status === _archiveFilter);
 
         // Recherche : adresse + ville + nom vendeur + noms des contacts liés
@@ -6175,8 +6179,8 @@
             const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
             filtered = filtered.filter(s => {
                 const contacts = [
-                    ...(_archiveCache.visitsBySeller[s.id] || []).map(v => v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : '')),
-                    ...(_archiveCache.requestsBySeller[s.id] || []).map(r => r.visitor_name || '')
+                    ...(_archiveData.visitsBySeller[s.id] || []).map(v => v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : '')),
+                    ...(_archiveData.requestsBySeller[s.id] || []).map(r => r.visitor_name || '')
                 ].join(' ');
                 const blob = norm([s.address, s.city, s.postal_code, s.first_name, s.last_name, s.property_type, contacts].filter(Boolean).join(' '));
                 return terms.every(t => blob.includes(t));
@@ -6209,8 +6213,8 @@
         if (seller.rooms) metaParts.push(seller.rooms);
         if (exitDate) metaParts.push(`📅 ${statusLabel} ${exitDate}`);
 
-        const visits = _archiveCache.visitsBySeller[seller.id] || [];
-        const requests = _archiveCache.requestsBySeller[seller.id] || [];
+        const visits = _archiveData.visitsBySeller[seller.id] || [];
+        const requests = _archiveData.requestsBySeller[seller.id] || [];
         const totalContacts = visits.length + requests.length;
 
         const contactRows = [
