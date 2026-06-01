@@ -2329,8 +2329,10 @@
         return (data || []).filter(s => s.status === 'mandate' || s.status === 'compromis');
     }
 
-    // Charge les biens archivés (sold/lost) avec un join visits+visit_requests pour la vue archive.
-    // Inclut tous les sellers terminés pour pouvoir retrouver l'historique des contacts.
+    // Charge les biens archivés = tous ceux qui ne sont PAS actifs (ni mandate ni compromis).
+    // Inclut donc : sold, lost, competitor, off_market, hot/warm/cold, custom_*.
+    // Permet à l'agent de retrouver l'historique des contacts quel que soit l'endroit
+    // où il a reclassé le bien dans son pipeline vendeurs.
     async function loadArchivedSellers() {
         const userId = await getCurrentUserId();
         if (!userId) return [];
@@ -2339,7 +2341,7 @@
             .from('sellers')
             .select('id, first_name, last_name, address, budget, mandate_price, surface, rooms, property_type, status, postal_code, city, mandate_start_date, updated_at, created_at')
             .eq('user_id', userId)
-            .in('status', ['sold', 'lost'])
+            .not('status', 'in', '(mandate,compromis)')
             .order('updated_at', { ascending: false });
 
         if (error) {
@@ -2347,6 +2349,24 @@
             return [];
         }
         return data || [];
+    }
+
+    // Labels et couleurs pour les badges de statut dans l'archive
+    // Aligné sur DEFAULT_SELLER_COLUMNS — adapter si tu changes les libellés là-bas.
+    const ARCHIVE_STATUS_META = {
+        sold:       { label: 'Vendu',       bg: '#F3E8FF', color: '#7E22CE' },
+        lost:       { label: 'Perdu',       bg: '#F1F5F9', color: '#64748B' },
+        competitor: { label: 'Concurrent',  bg: '#E0E7FF', color: '#3730A3' },
+        off_market: { label: 'Off Market',  bg: '#FCE7F3', color: '#9D174D' },
+        hot:        { label: 'Lead chaude', bg: '#FEE2E2', color: '#B91C1C' },
+        warm:       { label: 'Lead tiède',  bg: '#FEF3C7', color: '#92400E' },
+        cold:       { label: 'Lead froide', bg: '#DBEAFE', color: '#1E40AF' },
+        custom_1:   { label: 'Custom 1',    bg: '#FCE4EC', color: '#AD1457' },
+        custom_2:   { label: 'Custom 2',    bg: '#E0F7FA', color: '#006064' },
+        custom_3:   { label: 'Custom 3',    bg: '#FFF3E0', color: '#E65100' }
+    };
+    function getArchiveStatusMeta(status) {
+        return ARCHIVE_STATUS_META[status] || { label: status || 'Inconnu', bg: '#F1F5F9', color: '#64748B' };
     }
 
     // ===== GROUPING & FILTERING =====
@@ -6120,9 +6140,7 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" id="archiveSearchInput" placeholder="Rechercher (adresse, ville, contact...)">
                     </div>
-                    <button class="archive-filter-chip active" data-filter="all" onclick="setArchiveFilter('all')">Tous</button>
-                    <button class="archive-filter-chip" data-filter="sold" onclick="setArchiveFilter('sold')">Vendus</button>
-                    <button class="archive-filter-chip" data-filter="lost" onclick="setArchiveFilter('lost')">Perdus</button>
+                    <div id="archiveFilterChips" style="display:flex; gap:8px; flex-wrap:wrap"></div>
                 </div>
                 <div class="archive-body" id="archiveBody">
                     <div class="archive-empty"><i class="fa-solid fa-spinner fa-spin"></i><div>Chargement...</div></div>
@@ -6131,9 +6149,10 @@
         overlay.addEventListener('click', () => closeArchiveView());
         document.body.appendChild(overlay);
 
-        // Recharger systématiquement : un bien peut avoir été déplacé vers sold/lost
-        // depuis la page vendeurs entre deux ouvertures de cette modale.
+        // Recharger systématiquement : un bien peut avoir été déplacé depuis la page
+        // vendeurs entre deux ouvertures de cette modale.
         _archiveData = await loadArchiveData();
+        renderArchiveFilterChips();
         renderArchiveBody();
 
         const searchEl = document.getElementById('archiveSearchInput');
@@ -6162,6 +6181,26 @@
             c.classList.toggle('active', c.dataset.filter === filter);
         });
         renderArchiveBody();
+    }
+
+    // Génère les chips de filtre selon les statuts effectivement présents dans les données.
+    // Évite d'afficher un chip "Concurrents" s'il n'y a aucun bien dans ce statut.
+    function renderArchiveFilterChips() {
+        const container = document.getElementById('archiveFilterChips');
+        if (!container || !_archiveData) return;
+
+        // Compter par statut + trier par fréquence décroissante
+        const counts = {};
+        _archiveData.sellers.forEach(s => { counts[s.status] = (counts[s.status] || 0) + 1; });
+        const statuses = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+
+        // Toujours commencer par "Tous"
+        const chips = [`<button class="archive-filter-chip ${_archiveFilter === 'all' ? 'active' : ''}" data-filter="all" onclick="setArchiveFilter('all')">Tous (${_archiveData.sellers.length})</button>`];
+        statuses.forEach(status => {
+            const meta = getArchiveStatusMeta(status);
+            chips.push(`<button class="archive-filter-chip ${_archiveFilter === status ? 'active' : ''}" data-filter="${escapeHtml(status)}" onclick="setArchiveFilter('${escapeHtml(status)}')">${escapeHtml(meta.label)} (${counts[status]})</button>`);
+        });
+        container.innerHTML = chips.join('');
     }
 
     function renderArchiveBody() {
@@ -6202,7 +6241,7 @@
 
     function renderArchiveSellerCard(seller) {
         const addr = seller.address || `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || 'Bien sans adresse';
-        const statusLabel = seller.status === 'sold' ? 'Vendu' : 'Perdu';
+        const meta = getArchiveStatusMeta(seller.status);
         const finalPrice = seller.mandate_price || seller.budget;
         const exitDate = seller.updated_at ? new Date(seller.updated_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '';
 
@@ -6211,7 +6250,7 @@
         if (seller.property_type) metaParts.push(`🏠 ${seller.property_type}`);
         if (seller.surface) metaParts.push(`📐 ${seller.surface} m²`);
         if (seller.rooms) metaParts.push(seller.rooms);
-        if (exitDate) metaParts.push(`📅 ${statusLabel} ${exitDate}`);
+        if (exitDate) metaParts.push(`📅 ${exitDate}`);
 
         const visits = _archiveData.visitsBySeller[seller.id] || [];
         const requests = _archiveData.requestsBySeller[seller.id] || [];
@@ -6222,10 +6261,13 @@
             ...requests.map(r => renderArchiveRequestRow(r))
         ].join('');
 
+        // Badge avec style inline pour supporter tous les statuts (sold/lost/competitor/off_market/hot/warm/cold/custom_*)
+        const badgeStyle = `background:${meta.bg}; color:${meta.color}`;
+
         return `
             <div class="archive-seller-card" data-seller-id="${seller.id}">
                 <div class="archive-seller-header" onclick="this.parentElement.classList.toggle('open')">
-                    <span class="archive-status-badge ${seller.status}">${statusLabel}</span>
+                    <span class="archive-status-badge" style="${badgeStyle}">${escapeHtml(meta.label)}</span>
                     <div class="archive-seller-info">
                         <div class="archive-seller-address">${escapeHtml(addr)}</div>
                         <div class="archive-seller-meta">${metaParts.map(p => `<span>${p}</span>`).join('')}</div>
@@ -6314,11 +6356,12 @@
         try {
             const userId = await getCurrentUserId();
             if (!userId) return;
+            // Compteur = tous les biens NON-actifs (tout sauf mandate et compromis)
             const { count } = await supabaseClient
                 .from('sellers')
                 .select('id', { count: 'exact', head: true })
                 .eq('user_id', userId)
-                .in('status', ['sold', 'lost']);
+                .not('status', 'in', '(mandate,compromis)');
             el.textContent = count || 0;
         } catch (e) {
             console.error('[Archive] Count error:', e);
