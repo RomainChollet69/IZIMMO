@@ -2386,7 +2386,23 @@
     }
 
     function filterVisits(visits, filters) {
+        // Set des seller_ids actifs (mandate + compromis) — pour exclure les visites
+        // rattachées à des biens vendus/perdus/prospects qui ont été déplacés.
+        // v.sellers est joint depuis Supabase au moment du load → contient le statut à jour.
+        const activeSellerIds = new Set(activeSellers.map(s => s.id));
+
         return visits.filter(v => {
+            // Exclure les visites rattachées à un seller non-actif (sold, lost, prospect…).
+            // Garder : (a) visites sans seller (contact libre), (b) visites d'un seller actif.
+            // Source de vérité : v.sellers.status si dispo (join à jour), sinon présence dans activeSellerIds.
+            if (v.seller_id) {
+                if (v.sellers && v.sellers.status) {
+                    if (v.sellers.status !== 'mandate' && v.sellers.status !== 'compromis') return false;
+                } else if (!activeSellerIds.has(v.seller_id)) {
+                    return false;
+                }
+            }
+
             // Status filter
             if (filters.status && v.status !== filters.status) return false;
 
