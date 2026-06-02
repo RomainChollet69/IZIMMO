@@ -1942,6 +1942,17 @@
             if (/(?:sms|message|mail|texto|whatsapp).*(?:confirmation|retour)/.test(t)) return true;
             if (/(?:confirmation|retour)\s+(?:de\s+)?visite/.test(t)) return true;
             if (/demander\s+(?:un\s+)?retour/.test(t)) return true;
+            // Programmation / planification de visite ou RDV — déclenche le flow create_event
+            // Exemples : "Planifie une visite mercredi à 14h avec M. Dupont au 12 rue Branly"
+            //           "Programme un rdv jeudi matin chez les Martin"
+            //           "Ajoute une visite vendredi à 10h"
+            //           "Crée un rendez-vous demain à 15h"
+            //           "Mets un rdv lundi à 11h"
+            if (/(?:planifie|programme|ajoute|cree|met[sz])\s+(?:moi\s+)?(?:une\s+|un\s+)?(?:visite|rdv|rendez.vous|estimation|signature)/.test(t)) return true;
+            // "RDV/visite" + préposition contexte (le, avec, chez, au, à, demain, lundi...)
+            if (/\b(?:rdv|rendez.vous|visite|estimation)\s+(?:le\s|avec\s|chez\s|au\s|a\s|demain|aujourd|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|cette\s|prochaine?\s|ce\s)/.test(t)) return true;
+            // Jour de la semaine en début + "visite/rdv" plus loin : "Vendredi 14h, visite avec…"
+            if (/(?:vendredi|lundi|mardi|mercredi|jeudi|samedi|dimanche|demain|aujourd)[\s,]+.*(?:visite|rdv|rendez.vous)/.test(t)) return true;
             return false;
         }
 

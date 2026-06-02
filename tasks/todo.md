@@ -72,7 +72,7 @@ _(rien en cours)_
 - [ ] Mettre en place le logging structuré par module (`[DVF]`, `[Pipeline]`, `[Auth]`, `[Workflow]`)
 
 ### Assistant Vocal (micro.html) — Prochaines étapes
-- [ ] Gérer les cas vocaux agenda : "planifie une visite vendredi 14h avec M. Dupont" → Google Calendar + CRM
+- [x] Gérer les cas vocaux agenda : "planifie une visite vendredi 14h avec M. Dupont" → Google Calendar + CRM (2026-06-02 : regex isLeonCommand + flow create_event existant déjà branché sur INSERT visits si buyer/seller identifiés)
 - [ ] Gérer les cas vocaux visites : "visite faite ce matin chez Dupont" → table visits
 - [ ] Gérer les cas vocaux rappels : "relance M. Martin dans 10 jours" → reminder_date
 - [ ] Tester l'onboarding sur mobile iOS/Android en conditions réelles
