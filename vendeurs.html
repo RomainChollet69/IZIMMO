@@ -2617,6 +2617,7 @@
 
         /* ===== MOBILE-ONLY ELEMENTS (hidden on desktop) ===== */
         .mobile-tabs { display: none; }
+        .mobile-search-btn { display: none; }
         .mobile-move-btn { display: none !important; }
         .move-popup-overlay {
             display: none;
@@ -2767,8 +2768,92 @@
                 border-color: #2DD4BF;
             }
 
-            /* --- MOBILE TAB BAR : cachée (remplacée par colonnes scroll) --- */
-            .mobile-tabs { display: none !important; }
+            /* --- MOBILE TAB BAR : sticky en haut, scrollable horizontalement
+               Permet de jump directement à une colonne sans swiper toutes
+               les autres. Le tap sur une tab scrolle le pipeline jusqu'à
+               la colonne correspondante (cf. setMobileTab JS). --- */
+            .mobile-tabs {
+                display: flex !important;
+                position: fixed;
+                top: var(--m-header-h, 56px);
+                left: 0;
+                right: 0;
+                z-index: 50;
+                gap: 4px;
+                padding: 8px 12px;
+                background: var(--m-surface-0, #FFFFFF);
+                border-bottom: 1px solid var(--m-surface-3, #E1E8ED);
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .mobile-tabs::-webkit-scrollbar { display: none; }
+            .mobile-tab {
+                flex: 0 0 auto;
+                background: none;
+                border: none;
+                border-bottom: 2px solid transparent;
+                padding: 6px 10px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--m-text-secondary, #4A5568);
+                white-space: nowrap;
+                cursor: pointer;
+                transition: color 0.15s;
+                font-family: inherit;
+            }
+            .mobile-tab.active { color: #243B53; }
+            .mobile-tab .tab-count { font-size: 11px; color: var(--m-text-tertiary, #94A3B8); margin-left: 2px; }
+            .mobile-tab.active .tab-count { color: inherit; opacity: 0.65; }
+
+            /* Bouton search à droite de la mobile-tabs */
+            .mobile-search-btn {
+                position: fixed;
+                top: var(--m-header-h, 56px);
+                right: 8px;
+                z-index: 51;
+                height: 44px;
+                width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: var(--m-surface-0, #FFFFFF);
+                border: none;
+                color: #4A5568;
+                font-size: 16px;
+                cursor: pointer;
+                border-left: 1px solid var(--m-surface-3, #E1E8ED);
+            }
+            .mobile-search-btn:active { background: var(--m-surface-2, #F1F5F9); }
+            .mobile-tabs { padding-right: 52px; } /* Laisser la place au bouton search */
+
+            /* Search bar mobile révélée : sticky sous la mobile-tabs */
+            .search-bar-section.mobile-open {
+                display: flex !important;
+                position: fixed;
+                top: calc(var(--m-header-h, 56px) + 44px);
+                left: 0;
+                right: 0;
+                z-index: 49;
+                background: var(--m-surface-0, #FFFFFF);
+                border-bottom: 1px solid var(--m-surface-3, #E1E8ED);
+                padding: 8px 12px;
+                animation: searchSlideDown 0.15s ease;
+            }
+            @keyframes searchSlideDown {
+                from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            /* Décaler le pipeline quand la search est ouverte */
+            .search-bar-section.mobile-open ~ .pipeline {
+                top: calc(var(--m-header-h, 56px) + 44px + 56px);
+            }
+
+            /* Décaler le pipeline pour compenser la mobile-tabs sticky */
+            .pipeline {
+                top: calc(var(--m-header-h, 56px) + 44px);
+            }
 
             /* --- CARD DECK : caché (remplacé par colonnes scroll) --- */
             .mobile-card-deck { display: none !important; }
@@ -3021,7 +3106,20 @@
 
             .form-section { padding: 14px; margin-bottom: 12px; }
             .form-section-title { font-size: 14px; }
-            .submit-btn { padding: 14px; font-size: 15px; }
+
+            /* Sticky save bar mobile : bouton "Créer/Enregistrer" toujours visible en bas
+               de la modale lead, l'utilisateur n'a plus à scroller jusqu'en bas du form. */
+            .submit-btn {
+                position: sticky;
+                bottom: 0;
+                padding: 14px;
+                font-size: 15px;
+                margin: 16px -16px -16px;  /* compense le padding modal-card */
+                border-radius: 0;
+                box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.08);
+                z-index: 10;
+            }
+            .modal-card { padding-bottom: 0 !important; }
 
             /* Tabs & mandat responsive */
             .modal-tabs { margin-bottom: 16px; overflow-x: auto; }
@@ -4260,6 +4358,10 @@
 
     <!-- Mobile Tab Bar (card deck) — généré dynamiquement par renderSellerPipeline() -->
     <div class="mobile-tabs" id="mobileTabs"></div>
+    <!-- Bouton search mobile (révèle la search-bar-section) — visible uniquement < 768px via CSS -->
+    <button type="button" class="mobile-search-btn" onclick="toggleMobileSearch()" title="Rechercher" aria-label="Rechercher">
+        <i class="fa-solid fa-magnifying-glass"></i>
+    </button>
 
     <!-- Mobile Card Deck (visible uniquement sur mobile, remplace le pipeline Kanban) -->
     <div class="mobile-card-deck" id="mobileCardDeck">
@@ -6376,15 +6478,51 @@
             // Desktop : toggle column visibility
             document.querySelectorAll('.column').forEach(c => c.classList.toggle('mobile-active', c.dataset.status === status));
 
-            // Scroll active tab into view
+            // Scroll active tab into view (horizontalement dans la tab bar)
             const activeTab = document.querySelector(`.mobile-tab[data-status="${status}"]`);
             if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 
-            // Mobile : reset deck à la première carte et render
+            // Mobile : scroller horizontalement le pipeline jusqu'à la colonne cible
+            // Le pipeline mobile est en flex row avec scroll-snap. Chaque colonne fait 100vw.
             if (isMobile()) {
-                mobileDeckIndex = 0;
-                renderMobileCardDeck();
+                const targetCol = document.querySelector(`.column[data-status="${status}"]`);
+                const pipeline = document.querySelector('.pipeline');
+                if (targetCol && pipeline) {
+                    pipeline.scrollTo({ left: targetCol.offsetLeft, behavior: 'smooth' });
+                }
             }
+        }
+
+        // Détection du scroll horizontal pour mettre à jour la tab active
+        // (l'utilisateur peut swiper directement les colonnes, on suit ce mouvement)
+        function initMobilePipelineScrollSync() {
+            const pipeline = document.querySelector('.pipeline');
+            if (!pipeline) return;
+            let scrollTimeout = null;
+            pipeline.addEventListener('scroll', () => {
+                if (!isMobile()) return;
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    const colWidth = window.innerWidth;
+                    const idx = Math.round(pipeline.scrollLeft / colWidth);
+                    const visibleCol = document.querySelectorAll('.column')[idx];
+                    if (visibleCol && visibleCol.dataset.status !== mobileActiveTab) {
+                        const status = visibleCol.dataset.status;
+                        mobileActiveTab = status;
+                        localStorage.setItem('leon_mobile_tab_sellers', status);
+                        // Update visuel tabs uniquement (pas de scrollTo, sinon boucle)
+                        const color = COLUMN_COLORS[status] || '#2DD4BF';
+                        document.querySelectorAll('.mobile-tab').forEach(t => {
+                            const isActive = t.dataset.status === status;
+                            t.classList.toggle('active', isActive);
+                            t.style.borderBottomColor = isActive ? color : 'transparent';
+                            t.style.color = isActive ? '#243B53' : '';
+                        });
+                        const activeTab = document.querySelector(`.mobile-tab[data-status="${status}"]`);
+                        if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    }
+                }, 80);
+            }, { passive: true });
         }
 
         function updateMobileTabCounts() {
@@ -8479,6 +8617,26 @@
             }
 
             updateCounts();
+        }
+
+        // Toggle de la search-bar-section sur mobile (révélée via icône loupe dans la mobile-tabs)
+        function toggleMobileSearch() {
+            const bar = document.querySelector('.search-bar-section');
+            if (!bar) return;
+            const wasOpen = bar.classList.contains('mobile-open');
+            bar.classList.toggle('mobile-open');
+            if (!wasOpen) {
+                // Focus l'input quand on ouvre
+                const input = document.getElementById('bottomSearchInput');
+                if (input) setTimeout(() => input.focus(), 50);
+            } else {
+                // Vider la recherche quand on ferme
+                const input = document.getElementById('bottomSearchInput');
+                if (input && input.value) {
+                    input.value = '';
+                    input.dispatchEvent(new Event('input'));
+                }
+            }
         }
 
         function setupSearchToolbar() {
@@ -11543,6 +11701,7 @@
             setupSearchToolbar();
             injectExportToUserDropdown();
             initMobileTabs();
+            initMobilePipelineScrollSync();
             initColumnSettings();
             setupContactAutocomplete('lastName', 'firstName', 'phone', 'email');
             setupFullNameAutocomplete('fullName', 'phone', 'email');
