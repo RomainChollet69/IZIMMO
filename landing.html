@@ -1,971 +1,1485 @@
 <!--
-  Léon — Landing Page (landing.html)
-  Page d'accueil publique présentant l'application Léon.
+  landing.html
+  Landing page publique de Léon — assistant IA des conseillers immobiliers.
+  Servie sur avecleon.fr/ via rewrite Vercel (cf. vercel.json).
+  Narration Apple-style en 8 sections. Autonome (CSS + JS inline).
+  Dépendances : Google Fonts (Barlow SC + Inter), Font Awesome 6.5.
 -->
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="noindex, nofollow">
-    <title>Léon — Ton CRM qui ne dort jamais</title>
-    <meta name="description" content="Le seul outil pensé pour les conseillers immobiliers indépendants. Pipeline visuel, dictée vocale, messages IA, posts réseaux sociaux.">
+    <title>Léon — CRM IA pour conseillers immobiliers | Fais ton métier, Léon fait le reste</title>
+    <meta name="description" content="Léon est l'assistant IA des conseillers immobiliers indépendants (IAD, SAFTI, Optimhome). Pipeline leads vendeurs/acquéreurs, matching automatique, agenda Google, relances IA, posts sociaux. Gratuit pour commencer.">
+    <meta name="keywords" content="CRM immobilier, mandataire immobilier, assistant vocal immobilier, pipeline vendeurs acquéreurs, IA immobilier, IAD, SAFTI, Optimhome, dictée vocale CRM">
+    <meta name="author" content="Romain Chollet">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <meta name="theme-color" content="#6C4CC8">
+
+    <!-- Canonical -->
+    <link rel="canonical" href="https://www.avecleon.fr/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Léon">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:url" content="https://www.avecleon.fr/">
+    <meta property="og:title" content="Léon — L'assistant IA des conseillers immobiliers">
+    <meta property="og:description" content="Fais ton métier, Léon fait le reste. Pipeline leads, matching acquéreurs, agenda, relances, posts sociaux — automatisés pour les conseillers indépendants.">
+    <meta property="og:image" content="https://www.avecleon.fr/img/F.png">
+    <meta property="og:image:alt" content="Léon — CRM immobilier voice-first">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Léon — CRM immobilier voice-first pour mandataires">
+    <meta name="twitter:description" content="Fais ton métier, Léon fait le reste. L'assistant IA des conseillers immobiliers indépendants.">
+    <meta name="twitter:image" content="https://www.avecleon.fr/img/F.png">
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="img/fav_leon.svg">
 
+    <!-- JSON-LD : SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Léon",
+      "alternateName": "Léon CRM",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "CRM",
+      "operatingSystem": "Web, iOS, Android",
+      "url": "https://www.avecleon.fr/",
+      "description": "CRM immobilier voice-first pour mandataires indépendants. Dictez vos leads, Léon les structure et les organise dans des pipelines vendeurs et acquéreurs. Matching IA, agenda Google connecté, relances intelligentes.",
+      "inLanguage": "fr-FR",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "description": "Gratuit pour commencer"
+      },
+      "featureList": [
+        "Dictée vocale avec transcription IA",
+        "Pipeline vendeurs drag & drop",
+        "Pipeline acquéreurs drag & drop",
+        "Matching automatique acquéreurs / biens",
+        "Relances intelligentes par IA",
+        "Agenda Google connecté",
+        "Génération de posts réseaux sociaux",
+        "Récupération automatique des demandes de visite portails",
+        "Étude de marché IA (DVF + DPE)"
+      ],
+      "creator": {
+        "@type": "Organization",
+        "name": "Léon",
+        "url": "https://www.avecleon.fr/"
+      }
+    }
+    </script>
+
+    <!-- JSON-LD : Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Léon",
+      "url": "https://www.avecleon.fr/",
+      "logo": "https://www.avecleon.fr/img/Logo_leon.svg",
+      "description": "Léon est un CRM immobilier voice-first conçu pour les mandataires indépendants. Édité à Lyon, France.",
+      "foundingDate": "2025",
+      "foundingLocation": {
+        "@type": "Place",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Lyon",
+          "addressCountry": "FR"
+        }
+      },
+      "founder": {
+        "@type": "Person",
+        "name": "Romain Chollet"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "romainchollet69@gmail.com",
+        "contactType": "customer support",
+        "availableLanguage": ["French"]
+      }
+    }
+    </script>
+
+    <!-- JSON-LD : FAQPage (lue par Google + LLM, non affichée) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Qu'est-ce que Léon ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Léon est un CRM immobilier voice-first conçu pour les mandataires indépendants (IAD, SAFTI, Optimhome, Efficity...). Au lieu de remplir des formulaires, l'agent dicte ses informations après un rendez-vous : Léon transcrit, structure et range automatiquement les leads dans les bons pipelines vendeurs et acquéreurs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "À qui s'adresse Léon ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Léon s'adresse aux mandataires immobiliers indépendants travaillant sous une enseigne réseau (IAD France, SAFTI, Optimhome, Efficity, Capifrance, Megagence...) qui veulent un outil personnel en plus du CRM imposé par leur réseau et qui passent plus de temps sur le terrain qu'au bureau."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Combien coûte Léon ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Léon est gratuit pour démarrer, sans carte bancaire requise. Une offre payante est prévue à 19 €/mois pour les fonctionnalités avancées."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment fonctionne la dictée vocale de Léon ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Après un rendez-vous, en sortie de visite ou entre deux portes, vous dictez vos informations à Léon. L'IA transcrit automatiquement votre voix, identifie les éléments clés (nom, téléphone, adresse, surface, budget, projet) et crée la fiche du lead en environ 15 secondes, sans aucun champ à remplir manuellement."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Léon remplace-t-il le CRM de mon réseau ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non, Léon est un outil personnel et complémentaire. Il ne remplace pas le CRM imposé par votre réseau (IAD, SAFTI, etc.) mais il prend en charge la partie organisation quotidienne, dictée vocale et matching que ces CRM ne font pas bien."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Faut-il installer une application ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non, Léon fonctionne directement dans le navigateur sur ordinateur comme sur mobile. Il n'y a aucune application à installer. Vous vous connectez avec votre compte Google et c'est prêt en 30 secondes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Mes données sont-elles en sécurité ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui. Léon est édité en France, hébergé en Europe (Vercel + Supabase), et conforme RGPD. Vos données restent les vôtres et ne sont jamais revendues. L'accès Google Calendar peut être révoqué à tout moment depuis votre compte Google."
+          }
+        }
+      ]
+    }
+    </script>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        * {
+        /* ===== RESET & VARIABLES ===== */
+        *, *::before, *::after {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
 
         :root {
-            --primary: #243B53;
-            --accent: #6C4CC8;
-            --accent-hover: #5B3DB8;
-            --text-dark: #243B53;
-            --text-gray: #6B7280;
-            --text-light: #9CA3AF;
-            --border: #E5E7EB;
-            --bg-light: #F8FAFC;
+            --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-subtle: linear-gradient(135deg, rgba(102, 126, 234, 0.06) 0%, rgba(118, 75, 162, 0.06) 100%);
+            --primary: #6C4CC8;
+            --primary-soft: rgba(108, 76, 200, 0.08);
+            --text-primary: #1A1F36;
+            --text-secondary: #4A5568;
+            --text-tertiary: #94A3B8;
+            --bg-light: #F8F9FB;
+            --bg-white: #FFFFFF;
+            --border-light: #E8EBF0;
+            --radius-card: 14px;
+            --radius-pill: 100px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+            --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+            --shadow-device: 0 30px 80px rgba(0,0,0,0.18), 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            color: var(--text-dark);
-            background: white;
+            color: var(--text-primary);
+            background: var(--bg-white);
             line-height: 1.6;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+
+        /* ===== TYPOGRAPHY ===== */
+        .display-title {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.05;
+        }
+
+        .gradient-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ===== LAYOUT ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+        }
+
+        .section {
+            padding: 120px 0;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInLeft {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes pulse-soft {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(30px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+        .reveal.visible,
+        .reveal-left.visible,
+        .reveal-right.visible {
+            opacity: 1;
+            transform: translate(0);
+        }
+        .delay-1 { transition-delay: 0.15s; }
+        .delay-2 { transition-delay: 0.3s; }
+        .delay-3 { transition-delay: 0.45s; }
+        .delay-4 { transition-delay: 0.6s; }
 
         /* ===== HEADER ===== */
         .header {
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 1000;
-            background: white;
-            border-bottom: 1px solid var(--border);
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            transition: background 0.3s ease;
         }
 
         .header-inner {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 32px;
-            height: 72px;
+            height: 64px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .logo img {
-            height: 32px;
+        .header-logo img {
+            height: 30px;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
+        .header-cta {
+            display: inline-flex;
             align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-dark);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent);
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .btn-login {
-            color: var(--primary);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 8px 16px;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-
-        .btn-login:hover {
-            background: var(--bg-light);
-        }
-
-        .btn-signup {
-            background: var(--primary);
+            gap: 8px;
+            padding: 10px 24px;
+            background: var(--gradient);
             color: white;
             text-decoration: none;
-            font-size: 15px;
+            font-family: 'Inter', sans-serif;
             font-weight: 600;
-            padding: 10px 20px;
-            border-radius: 6px;
-            transition: all 0.2s;
+            font-size: 14px;
+            border-radius: var(--radius-pill);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .btn-signup:hover {
-            background: #1a2d42;
+        .header-cta:hover {
             transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
         }
 
-        /* ===== SECTIONS ===== */
-        section {
-            padding: 96px 32px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* ===== HERO ===== */
+        /* ===== SECTION 1 : HERO ===== */
         .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             text-align: center;
-            padding: 120px 32px 96px;
+            padding: 120px 32px 80px;
+            background: var(--bg-white);
         }
 
-        .hero-logo {
-            height: 48px;
-            margin-bottom: 16px;
+        .hero-title {
+            font-size: clamp(52px, 8vw, 96px);
+            margin-bottom: 0;
+            animation: fadeInUp 0.8s ease-out both;
         }
 
-        .baseline {
-            font-size: 18px;
-            color: var(--text-gray);
-            font-weight: 400;
-            margin-bottom: 32px;
-        }
-
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 700;
-            color: var(--text-dark);
-            line-height: 1.15;
-            max-width: 700px;
-            margin: 0 auto 16px;
+        .hero-title-gradient {
+            font-size: clamp(52px, 8vw, 96px);
+            display: block;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
         .hero-subtitle {
-            font-size: 18px;
-            color: var(--text-gray);
-            max-width: 560px;
-            margin: 0 auto 32px;
-            line-height: 1.6;
+            font-size: clamp(16px, 2.2vw, 20px);
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 28px auto 0;
+            line-height: 1.7;
+            font-weight: 400;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
         }
 
-        .btn-cta {
-            display: inline-block;
-            background: var(--accent);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            padding: 14px 32px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.2s;
-            margin-bottom: 12px;
-        }
-
-        .btn-cta:hover {
-            background: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(108, 76, 200, 0.3);
-        }
-
-        .cta-subtitle {
-            font-size: 13px;
-            color: var(--text-light);
-            margin-bottom: 48px;
-        }
-
-        .hero-screenshot {
-            max-width: 1000px;
-            margin: 0 auto;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-        }
-
-        .screenshot-placeholder {
-            background: linear-gradient(135deg, #f0f2f5 0%, #e8eaf6 100%);
-            border-radius: 12px;
-            height: 500px;
+        .hero-cta-group {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
-            color: var(--text-light);
-            font-size: 18px;
-            font-weight: 500;
-        }
-
-        /* ===== SOCIAL PROOF ===== */
-        .social-proof {
-            background: var(--bg-light);
-            padding: 48px 32px;
-            text-align: center;
-        }
-
-        .social-proof p {
-            font-size: 15px;
-            color: var(--text-gray);
-            letter-spacing: 0.3px;
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        /* ===== PROBLEM ===== */
-        .problem h2 {
-            font-size: 28px;
-            font-weight: 600;
-            color: var(--text-dark);
-            text-align: center;
-            max-width: 650px;
-            margin: 0 auto 48px;
-            line-height: 1.4;
-        }
-
-        .pain-points {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .pain-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 24px;
-        }
-
-        .pain-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-        }
-
-        .pain-card p {
-            font-size: 15px;
-            color: var(--text-gray);
-            line-height: 1.6;
-        }
-
-        /* ===== FEATURES ===== */
-        .feature {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 64px;
-            align-items: center;
-        }
-
-        .feature.reverse {
-            direction: rtl;
-        }
-
-        .feature.reverse > * {
-            direction: ltr;
-        }
-
-        .feature-bg-light {
-            background: var(--bg-light);
-        }
-
-        .feature-badge {
-            display: inline-block;
-            background: #EEF2FF;
-            color: var(--accent);
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .feature h2 {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 16px;
-            line-height: 1.3;
-        }
-
-        .feature-description {
-            font-size: 16px;
-            color: #4B5563;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-
-        .feature-points {
-            list-style: none;
-        }
-
-        .feature-points li {
-            font-size: 15px;
-            color: var(--text-gray);
-            margin-bottom: 12px;
-            line-height: 1.6;
-        }
-
-        .feature-screenshot {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
-        }
-
-        /* ===== COMING SOON ===== */
-        .coming-soon {
-            background: var(--bg-light);
-            text-align: center;
-        }
-
-        .coming-soon h2 {
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 48px;
-        }
-
-        .coming-cards {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 32px;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .coming-card {
-            background: white;
-            border: 1px dashed #D1D5DB;
-            border-radius: 12px;
-            padding: 24px;
-            opacity: 0.8;
-        }
-
-        .coming-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 12px;
-        }
-
-        .coming-card p {
-            font-size: 15px;
-            color: var(--text-gray);
-            line-height: 1.6;
-        }
-
-        /* ===== PRICING ===== */
-        .pricing h2 {
-            font-size: 32px;
-            font-weight: 600;
-            color: var(--text-dark);
-            text-align: center;
-            margin-bottom: 48px;
-        }
-
-        .pricing-cards {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 32px;
-            max-width: 800px;
-            margin: 0 auto 24px;
-        }
-
-        .pricing-card {
-            background: white;
-            border: 2px solid var(--border);
-            border-radius: 12px;
-            padding: 32px;
-            position: relative;
-        }
-
-        .pricing-card.popular {
-            border-color: var(--accent);
-            box-shadow: 0 12px 40px rgba(108, 76, 200, 0.15);
-        }
-
-        .pricing-badge {
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: white;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-
-        .pricing-card h3 {
-            font-size: 20px;
-            font-weight: 600;
-            color: var(--text-dark);
-            margin-bottom: 8px;
-        }
-
-        .pricing-card .price {
-            font-size: 36px;
-            font-weight: 700;
-            color: var(--text-dark);
-            margin-bottom: 24px;
-        }
-
-        .pricing-card ul {
-            list-style: none;
-            margin-bottom: 24px;
-        }
-
-        .pricing-card li {
-            font-size: 15px;
-            color: var(--text-gray);
-            margin-bottom: 12px;
-            padding-left: 24px;
-            position: relative;
-        }
-
-        .pricing-card li::before {
-            content: "✓";
-            position: absolute;
-            left: 0;
-            color: var(--accent);
-            font-weight: 700;
-        }
-
-        .btn-outline {
-            display: block;
-            width: 100%;
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            font-size: 15px;
-            font-weight: 600;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-align: center;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
+            gap: 12px;
+            margin-top: 40px;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
         }
 
         .btn-primary {
-            display: block;
-            width: 100%;
-            background: var(--accent);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: var(--gradient);
             color: white;
-            border: none;
-            font-size: 15px;
-            font-weight: 600;
-            padding: 12px 24px;
-            border-radius: 8px;
-            text-align: center;
             text-decoration: none;
-            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .btn-primary:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
         }
 
-        .pricing-footer {
-            text-align: center;
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: transparent;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: 2px solid var(--border-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .hero-note {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-weight: 400;
+        }
+
+        .hero-visual {
+            margin-top: 64px;
+            animation: fadeInUp 1s ease-out 0.8s both;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* Device frame */
+        .device-desktop {
+            position: relative;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: var(--shadow-device);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .device-desktop img {
+            width: 100%;
+            display: block;
+        }
+
+        /* Placeholder pour screenshots */
+        .screenshot-placeholder {
+            width: 100%;
+            aspect-ratio: 16/10;
+            background: var(--bg-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-tertiary);
             font-size: 14px;
-            color: var(--text-gray);
+            font-weight: 500;
         }
 
-        /* ===== FINAL CTA ===== */
-        .final-cta {
-            background: linear-gradient(135deg, var(--primary) 0%, #1a2d42 100%);
-            text-align: center;
-            color: white;
-        }
-
-        .final-cta h2 {
-            font-size: 36px;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 16px;
-        }
-
-        .final-cta p {
+        .screenshot-placeholder i {
+            margin-right: 8px;
             font-size: 18px;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 32px;
+        }
+
+        /* ===== SECTION 2 : RUPTURE ===== */
+        .rupture {
+            background: var(--bg-light);
+        }
+
+        .rupture-title {
+            font-size: clamp(28px, 5vw, 48px);
+            max-width: 800px;
+            margin: 0 auto 32px;
+        }
+
+        .rupture-text {
+            font-size: clamp(16px, 1.8vw, 19px);
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin: 0 auto;
+            line-height: 1.85;
+        }
+
+        /* ===== SECTION 3 : VOICE-FIRST ===== */
+        .split-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .split-text {
+            max-width: 480px;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: var(--radius-pill);
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-size: clamp(28px, 4vw, 44px);
+            margin-bottom: 20px;
+        }
+
+        .section-desc {
+            font-size: 17px;
+            color: var(--text-secondary);
+            line-height: 1.75;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 32px;
+            flex-wrap: wrap;
+        }
+
+        .stat-pill {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 22px;
+            background: var(--primary-soft);
+            border-radius: var(--radius-card);
+            min-width: 100px;
+        }
+
+        .stat-pill-value {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: var(--primary);
+            line-height: 1;
+        }
+
+        .stat-pill-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* Device phone */
+        .device-phone {
+            position: relative;
+            max-width: 300px;
+            margin: 0 auto;
+            border-radius: 36px;
+            overflow: hidden;
+            box-shadow: var(--shadow-device);
+            border: 8px solid #1A1F36;
+            background: #1A1F36;
+        }
+
+        .device-phone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 28px;
+            background: #1A1F36;
+            border-radius: 0 0 16px 16px;
+            z-index: 2;
+        }
+
+        .device-phone img {
+            width: 100%;
+            display: block;
+            border-radius: 28px;
+        }
+
+        .device-phone .screenshot-placeholder {
+            aspect-ratio: 9/18;
+            border-radius: 28px;
+        }
+
+        /* ===== SECTION 4 : CRM INTELLIGENT ===== */
+        .split-section-reverse {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .split-visual-left {
+            order: -1;
+        }
+
+        .feature-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 28px;
+        }
+
+        .feature-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 18px 20px;
+            background: var(--bg-white);
+            border-radius: var(--radius-card);
+            border: 1px solid var(--border-light);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+
+        .feature-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .feature-card-icon {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            border-radius: 12px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .feature-card-title {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        .feature-card-desc {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* ===== SECTION 5 : IA CONTEXTUELLE ===== */
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 56px;
+        }
+
+        .mockup-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .mockup-card-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-radius: var(--radius-pill);
+            margin: 16px 16px 0;
+        }
+
+        .badge-generated {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+        }
+
+        .badge-contextual {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10B981;
+        }
+
+        .badge-realtime {
+            background: rgba(139, 92, 246, 0.1);
+            color: #8B5CF6;
+        }
+
+        .mockup-card-content {
+            padding: 16px;
+        }
+
+        .mockup-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .mockup-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .mockup-name {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .mockup-platform {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .mockup-text {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* SMS bubble */
+        .sms-bubble {
+            background: #E9F5FF;
+            border-radius: 18px 18px 18px 4px;
+            padding: 14px 18px;
+            margin: 16px;
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .sms-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-align: right;
+            margin-top: 6px;
+        }
+
+        /* Match card */
+        .match-visual {
+            padding: 20px 16px;
+            text-align: center;
+        }
+
+        .match-score {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 16px;
+        }
+
+        .match-score-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(#667eea 0deg, #764ba2 312deg, #E8EBF0 312deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .match-score-inner {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--primary);
+        }
+
+        .match-from {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .match-arrow {
+            color: var(--text-tertiary);
+            margin: 6px 0;
+            font-size: 14px;
+        }
+
+        .match-to {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== SECTION 6 : MOBILE ===== */
+        .mobile-section {
+            background: var(--gradient-subtle);
+        }
+
+        .phones-fan {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0;
+            margin-top: 56px;
+            perspective: 1200px;
+        }
+
+        .phone-item {
+            transition: transform 0.6s ease;
+        }
+
+        .phone-item:nth-child(1) {
+            transform: rotate(-8deg) translateX(40px) translateY(10px);
+            z-index: 1;
+        }
+
+        .phone-item:nth-child(2) {
+            transform: scale(1.08);
+            z-index: 3;
+        }
+
+        .phone-item:nth-child(3) {
+            transform: rotate(8deg) translateX(-40px) translateY(10px);
+            z-index: 1;
+        }
+
+        .phone-item .device-phone {
+            max-width: 220px;
+        }
+
+        /* ===== SECTION 7 : CHIFFRES ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 56px;
+        }
+
+        .stat-block {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800;
+            font-size: clamp(40px, 5vw, 56px);
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+
+        /* ===== SECTION 8 : CTA FINAL ===== */
+        .cta-final {
+            background: var(--gradient);
+            padding: 120px 0;
+        }
+
+        .cta-final .display-title {
+            color: white;
+            font-size: clamp(32px, 5.5vw, 56px);
+            margin-bottom: 20px;
+        }
+
+        .cta-final .section-desc {
+            color: rgba(255, 255, 255, 0.8);
+            max-width: 520px;
+            margin: 0 auto 40px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .btn-white {
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
             background: white;
-            color: var(--primary);
-            font-size: 16px;
-            font-weight: 600;
-            padding: 14px 32px;
-            border-radius: 8px;
+            color: var(--text-primary);
             text-decoration: none;
-            transition: all 0.2s;
-            margin-bottom: 16px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
         .btn-white:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
         }
 
-        .final-cta-subtitle {
+        .btn-outline-white {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 40px;
+            background: transparent;
+            color: white;
+            text-decoration: none;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 17px;
+            border-radius: var(--radius-pill);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-outline-white:hover {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .cta-note {
             font-size: 13px;
-            color: rgba(255, 255, 255, 0.7);
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 20px;
         }
 
         /* ===== FOOTER ===== */
         .footer {
             background: #0F1419;
-            color: rgba(255, 255, 255, 0.7);
-            padding: 64px 32px 32px;
+            padding: 48px 0;
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr;
-            gap: 48px;
-            margin-bottom: 48px;
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
         }
 
-        .footer-logo img {
-            height: 32px;
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-logo {
+            height: 24px;
             filter: brightness(0) invert(1);
-            margin-bottom: 16px;
         }
 
-        .footer h4 {
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .footer-tagline {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        .footer ul {
-            list-style: none;
+        .footer-links {
+            display: flex;
+            gap: 24px;
         }
 
-        .footer li {
-            margin-bottom: 12px;
-        }
-
-        .footer a {
-            color: rgba(255, 255, 255, 0.7);
+        .footer-links a {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
             text-decoration: none;
-            font-size: 14px;
             transition: color 0.2s;
         }
 
-        .footer a:hover {
+        .footer-links a:hover {
             color: white;
         }
 
-        .footer-bottom {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding-top: 32px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
+        .footer-copy {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.3);
         }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            section {
-                padding: 64px 24px;
-            }
-
-            .header-inner {
+            .container {
                 padding: 0 20px;
             }
 
-            .nav-links {
+            .section {
+                padding: 80px 0;
+            }
+
+            .hero {
+                min-height: auto;
+                padding: 100px 20px 60px;
+            }
+
+            .hero-visual {
+                margin-top: 40px;
+            }
+
+            /* Split sections → stack */
+            .split-section,
+            .split-section-reverse {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .split-visual-left {
+                order: 0;
+            }
+
+            .split-text {
+                max-width: 100%;
+            }
+
+            .device-phone {
+                max-width: 240px;
+            }
+
+            /* Mockup grid → stack */
+            .mockup-grid {
+                grid-template-columns: 1fr;
+                max-width: 360px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            /* Phones fan → single phone */
+            .phones-fan {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .phone-item:nth-child(1),
+            .phone-item:nth-child(3) {
                 display: none;
             }
 
-            .hero h1 {
-                font-size: 32px;
+            .phone-item:nth-child(2) {
+                transform: none;
             }
 
-            .hero-subtitle {
-                font-size: 16px;
+            .phone-item .device-phone {
+                max-width: 260px;
             }
 
-            .pain-points,
-            .coming-cards,
-            .pricing-cards {
-                grid-template-columns: 1fr;
+            /* Stats grid → 2 columns */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 24px;
             }
 
-            .feature {
-                grid-template-columns: 1fr;
-                gap: 32px;
+            /* Stats row → wrap */
+            .stats-row {
+                justify-content: center;
             }
 
-            .feature.reverse {
-                direction: ltr;
-            }
-
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 32px;
-            }
-
-            .footer-bottom {
+            /* CTA buttons → stack */
+            .cta-buttons {
                 flex-direction: column;
-                gap: 16px;
+                align-items: center;
+            }
+
+            .btn-primary,
+            .btn-white,
+            .btn-outline-white {
+                width: 100%;
+                max-width: 320px;
+                justify-content: center;
+            }
+
+            /* Footer → stack */
+            .footer-inner {
+                flex-direction: column;
+                align-items: center;
                 text-align: center;
             }
-        }
 
-        /* ===== ANIMATIONS ===== */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+            .footer-brand {
+                flex-direction: column;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            /* Header */
+            .header-inner {
+                padding: 0 20px;
             }
         }
 
-        .fade-in {
-            animation: fadeInUp 0.6s ease-out;
+        @media (max-width: 480px) {
+            .hero-title,
+            .hero-title-gradient {
+                font-size: clamp(36px, 10vw, 52px);
+            }
+
+            .rupture-title {
+                font-size: clamp(24px, 7vw, 32px);
+            }
+
+            .section-title {
+                font-size: clamp(24px, 7vw, 32px);
+            }
         }
     </style>
 </head>
 <body>
-    <!-- HEADER -->
+
+    <!-- ===== HEADER ===== -->
     <header class="header">
         <div class="header-inner">
-            <a href="#hero" class="logo">
+            <a href="/" class="header-logo">
                 <img src="img/Logo_leon.svg" alt="Léon">
             </a>
-            <nav class="nav-links">
-                <a href="#fonctionnalites">Fonctionnalités</a>
-                <a href="#tarifs">Tarifs</a>
-            </nav>
-            <div class="header-actions">
-                <a href="login.html" class="btn-login">Se connecter</a>
-                <a href="login.html" class="btn-signup">Essayer gratuitement</a>
-            </div>
+            <a href="login.html" class="header-cta">
+                Se connecter
+            </a>
         </div>
     </header>
 
-    <!-- HERO -->
-    <section class="hero" id="hero">
-        <div class="container">
-            <img src="img/Logo_leon.svg" alt="Léon" class="hero-logo">
-            <p class="baseline">Ton CRM qui ne dort jamais.</p>
-            <h1>Le seul outil pensé pour les conseillers immobiliers indépendants.</h1>
-            <p class="hero-subtitle">Pipeline visuel, dictée vocale, messages IA, posts réseaux sociaux — Léon gère ton quotidien pendant que tu es sur le terrain.</p>
-            <a href="login.html" class="btn-cta">Essayer gratuitement — 10 leads offerts</a>
-            <p class="cta-subtitle">Pas de carte bancaire · Prêt en 30 secondes</p>
-            <div class="hero-screenshot">
-                <div class="screenshot-placeholder">Screenshot Pipeline Vendeurs</div>
+    <!-- ===== SECTION 1 : HERO ===== -->
+    <section class="hero">
+        <h1 class="display-title hero-title">Fais ton métier.</h1>
+        <span class="display-title hero-title-gradient gradient-text">Léon fait le reste.</span>
+        <p class="hero-subtitle">
+            Pipeline leads, matching acquéreurs, agenda, relances, posts sociaux — l'assistant immobilier qui automatise tout ce qui n'est pas du contact humain.
+        </p>
+        <div class="hero-cta-group">
+            <a href="login.html" class="btn-primary">
+                Essayer gratuitement
+                <i class="fas fa-arrow-right"></i>
+            </a>
+            <span class="hero-note">Prêt à être utilisé en 30 secondes.</span>
+        </div>
+        <div class="hero-visual">
+            <div class="device-desktop">
+                <img src="img/landing/pipeline-vendeurs.png" alt="Pipeline vendeurs Léon — CRM immobilier">
             </div>
         </div>
     </section>
 
-    <!-- SOCIAL PROOF -->
-    <section class="social-proof">
-        <div class="container">
-            <p>Pensé pour les mandataires Efficity, IAD, Safti, Capifrance, eXp, Keller Williams et les agents d'agences.</p>
+    <!-- ===== SECTION 2 : RUPTURE ===== -->
+    <section class="section rupture">
+        <div class="container text-center">
+            <h2 class="display-title rupture-title reveal">
+                Vous n'avez pas choisi<br>ce métier pour faire<br>de l'admin.
+            </h2>
+            <p class="rupture-text reveal delay-1">
+                Entre les fiches Excel, les leads notés sur un coin de papier, les relances oubliées
+                et le CRM du réseau que personne ne remplit... vous passez
+                plus de temps à alimenter vos outils qu'à rencontrer vos clients.
+                Et pendant ce temps, des mandats vous échappent.
+            </p>
         </div>
     </section>
 
-    <!-- PROBLEM -->
-    <section class="problem">
+    <!-- ===== SECTION 3 : VOICE-FIRST ===== -->
+    <section class="section">
         <div class="container">
-            <h2>Tu gères tes leads sur Excel, tes messages sur WhatsApp, tes posts sur ChatGPT… et tu perds du temps partout.</h2>
-            <div class="pain-points">
-                <div class="pain-card">
-                    <h3>📋 Leads éparpillés</h3>
-                    <p>Ton fichier Excel ne te dit pas qui relancer ni quand.</p>
+            <div class="split-section">
+                <div class="split-text reveal-left">
+                    <div class="section-label">
+                        <i class="fas fa-microphone"></i>
+                        Voice-first
+                    </div>
+                    <h2 class="display-title section-title">
+                        Vous parlez.<br>
+                        <span class="gradient-text">Léon comprend.</span>
+                    </h2>
+                    <p class="section-desc">
+                        Après un appel, en sortie de rendez-vous ou entre deux portes, dictez vos infos. Léon transcrit,
+                        structure et remplit la fiche automatiquement. Nom, téléphone,
+                        adresse, surface, budget — tout est rangé au bon endroit.
+                    </p>
+                    <div class="stats-row">
+                        <div class="stat-pill reveal delay-1">
+                            <span class="stat-pill-value">15s</span>
+                            <span class="stat-pill-label">Pour créer<br>une fiche</span>
+                        </div>
+                        <div class="stat-pill reveal delay-2">
+                            <span class="stat-pill-value">0</span>
+                            <span class="stat-pill-label">Champs à<br>remplir</span>
+                        </div>
+                        <div class="stat-pill reveal delay-3">
+                            <span class="stat-pill-value">100%</span>
+                            <span class="stat-pill-label">Mains<br>libres</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="pain-card">
-                    <h3>📱 Messages recopiés</h3>
-                    <p>Tu passes 20 min à rédiger un SMS de relance que tu aurais pu envoyer en 2 clics.</p>
-                </div>
-                <div class="pain-card">
-                    <h3>📸 Posts répétitifs</h3>
-                    <p>Tu ouvres ChatGPT, tu tapes un prompt vague, tu obtiens un post qui sonne faux.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FEATURE 1: PIPELINE -->
-    <section id="fonctionnalites">
-        <div class="container">
-            <div class="feature">
-                <div class="feature-content">
-                    <span class="feature-badge">PIPELINE</span>
-                    <h2>Tes leads vendeurs et acquéreurs, organisés comme tu travailles.</h2>
-                    <p class="feature-description">8 colonnes drag & drop — de la prise de contact jusqu'à la vente. Leads chaudes, tièdes, froides, off market, sous mandats, chez le concurrent… chaque lead a sa place. Tu vois ton business en un coup d'œil.</p>
-                    <ul class="feature-points">
-                        <li>🔥 Colonnes personnalisées par statut immobilier</li>
-                        <li>📱 Dictée vocale : crée une fiche en 15 secondes</li>
-                        <li>🎯 Matching automatique acquéreurs ↔ vendeurs</li>
-                    </ul>
-                </div>
-                <div class="feature-screenshot">
-                    <div class="screenshot-placeholder">Screenshot Pipeline</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- FEATURE 2: DICTÉE VOCALE -->
-    <section class="feature-bg-light">
-        <div class="container">
-            <div class="feature reverse">
-                <div class="feature-content">
-                    <span class="feature-badge">DICTÉE VOCALE</span>
-                    <h2>Tu parles, Léon structure.</h2>
-                    <p class="feature-description">Tu sors d'une visite, tu dictes ce que tu as vu. Léon transcrit, structure, et remplit la fiche automatiquement. Nom, téléphone, adresse, surface, budget, notes de visite — tout est rangé au bon endroit.</p>
-                    <ul class="feature-points">
-                        <li>🎤 Dicte en marchant, Léon comprend tout</li>
-                        <li>✨ L'IA distingue les infos du bien et tes notes commerciales</li>
-                        <li>⚡ 15 secondes au lieu de 5 minutes de saisie</li>
-                    </ul>
-                </div>
-                <div class="feature-screenshot">
-                    <div class="screenshot-placeholder">Screenshot Dictée Vocale</div>
+                <div class="reveal-right">
+                    <div class="device-phone">
+                        <img src="img/landing/micro-mobile.png" alt="Mode micro Léon — dictée vocale CRM immobilier">
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FEATURE 3: SOCIAL -->
-    <section>
+    <!-- ===== SECTION 4 : CRM INTELLIGENT ===== -->
+    <section class="section" style="background: var(--bg-light);">
         <div class="container">
-            <div class="feature">
-                <div class="feature-content">
-                    <span class="feature-badge">RÉSEAUX SOCIAUX</span>
-                    <h2>Tes posts LinkedIn, Insta, Facebook et TikTok — écrits avec tes vrais biens.</h2>
-                    <p class="feature-description">ChatGPT ne sait pas que tu as vendu un T3 rue Garibaldi mardi dernier. Léon le sait. Il génère des posts personnalisés à partir de ton CRM, adaptés à chaque plateforme, avec un calendrier éditorial intégré.</p>
-                    <ul class="feature-points">
-                        <li>📅 Calendrier éditorial : tu sais quoi poster chaque jour</li>
-                        <li>🎯 4 plateformes, 4 angles différents — pas des copier-coller</li>
-                        <li>⚖️ Mentions légales Hoguet ajoutées automatiquement</li>
-                    </ul>
+            <div class="split-section-reverse">
+                <div class="split-text reveal-right">
+                    <div class="section-label">
+                        <i class="fas fa-columns"></i>
+                        Organisation
+                    </div>
+                    <h2 class="display-title section-title">
+                        Zéro lead oublié.<br>
+                        <span class="gradient-text">Zéro Excel.</span>
+                    </h2>
+                    <p class="section-desc">
+                        Pipeline vendeurs, pipeline acquéreurs. Chaque lead a sa colonne,
+                        du premier contact jusqu'à la vente. Glissez-déposez pour avancer vos dossiers.
+                        Fini les fichiers Excel, les notes papier et le CRM du réseau que personne ne remplit.
+                    </p>
+                    <div class="feature-cards">
+                        <div class="feature-card reveal delay-1">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-arrows-alt"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Drag & drop intuitif</div>
+                                <div class="feature-card-desc">Déplacez vos leads d'une colonne à l'autre. Votre pipeline, votre organisation.</div>
+                            </div>
+                        </div>
+                        <div class="feature-card reveal delay-2">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Matching automatique</div>
+                                <div class="feature-card-desc">Léon rapproche vos acquéreurs et vos biens en temps réel.</div>
+                            </div>
+                        </div>
+                        <div class="feature-card reveal delay-3">
+                            <div class="feature-card-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div>
+                                <div class="feature-card-title">Relances intelligentes</div>
+                                <div class="feature-card-desc">Léon vous dit qui relancer, quand, et pourquoi. Plus aucun lead ne passe entre les mailles.</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="feature-screenshot">
-                    <div class="screenshot-placeholder">Screenshot Réseaux Sociaux</div>
+                <div class="split-visual-left reveal-left">
+                    <div class="device-desktop">
+                        <img src="img/landing/pipeline-vendeurs.png" alt="Pipeline vendeurs Léon — organisation des leads">
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FEATURE 4: MATCHING -->
-    <section class="feature-bg-light">
-        <div class="container">
-            <div class="feature reverse">
-                <div class="feature-content">
-                    <span class="feature-badge">MATCHING</span>
-                    <h2>Tes acquéreurs matchent avec tes biens. Automatiquement.</h2>
-                    <p class="feature-description">Dès qu'un bien passe sous mandat, Léon te dit quels acquéreurs correspondent. Budget, localisation, surface, nombre de pièces — tout est calculé en temps réel. Tu ne rates plus jamais un rapprochement.</p>
-                    <ul class="feature-points">
-                        <li>🎯 Score de compatibilité en pourcentage</li>
-                        <li>🔔 Notification quand un nouveau match dépasse 70%</li>
-                        <li>↔️ Bidirectionnel : vu côté vendeur ET côté acquéreur</li>
-                    </ul>
+    <!-- ===== SECTION 5 : IA CONTEXTUELLE ===== -->
+    <section class="section">
+        <div class="container text-center">
+            <h2 class="display-title section-title reveal" style="max-width: 700px; margin: 0 auto 8px;">
+                Léon automatise.<br>
+                <span class="gradient-text">Vous signez.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 600px; margin: 0 auto;">
+                Connecté à votre agenda Google, Léon gère les demandes de visite automatiquement.
+                Messages de relance générés par l'IA, posts réseaux sociaux avec vos vrais mandats.
+                Tout est connecté à vos données.
+            </p>
+
+            <div class="mockup-grid">
+                <!-- Carte 1 : Post LinkedIn -->
+                <div class="mockup-card reveal delay-1">
+                    <span class="mockup-card-badge badge-generated">Généré par Léon</span>
+                    <div class="mockup-card-content">
+                        <div class="mockup-card-header">
+                            <div class="mockup-avatar">RC</div>
+                            <div>
+                                <div class="mockup-name">Romain Chollet</div>
+                                <div class="mockup-platform">LinkedIn</div>
+                            </div>
+                        </div>
+                        <p class="mockup-text">
+                            Vendu en 3 semaines. Ce T3 lumineux rue Garibaldi partait à 285 000 €.
+                            Résultat : 4 visites, 2 offres, une vente au prix. La clé ? Un prix juste
+                            dès le départ et une mise en valeur soignée...
+                        </p>
+                    </div>
                 </div>
-                <div class="feature-screenshot">
-                    <div class="screenshot-placeholder">Screenshot Matching</div>
+
+                <!-- Carte 2 : Message automatique + agenda -->
+                <div class="mockup-card reveal delay-2">
+                    <span class="mockup-card-badge badge-contextual">Agenda connecté</span>
+                    <div class="sms-bubble">
+                        Bonjour Mme Dupont, suite à votre demande de visite pour le T4 avenue Jean Jaurès,
+                        je vous propose un créneau jeudi à 14h. Confirmez-vous ?
+                        <div class="sms-time">Généré par Léon · 14:32</div>
+                    </div>
+                </div>
+
+                <!-- Carte 3 : Match -->
+                <div class="mockup-card reveal delay-3">
+                    <span class="mockup-card-badge badge-realtime">Temps réel</span>
+                    <div class="match-visual">
+                        <div class="match-score">
+                            <div class="match-score-circle">
+                                <div class="match-score-inner">87%</div>
+                            </div>
+                        </div>
+                        <div class="match-from">Famille Martin</div>
+                        <div class="match-arrow"><i class="fas fa-arrow-down"></i></div>
+                        <div class="match-to">T4 Villeurbanne — 280 000 €<br>
+                            <span style="font-size: 11px; color: var(--text-tertiary);">
+                                Budget · Localisation · Surface · Type
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- FEATURE 5: MESSAGES IA -->
-    <section>
-        <div class="container">
-            <div class="feature">
-                <div class="feature-content">
-                    <span class="feature-badge">MESSAGES IA</span>
-                    <h2>Le bon message, au bon moment, sur le bon canal.</h2>
-                    <p class="feature-description">SMS, WhatsApp, email — Léon rédige des messages contextuels en utilisant les vraies données du dossier. Pas de template générique. Chaque message mentionne le bien, les visites, l'historique de prix.</p>
-                    <ul class="feature-points">
-                        <li>💬 SMS court, WhatsApp conversationnel, email formel</li>
-                        <li>📋 9 scénarios vendeurs + 7 scénarios acquéreurs</li>
-                        <li>📝 Un clic pour copier, ouvrir WhatsApp ou envoyer l'email</li>
-                    </ul>
-                </div>
-                <div class="feature-screenshot">
-                    <div class="screenshot-placeholder">Screenshot Messages IA</div>
+    <!-- ===== SECTION 6 : ACCESSIBLE PARTOUT ===== -->
+    <section class="section mobile-section">
+        <div class="container text-center">
+            <div class="section-label reveal" style="margin: 0 auto 20px;">
+                <i class="fas fa-laptop"></i>
+                Desktop & mobile
+            </div>
+            <h2 class="display-title section-title reveal" style="max-width: 600px; margin: 0 auto 8px;">
+                <span class="gradient-text">Votre bureau, partout.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 560px; margin: 0 auto;">
+                Léon fonctionne sur votre ordinateur comme sur votre téléphone.
+                Au bureau, gérez vos pipelines sur grand écran. Sur le terrain,
+                dictez vos comptes-rendus en un tap. Aucune app à installer,
+                tout se passe dans votre navigateur.
+            </p>
+
+            <div class="phones-fan">
+                <div class="phone-item reveal delay-2">
+                    <div class="device-phone">
+                        <img src="img/landing/micro-mobile.png" alt="Mode micro Léon sur mobile">
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- COMING SOON -->
-    <section class="coming-soon">
-        <div class="container">
-            <h2>Et ce n'est que le début.</h2>
-            <div class="coming-cards">
-                <div class="coming-card">
-                    <h3>☀️ Briefing du matin</h3>
-                    <p>Chaque matin, Léon te dit qui relancer, quels matchs traiter, quels mandats expirent.</p>
+    <!-- ===== SECTION 7 : CHIFFRES ===== -->
+    <section class="section">
+        <div class="container text-center">
+            <h2 class="display-title section-title reveal" style="max-width: 600px; margin: 0 auto 8px;">
+                L'administratif<br>
+                <span class="gradient-text">devient addictif.</span>
+            </h2>
+            <p class="section-desc reveal delay-1" style="max-width: 520px; margin: 0 auto;">
+                Points d'expérience, séries de jours actifs, niveaux de progression.
+                Léon transforme votre routine en jeu. Pas pour vous distraire —
+                pour garder le rythme.
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-block reveal delay-1">
+                    <div class="stat-number gradient-text">15s</div>
+                    <div class="stat-label">Pour créer une fiche<br>complète par la voix</div>
                 </div>
-                <div class="coming-card">
-                    <h3>📊 Scoring automatique</h3>
-                    <p>Tes leads passent de chaude à tiède à froide automatiquement selon l'activité.</p>
+                <div class="stat-block reveal delay-2">
+                    <div class="stat-number gradient-text">87%</div>
+                    <div class="stat-label">Score matching moyen<br>acquéreur / vendeur</div>
                 </div>
-                <div class="coming-card">
-                    <h3>🤝 Réseau inter-agents</h3>
-                    <p>Bientôt : partage tes biens avec d'autres agents Léon.</p>
+                <div class="stat-block reveal delay-3">
+                    <div class="stat-number gradient-text">3x</div>
+                    <div class="stat-label">Plus de leads<br>relancés à temps</div>
+                </div>
+                <div class="stat-block reveal delay-4">
+                    <div class="stat-number gradient-text">0 €</div>
+                    <div class="stat-label">Pour commencer<br>avec Léon</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- PRICING -->
-    <section id="tarifs" class="pricing">
+    <!-- ===== SECTION 8 : CTA FINAL ===== -->
+    <section class="cta-final text-center">
         <div class="container">
-            <h2>Un prix simple. Pas de surprise.</h2>
-            <div class="pricing-cards">
-                <div class="pricing-card">
-                    <h3>Gratuit pendant un mois</h3>
-                    <p class="price">0 €</p>
-                    <ul>
-                        <li>Toutes les fonctionnalités gratuites</li>
-                        <li>Pour essayer pendant un mois</li>
-                        <li>10 leads offerts</li>
-                    </ul>
-                    <a href="login.html" class="btn-outline">Commencer gratuitement</a>
-                </div>
-                <div class="pricing-card popular">
-                    <span class="pricing-badge">POPULAIRE</span>
-                    <h3>Pro</h3>
-                    <p class="price">19,90 €<span style="font-size:16px;font-weight:400;color:var(--text-gray)"> / mois</span></p>
-                    <ul>
-                        <li>Leads illimités</li>
-                        <li>Toutes les fonctionnalités IA</li>
-                        <li>Posts réseaux sociaux</li>
-                        <li>Support prioritaire</li>
-                    </ul>
-                    <a href="login.html" class="btn-primary">Essayer gratuitement — puis 19,90€/mois</a>
-                </div>
+            <h2 class="display-title reveal">
+                Arrêtez de perdre<br>des mandats.
+            </h2>
+            <p class="section-desc reveal delay-1">
+                Léon est gratuit pour commencer.<br>
+                Juste votre voix et 30 secondes.
+            </p>
+            <div class="cta-buttons reveal delay-2">
+                <a href="login.html" class="btn-white">
+                    Commencer gratuitement
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="#" class="btn-outline-white">
+                    <i class="fas fa-play"></i>
+                    Voir une démo
+                </a>
             </div>
-            <p class="pricing-footer">Pas d'engagement. Tu annules quand tu veux.</p>
+            <p class="cta-note reveal delay-3">Prêt à être utilisé en 30 secondes.</p>
         </div>
     </section>
 
-    <!-- FINAL CTA -->
-    <section class="final-cta">
-        <div class="container">
-            <h2>Arrête de perdre des leads. Commence avec Léon.</h2>
-            <p>10 leads gratuits. 30 secondes pour démarrer.</p>
-            <a href="login.html" class="btn-white">Créer mon compte gratuitement</a>
-            <p class="final-cta-subtitle">Pas de carte bancaire requise</p>
-        </div>
-    </section>
-
-    <!-- FOOTER -->
+    <!-- ===== FOOTER ===== -->
     <footer class="footer">
-        <div class="footer-content">
-            <div class="footer-logo">
-                <img src="img/Logo_leon.svg" alt="Léon">
-                <p>Ton CRM qui ne dort jamais.</p>
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-brand">
+                    <img src="img/Logo_leon.svg" alt="Léon" class="footer-logo">
+                    <span class="footer-tagline">Le CRM immobilier voice-first.</span>
+                </div>
+                <div class="footer-links">
+                    <a href="login.html">Connexion</a>
+                    <a href="cgu.html">Conditions d'utilisation</a>
+                    <a href="confidentialite.html">Politique de confidentialité</a>
+                    <a href="mailto:romainchollet69@gmail.com">Contact</a>
+                </div>
+                <span class="footer-copy">© 2026 Léon. Fait à Lyon.</span>
             </div>
-            <div>
-                <h4>Produit</h4>
-                <ul>
-                    <li><a href="#fonctionnalites">Fonctionnalités</a></li>
-                    <li><a href="#tarifs">Tarifs</a></li>
-                    <li><a href="#">Roadmap</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Ressources</h4>
-                <ul>
-                    <li><a href="#">Blog</a></li>
-                    <li><a href="#">Guide mandataire</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4>Légal</h4>
-                <ul>
-                    <li><a href="#">CGV</a></li>
-                    <li><a href="#">Confidentialité</a></li>
-                    <li><a href="#">Mentions légales</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p>© 2026 Léon. Tous droits réservés.</p>
-            <p>Fait avec ❤️ à Lyon</p>
         </div>
     </footer>
 
+    <!-- ===== SCROLL REVEAL ===== -->
     <script>
-        // Smooth scroll pour les liens d'ancre
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-
-        // Animation fade-in au scroll
-        const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
-        };
-
+        /**
+         * Scroll-reveal : ajoute .visible aux éléments .reveal quand ils entrent dans le viewport.
+         * Pas de librairie externe — IntersectionObserver natif.
+         */
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
-                    entry.target.classList.add('fade-in');
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
                 }
             });
-        }, observerOptions);
+        }, {
+            threshold: 0.15,
+            rootMargin: '0px 0px -60px 0px'
+        });
 
-        document.querySelectorAll('section').forEach(section => {
-            observer.observe(section);
+        document.querySelectorAll('.reveal, .reveal-left, .reveal-right').forEach(el => {
+            observer.observe(el);
         });
     </script>
+
 </body>
 </html>

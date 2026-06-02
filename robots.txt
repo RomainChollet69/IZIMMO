@@ -19,7 +19,6 @@ Disallow: /aide-vocale.html
 Disallow: /parametres.html
 Disallow: /login.html
 Disallow: /landing.html
-Disallow: /landing-v2.html
 
 # Crawlers IA — explicitement autorisés (pour citation dans les LLM)
 User-agent: GPTBot

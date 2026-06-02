@@ -1,10 +1,10 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/landing-v2.html" }
+    { "source": "/", "destination": "/landing.html" }
   ],
   "redirects": [
-    { "source": "/landing-v2.html", "destination": "/", "statusCode": 301 },
-    { "source": "/landing.html", "destination": "/", "statusCode": 301 }
+    { "source": "/landing.html", "destination": "/", "statusCode": 301 },
+    { "source": "/landing-v2.html", "destination": "/", "statusCode": 301 }
   ],
   "functions": {
     "api/parse-import-batch.js": {
