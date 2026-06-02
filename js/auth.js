@@ -9,8 +9,15 @@
         return;
     }
 
+    // Si le header partagé n'est pas encore injecté (race avec js/header.js),
+    // on stocke le user et on re-render quand l'event leon:header-ready arrive.
+    window._leonSessionUser = session.user;
     renderUserProfile(session.user);
     renderMobileHeader(session.user);
+
+    document.addEventListener('leon:header-ready', () => {
+        if (window._leonSessionUser) renderUserProfile(window._leonSessionUser);
+    });
 
     supabaseClient.auth.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_OUT' || !session) {

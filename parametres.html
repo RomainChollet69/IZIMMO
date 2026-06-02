@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="js/supabase-config.js"></script>
     <script src="js/auth.js"></script>
+    <script src="js/header.js?v=260602"></script>
     <script src="js/pipeline-config.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1683,51 +1684,8 @@
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="header-inner">
-            <!-- Zone gauche : Logo -->
-            <a href="home.html" class="logo">
-                <img src="img/Logo_leon.svg" alt="Léon">
-            </a>
-
-            <!-- Zone centre : Navigation -->
-            <nav class="nav-tabs">
-                <a href="vendeurs.html" class="nav-tab">
-                    <i class="fa-solid fa-house"></i> Vendeurs
-                </a>
-                <a href="acquereurs.html" class="nav-tab">
-                    <i class="fa-solid fa-key"></i> Acquéreurs
-                </a>
-                <a href="dvf.html" class="nav-tab">
-                    <i class="fa-solid fa-chart-simple"></i> Marché
-                </a>
-                <a href="visites.html" class="nav-tab">
-                    <i class="fa-solid fa-calendar-check"></i> Visites
-                </a>
-                <a href="micro.html" class="nav-tab">
-                    <i class="fa-solid fa-microphone"></i> Vocal
-                </a>
-            </nav>
-
-            <!-- Zone droite : Actions -->
-            <div class="header-actions">
-                <!-- Alerte relances -->
-                <button class="alert-bell" id="alertBell" title="Relances du jour">
-                    <i class="fa-solid fa-bell"></i>
-                    <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
-                </button>
-
-                <!-- Séparateur -->
-                <div class="header-separator"></div>
-
-                <!-- Profil utilisateur -->
-                <div class="user-profile" id="userProfile">
-                    <!-- Chargé dynamiquement par auth.js -->
-                </div>
-
-            </div>
-        </div>
-    </div>
+    <!-- Header partagé (logo + nav + bell + user) — injecté par js/header.js -->
+    <div data-leon-header data-active=""></div>
 
     <div class="settings-container">
         <!-- Section Mes Performances (Gamification) — désactivée -->
