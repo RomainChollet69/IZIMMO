@@ -335,6 +335,23 @@
             align-items: center;
             gap: 8px;
         }
+        /* Bouton ✕ pour masquer la vue "Demandes traitées" — aligné à droite du header */
+        .processed-close-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94A3B8;
+            font-size: 16px;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .processed-close-btn:hover { color: #1E293B; background: rgba(15, 23, 42, 0.08); }
         .processed-request-item {
             padding: 12px 20px;
             border-top: 1px solid #F3F4F6;
@@ -2067,6 +2084,9 @@
             <div class="processed-requests-header">
                 <i class="fa-solid fa-inbox"></i>
                 <span id="processedRequestsTitle">Demandes traitées</span>
+                <button type="button" class="processed-close-btn" onclick="toggleProcessedView()" title="Masquer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             <div id="processedRequestsList"></div>
         </div>
