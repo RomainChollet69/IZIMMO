@@ -368,6 +368,19 @@
             flex-shrink: 0;
         }
         .processed-delete-btn:hover { color: #E53935; background: #FFEBEE; }
+        /* Bouton "Détraiter" — remet la demande dans les pending pour pouvoir la retraiter */
+        .processed-reopen-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #94A3B8;
+            font-size: 13px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            transition: all 0.15s;
+            flex-shrink: 0;
+        }
+        .processed-reopen-btn:hover { color: #2563EB; background: #EFF6FF; }
 
         /* ===== VUE ARCHIVE (modale plein écran biens vendus/perdus + contacts) ===== */
         .archive-overlay {
@@ -6600,6 +6613,7 @@
                 </div>
                 <span class="processed-request-status" style="background:${st.bg}; color:${st.color}">${st.label}</span>
                 <span style="font-size:12px; color:#9CA3AF; white-space:nowrap">${dateStr}</span>
+                <button class="processed-reopen-btn" onclick="reopenProcessedRequest('${req.id}')" title="Remettre à traiter"><i class="fa-solid fa-rotate-left"></i></button>
                 <button class="processed-delete-btn" onclick="deleteProcessedRequest('${req.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
             </div>`;
         }).join('');
@@ -6929,6 +6943,50 @@
             showToast('Erreur réseau');
             btn.disabled = false;
             btn.textContent = 'Valider';
+        }
+    }
+
+    // Remet une demande "traitée" en "à traiter" (pending) — utile quand l'agent
+    // s'est trompé et veut récupérer la demande dans le bandeau principal.
+    // L'API /api/assistant action=process_visit_request decision=reopen gère ça
+    // côté serveur (reset status='pending' + updated_at, conserve les notes).
+    async function reopenProcessedRequest(requestId) {
+        const req = processedRequests.find(r => r.id === requestId);
+        if (!req) return;
+
+        const headers = {};
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) headers['Authorization'] = 'Bearer ' + session.access_token;
+
+        try {
+            const resp = await fetch('/api/assistant', {
+                method: 'POST',
+                headers: { ...headers, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'process_visit_request',
+                    request_id: requestId,
+                    decision: 'reopen'
+                })
+            });
+
+            if (!resp.ok) {
+                showToast('Erreur lors de la remise à traiter');
+                return;
+            }
+
+            // Déplacer localement : processedRequests → portalRequests, status='pending'
+            req.status = 'pending';
+            req.updated_at = new Date().toISOString();
+            processedRequests = processedRequests.filter(r => r.id !== requestId);
+            portalRequests.push(req);
+            renderProcessedView();
+            renderPortalBanner();
+            renderVisitsPage();
+            document.getElementById('processedCount').textContent = processedRequests.length;
+            showToast('Demande remise à traiter');
+        } catch (e) {
+            console.error('[Visites] Reopen error:', e);
+            showToast('Erreur réseau');
         }
     }
 
