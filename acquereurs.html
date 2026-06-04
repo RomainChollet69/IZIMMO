@@ -2516,7 +2516,10 @@
                 min-height: auto;
             }
 
-            /* Header colonne : image bord à bord */
+            /* Header colonne mobile : image bandeau MASQUÉE.
+               La tab bar sticky (mobile-tabs) affiche déjà le label de la colonne.
+               L'image bord-à-bord en dessous faisait doublon et masquait le contenu
+               derrière la tab bar fixée. */
             .column-top {
                 position: sticky;
                 top: 0;
@@ -2529,17 +2532,7 @@
                 backdrop-filter: none;
                 -webkit-backdrop-filter: none;
             }
-            .column-header {
-                display: flex !important;
-                height: 56px;
-                border-radius: 0;
-                margin-bottom: 0;
-                background-size: cover;
-                background-position: center;
-                align-items: flex-end;
-                overflow: hidden;
-                position: relative;
-            }
+            .column-header { display: none !important; }
             .column-label {
                 position: relative;
                 padding: 8px 20px;
