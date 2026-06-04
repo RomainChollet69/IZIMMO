@@ -2472,7 +2472,11 @@
                 gap: 0;
                 overflow-x: auto;
                 overflow-y: hidden;
-                scroll-snap-type: x mandatory;
+                /* "proximity" (vs "mandatory") tolère les gestes obliques : un scroll
+                   presque-vertical avec un léger angle ne déclenche plus le snap horizontal.
+                   Combiné avec touch-action: pan-y sur les colonnes, le scroll vertical
+                   reste vertical. */
+                scroll-snap-type: x proximity;
                 overscroll-behavior-x: contain;
                 position: fixed;
                 top: var(--m-header-h, 56px);
@@ -2499,6 +2503,10 @@
                 overflow-x: hidden;
                 overscroll-behavior-y: contain;
                 -webkit-overflow-scrolling: touch;
+                /* Force le navigateur à privilégier le scroll vertical dans les colonnes.
+                   Le navigateur n'envoie l'event horizontal au pipeline parent que si
+                   le geste est clairement horizontal. */
+                touch-action: pan-y;
                 height: 100%;
                 flex-direction: column;
                 /* Reset héritages desktop */
@@ -2708,6 +2716,23 @@
         .visit-delete-btn-match { position: absolute; top: 6px; right: 6px; background: none; border: none; cursor: pointer; font-size: 13px; opacity: 0; transition: opacity 0.2s; }
         .visit-match-card:hover .visit-delete-btn-match { opacity: 1; }
         .visits-match-separator { height: 1px; background: #E0E0E0; margin: 12px 0; }
+        /* Overlay générique pour les modales créées dynamiquement (partage, etc.).
+           Sans cette règle les divs class="modal-overlay" étaient invisibles sur desktop
+           (le partage sur mobile passait par navigator.share et masquait le bug). */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: modalFadeIn 0.15s ease;
+        }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
         .match-card { position: relative; }
         .match-visit-btn { position: absolute; bottom: 6px; right: 6px; background: #E8EAF6; border: none; font-size: 13px; cursor: pointer; padding: 3px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.2s; z-index: 2; }
         .match-card:hover .match-visit-btn { opacity: 1; }
@@ -6080,36 +6105,18 @@
                 });
             }
 
-            const blocks = selected.map(buyer => {
-                const name = `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim();
-                const lines = [`📋 ${name}`];
-                if (buyer.phone) lines.push(`📞 ${buyer.phone}`);
-                if (buyer.email) lines.push(`📧 ${buyer.email}`);
-
-                const searchParts = [];
-                if (buyer.property_type) {
-                    const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble', appartement_ou_maison: 'Appart/Maison' };
-                    searchParts.push(types[buyer.property_type] || buyer.property_type);
-                }
-                if (buyer.rooms) searchParts.push(buyer.rooms);
-                if (buyer.budget_max) searchParts.push(formatEuro(buyer.budget_max));
-                if (searchParts.length > 0) lines.push(`🏠 ${searchParts.join(' · ')}`);
-                if (buyer.sector) lines.push(`📍 ${buyer.sector.replace(/ \| /g, ', ')}`);
-                if (buyer.surface_min) lines.push(`📐 ${buyer.surface_min} m² min`);
-
-                const ns = notesByBuyer[buyer.id] || [];
-                if (ns.length > 0) {
-                    lines.push('📝 Notes :');
-                    ns.forEach(n => {
-                        const d = new Date(n.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-                        lines.push(`• ${d} — ${n.content.substring(0, 120)}`);
-                    });
-                }
-                return lines.join('\n');
+            // Chaque fiche dans son propre bloc, numérotée X/N, avec séparateurs clairs.
+            const total = selected.length;
+            const blocks = selected.map((buyer, i) => {
+                const header = `━━━━━━━  ${i + 1} / ${total}  ━━━━━━━`;
+                const body = buildBuyerShareBlock(buyer, notesByBuyer[buyer.id] || []);
+                return `${header}\n\n${body}`;
             });
 
-            const text = `${selected.length} acquéreur${selected.length > 1 ? 's' : ''}\n\n` + blocks.join('\n\n─────────\n\n');
-            openSharePopup(text, `${selected.length} acquéreurs`);
+            const intro = `${total} acquéreur${total > 1 ? 's' : ''} — Léon`;
+            const footer = '━━━━━━━━━━━━━━━━━━\nPartagés via Léon';
+            const text = `${intro}\n\n\n${blocks.join('\n\n\n')}\n\n\n${footer}`;
+            openSharePopup(text, `${total} acquéreurs`);
         }
 
         // Popup de partage générique (utilisée par shareBuyer ET shareSelectedBuyers)
@@ -7424,49 +7431,70 @@
 
         // ===== PARTAGE FICHE ACQUÉREUR =====
 
-        async function shareBuyer(id) {
-            const buyer = buyers.find(b => b.id === id);
-            if (!buyer) return;
-
+        // Construit le bloc texte d'une fiche acquéreur pour partage WhatsApp/SMS/Email.
+        // Format aéré : sections séparées par des lignes vides, hiérarchie claire.
+        function buildBuyerShareBlock(buyer, notes) {
             const name = `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim();
-            const lines = [`📋 Acquéreur : ${name}`];
-            if (buyer.phone) lines.push(`📞 ${buyer.phone}`);
-            if (buyer.email) lines.push(`📧 ${buyer.email}`);
+            const lines = [];
 
+            // Section 1 : identité
+            lines.push(`👤  ${name || 'Acquéreur'}`);
+            if (buyer.phone) lines.push(`📞  ${buyer.phone}`);
+            if (buyer.email) lines.push(`✉️  ${buyer.email}`);
+
+            // Section 2 : recherche
             const searchParts = [];
             if (buyer.property_type) {
                 const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble', appartement_ou_maison: 'Appart/Maison' };
                 searchParts.push(types[buyer.property_type] || buyer.property_type);
             }
             if (buyer.rooms) searchParts.push(buyer.rooms);
-            if (buyer.budget_max) searchParts.push(formatEuro(buyer.budget_max));
-            if (searchParts.length > 0) lines.push(`🏠 Recherche : ${searchParts.join(' · ')}`);
+            if (buyer.surface_min) searchParts.push(`${buyer.surface_min} m² min`);
+            if (buyer.budget_max) searchParts.push(`max ${formatEuro(buyer.budget_max)}`);
 
-            if (buyer.sector) lines.push(`📍 ${buyer.sector.replace(/ \| /g, ', ')}`);
-            if (buyer.surface_min) lines.push(`📐 ${buyer.surface_min} m² min`);
-            if (buyer.budget_max) lines.push(`💰 Budget max : ${formatEuro(buyer.budget_max)}`);
+            if (searchParts.length > 0 || buyer.sector) {
+                lines.push('');
+                lines.push('🔎  Recherche');
+                if (searchParts.length > 0) lines.push(`    ${searchParts.join(' · ')}`);
+                if (buyer.sector) lines.push(`    📍 ${buyer.sector.replace(/ \| /g, ', ')}`);
+            }
 
-            // Charger les notes
+            // Section 3 : notes
+            if (notes && notes.length > 0) {
+                lines.push('');
+                lines.push('📝  Notes');
+                notes.slice(0, 3).forEach(n => {
+                    const d = new Date(n.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+                    const content = n.content.length > 140 ? n.content.substring(0, 140) + '…' : n.content;
+                    lines.push(`    • ${d} — ${content}`);
+                });
+            }
+
+            return lines.join('\n');
+        }
+
+        async function shareBuyer(id) {
+            const buyer = buyers.find(b => b.id === id);
+            if (!buyer) return;
+
+            const name = `${buyer.first_name || ''} ${buyer.last_name || ''}`.trim();
+
+            // Charger les notes (limitées aux 5 plus récentes, on affichera les 3 premières)
+            let notes = [];
             const userId = await getCurrentUserId();
             if (userId) {
-                const { data: notes } = await supabaseClient
+                const { data } = await supabaseClient
                     .from('lead_notes')
                     .select('content, created_at')
                     .eq('user_id', userId)
                     .eq('buyer_id', id)
                     .order('created_at', { ascending: false })
                     .limit(5);
-                if (notes && notes.length > 0) {
-                    lines.push('');
-                    lines.push('📝 Notes :');
-                    notes.forEach(n => {
-                        const d = new Date(n.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
-                        lines.push(`• ${d} — ${n.content.substring(0, 150)}`);
-                    });
-                }
+                notes = data || [];
             }
 
-            const text = lines.join('\n');
+            const block = buildBuyerShareBlock(buyer, notes);
+            const text = `Fiche acquéreur — Léon\n\n${block}\n\n—\nPartagée via Léon`;
             const phone = buyer.phone ? buyer.phone.replace(/\s/g, '').replace(/^0/, '33') : '';
 
             // Sur mobile (iOS/Android) on garde le share sheet natif (riche : Messages, WhatsApp, etc.).

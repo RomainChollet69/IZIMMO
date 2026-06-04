@@ -2865,7 +2865,10 @@
                 gap: 0;
                 overflow-x: auto;
                 overflow-y: hidden;
-                scroll-snap-type: x mandatory;
+                /* "proximity" (vs "mandatory") tolère les gestes obliques :
+                   un scroll presque-vertical avec léger angle ne déclenche plus le snap.
+                   Combiné avec touch-action: pan-y sur les colonnes, le vertical reste vertical. */
+                scroll-snap-type: x proximity;
                 overscroll-behavior-x: contain;
                 /* Fixé entre header et bottom bar — immunisé contre la barre d'adresse Safari */
                 position: fixed;
@@ -2892,6 +2895,9 @@
                 overflow-x: hidden;
                 overscroll-behavior-y: contain;
                 -webkit-overflow-scrolling: touch;
+                /* Privilégier le scroll vertical : le navigateur ne propage l'event
+                   au pipeline parent (horizontal) que si le geste est franchement horizontal. */
+                touch-action: pan-y;
                 height: 100%;
                 /* Reset héritages desktop */
                 backdrop-filter: none;
