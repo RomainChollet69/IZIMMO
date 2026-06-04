@@ -5585,13 +5585,14 @@
                     email: v.visitor_email || v.buyers?.email
                 })));
 
-            // 1. Chercher une visite planifiée/effectuée pour ce seller avec visiteur matchant
-            // 2. OU un contact manuel (même non traité) pour ce seller avec visiteur matchant
+            // Auto-process UNIQUEMENT si une visite planifiée/effectuée existe pour ce
+            // bien + ce visiteur. Les contacts manuels (status=demande) ne déclenchent
+            // plus l'auto-traitement : un contact noté ≠ demande gérée, l'agent doit
+            // pouvoir voir la demande portail pour confirmer.
             const matchingVisit = allVisits.find(v => {
                 if (v.seller_id !== req.matched_seller_id) return false;
                 const isPlanifiedOrDone = v.status === 'planifiee' || v.status === 'effectuee';
-                const isContact = v.status === 'demande'; // tous les contacts (traités ou non)
-                if (!isPlanifiedOrDone && !isContact) return false;
+                if (!isPlanifiedOrDone) return false;
                 const vEmail = (v.buyers?.email || v.visitor_email || '').toLowerCase().trim();
                 const vPhone = normalizePhone(v.buyers?.phone || v.visitor_phone);
                 const vName = normalizeName(v.buyer_name || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}` : ''));
@@ -6438,7 +6439,8 @@
         if (seller.property_type) titleParts.push(seller.property_type);
         if (seller.rooms) titleParts.push(seller.rooms);
         const titleType = titleParts.join(' ');
-        lines.push(`🏠 ${titleType ? titleType + ' — ' : ''}${addr}`);
+        // Bien (adresse) en gras WhatsApp pour faire ressortir l'info principale.
+        lines.push(`🏠 *${titleType ? titleType + ' — ' : ''}${addr}*`);
 
         const subParts = [];
         const price = seller.mandate_price || seller.budget;
@@ -6448,7 +6450,9 @@
 
         // Statut + date d'événement (pour les biens archivés surtout)
         const statusMeta = (typeof getArchiveStatusMeta === 'function') ? getArchiveStatusMeta(seller.status) : null;
-        const statusLabel = statusMeta ? statusMeta.label : seller.status;
+        const rawStatus = statusMeta ? statusMeta.label : seller.status;
+        const STATUS_LABELS = { mandate: 'Sous mandat', compromis: 'Sous compromis', sold: 'Vendu', lost: 'Perdu', off_market: 'Off market' };
+        const statusLabel = STATUS_LABELS[seller.status] || rawStatus;
         const exitDate = seller.updated_at ? new Date(seller.updated_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '';
         if (statusLabel) lines.push(`📌 ${statusLabel}${exitDate ? ' · ' + exitDate : ''}`);
 
@@ -6461,6 +6465,8 @@
             lines.push(`👥 ${totalContacts} contact${totalContacts > 1 ? 's' : ''} :`);
             lines.push('');
 
+            // Format WhatsApp/Telegram : *nom* rend en gras. Discret en SMS/Email
+            // (juste un asterisk autour du nom, lisible).
             visits.forEach(v => {
                 const name = v.buyer_name
                     || (v.buyers ? `${v.buyers.first_name || ''} ${v.buyers.last_name || ''}`.trim() : '')
@@ -6470,8 +6476,9 @@
                 const dateStr = v.visit_date ? new Date(v.visit_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
                 const statusFr = v.status === 'effectuee' ? 'Visite effectuée' : (v.status === 'annulee' ? 'Visite annulée' : 'Visite planifiée');
                 const feedback = v.feedback_rating ? ` · ${getFeedbackEmoji(v.feedback_rating)}` : '';
-                lines.push(`• ${name}${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
+                lines.push(`• *${name}*${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
                 lines.push(`  ${statusFr} ${dateStr}${feedback}`);
+                lines.push('');
             });
 
             requests.forEach(r => {
@@ -6480,8 +6487,9 @@
                 const email = r.visitor_email || '';
                 const dateStr = r.email_date ? new Date(r.email_date).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '';
                 const portal = r.portal_name || 'portail';
-                lines.push(`• ${name}${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
+                lines.push(`• *${name}*${phone ? ' — ' + phone : ''}${email ? ' — ' + email : ''}`);
                 lines.push(`  Demande via ${portal} ${dateStr}`);
+                lines.push('');
             });
         }
 
