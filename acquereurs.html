@@ -2733,6 +2733,19 @@
             animation: modalFadeIn 0.15s ease;
         }
         @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Cadre blanc des modales créées dynamiquement (popup partage, etc.).
+           Bord arrondi, padding, ombre + scroll vertical si le contenu déborde. */
+        .modal-overlay .modal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            max-height: calc(100vh - 64px);
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+            -webkit-overflow-scrolling: touch;
+        }
         .match-card { position: relative; }
         .match-visit-btn { position: absolute; bottom: 6px; right: 6px; background: #E8EAF6; border: none; font-size: 13px; cursor: pointer; padding: 3px 7px; border-radius: 6px; opacity: 0; transition: opacity 0.2s; z-index: 2; }
         .match-card:hover .match-visit-btn { opacity: 1; }
