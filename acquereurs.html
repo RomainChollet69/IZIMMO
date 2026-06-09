@@ -6280,6 +6280,64 @@ Très cordialement,`
             libre: { label: '✏️ Message libre', subject: '', body: '' }
         };
 
+        // Détecte une notification en attente venant de la fiche vendeur (clic
+        // "Notifier ces acquéreurs"). Active la sélection multiple sur les buyers
+        // ciblés et ouvre la modale message avec le contexte du bien pré-rempli.
+        function handlePendingNotify() {
+            const raw = localStorage.getItem('leon_pending_notify');
+            if (!raw) return;
+            localStorage.removeItem('leon_pending_notify'); // consommer une seule fois
+            try {
+                const data = JSON.parse(raw);
+                // Expiration : 5 minutes (au-delà on ignore)
+                if (!data.ts || (Date.now() - data.ts) > 5 * 60 * 1000) return;
+                if (!Array.isArray(data.buyer_ids) || data.buyer_ids.length === 0) return;
+
+                // Vérifier que les buyers existent encore
+                const validIds = data.buyer_ids.filter(id => buyers.find(b => b.id === id));
+                if (validIds.length === 0) return;
+
+                // Activer le mode sélection + pré-cocher
+                setSelectionMode(true);
+                validIds.forEach(id => {
+                    selectedBuyerIds.add(id);
+                    const card = document.querySelector(`.lead-card[data-id="${id}"]`);
+                    if (card) card.classList.add('selected');
+                });
+                updateSelectionBar();
+
+                // Ouvrir la modale avec template par défaut + variables du bien
+                setTimeout(() => {
+                    openGroupMessageModal();
+                    setTimeout(() => {
+                        const tplSel = document.getElementById('groupMsgTemplate');
+                        const bodyEl = document.getElementById('groupMsgBody');
+                        const subjEl = document.getElementById('groupMsgSubject');
+                        if (!tplSel || !bodyEl) return;
+                        tplSel.value = data.template || 'baisse_prix';
+                        tplSel.dispatchEvent(new Event('change'));
+                        // Remplacer les variables connues
+                        const ctx = data.context || {};
+                        let body = bodyEl.value;
+                        let subj = subjEl ? subjEl.value : '';
+                        const formatPrice = p => p ? parseInt(p).toLocaleString('fr-FR') + ' €' : '[prix]';
+                        body = body.replace(/\[adresse\]/g, ctx.adresse || '[adresse]')
+                                   .replace(/\[prix\]/g, ctx.prix ? formatPrice(ctx.prix) : '[prix]')
+                                   .replace(/\[ville\]/g, ctx.ville || '[ville]')
+                                   .replace(/\[type\]/g, ctx.type || '[type]');
+                        bodyEl.value = body;
+                        if (subjEl && ctx.adresse) {
+                            subjEl.value = subj + ' — ' + ctx.adresse;
+                        }
+                    }, 50);
+                }, 250);
+
+                showToast(`${validIds.length} acquéreur${validIds.length > 1 ? 's' : ''} pré-sélectionné${validIds.length > 1 ? 's' : ''}`);
+            } catch (e) {
+                console.error('[Notify] Parse error:', e);
+            }
+        }
+
         function openGroupMessageModal() {
             if (selectedBuyerIds.size === 0) return;
             const selected = buyers.filter(b => selectedBuyerIds.has(b.id));
@@ -9094,6 +9152,8 @@ Très cordialement,`
                 }
                 // Matching en arrière-plan après le premier render
                 computeBuyerMatchCounts().then(() => renderBuyers()).catch(() => {});
+                // Notification groupée arrivant depuis la fiche vendeur ?
+                handlePendingNotify();
             });
 
             // Handler toggle vue (bottom bar)

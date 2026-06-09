@@ -5367,6 +5367,22 @@
             return penalties;
         }
 
+        // Stocke la sélection d'acquéreurs + le contexte du bien en localStorage
+        // puis redirige vers acquereurs.html qui détectera ce contexte et ouvrira
+        // directement la modale "Message groupé" avec les variables pré-remplies.
+        function notifyMatchingBuyers(data) {
+            try {
+                localStorage.setItem('leon_pending_notify', JSON.stringify({
+                    ...data,
+                    ts: Date.now()  // pour expiration côté acquéreurs si nécessaire
+                }));
+                window.location.href = 'acquereurs.html';
+            } catch (e) {
+                console.error('[Vendeurs] Notify error:', e);
+                alert('Erreur : impossible de préparer la notification');
+            }
+        }
+
         async function loadBuyersForMatching() {
             if (matchBuyers !== null) return matchBuyers;
             const userId = await getCurrentUserId();
@@ -5425,7 +5441,28 @@
 
             let html = '';
             if (matches.length > 0) {
-                html += `<div data-match-count style="font-size:13px;color:#78909C;margin-bottom:12px">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>`;
+                // Bouton pour envoyer un message groupé à tous les acquéreurs correspondants
+                // Cas d'usage : baisse de prix → notifier toutes les pistes en un clic.
+                // Stocke la sélection + le contexte du bien en localStorage puis redirige.
+                const notifyData = JSON.stringify({
+                    buyer_ids: matches.map(m => m.buyer.id),
+                    template: 'baisse_prix',
+                    context: {
+                        adresse: seller.address || '',
+                        prix: seller.mandate_price || seller.budget || '',
+                        ville: seller.city || '',
+                        type: seller.property_type || ''
+                    },
+                    seller_label: seller.address || ''
+                }).replace(/'/g, "&#39;");
+                html += `<div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap">
+                    <div data-match-count style="font-size:13px;color:#78909C">${matches.length} acquéreur${matches.length > 1 ? 's' : ''} correspondant${matches.length > 1 ? 's' : ''}</div>
+                    <button type="button" onclick='notifyMatchingBuyers(${notifyData})' style="
+                        padding:8px 14px; background:#10B981; border:none; border-radius:8px; color:white;
+                        font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;
+                        display:inline-flex; align-items:center; gap:6px;
+                    "><i class="fa-solid fa-paper-plane"></i> Notifier ces acquéreurs</button>
+                </div>`;
                 html += `<div class="match-list">${matches.map(m => renderMatchCard(m, 'buyer', { sellerId: seller.id, canPlanVisits })).join('')}</div>`;
             } else {
                 html += '<div class="match-empty">Tous les acquéreurs ont été écartés</div>';
