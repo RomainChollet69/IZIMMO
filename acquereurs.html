@@ -93,28 +93,38 @@
         .search-bar-section .add-btn:hover {
             transform: translateY(-50%);
         }
+        /* Bouton "Sélectionner" : libellé visible avec icône, pas juste une case opaque.
+           Au clic on entre en mode sélection (cases à cocher sur cartes + footer flottant). */
         .search-bar-section .select-btn {
             position: absolute;
             left: calc(50% + 290px);
             top: 50%;
             transform: translateY(-50%);
             background: white;
-            border: 1.5px solid #E5E7EB;
-            color: #374151;
+            border: 1.5px solid #C7D2FE;
+            color: #4F46E5;
             border-radius: 10px;
-            width: 38px;
             height: 38px;
+            padding: 0 14px;
             cursor: pointer;
-            font-size: 15px;
-            display: flex;
+            font-size: 13px;
+            font-weight: 600;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
+            gap: 8px;
             transition: all 0.15s;
+            white-space: nowrap;
+            font-family: inherit;
         }
-        .search-bar-section .select-btn:hover { background: #F3F4F6; border-color: #9CA3AF; }
-        .search-bar-section .select-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        .search-bar-section .select-btn i { font-size: 14px; }
+        .search-bar-section .select-btn:hover { background: #EEF2FF; border-color: #818CF8; }
+        .search-bar-section .select-btn.active { background: #4F46E5; color: white; border-color: #4F46E5; }
         @media (max-width: 768px) {
-            .search-bar-section .select-btn { left: auto; right: 70px; position: absolute; }
+            .search-bar-section .select-btn {
+                left: auto; right: 70px; position: absolute;
+                padding: 0 10px;
+            }
+            .search-bar-section .select-btn .select-btn-label { display: none; }
         }
         /* Mode sélection : checkbox visible sur chaque carte, clic = toggle */
         .lead-card .select-checkbox {
@@ -166,6 +176,10 @@
         .selection-bar-share { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
         .selection-bar-share:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(102,126,234,0.35); }
         .selection-bar-share:disabled { opacity: .45; cursor: not-allowed; }
+        .selection-bar-message { background: #10B981; color: white; }
+        .selection-bar-message:hover { background: #059669; }
+        .selection-bar-selectall { background: #EEF2FF; color: #4F46E5; border: 1px solid #C7D2FE; }
+        .selection-bar-selectall:hover { background: #E0E7FF; }
         .selection-bar-clear { background: #F1F5F9; color: #475569; }
         .selection-bar-clear:hover { background: #E2E8F0; }
         .selection-bar-cancel { background: none; color: #64748b; }
@@ -173,6 +187,15 @@
         @media (max-width: 768px) {
             .selection-bar { bottom: 80px; padding: 8px 10px; gap: 6px; flex-wrap: wrap; max-width: 95vw; }
             .selection-bar-btn { padding: 8px 10px; font-size: 12px; }
+        }
+
+        /* Mode sélection : checkbox plus visible, pulsation initiale pour signaler */
+        body.selection-mode .lead-card .select-checkbox {
+            width: 26px; height: 26px;
+            border-width: 2.5px;
+            border-color: #818CF8;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+            font-size: 13px;
         }
         .search-bar-section-inner {
             max-width: 600px;
@@ -3373,13 +3396,22 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
-        <button class="select-btn" id="toggleSelectBtn" title="Sélectionner plusieurs acquéreurs"><i class="fa-regular fa-square-check"></i></button>
+        <button class="select-btn" id="toggleSelectBtn" title="Mode sélection multiple (Esc pour quitter)">
+            <i class="fa-regular fa-square-check"></i>
+            <span class="select-btn-label">Sélectionner</span>
+        </button>
         <button class="add-btn" id="addBuyerBtn">+ Lead</button>
     </div>
 
     <!-- Barre flottante mode sélection -->
     <div class="selection-bar" id="selectionBar" style="display:none">
         <span class="selection-bar-count" id="selectionBarCount">0 sélectionné</span>
+        <button class="selection-bar-btn selection-bar-selectall" id="selectionBarSelectAll" title="Sélectionner tous les acquéreurs visibles">
+            <i class="fa-solid fa-check-double"></i> Tout sélectionner
+        </button>
+        <button class="selection-bar-btn selection-bar-message" id="selectionBarMessage" title="Envoyer un message aux acquéreurs sélectionnés">
+            <i class="fa-solid fa-paper-plane"></i> Message
+        </button>
         <button class="selection-bar-btn selection-bar-share" id="selectionBarShare">
             <i class="fa-solid fa-arrow-up-from-bracket"></i> Partager
         </button>
@@ -3607,7 +3639,15 @@
                 <!-- Section Contact -->
                 <div class="form-section">
                     <div class="form-section-title">📇 Contact</div>
-                    <div class="form-row">
+                    <div class="form-row" style="grid-template-columns: 100px 1fr 1fr">
+                        <div class="form-group">
+                            <label class="form-label">Civilité</label>
+                            <select class="form-select" id="civility">
+                                <option value="">—</option>
+                                <option value="M.">M.</option>
+                                <option value="Mme">Mme</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label class="form-label">Prénom *</label>
                             <input type="text" class="form-input" id="firstName" placeholder="Jean" required>
@@ -6090,8 +6130,24 @@
                 return;
             }
             bar.style.display = 'flex';
-            document.getElementById('selectionBarCount').textContent = `${count} sélectionné${count > 1 ? 's' : ''}`;
+            // Compteur incluant le nombre de cartes visibles (utile avec filtre recherche)
+            const visibleCount = getVisibleBuyerCards().length;
+            document.getElementById('selectionBarCount').textContent =
+                visibleCount > count
+                    ? `${count} / ${visibleCount} sélectionné${visibleCount > 1 ? 's' : ''}`
+                    : `${count} sélectionné${count > 1 ? 's' : ''}`;
             document.getElementById('selectionBarShare').disabled = count === 0;
+            const messageBtn = document.getElementById('selectionBarMessage');
+            if (messageBtn) messageBtn.disabled = count === 0;
+        }
+
+        // Retourne les cards acquéreur actuellement visibles (respecte le filtre de recherche).
+        // Skip les cartes "exemple" (onboarding) qui n'ont pas d'id buyer réel.
+        function getVisibleBuyerCards() {
+            return Array.from(document.querySelectorAll('.pipeline .lead-card'))
+                .filter(c => c.style.display !== 'none'
+                    && c.dataset.id
+                    && buyers.find(b => b.id === c.dataset.id));
         }
 
         function setupSelectionMode() {
@@ -6104,7 +6160,34 @@
                 document.querySelectorAll('.lead-card.selected').forEach(c => c.classList.remove('selected'));
                 updateSelectionBar();
             });
+            // "Tout sélectionner" : ne cible que les cartes visibles (respecte recherche/filtre)
+            document.getElementById('selectionBarSelectAll').addEventListener('click', () => {
+                const visible = getVisibleBuyerCards();
+                const allAlreadySelected = visible.length > 0 && visible.every(c => selectedBuyerIds.has(c.dataset.id));
+                if (allAlreadySelected) {
+                    // Toggle : si tout est déjà coché, on décoche les visibles
+                    visible.forEach(c => {
+                        selectedBuyerIds.delete(c.dataset.id);
+                        c.classList.remove('selected');
+                    });
+                } else {
+                    visible.forEach(c => {
+                        selectedBuyerIds.add(c.dataset.id);
+                        c.classList.add('selected');
+                    });
+                }
+                updateSelectionBar();
+            });
+            // Esc pour quitter le mode sélection
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && selectionModeActive) {
+                    setSelectionMode(false);
+                }
+            });
             document.getElementById('selectionBarShare').addEventListener('click', shareSelectedBuyers);
+            // Message groupé : handler ajouté en Phase 3
+            const msgBtn = document.getElementById('selectionBarMessage');
+            if (msgBtn) msgBtn.addEventListener('click', openGroupMessageModal);
 
             // Intercepte le clic carte en mode sélection (avant le toggle expand)
             // capture=true pour passer avant le listener pipeline classique
@@ -6153,6 +6236,191 @@
             const footer = '━━━━━━━━━━━━━━━━━━\nPartagés via Léon';
             const text = `${intro}\n\n\n${blocks.join('\n\n\n')}\n\n\n${footer}`;
             openSharePopup(text, `${total} acquéreurs`);
+        }
+
+        // ===== MESSAGE GROUPÉ =====
+        // Envoie un message personnalisé aux acquéreurs sélectionnés via Email (BCC),
+        // WhatsApp ou SMS. 3 templates pré-remplis : baisse de prix, nouveau bien,
+        // visite groupée. Variables [salutation] et [adresse]/[prix]/[ville]/[date]
+        // remplacées pour chaque destinataire.
+        const GROUP_MSG_TEMPLATES = {
+            baisse_prix: {
+                label: '📉 Baisse de prix',
+                subject: 'Baisse de prix sur un bien qui pourrait vous intéresser',
+                body: `Bonjour [salutation],
+
+Je vous contacte rapidement : le prix du bien situé [adresse] vient d'être révisé à la baisse, à [prix].
+
+Compte tenu de vos critères, je pense qu'il pourrait vraiment vous correspondre. Souhaitez-vous une visite ?
+
+Très cordialement,`
+            },
+            nouveau_bien: {
+                label: '🏠 Nouveau bien',
+                subject: 'Nouveau bien à votre attention',
+                body: `Bonjour [salutation],
+
+J'ai rentré un nouveau bien qui correspond à votre recherche : [type] à [ville] à [prix].
+
+Souhaitez-vous que je vous envoie le dossier complet ?
+
+Très cordialement,`
+            },
+            visite_groupee: {
+                label: '📅 Visite groupée',
+                subject: 'Proposition de visite',
+                body: `Bonjour [salutation],
+
+Je vous propose une visite du bien situé [adresse] le [date].
+
+Pouvez-vous me confirmer votre disponibilité ?
+
+Très cordialement,`
+            },
+            libre: { label: '✏️ Message libre', subject: '', body: '' }
+        };
+
+        function openGroupMessageModal() {
+            if (selectedBuyerIds.size === 0) return;
+            const selected = buyers.filter(b => selectedBuyerIds.has(b.id));
+            if (selected.length === 0) return;
+
+            const existing = document.getElementById('groupMsgModal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'groupMsgModal';
+
+            // Compteurs de canaux disponibles selon les contacts des destinataires
+            const withEmail = selected.filter(b => b.email).length;
+            const withPhone = selected.filter(b => b.phone).length;
+
+            modal.innerHTML = `
+                <div class="modal-card" style="max-width:560px">
+                    <h3 style="margin:0 0 4px; font-size:17px; font-weight:700; color:#2C3E50">
+                        <i class="fa-solid fa-paper-plane" style="color:#10B981"></i> Message groupé
+                    </h3>
+                    <div style="font-size:13px; color:#64748b; margin-bottom:14px">
+                        ${selected.length} destinataire${selected.length > 1 ? 's' : ''}
+                        · <span style="color:#10B981">${withEmail} email</span>
+                        · <span style="color:#10B981">${withPhone} téléphone</span>
+                    </div>
+
+                    <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:6px">Template</label>
+                    <select id="groupMsgTemplate" class="form-select" style="margin-bottom:14px">
+                        <option value="baisse_prix">📉 Baisse de prix</option>
+                        <option value="nouveau_bien">🏠 Nouveau bien</option>
+                        <option value="visite_groupee">📅 Visite groupée</option>
+                        <option value="libre">✏️ Message libre</option>
+                    </select>
+
+                    <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:6px">Objet (email)</label>
+                    <input type="text" id="groupMsgSubject" class="form-input" style="margin-bottom:14px">
+
+                    <label style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:6px">Message</label>
+                    <textarea id="groupMsgBody" rows="9" style="
+                        width:100%; padding:12px; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
+                        margin-bottom:8px;
+                    "></textarea>
+                    <div style="font-size:11px; color:#94A3B8; margin-bottom:14px">
+                        Variables remplacées par destinataire : <code>[salutation]</code> (ex: "M. Dupont"), <code>[adresse]</code>, <code>[prix]</code>, <code>[ville]</code>, <code>[type]</code>, <code>[date]</code> — à compléter si vide.
+                    </div>
+
+                    <div style="display:flex; gap:8px; flex-wrap:wrap">
+                        <button type="button" onclick="sendGroupMessage('email')" ${withEmail === 0 ? 'disabled' : ''} style="
+                            flex:1; padding:11px; background:#667eea; border:none; border-radius:10px; color:white;
+                            font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;
+                            ${withEmail === 0 ? 'opacity:0.4; cursor:not-allowed' : ''}
+                        "><i class="fa-solid fa-envelope"></i> Email (${withEmail})</button>
+                        <button type="button" onclick="sendGroupMessage('whatsapp')" ${withPhone === 0 ? 'disabled' : ''} style="
+                            flex:1; padding:11px; background:#25D366; border:none; border-radius:10px; color:white;
+                            font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;
+                            ${withPhone === 0 ? 'opacity:0.4; cursor:not-allowed' : ''}
+                        "><i class="fa-brands fa-whatsapp"></i> WhatsApp (${withPhone})</button>
+                        <button type="button" onclick="sendGroupMessage('sms')" ${withPhone === 0 ? 'disabled' : ''} style="
+                            flex:1; padding:11px; background:#22c55e; border:none; border-radius:10px; color:white;
+                            font-weight:600; font-size:13px; cursor:pointer; font-family:Inter,sans-serif;
+                            ${withPhone === 0 ? 'opacity:0.4; cursor:not-allowed' : ''}
+                        "><i class="fa-solid fa-comment-sms"></i> SMS (${withPhone})</button>
+                    </div>
+                    <button type="button" onclick="document.getElementById('groupMsgModal').remove()" style="
+                        width:100%; margin-top:8px; padding:10px; background:none; border:1.5px solid #E1E8ED; border-radius:10px;
+                        font-size:13px; color:#64748b; cursor:pointer; font-family:Inter,sans-serif;
+                    ">Annuler</button>
+                </div>`;
+            document.body.appendChild(modal);
+
+            const templateSelect = document.getElementById('groupMsgTemplate');
+            const applyTemplate = () => {
+                const t = GROUP_MSG_TEMPLATES[templateSelect.value];
+                document.getElementById('groupMsgSubject').value = t.subject;
+                document.getElementById('groupMsgBody').value = t.body;
+            };
+            templateSelect.addEventListener('change', applyTemplate);
+            applyTemplate();
+        }
+
+        // Remplace les variables d'un template par les valeurs du buyer.
+        // [salutation] = "M. Dupont" / "Mme Martin" / "" via getBuyerSalutation
+        function personalizeMessage(template, buyer) {
+            const salutation = getBuyerSalutation(buyer);
+            return template
+                .replace(/\[salutation\]/g, salutation || 'à vous')
+                .replace(/\[prénom\]/gi, buyer.first_name || '')
+                .replace(/\[nom\]/gi, buyer.last_name || '');
+            // [adresse], [prix], [ville], [type], [date] sont laissés tels quels
+            // → l'agent les complète manuellement dans le textarea avant envoi
+        }
+
+        async function sendGroupMessage(channel) {
+            const subject = document.getElementById('groupMsgSubject').value.trim();
+            const bodyTemplate = document.getElementById('groupMsgBody').value.trim();
+            if (!bodyTemplate) { alert('Merci de saisir un message.'); return; }
+
+            const selected = buyers.filter(b => selectedBuyerIds.has(b.id));
+            if (selected.length === 0) return;
+
+            if (channel === 'email') {
+                const recipients = selected.filter(b => b.email).map(b => b.email);
+                if (recipients.length === 0) { alert('Aucun destinataire avec email.'); return; }
+                // 1 seul email en BCC, pas de personnalisation (destinataires en cci ne se voient pas)
+                // On utilise un placeholder générique
+                const genericBody = bodyTemplate.replace(/\[salutation\]/g, 'à vous');
+                const mailto = `mailto:?bcc=${encodeURIComponent(recipients.join(','))}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(genericBody)}`;
+                window.location.href = mailto;
+                showToast(`Email préparé pour ${recipients.length} destinataire${recipients.length > 1 ? 's' : ''}`);
+                document.getElementById('groupMsgModal').remove();
+                return;
+            }
+
+            // WhatsApp ou SMS : ouverture séquentielle d'une conversation par destinataire
+            const withPhone = selected.filter(b => b.phone);
+            if (withPhone.length === 0) { alert('Aucun destinataire avec téléphone.'); return; }
+            if (withPhone.length > 10) {
+                if (!confirm(`Vous allez ouvrir ${withPhone.length} conversations ${channel.toUpperCase()} successivement. Continuer ?`)) return;
+            }
+
+            document.getElementById('groupMsgModal').remove();
+            showToast(`Préparation de ${withPhone.length} ${channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}...`);
+
+            // Boucle avec délai pour laisser le navigateur respirer (window.open ouvre une nouvelle fenêtre)
+            for (let i = 0; i < withPhone.length; i++) {
+                const b = withPhone[i];
+                const personalized = personalizeMessage(bodyTemplate, b);
+                const phone = b.phone.replace(/[\s.\-]/g, '').replace(/^0/, '33');
+                let url;
+                if (channel === 'whatsapp') {
+                    url = `https://wa.me/${phone}?text=${encodeURIComponent(personalized)}`;
+                } else {
+                    // SMS : sur iOS le séparateur de body est & ou ; selon version, on garde ?
+                    url = `sms:${b.phone}?body=${encodeURIComponent(personalized)}`;
+                }
+                window.open(url, '_blank');
+                // Délai 400ms entre les ouvertures pour éviter que le navigateur bloque
+                if (i < withPhone.length - 1) await new Promise(r => setTimeout(r, 400));
+            }
         }
 
         // Popup de partage générique (utilisée par shareBuyer ET shareSelectedBuyers)
@@ -7146,6 +7414,18 @@
             document.getElementById('rooms').value = values.join(',');
         }
 
+        // Construit la salutation d'un acquéreur pour les messages :
+        // "M. Dupont" / "Mme Martin" si civilité renseignée
+        // "Dupont" si nom seul
+        // "" sinon (l'appelant ajoutera "Bonjour" sans nom)
+        function getBuyerSalutation(buyer) {
+            const last = (buyer.last_name || '').trim();
+            const civ = (buyer.civility || '').trim();
+            if (civ && last) return `${civ} ${last}`;
+            if (last) return last;
+            return '';
+        }
+
         function setupDocsDropZone() {
             const dropZone = document.getElementById('docsDropZone');
             const fileInput = document.getElementById('docsFileInput');
@@ -7380,6 +7660,7 @@
             const buyer = buyers.find(b => b.id === id);
             if (!buyer) return;
 
+            document.getElementById('civility').value = buyer.civility || '';
             document.getElementById('firstName').value = buyer.first_name || '';
             document.getElementById('lastName').value = buyer.last_name || '';
             document.getElementById('phone').value = buyer.phone || '';
@@ -7646,6 +7927,7 @@
 
             const firstEntry = entries[0] || {};
             const buyerData = {
+                civility: document.getElementById('civility').value || null,
                 first_name: firstName,
                 last_name: lastName,
                 phone: document.getElementById('phone').value.trim(),
