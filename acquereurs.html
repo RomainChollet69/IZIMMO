@@ -83,23 +83,26 @@
             position: sticky;
             top: 64px;
             z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        /* Search bar centrée, boutons d'action regroupés à droite */
+        .search-bar-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
         }
         .search-bar-section .add-btn {
-            position: absolute;
-            left: calc(50% + 360px);
-            top: 50%;
-            transform: translateY(-50%);
+            position: static;
+            transform: none !important;
         }
-        .search-bar-section .add-btn:hover {
-            transform: translateY(-50%);
-        }
-        /* Bouton "Sélectionner" : libellé visible avec icône, pas juste une case opaque.
-           Au clic on entre en mode sélection (cases à cocher sur cartes + footer flottant). */
+        /* Bouton "Sélectionner" : libellé visible avec icône, pas juste une case opaque. */
         .search-bar-section .select-btn {
-            position: absolute;
-            left: calc(50% + 290px);
-            top: 50%;
-            transform: translateY(-50%);
+            position: static;
+            transform: none;
             background: white;
             border: 1.5px solid #C7D2FE;
             color: #4F46E5;
@@ -115,15 +118,13 @@
             transition: all 0.15s;
             white-space: nowrap;
             font-family: inherit;
+            flex-shrink: 0;
         }
         .search-bar-section .select-btn i { font-size: 14px; }
         .search-bar-section .select-btn:hover { background: #EEF2FF; border-color: #818CF8; }
         .search-bar-section .select-btn.active { background: #4F46E5; color: white; border-color: #4F46E5; }
         @media (max-width: 768px) {
-            .search-bar-section .select-btn {
-                left: auto; right: 70px; position: absolute;
-                padding: 0 10px;
-            }
+            .search-bar-section .select-btn { padding: 0 10px; }
             .search-bar-section .select-btn .select-btn-label { display: none; }
         }
         /* Mode sélection : checkbox visible sur chaque carte, clic = toggle */
@@ -198,8 +199,8 @@
             font-size: 13px;
         }
         .search-bar-section-inner {
+            flex: 1 1 600px;
             max-width: 600px;
-            margin: 0 auto;
             position: relative;
             display: flex;
             align-items: center;
@@ -3396,11 +3397,13 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
-        <button class="select-btn" id="toggleSelectBtn" title="Mode sélection multiple (Esc pour quitter)">
-            <i class="fa-regular fa-square-check"></i>
-            <span class="select-btn-label">Sélectionner</span>
-        </button>
-        <button class="add-btn" id="addBuyerBtn">+ Lead</button>
+        <div class="search-bar-actions">
+            <button class="select-btn" id="toggleSelectBtn" title="Mode sélection multiple (Esc pour quitter)">
+                <i class="fa-regular fa-square-check"></i>
+                <span class="select-btn-label">Sélectionner</span>
+            </button>
+            <button class="add-btn" id="addBuyerBtn">+ Lead</button>
+        </div>
     </div>
 
     <!-- Barre flottante mode sélection -->
