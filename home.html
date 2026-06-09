@@ -13,6 +13,19 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+
+    <!-- Desktop : bascule vers le shell multi-onglets (app.html).
+         Skip si embarqué dans une iframe (= déjà DANS le shell, ses tuiles ouvrent des onglets)
+         ou pendant un callback OAuth (hash/code à consommer ici avant toute redirection). -->
+    <script>
+        (function () {
+            var topLevel = window.self === window.top;
+            var desktop = window.innerWidth > 768;
+            var oauth = /access_token|refresh_token|[?&]code=/.test(location.hash + location.search);
+            if (topLevel && desktop && !oauth) location.replace('app.html');
+        })();
+    </script>
+
     <title>Léon. — Accueil</title>
     <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
     <meta property="og:title" content="Léon. — CRM Immobilier">

@@ -4,6 +4,56 @@
 
 ---
 
+## Session 2026-06-09 — Navigation multi-onglets desktop (shell « façon navigateur »)
+
+### Contexte
+L'utilisateur veut que Léon fonctionne comme un navigateur (exemple cité : cadastre.com) :
+ouvrir chaque rubrique dans un onglet *à l'intérieur* de l'app, garder l'Accueil à gauche
+en permanence, naviguer d'onglet en onglet sans recharger ni perdre la page précédente.
+**Desktop uniquement** — le mobile garde la bottom nav actuelle.
+
+Décisions de design validées : ouverture d'onglet via les **tuiles de l'Accueil ET un bouton `+`** ;
+**démarrage sur l'Accueil seul** (pas de restauration de session pour l'instant).
+
+### Architecture retenue : shell + iframes (même origine)
+- Toutes les pages sont sur le même domaine → le shell accède au `contentDocument` de chaque
+  iframe pour masquer le header interne et intercepter les liens. **Les pages métier ne sont
+  PAS modifiées** (seul `home.html` reçoit une redirection desktop → shell).
+- Chaque onglet = un `<iframe>` qui reste vivant : changer d'onglet masque/affiche au lieu de
+  recharger → scroll, filtres et formulaires conservés.
+
+### Fichiers créés
+- `app.html` — shell desktop : barre d'onglets sombre (logo Accueil fixe + onglets fermables +
+  bouton `+` avec menu des rubriques + cloche relances + profil), pile d'iframes. Auth via `auth.js`.
+  Redirige vers `home.html` si écran ≤ 768px (shell desktop-only).
+- `js/tab-shell.js` — moteur d'onglets : registre `PAGES`, `openTab`/`activateTab`/`closeTab`,
+  injection « mode embarqué » dans chaque iframe (masque `.header` / `.header-desktop` /
+  `[data-leon-header]`), interception des liens internes (autre page → onglet ; même page ou
+  page hors-registre type `cgu.html` → navigation interne), menu du bouton `+`.
+
+### Fichiers modifiés
+- `home.html` — ajout d'un guard `<script>` en `<head>` : si top-level + desktop + hors callback
+  OAuth → `location.replace('app.html')`. Skip si embarqué dans le shell (les tuiles ouvrent alors
+  des onglets via l'interception de liens) ou si un hash/`code` OAuth est présent.
+
+### Points d'attention / limites connues
+- **Permissions iframe** : `allow="microphone; camera; geolocation; clipboard-read; clipboard-write"`
+  ajouté sur chaque iframe (sinon le micro de `micro.html` serait bloqué).
+- **Navigations programmatiques** non interceptées (clics uniquement) : ex. la recherche globale de
+  l'Accueil fait `location.href='vendeurs.html?search='` → navigue l'iframe Accueil au lieu d'ouvrir
+  un onglet. À traiter au cas par cas si gênant.
+- **Mémoire** : N onglets = N pages chargées en parallèle (comportement voulu). Déchargement des
+  onglets inactifs non implémenté (évolution possible).
+- **Vérification** : syntaxe JS validée (`node --check`). Le test comportemental complet nécessite
+  une session Supabase connectée (auth.js redirige vers login sinon) → à valider en live par l'utilisateur.
+
+### Prochaines étapes possibles
+- Restauration des onglets ouverts à la dernière session (localStorage).
+- Intercepter les redirections JS internes (recherche globale Accueil).
+- Déchargement/mise en veille des onglets inactifs si la conso mémoire pose problème.
+
+---
+
 ## Session 2026-06-01 (bis) — Colonne Compromis + Vue Archive + Fix FAB
 
 ### Contexte
