@@ -589,6 +589,14 @@
             cursor: pointer; color: #667eea; font-size: 13px; transition: all 0.15s; flex-shrink: 0;
         }
         .accordion-share-btn:hover { background: #EEF2FF; border-color: #667eea; }
+        /* Bouton "Contacter" : envoie un message groupé à tous les acquéreurs du bien
+           (réutilise la modale Message groupé d'acquereurs.html via localStorage + redirect) */
+        .accordion-contact-btn {
+            background: none; border: 2px solid #E1E8ED; border-radius: 8px;
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #10B981; font-size: 13px; transition: all 0.15s; flex-shrink: 0;
+        }
+        .accordion-contact-btn:hover { background: #ECFDF5; border-color: #10B981; }
         .visits-drop-zone { min-height: 20px; transition: all 0.2s; border-radius: 8px; }
         .visits-drop-zone.drag-over { background: #F3E5F5; outline: 2px dashed #7B1FA2; outline-offset: -2px; }
         .contact-source-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: #F3E5F5; color: #7B1FA2; }
@@ -3354,7 +3362,10 @@
                     ${portalStatsHtml}
                 </div>
                 <div class="accordion-badges">${badges}</div>
-                <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${sellerId}')" title="Partager le bien et ses contacts">
+                <button class="accordion-contact-btn" onclick="event.stopPropagation(); contactSellerBuyers('${sellerId}')" title="Envoyer un message à tous les contacts ayant fiche acquéreur">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+                <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${sellerId}')" title="Partager le bien et ses contacts à un collègue">
                     <i class="fa-solid fa-arrow-up-from-bracket"></i>
                 </button>
                 <button class="accordion-add-contact-btn" onclick="event.stopPropagation(); openAddContactModal('${sellerId}')" title="Ajouter un contact">
@@ -6318,7 +6329,10 @@
                         <div class="archive-seller-meta">${metaParts.map(p => `<span>${p}</span>`).join('')}</div>
                     </div>
                     <span style="font-size:11px; color:#6B7280; font-weight:600">${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>
-                    <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${seller.id}')" title="Partager le bien et ses contacts">
+                    <button class="accordion-contact-btn" onclick="event.stopPropagation(); contactSellerBuyers('${seller.id}')" title="Envoyer un message à tous les contacts ayant fiche acquéreur">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                    <button class="accordion-share-btn" onclick="event.stopPropagation(); shareSellerContacts('${seller.id}')" title="Partager le bien et ses contacts à un collègue">
                         <i class="fa-solid fa-arrow-up-from-bracket"></i>
                     </button>
                     <i class="fa-solid fa-chevron-down archive-seller-toggle"></i>
@@ -6401,6 +6415,67 @@
     // Construit un message structuré : titre du bien + liste des contacts, puis ouvre
     // la popup standard (WhatsApp / SMS / Email / Copier). Cas d'usage : partager à
     // un collègue tous les contacts qu'on a eu sur un bien (à vendre ou archivé).
+    // Envoie un message groupé à tous les acquéreurs du bien qui ont une fiche.
+    // Récupère les visits.buyer_id + visit_requests.created_buyer_id pour ce bien,
+    // stocke en localStorage et redirige vers acquereurs.html qui ouvrira la modale
+    // Message groupé avec présélection et variables du bien pré-remplies.
+    async function contactSellerBuyers(sellerId) {
+        const userId = await getCurrentUserId();
+        if (!userId) return;
+
+        // Chercher le seller en local d'abord, sinon en DB (cas archive)
+        let seller = activeSellers.find(s => s.id === sellerId);
+        if (!seller) {
+            const { data } = await supabaseClient.from('sellers')
+                .select('id, first_name, last_name, address, budget, mandate_price, surface, property_type, status, postal_code, city')
+                .eq('id', sellerId).eq('user_id', userId).maybeSingle();
+            seller = data;
+        }
+        if (!seller) { alert('Bien introuvable.'); return; }
+
+        // Collecter les buyer_id depuis visits + visit_requests pour ce seller
+        const [visitsRes, reqsRes] = await Promise.all([
+            supabaseClient.from('visits')
+                .select('buyer_id')
+                .eq('user_id', userId).eq('seller_id', sellerId)
+                .not('buyer_id', 'is', null),
+            supabaseClient.from('visit_requests')
+                .select('created_buyer_id')
+                .eq('user_id', userId).eq('matched_seller_id', sellerId)
+                .not('created_buyer_id', 'is', null)
+        ]);
+        const buyerIdSet = new Set();
+        (visitsRes.data || []).forEach(v => { if (v.buyer_id) buyerIdSet.add(v.buyer_id); });
+        (reqsRes.data || []).forEach(r => { if (r.created_buyer_id) buyerIdSet.add(r.created_buyer_id); });
+
+        if (buyerIdSet.size === 0) {
+            alert('Aucun contact n\'a encore de fiche acquéreur pour ce bien.\n\nPromouvez-les d\'abord en acquéreurs (bouton 👤+ sur les visites/contacts) pour pouvoir leur envoyer un message groupé.');
+            return;
+        }
+
+        // Préparer le contexte du bien pour pré-remplir [adresse], [prix], [ville], [type]
+        const ctx = {
+            adresse: seller.address || '',
+            prix: seller.mandate_price || seller.budget || '',
+            ville: seller.city || '',
+            type: seller.property_type || ''
+        };
+
+        try {
+            localStorage.setItem('leon_pending_notify', JSON.stringify({
+                buyer_ids: Array.from(buyerIdSet),
+                template: 'baisse_prix', // template par défaut, l'agent peut changer
+                context: ctx,
+                seller_label: seller.address || '',
+                ts: Date.now()
+            }));
+            window.location.href = 'acquereurs.html';
+        } catch (e) {
+            console.error('[Visites] Contact error:', e);
+            alert('Erreur : impossible de préparer le message groupé');
+        }
+    }
+
     async function shareSellerContacts(sellerId) {
         const userId = await getCurrentUserId();
         if (!userId) return;
