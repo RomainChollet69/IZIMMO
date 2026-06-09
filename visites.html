@@ -6839,12 +6839,24 @@
                 const data = await resp.json();
                 closeModal('portalPlanModal');
                 showToast(data.buyer_id ? 'Visite planifiée + lead créé !' : 'Visite planifiée !');
+                // Filtrer localement immédiatement pour réactivité visuelle
                 portalRequests = portalRequests.filter(r => r.id !== requestId);
                 renderPortalBanner();
-                allVisits = await loadAllVisits();
-                await loadProcessedRequests();
+                // Puis recharger les 3 listes depuis l'API en parallèle pour rester
+                // synchronisé avec la DB (au cas où une race condition aurait laissé
+                // la demande dans portalRequests, ou si une autre demande a été reçue).
+                const [visits] = await Promise.all([
+                    loadAllVisits(),
+                    loadPortalRequests(),
+                    loadProcessedRequests()
+                ]);
+                allVisits = visits;
                 applyFrontendMatching();
+                renderPortalBanner();
                 renderVisitsPage();
+                // Mettre à jour le compteur des demandes traitées
+                const processedCountEl = document.getElementById('processedCount');
+                if (processedCountEl) processedCountEl.textContent = processedRequests.length;
 
                 // Proposer l'ajout au calendrier
                 const req = processedRequests.find(r => r.id === requestId) || {};
