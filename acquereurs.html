@@ -198,6 +198,23 @@
             box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
             font-size: 13px;
         }
+
+        /* Chips de variables dans la modale Message groupé (cliquables pour insérer) */
+        .msg-var-chip {
+            display: inline-block;
+            padding: 3px 9px;
+            background: white;
+            border: 1px solid #CBD5E1;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            font-family: 'SF Mono', Monaco, monospace;
+            cursor: pointer;
+            transition: all .15s;
+            user-select: none;
+        }
+        .msg-var-chip:hover { background: #4F46E5; color: white; border-color: #4F46E5; }
         .search-bar-section-inner {
             flex: 1 1 600px;
             max-width: 600px;
@@ -6385,9 +6402,26 @@ Très cordialement,`
                         font-family:Inter,sans-serif; font-size:13px; line-height:1.5; resize:vertical; color:#334155;
                         margin-bottom:8px;
                     "></textarea>
-                    <div style="font-size:11px; color:#94A3B8; margin-bottom:14px">
-                        Variables remplacées par destinataire : <code>[salutation]</code> (ex: "M. Dupont"), <code>[adresse]</code>, <code>[prix]</code>, <code>[ville]</code>, <code>[type]</code>, <code>[date]</code> — à compléter si vide.
-                    </div>
+                    <details style="margin-bottom:14px">
+                        <summary style="font-size:12px; color:#64748B; cursor:pointer; user-select:none; padding:6px 0">
+                            <i class="fa-solid fa-circle-info" style="font-size:11px"></i> Variables disponibles dans le message
+                        </summary>
+                        <div style="margin-top:8px; padding:10px 12px; background:#F8FAFC; border-radius:8px; font-size:12px; color:#475569; line-height:1.7">
+                            <div style="margin-bottom:6px"><strong>Personnalisées</strong> (remplacées par destinataire)</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px">
+                                <span class="msg-var-chip" onclick="insertMsgVar('[salutation]')">[salutation]</span>
+                                <span style="font-size:11px; color:#94A3B8; align-self:center">→ « M. Dupont »</span>
+                            </div>
+                            <div style="margin-bottom:6px"><strong>À compléter</strong> (saisir une valeur)</div>
+                            <div style="display:flex; flex-wrap:wrap; gap:6px">
+                                <span class="msg-var-chip" onclick="insertMsgVar('[adresse]')">[adresse]</span>
+                                <span class="msg-var-chip" onclick="insertMsgVar('[prix]')">[prix]</span>
+                                <span class="msg-var-chip" onclick="insertMsgVar('[ville]')">[ville]</span>
+                                <span class="msg-var-chip" onclick="insertMsgVar('[type]')">[type]</span>
+                                <span class="msg-var-chip" onclick="insertMsgVar('[date]')">[date]</span>
+                            </div>
+                        </div>
+                    </details>
 
                     <div style="display:flex; gap:8px; flex-wrap:wrap">
                         <button type="button" onclick="sendGroupMessage('email')" ${withEmail === 0 ? 'disabled' : ''} style="
@@ -6421,6 +6455,17 @@ Très cordialement,`
             };
             templateSelect.addEventListener('change', applyTemplate);
             applyTemplate();
+        }
+
+        // Insère une variable dans le textarea du message groupé à la position du curseur.
+        function insertMsgVar(varName) {
+            const ta = document.getElementById('groupMsgBody');
+            if (!ta) return;
+            const start = ta.selectionStart || 0;
+            const end = ta.selectionEnd || 0;
+            ta.value = ta.value.substring(0, start) + varName + ta.value.substring(end);
+            ta.selectionStart = ta.selectionEnd = start + varName.length;
+            ta.focus();
         }
 
         // Remplace les variables d'un template par les valeurs du buyer.
