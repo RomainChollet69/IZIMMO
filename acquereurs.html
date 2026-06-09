@@ -1636,6 +1636,27 @@
 
         .form-group { margin-bottom: 20px; }
 
+        /* Chips de typologie (multi-sélection) — un acquéreur peut chercher T2 OU T3 */
+        .rooms-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+        .room-chip {
+            padding: 8px 14px;
+            border: 1.5px solid #E1E8ED;
+            border-radius: 999px;
+            background: white;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .room-chip:hover { border-color: #94A3B8; color: #1E293B; }
+        .room-chip.selected {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: transparent;
+            color: white;
+        }
+
         .form-label {
             display: block;
             font-weight: 600;
@@ -3644,15 +3665,15 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Typologie</label>
-                            <select class="form-select" id="rooms">
-                                <option value="">—</option>
-                                <option value="T1">T1</option>
-                                <option value="T2">T2</option>
-                                <option value="T3">T3</option>
-                                <option value="T4">T4</option>
-                                <option value="T5+">T5+</option>
-                            </select>
+                            <label class="form-label">Typologie <span style="font-weight:400; color:#9CA3AF; font-size:11px">(plusieurs choix possibles)</span></label>
+                            <div class="rooms-chips" id="roomsChips">
+                                <span class="room-chip" data-value="T1">T1</span>
+                                <span class="room-chip" data-value="T2">T2</span>
+                                <span class="room-chip" data-value="T3">T3</span>
+                                <span class="room-chip" data-value="T4">T4</span>
+                                <span class="room-chip" data-value="T5+">T5+</span>
+                            </div>
+                            <input type="hidden" id="rooms">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Surface min (m²)</label>
@@ -3933,17 +3954,21 @@
         /** Détermine la colonne "type de bien" d'un acquéreur selon ses critères */
         function getBuyerPropertyColumn(buyer) {
             const type = (buyer.property_type || '').toLowerCase();
-            const rooms = (buyer.rooms || '').toUpperCase();
+            // rooms peut être multi-valué : "T2,T3". On prend la plus petite typologie
+            // pour décider la colonne (le buyer recherche aussi cette taille).
+            const ORDER = ['T1', 'T2', 'T3', 'T4', 'T5+'];
+            const roomsList = (buyer.rooms || '').toUpperCase().split(',').map(s => s.trim()).filter(Boolean);
+            const smallest = ORDER.find(r => roomsList.includes(r)) || '';
             const budget = parseFloat(buyer.budget_max) || 0;
 
             if (type === 'appartement' || type === 'appartement_ou_maison') {
-                if (rooms === 'T1') return 'studio_t1';
-                if (rooms === 'T2') return 't2';
-                if (rooms === 'T3') return 't3';
-                if (rooms === 'T4' || rooms === 'T5+') return 't4_plus';
+                if (smallest === 'T1') return 'studio_t1';
+                if (smallest === 'T2') return 't2';
+                if (smallest === 'T3') return 't3';
+                if (smallest === 'T4' || smallest === 'T5+') return 't4_plus';
                 if (type === 'appartement') return 'autre';
             }
-            if (type === 'maison' || (type === 'appartement_ou_maison' && !rooms)) {
+            if (type === 'maison' || (type === 'appartement_ou_maison' && !smallest)) {
                 return budget >= 500000 ? 'maison_big' : 'maison_small';
             }
             return 'autre';
@@ -4106,7 +4131,7 @@
             const typeIcon = cardData.property_type ? (typeEmojis[cardData.property_type] || '') : '';
             const compactParts = [];
             if (typeIcon) compactParts.push(typeIcon);
-            if (cardData.rooms) compactParts.push(cardData.rooms);
+            if (cardData.rooms) compactParts.push(cardData.rooms.replace(/,/g, '/'));
             if (budgetStr) compactParts.push(budgetStr);
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
 
@@ -4206,9 +4231,14 @@
             if (seller.rooms && buyer.rooms) {
                 maxScore += 10;
                 const sn = parseInt(seller.rooms.replace(/\D/g, '')) || 0;
-                const bn = parseInt(buyer.rooms.replace(/\D/g, '')) || 0;
-                if (sn >= bn) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
-                else if (sn === bn - 1) { score += 5; details.push({ label: 'Pièces', score: 5, max: 10 }); }
+                // Acquéreur peut chercher plusieurs typologies ("T2,T3") → on prend la plus
+                // petite comme seuil minimum acceptable, le score 10 si seller couvre une
+                // de ses options.
+                const buyerNums = (buyer.rooms || '').split(',').map(s => parseInt(s.replace(/\D/g, '')) || 0).filter(n => n > 0);
+                const bnMin = buyerNums.length > 0 ? Math.min(...buyerNums) : 0;
+                if (buyerNums.length > 0 && buyerNums.includes(sn)) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else if (sn > bnMin) { score += 10; details.push({ label: 'Pièces', score: 10, max: 10 }); }
+                else if (sn === bnMin - 1) { score += 5; details.push({ label: 'Pièces', score: 5, max: 10 }); }
                 else { details.push({ label: 'Pièces', score: 0, max: 10 }); }
             }
 
@@ -5870,7 +5900,7 @@
             const typeEmojis = { appartement: '🏢', maison: '🏡', terrain: '🏗️', immeuble: '🏛️', appartement_ou_maison: '🏢🏡' };
             const compactParts = [];
             if (buyer.property_type) compactParts.push(typeEmojis[buyer.property_type] || '');
-            if (buyer.rooms) compactParts.push(buyer.rooms);
+            if (buyer.rooms) compactParts.push(buyer.rooms.replace(/,/g, '/'));
             const budgetLabel = formatBudget(null, buyer.budget_max);
             if (budgetLabel) compactParts.push(budgetLabel);
             const compactPropLine = compactParts.length > 0 ? `<div class="card-info" style="font-size:13px;color:#546E7A;font-weight:500">${compactParts.join(' · ')}</div>` : '';
@@ -6362,6 +6392,8 @@
 
         function resetForm() {
             document.getElementById('buyerForm').reset();
+            // form.reset() ne touche pas les classes CSS — décocher manuellement les chips
+            setRoomsValue('');
             // Reset pop-up Léon
             hideLeonPopup();
             document.getElementById('sellerFields').style.display = 'none';
@@ -6517,15 +6549,9 @@
                     }
                 }
 
-                // Rooms select
+                // Rooms : peut être "T3" ou "T2,T3" (multi-sélection depuis micro)
                 if (fields.rooms) {
-                    const roomsSelect = document.getElementById('rooms');
-                    for (let option of roomsSelect.options) {
-                        if (option.value === fields.rooms) {
-                            roomsSelect.value = option.value;
-                            break;
-                        }
-                    }
+                    setRoomsValue(fields.rooms);
                 }
 
                 if (fields.sector) {
@@ -7087,6 +7113,39 @@
             renderFiles();
         }
 
+        // ===== TYPOLOGIE MULTI-SÉLECTION (T1, T2, T3, T4, T5+) =====
+        // Stockage : CSV "T2,T3" dans la colonne buyers.rooms (TEXT).
+        // Permet à un acquéreur qui cherche T2 OU T3 d'être matché avec les deux types.
+        function setupRoomsChips() {
+            const container = document.getElementById('roomsChips');
+            if (!container) return;
+            container.addEventListener('click', (e) => {
+                const chip = e.target.closest('.room-chip');
+                if (!chip) return;
+                chip.classList.toggle('selected');
+                syncRoomsHidden();
+            });
+        }
+
+        // Synchronise l'input hidden #rooms avec les chips sélectionnés (CSV ordonné T1→T5+).
+        function syncRoomsHidden() {
+            const ORDER = ['T1', 'T2', 'T3', 'T4', 'T5+'];
+            const selected = Array.from(document.querySelectorAll('#roomsChips .room-chip.selected'))
+                .map(c => c.dataset.value);
+            // Trier dans l'ordre canonique pour stockage stable
+            const sorted = ORDER.filter(v => selected.includes(v));
+            document.getElementById('rooms').value = sorted.join(',');
+        }
+
+        // Coche les chips correspondants au CSV passé. Vide → tout décoché.
+        function setRoomsValue(csv) {
+            const values = (csv || '').split(',').map(s => s.trim()).filter(Boolean);
+            document.querySelectorAll('#roomsChips .room-chip').forEach(chip => {
+                chip.classList.toggle('selected', values.includes(chip.dataset.value));
+            });
+            document.getElementById('rooms').value = values.join(',');
+        }
+
         function setupDocsDropZone() {
             const dropZone = document.getElementById('docsDropZone');
             const fileInput = document.getElementById('docsFileInput');
@@ -7337,7 +7396,7 @@
                 referrerInput.value = '';
             }
             document.getElementById('propertyType').value = buyer.property_type || '';
-            document.getElementById('rooms').value = buyer.rooms || '';
+            setRoomsValue(buyer.rooms || '');
             document.getElementById('surfaceMin').value = buyer.surface_min || '';
             // Sector tags — toujours splitter le champ sector par ' | ' (séparateur multi-villes).
             // city/postal_code peuvent être vides (ex: leads venant du formulaire public),
@@ -7454,7 +7513,7 @@
                 const types = { appartement: 'Appartement', maison: 'Maison', terrain: 'Terrain', immeuble: 'Immeuble', appartement_ou_maison: 'Appart/Maison' };
                 searchParts.push(types[buyer.property_type] || buyer.property_type);
             }
-            if (buyer.rooms) searchParts.push(buyer.rooms);
+            if (buyer.rooms) searchParts.push(buyer.rooms.replace(/,/g, '/'));
             if (buyer.surface_min) searchParts.push(`${buyer.surface_min} m² min`);
             if (buyer.budget_max) searchParts.push(`max ${formatEuro(buyer.budget_max)}`);
 
@@ -8675,10 +8734,8 @@
                 // Recherche
                 if (fields.property_type) { setFieldValue('propertyType', fields.property_type); }
                 if (fields.rooms) {
-                    const roomsEl = document.getElementById('rooms');
-                    for (const opt of roomsEl.options) {
-                        if (opt.value === fields.rooms) { roomsEl.value = opt.value; flashField('rooms'); break; }
-                    }
+                    setRoomsValue(fields.rooms);
+                    flashField('roomsChips');
                 }
                 if (fields.surface_min) { setFieldValue('surfaceMin', fields.surface_min); }
                 if (fields.budget_max) { setFieldValue('budgetMax', fields.budget_max); }
@@ -8778,6 +8835,7 @@
             setupSectorAutocomplete();
             setupReferrerField();
             setupDocsDropZone();
+            setupRoomsChips();
 
             // Note events
             document.getElementById('noteMicBtn').addEventListener('click', startBuyerNoteRecording);
