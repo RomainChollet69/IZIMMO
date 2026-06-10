@@ -45,8 +45,13 @@ du navigateur Chrome connecté.
 ### Fichiers modifiés
 - `app.html`, `js/tab-shell.js`, `vendeurs.html`, `acquereurs.html`
 
+### Expérience 100% cohérente — toutes les rubriques dans le shell (ajout fin de session)
+- Guard `<head>` ajouté aux 8 pages rubriques (`vendeurs`, `acquereurs`, `visites`, `dvf`, `micro`, `social`, `parametres`, `tutoriels`) : en accès direct desktop (hors iframe, hors OAuth) → `location.replace('app.html?open=<page>')`.
+- `tab-shell.js` lit `?open=<page>` au démarrage et ouvre l'onglet correspondant.
+- Résultat : favori, lien direct ou ancienne URL ouvrent désormais le shell sur la bonne rubrique. **Vérifié en live** (`/visites.html` → `app.html?open=visites.html`, onglet Visites actif).
+- Cache-bust `tab-shell.js?v=20260610c`. Mobile et contexte embarqué inchangés.
+
 ### Points d'attention / restant
-- **Accès direct aux pages** (`vendeurs.html`, etc. via favori) affiche encore l'ancienne page plein écran (seul `home.html` redirige vers le shell). Bascule de toutes les rubriques dans le shell = évolution optionnelle proposée, en attente d'arbitrage.
 - Recherche globale de l'Accueil : redirection JS interne non interceptée (navigue l'onglet Accueil au lieu d'ouvrir un onglet) — connu.
 - CSS `.page-actions-bar` désormais inerte dans vendeurs/acquereurs (nettoyage mineur possible).
 

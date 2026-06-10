@@ -1643,5 +1643,5 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - **Permissions iframe** : le micro (`micro.html`) exige `allow="microphone…"` sur l'iframe (sinon bloqué). Vérifié en live (flux audio OK).
 - **Mémoire** : N onglets = N pages chargées simultanément (comportement voulu ; déchargement des onglets inactifs non implémenté).
 - **Cache JS** : `app.html` charge `tab-shell.js` avec `?v=` pour éviter qu'un déploiement serve une version cachée obsolète.
-- **Accès direct** : seul `home.html` redirige vers le shell sur desktop. Taper une URL de rubrique directement affiche encore l'ancienne page plein écran (fallback ; bascule globale en attente d'arbitrage).
+- **Accès direct** : toutes les pages rubriques (+ `home.html`) portent un guard `<head>` qui redirige vers `app.html?open=<page>` en accès direct desktop → le shell s'ouvre sur le bon onglet (le shell lit `?open=`). Expérience cohérente quel que soit le point d'entrée. Mobile et contexte embarqué (iframe) exclus du guard.
 - **Navigations JS internes** non interceptées (interception sur clics de liens uniquement) — ex. recherche globale de l'Accueil.
