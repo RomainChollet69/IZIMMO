@@ -29,7 +29,7 @@
 
         :root {
             --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bar-h: 56px;
+            --bar-h: 50px;
             --ink: #243B53;
         }
 
@@ -40,11 +40,10 @@
             color: var(--ink);
         }
 
-        /* ===== BARRE D'ONGLETS (blanche, façon header Léon + onglets) ===== */
+        /* ===== BARRE D'ONGLETS (foncée, façon barre de navigateur) ===== */
         .shell-bar {
             height: var(--bar-h);
-            background: #FFFFFF;
-            border-bottom: 1px solid #E5E7EB;
+            background: #1f2937;
             display: flex;
             align-items: stretch;
             padding: 0 8px 0 0;
@@ -52,18 +51,23 @@
             z-index: 10;
         }
 
-        /* Logo Léon = clic → active l'onglet Accueil */
+        /* Logo Léon = clic → active l'onglet Accueil.
+           filter brightness(0) invert(1) → rend le logo (bleu marine) BLANC,
+           visible sur la barre foncée, sans nouveau fichier image. */
         .shell-logo {
             display: flex;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 20px 0 18px;
             background: transparent;
             border: none;
-            border-right: 1px solid #EEF1F4;
             cursor: pointer;
             flex-shrink: 0;
         }
-        .shell-logo img { height: 30px; width: auto; }
+        .shell-logo img {
+            height: 26px;
+            width: auto;
+            filter: brightness(0) invert(1);
+        }
 
         /* Bande d'onglets (scroll horizontal si débordement) */
         .shell-tabs {
@@ -81,54 +85,56 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 0 18px;
-            max-width: 220px;
+            padding: 0 14px;
+            max-width: 210px;
             min-width: 120px;
-            background: transparent;
-            color: #6B7280;
+            background: #2b3544;
+            color: #cbd5e1;
             border: none;
-            border-bottom: 3px solid transparent;
+            border-top: 2px solid transparent;
             font-family: 'Inter', sans-serif;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 500;
             cursor: pointer;
             white-space: nowrap;
             transition: background 0.15s, color 0.15s;
-            height: 100%;
+            align-self: flex-end;
+            height: calc(var(--bar-h) - 6px);
+            border-radius: 8px 8px 0 0;
         }
-        .shell-tab:hover { background: #F9FAFB; color: var(--ink); }
+        .shell-tab:hover { background: #34404f; color: #fff; }
         .shell-tab.active {
+            background: #f0f2f5;
             color: var(--ink);
-            font-weight: 600;
-            border-bottom-color: #667eea;
+            border-top-color: #667eea;
         }
-        .shell-tab-ico { font-size: 13px; opacity: 0.9; flex-shrink: 0; }
+        .shell-tab-ico { font-size: 12px; opacity: 0.85; flex-shrink: 0; }
         .shell-tab-label { overflow: hidden; text-overflow: ellipsis; }
         .shell-tab-close {
             margin-left: 2px;
-            font-size: 18px;
+            font-size: 17px;
             line-height: 1;
-            color: #9CA3AF;
+            opacity: 0.5;
             border-radius: 4px;
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
         }
-        .shell-tab-close:hover { color: var(--ink); background: #E5E7EB; }
+        .shell-tab-close:hover { opacity: 1; background: rgba(0,0,0,0.18); }
 
         /* Bouton "+" + menu */
         .shell-plus-wrap { position: relative; display: flex; align-items: center; flex-shrink: 0; }
         .shell-plus-btn {
-            width: 34px; height: 34px;
-            margin: 0 8px;
+            width: 32px; height: 32px;
+            margin: 0 6px;
             border: none;
             border-radius: 8px;
-            background: #F3F4F6;
-            color: #6B7280;
-            font-size: 18px;
+            background: #2b3544;
+            color: #cbd5e1;
+            font-size: 17px;
             cursor: pointer;
             transition: background 0.15s, color 0.15s;
         }
@@ -176,9 +182,9 @@
         }
         .alert-bell {
             position: relative; background: none; border: none;
-            color: #6B7280; font-size: 18px; cursor: pointer; padding: 6px;
+            color: #cbd5e1; font-size: 17px; cursor: pointer; padding: 6px;
         }
-        .alert-bell:hover { color: var(--ink); }
+        .alert-bell:hover { color: #fff; }
         .alert-badge {
             position: absolute; top: 0; right: 0;
             background: #EF4444; color: #fff; font-size: 10px; font-weight: 600;
@@ -192,7 +198,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 13px; font-weight: 600;
         }
-        .user-name { color: #374151; font-weight: 500; font-size: 14px; white-space: nowrap; }
+        .user-name { color: #e2e8f0; font-weight: 500; font-size: 13px; white-space: nowrap; }
         .user-dropdown {
             display: none; position: absolute; top: calc(100% + 10px); right: 0;
             background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
