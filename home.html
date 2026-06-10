@@ -706,8 +706,15 @@
 
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && this.value.trim()) {
-                const query = encodeURIComponent(this.value.trim());
-                window.location.href = 'vendeurs.html?search=' + query;
+                const query = this.value.trim();
+                // Dans le shell desktop : ouvrir/activer l'onglet Vendeurs avec la recherche
+                // (sinon location.href écraserait l'onglet Accueil au lieu d'ouvrir un onglet).
+                const shell = (window.self !== window.top) ? window.parent.LeonShell : null;
+                if (shell) {
+                    shell.open('vendeurs.html', { search: query });
+                } else {
+                    window.location.href = 'vendeurs.html?search=' + encodeURIComponent(query);
+                }
             }
         });
     })();

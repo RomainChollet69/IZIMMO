@@ -55,21 +55,30 @@
     /**
      * Ouvre (ou réactive si déjà ouvert) un onglet pour la page demandée.
      * @param {string} page - nom de fichier (ex: 'vendeurs.html')
+     * @param {Object} [opts] - options. opts.search → ajoute ?search=… (recherche globale).
      */
-    function openTab(page) {
+    function openTab(page, opts) {
+        opts = opts || {};
         if (page === HOME_PAGE) { activateTab('home'); return; }
         if (!PAGES[page]) {
             console.warn('[Shell] Page inconnue, onglet ignoré :', page);
             return;
         }
 
-        // Déjà ouvert → on l'active simplement (pas de doublon).
+        // src réel de l'iframe : page de base + éventuel paramètre de recherche.
+        const src = opts.search ? page + '?search=' + encodeURIComponent(opts.search) : page;
+
+        // Déjà ouvert → on l'active. Si une recherche est fournie, on recharge avec.
         const existing = findTabByPage(page);
-        if (existing) { activateTab(existing.id); return; }
+        if (existing) {
+            if (opts.search) existing.viewEl.src = src;
+            activateTab(existing.id);
+            return;
+        }
 
         const id = 'tab-' + (++tabSeq);
         const meta = PAGES[page];
-        createTab({ id: id, page: page, label: meta.label, icon: meta.icon, closable: true });
+        createTab({ id: id, page: page, src: src, label: meta.label, icon: meta.icon, closable: true });
         activateTab(id);
     }
 
@@ -113,7 +122,8 @@
         // Permissions indispensables : micro (micro.html), géoloc (dvf.html),
         // presse-papier (exports CSV / copie de partages). Même origine sinon non requis.
         iframe.setAttribute('allow', 'microphone; camera; geolocation; clipboard-read; clipboard-write');
-        iframe.src = opts.page;
+        // dataset.page = page de base (identité de l'onglet) ; src peut porter ?search=…
+        iframe.src = opts.src || opts.page;
         iframe.addEventListener('load', function () { onViewLoaded(iframe); });
         viewsContainer.appendChild(iframe);
 
