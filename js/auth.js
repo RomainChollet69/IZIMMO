@@ -15,8 +15,15 @@
     renderUserProfile(session.user);
     renderMobileHeader(session.user);
 
+    // Si header.js injecte le header APRÈS la résolution de getSession (race où
+    // getSession résout avant DOMContentLoaded), les premiers appels ci-dessus
+    // sont des no-op faute de .header → on (re)rend ici dès que le header est prêt.
+    // Sans ça, .m-header n'est jamais inséré et le header desktop déborde sur mobile.
     document.addEventListener('leon:header-ready', () => {
-        if (window._leonSessionUser) renderUserProfile(window._leonSessionUser);
+        if (window._leonSessionUser) {
+            renderUserProfile(window._leonSessionUser);
+            renderMobileHeader(window._leonSessionUser);
+        }
     });
 
     supabaseClient.auth.onAuthStateChange((event, session) => {

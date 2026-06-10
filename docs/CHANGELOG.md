@@ -57,6 +57,37 @@ du navigateur Chrome connecté.
 
 ---
 
+## Session 2026-06-10 — Fix header desktop qui déborde sur mobile (race condition)
+
+### Contexte
+Bug remonté avec capture : sur mobile, le header desktop (`Léon. | Vendeurs | Acquéreurs…`)
+s'affichait en haut de page et débordait horizontalement (« Acquéreurs » tronqué en « Acqu »),
+en plus de la bottom nav mobile.
+
+### Cause racine
+Race condition entre `js/header.js` (injecte le header desktop `.header`) et `js/auth.js`
+(insère le header mobile `.m-header` juste avant `.header`, ce qui masque le desktop via
+`.m-header ~ .header { display:none }` dans `css/mobile.css`).
+
+Dans `auth.js`, `renderMobileHeader()` est appelé après `await getSession()`. Quand la session
+résout **avant** `DOMContentLoaded`, `.header` n'existe pas encore → `renderMobileHeader` sort
+immédiatement (`if (!desktopHeader) return`) → le header mobile n'est jamais inséré → le header
+desktop, injecté ensuite par `header.js`, s'affiche et déborde sur mobile.
+
+Le code rejouait déjà `renderUserProfile` sur l'event `leon:header-ready` mais avait **oublié
+`renderMobileHeader`**.
+
+### Correction
+- `js/auth.js` : ajout de `renderMobileHeader(window._leonSessionUser)` dans le listener
+  `leon:header-ready`. Idempotent grâce au garde `if (document.querySelector('.m-header')) return`
+  → le header mobile est rendu exactement une fois quel que soit l'ordre de résolution.
+  Correctif partagé → s'applique à toutes les pages protégées (acquereurs, vendeurs, dvf, visites…).
+
+### Fichiers modifiés
+- `js/auth.js`
+
+---
+
 ## Session 2026-06-09 — Navigation multi-onglets desktop (shell « façon navigateur »)
 
 ### Contexte
