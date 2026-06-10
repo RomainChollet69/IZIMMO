@@ -189,9 +189,13 @@
         style.id = 'shell-embedded-style';
         // .header (home + header.js), .header-desktop (micro), [data-leon-header] (avant injection)
         // .search-bar-section : sticky calé sur top:64px (ancien header) → 0 ici (header masqué).
+        // .pipeline : hauteur calée sur 100vh-230px (incluait l'ancien header) → recalculée
+        //   pour le shell (header masqué) : il ne reste que la barre de recherche (~86px) au-dessus,
+        //   donc les colonnes descendent jusqu'en bas de l'onglet.
         style.textContent =
             '.header,.header-desktop,[data-leon-header]{display:none!important;}' +
-            '.search-bar-section{top:0!important;}';
+            '.search-bar-section{top:0!important;}' +
+            '.pipeline{height:calc(100vh - 86px)!important;}';
         (doc.head || doc.documentElement).appendChild(style);
     }
 
