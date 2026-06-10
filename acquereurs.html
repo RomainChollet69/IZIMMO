@@ -75,6 +75,7 @@
         }
 
         /* === Search Bar sous le header (desktop) === */
+        /* Barre d'outils en 3 zones : [actions gauche] · [recherche centre] · [Sélectionner/+Lead droite] */
         .search-bar-section {
             background: #FFFFFF;
             border-bottom: 1px solid #F3F4F6;
@@ -85,15 +86,18 @@
             z-index: 999;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 12px;
         }
-        /* Search bar centrée, boutons d'action regroupés à droite */
+        /* Zones gauche (import/export) et droite (sélection/+Lead) */
+        .toolbar-actions,
         .search-bar-actions {
             display: inline-flex;
             align-items: center;
             gap: 8px;
             flex-shrink: 0;
+        }
+        @media (max-width: 768px) {
+            .toolbar-actions { display: none; }
         }
         .search-bar-section .add-btn {
             position: static;
@@ -218,6 +222,7 @@
         .search-bar-section-inner {
             flex: 1 1 600px;
             max-width: 600px;
+            margin: 0 auto;
             position: relative;
             display: flex;
             align-items: center;
@@ -3381,32 +3386,33 @@
     <!-- Header partagé (logo + nav + bell + user) — injecté par js/header.js -->
     <div data-leon-header data-active="acquereurs"></div>
 
-    <!-- Barre d'actions contextuelles propres à la page Acquéreurs -->
-    <section class="page-actions-bar">
-        <button class="import-screenshot-btn" id="importScreenshotBtn" title="Importer depuis capture d'écran">
-            <i class="fa-solid fa-camera"></i> Import
-        </button>
-        <button class="import-screenshot-btn" id="importCsvBtn" title="Importer depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
-            <i class="fa-solid fa-file-csv"></i> CSV
-        </button>
-        <div class="export-wrapper">
-            <button class="export-btn" id="exportBtn">
-                <i class="fa-solid fa-download"></i> Exporter
+    <!-- Barre d'outils Acquéreurs (sous le header) : actions à gauche · recherche au centre · sélection/+Lead à droite -->
+    <div class="search-bar-section">
+        <!-- Zone gauche : import + export -->
+        <div class="toolbar-actions">
+            <button class="import-screenshot-btn" id="importScreenshotBtn" title="Importer depuis capture d'écran">
+                <i class="fa-solid fa-camera"></i> Import
             </button>
-            <div class="export-dropdown" id="exportDropdown">
-                <button class="export-dropdown-item" onclick="exportBuyersCSV()">Exporter tout</button>
-                <div class="export-dropdown-separator"></div>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('nouveau')">Nouveaux Acquéreurs</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('actif')">En Recherche Active</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_avec_moi')">Achetés avec moi</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_ailleurs')">Achetés ailleurs</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('abandon')">Abandon</button>
+            <button class="import-screenshot-btn" id="importCsvBtn" title="Importer depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <div class="export-wrapper">
+                <button class="export-btn" id="exportBtn">
+                    <i class="fa-solid fa-download"></i> Exporter
+                </button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="export-dropdown-item" onclick="exportBuyersCSV()">Exporter tout</button>
+                    <div class="export-dropdown-separator"></div>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('nouveau')">Nouveaux Acquéreurs</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('actif')">En Recherche Active</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_avec_moi')">Achetés avec moi</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('achete_ailleurs')">Achetés ailleurs</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportBuyersCSV('abandon')">Abandon</button>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- Search bar desktop (sous le header) -->
-    <div class="search-bar-section">
+        <!-- Zone centre : recherche -->
         <div class="search-bar-section-inner">
             <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
             <input type="text" id="bottomSearchInput" class="search-input"
@@ -3414,6 +3420,8 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
+
+        <!-- Zone droite : sélection multiple + Lead -->
         <div class="search-bar-actions">
             <button class="select-btn" id="toggleSelectBtn" title="Mode sélection multiple (Esc pour quitter)">
                 <i class="fa-regular fa-square-check"></i>

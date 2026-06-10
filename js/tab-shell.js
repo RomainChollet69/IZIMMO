@@ -188,8 +188,10 @@
         const style = doc.createElement('style');
         style.id = 'shell-embedded-style';
         // .header (home + header.js), .header-desktop (micro), [data-leon-header] (avant injection)
+        // .search-bar-section : sticky calé sur top:64px (ancien header) → 0 ici (header masqué).
         style.textContent =
-            '.header,.header-desktop,[data-leon-header]{display:none!important;}';
+            '.header,.header-desktop,[data-leon-header]{display:none!important;}' +
+            '.search-bar-section{top:0!important;}';
         (doc.head || doc.documentElement).appendChild(style);
     }
 

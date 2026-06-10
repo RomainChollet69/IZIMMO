@@ -79,22 +79,35 @@
         }
 
         /* === Search Bar sous le header (desktop) === */
+        /* Barre d'outils en 3 zones : [actions gauche] · [recherche centre] · [+Lead droite] */
         .search-bar-section {
             background: #FFFFFF;
             border-bottom: 1px solid #F3F4F6;
             padding: 12px 32px;
             margin-bottom: 16px;
             position: sticky;
-            top: 64px; /* Sous le header — sticky crée déjà un contexte pour le bouton absolu */
+            top: 64px;
             z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
-        .search-bar-section .add-btn {
-            position: absolute;
-            left: calc(50% + 360px);
-            top: 50%;
-            transform: translateY(-50%);
+        /* Zone gauche : réglages colonnes + import + export */
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .search-bar-section .add-btn { flex-shrink: 0; }
+        /* Sur mobile, la barre n'expose que la recherche (révélée via .mobile-open) ;
+           actions et +Lead passent par les FAB/menus mobiles (IDs conservés). */
+        @media (max-width: 768px) {
+            .toolbar-actions { display: none; }
+            .search-bar-section .add-btn { display: none; }
         }
         .search-bar-section-inner {
+            flex: 1;
             max-width: 600px;
             margin: 0 auto;
             position: relative;
@@ -563,9 +576,6 @@
         .add-btn:hover {
             background: #F3F4F6;
         }
-        .search-bar-section .add-btn:hover {
-            transform: translateY(-50%); /* Maintenir le centrage vertical au hover */
-        }
 
         /* ===== SEARCH TOOLBAR ===== */
         .search-toolbar {
@@ -688,10 +698,7 @@
 
         /* ===== BOUTON PERSONNALISATION PIPELINE ===== */
         .pipeline-settings-btn {
-            position: absolute;
-            right: calc(50% + 360px);
-            top: 50%;
-            transform: translateY(-50%);
+            position: static;
             width: 40px;
             height: 40px;
             border-radius: 10px;
@@ -4314,36 +4321,38 @@
     <!-- Header partagé (logo + nav + bell + user) — injecté par js/header.js -->
     <div data-leon-header data-active="vendeurs"></div>
 
-    <!-- Barre d'actions contextuelles propres à la page Vendeurs (sous le header) -->
-    <section class="page-actions-bar">
-        <button class="import-screenshot-btn" id="importScreenshotBtn" title="Importer depuis capture d'écran ou texte">
-            <i class="fa-solid fa-camera"></i> Import
-        </button>
-        <button class="export-btn" id="importSellerCsvBtn" title="Importer vendeurs depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
-            <i class="fa-solid fa-file-csv"></i> CSV
-        </button>
-        <div class="export-wrapper">
-            <button class="export-btn" id="exportBtn">
-                <i class="fa-solid fa-download"></i> Exporter
+    <!-- Barre d'outils Vendeurs (sous le header) : actions à gauche · recherche au centre · +Lead à droite -->
+    <div class="search-bar-section">
+        <!-- Zone gauche : réglages colonnes + import + export -->
+        <div class="toolbar-actions">
+            <button class="pipeline-settings-btn" id="pipelineSettingsBtn" title="Personnaliser les colonnes"><i class="fa-solid fa-gear"></i></button>
+            <button class="import-screenshot-btn" id="importScreenshotBtn" title="Importer depuis capture d'écran ou texte">
+                <i class="fa-solid fa-camera"></i> Import
             </button>
-            <div class="export-dropdown" id="exportDropdown">
-                <button class="export-dropdown-item" onclick="exportSellersCSV()">Exporter tout</button>
-                <div class="export-dropdown-separator"></div>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">Leads Chaudes</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">Leads Tièdes</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">Leads Froides</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">Sous Mandats</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">Vendus</button>
-                <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">Perdus</button>
-                <div class="export-dropdown-separator"></div>
-                <button class="export-dropdown-item" onclick="exportVisitsCSV()">Exporter les visites</button>
-                <button class="export-dropdown-item" onclick="exportCommissionsCSV()">Exporter les commissions</button>
+            <button class="export-btn" id="importSellerCsvBtn" title="Importer vendeurs depuis CSV" style="background:#f0fdf4;border-color:#86efac;color:#166534">
+                <i class="fa-solid fa-file-csv"></i> CSV
+            </button>
+            <div class="export-wrapper">
+                <button class="export-btn" id="exportBtn">
+                    <i class="fa-solid fa-download"></i> Exporter
+                </button>
+                <div class="export-dropdown" id="exportDropdown">
+                    <button class="export-dropdown-item" onclick="exportSellersCSV()">Exporter tout</button>
+                    <div class="export-dropdown-separator"></div>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('hot')">Leads Chaudes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('warm')">Leads Tièdes</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('cold')">Leads Froides</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('mandate')">Sous Mandats</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('sold')">Vendus</button>
+                    <button class="export-dropdown-item export-dropdown-sub" onclick="exportSellersCSV('lost')">Perdus</button>
+                    <div class="export-dropdown-separator"></div>
+                    <button class="export-dropdown-item" onclick="exportVisitsCSV()">Exporter les visites</button>
+                    <button class="export-dropdown-item" onclick="exportCommissionsCSV()">Exporter les commissions</button>
+                </div>
             </div>
         </div>
-    </section>
 
-    <!-- Search bar desktop (sous le header) -->
-    <div class="search-bar-section">
+        <!-- Zone centre : recherche -->
         <div class="search-bar-section-inner">
             <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
             <input type="text" id="bottomSearchInput" class="search-input"
@@ -4351,8 +4360,9 @@
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
+
+        <!-- Zone droite : + Lead -->
         <button class="add-btn" id="addLeadBtn">+ Lead</button>
-        <button class="pipeline-settings-btn" id="pipelineSettingsBtn" title="Personnaliser les colonnes"><i class="fa-solid fa-gear"></i></button>
     </div>
 
     <!-- Mobile Tab Bar (card deck) — généré dynamiquement par renderSellerPipeline() -->
