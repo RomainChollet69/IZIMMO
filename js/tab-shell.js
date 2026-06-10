@@ -266,6 +266,14 @@
         // Liens internes cliqués dans la barre du shell elle-même (ex: "Paramètres"
         // du menu profil injecté par auth.js) → ouverts en onglet plutôt qu'en pleine page.
         attachShellLinkInterceptor();
+
+        // Ouverture directe d'une rubrique via ?open=<page> : utilisé quand une page
+        // est atteinte en accès direct sur desktop (favori, ancien lien) et redirige
+        // vers le shell pour s'y ouvrir dans le bon onglet.
+        try {
+            const toOpen = new URLSearchParams(window.location.search).get('open');
+            if (toOpen && PAGES[toOpen]) openTab(toOpen);
+        } catch (e) { /* paramètre absent ou invalide → on reste sur l'Accueil */ }
     }
 
     /** Intercepte aussi les liens internes du shell (hors iframes). */

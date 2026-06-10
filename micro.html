@@ -8,6 +8,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Desktop : ouvre cette rubrique dans le shell multi-onglets (app.html).
+         Skip si déjà embarqué dans le shell (iframe) ou pendant un callback OAuth.
+         (Sur mobile, micro.html reste le point d'entrée — guard inactif car non-desktop.) -->
+    <script>
+        (function () {
+            var topLevel = window.self === window.top;
+            var desktop = window.innerWidth > 768;
+            var oauth = /access_token|refresh_token|[?&]code=/.test(location.hash + location.search);
+            if (topLevel && desktop && !oauth) location.replace('app.html?open=micro.html');
+        })();
+    </script>
     <meta name="robots" content="noindex, nofollow">
     <title>Léon. — Vocal</title>
     <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">

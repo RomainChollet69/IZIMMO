@@ -9,6 +9,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Desktop : ouvre cette rubrique dans le shell multi-onglets (app.html).
+         Skip si déjà embarqué dans le shell (iframe) ou pendant un callback OAuth. -->
+    <script>
+        (function () {
+            var topLevel = window.self === window.top;
+            var desktop = window.innerWidth > 768;
+            var oauth = /access_token|refresh_token|[?&]code=/.test(location.hash + location.search);
+            if (topLevel && desktop && !oauth) location.replace('app.html?open=tutoriels.html');
+        })();
+    </script>
     <meta name="robots" content="noindex, nofollow">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
