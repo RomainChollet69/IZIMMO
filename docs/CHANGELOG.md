@@ -4,6 +4,54 @@
 
 ---
 
+## Session 2026-06-10 — Shell multi-onglets : finitions design + correctifs (vérifié en live)
+
+### Contexte
+Suite de la session 2026-06-09 (création du shell `app.html`). Itérations design avec
+l'utilisateur, puis **vérification en direct** sur la prod (`avecleon.fr`) via pilotage
+du navigateur Chrome connecté.
+
+### Décisions de design (validées avec l'utilisateur)
+- **Barre du shell foncée** (`#1f2937`, façon barre de navigateur, comme cadastre.com) — préférée à la version blanche testée puis abandonnée.
+- **Logo Léon affiché en blanc** via `filter: brightness(0) invert(1)` (le logo source est bleu marine, invisible sur fond foncé) — pas de nouveau fichier image.
+- **Bouton `+` juste après les onglets** (et non collé à droite) : structure logo · onglets · `+` · [espace flexible] · cloche · profil. Le `+` devient l'accès direct à toute rubrique depuis n'importe quel onglet → plus besoin de repasser par l'Accueil.
+
+### Modifications
+#### Barre du shell (`app.html`)
+- Refonte CSS : barre foncée, logo blanc, onglets foncés à coin arrondi (actif = fond clair + liseré violet), `+` repositionné via un `.shell-spacer` flexible.
+
+#### Refonte barre d'outils pipelines (`vendeurs.html`, `acquereurs.html`)
+- Fusion de la barre Import/CSV/Exporter (qui flottait seule en haut à droite) avec la barre de recherche → **barre unique à 3 zones** : `[⚙ Import CSV Exporter]` à gauche · `[recherche]` au centre · `[+Lead / Sélectionner]` à droite.
+- Suppression des hacks de positionnement absolu (`left/right: calc(50% + 360px)`), passage en flexbox propre. `.page-actions-bar` retiré du HTML (CSS résiduel inerte).
+- IDs préservés (vérifié) → FAB mobiles et JS intacts.
+
+#### Correctifs shell (injection embarquée dans `js/tab-shell.js`)
+- `.search-bar-section{top:0}` : la barre sticky était calée sur `top:64px` (ancien header masqué dans le shell) → 0.
+- `.pipeline{height:calc(100vh - 88px)}` : la hauteur était `100vh - 230px` (incluait l'ancien header + barre actions, absents du shell) → **les colonnes descendent maintenant jusqu'en bas** (valeur 88px = `pipeTop` mesuré en live, gap résiduel 1px).
+- Permissions iframe `allow="microphone; camera; geolocation; clipboard-read; clipboard-write"` (indispensable pour le micro de `micro.html`).
+- **Cache-bust** `?v=` sur `tab-shell.js` dans `app.html` (un déploiement Vercel servait encore l'ancien JS → fix invisible le temps de la propagation).
+
+### Vérifications en direct (prod, session réelle)
+| Élément | État |
+|---|---|
+| Colonnes pipeline jusqu'en bas | ✅ (mesuré : pipeBottom = hauteur iframe, gap 1px) |
+| Logo blanc visible sur barre foncée | ✅ |
+| `+` juste après les onglets | ✅ |
+| Barre d'outils 3 zones | ✅ |
+| Ouverture onglets (tuiles + `+`) | ✅ |
+| **Micro** dans un onglet | ✅ (flux audio réel obtenu puis coupé — `permissionState: granted`) |
+| **Export CSV** dans un onglet | ✅ (blob CSV rempli + téléchargement déclenché, intercepté pour ne rien écrire sur disque) |
+
+### Fichiers modifiés
+- `app.html`, `js/tab-shell.js`, `vendeurs.html`, `acquereurs.html`
+
+### Points d'attention / restant
+- **Accès direct aux pages** (`vendeurs.html`, etc. via favori) affiche encore l'ancienne page plein écran (seul `home.html` redirige vers le shell). Bascule de toutes les rubriques dans le shell = évolution optionnelle proposée, en attente d'arbitrage.
+- Recherche globale de l'Accueil : redirection JS interne non interceptée (navigue l'onglet Accueil au lieu d'ouvrir un onglet) — connu.
+- CSS `.page-actions-bar` désormais inerte dans vendeurs/acquereurs (nettoyage mineur possible).
+
+---
+
 ## Session 2026-06-09 — Navigation multi-onglets desktop (shell « façon navigateur »)
 
 ### Contexte

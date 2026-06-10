@@ -10,7 +10,8 @@
 IZIMMO/
 │
 ├── CLAUDE.md                   # Règles de comportement Claude Code
-├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée (accessible mobile, plus de redirect vers micro)
+├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée (accessible mobile ; sur desktop redirige vers app.html)
+├── app.html                    # 🖥️ Shell desktop multi-onglets — barre foncée (logo + onglets + "+") qui charge chaque rubrique dans un <iframe> vivant (façon navigateur). Point d'entrée desktop. Mobile → redirige vers home.html
 ├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes personnalisables + Card Deck mobile + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
@@ -39,6 +40,7 @@ IZIMMO/
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
 │   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
+│   ├── tab-shell.js            # Moteur d'onglets du shell desktop (app.html) — open/activate/close, iframes vivants, injection "mode embarqué" (masque header interne, intercepte liens, recale pipeline/sticky), menu du bouton "+"
 │   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
 │   ├── pipeline-config.js      # Personnalisation colonnes pipeline (renommer, masquer, réordonner, sous-titres, 3 colonnes custom) — Supabase JSONB
 │   └── maps-config.js          # Clé API Google Maps

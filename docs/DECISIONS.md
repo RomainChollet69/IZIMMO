@@ -1615,3 +1615,33 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Tout endpoint serveur qui aurait utilisé la clé anon (au lieu du service_role) pour lire/écrire `buyers` ou `sellers` casse. Audit grep effectué avant migration → aucun cas trouvé.
 - Une éventuelle page publique de partage de fiche vendeur (non implémentée à date) nécessitera un endpoint API dédié en service_role plutôt qu'un accès direct anon.
 - Les autres tables sensibles (`profiles`, `oauth_states`) gardent leurs anciennes policies — à durcir séparément si besoin (oauth_states est volontairement permissif pour service_role, pas critique).
+
+---
+
+## D075 — Navigation desktop multi-onglets : shell + iframes (pas de SPA)
+
+**Date** : 2026-06-10
+**Statut** : Actif
+
+**Contexte** : Demande utilisateur — naviguer entre les rubriques (Vendeurs, Acquéreurs, Visites…) « comme un navigateur » : chaque page dans un onglet qui reste vivant, l'Accueil toujours accessible, sans recharger ni perdre l'état (référence citée : cadastre.com). Desktop uniquement.
+
+**Décision** : Créer un **shell** (`app.html` + `js/tab-shell.js`) qui héberge une barre d'onglets et charge chaque rubrique dans un `<iframe>`. Les onglets inactifs sont masqués (`display:none`) mais restent vivants → état conservé. Les pages métier ne sont **pas modifiées** : le shell, étant sur la même origine, accède au `contentDocument` de chaque iframe pour masquer le header interne et intercepter les liens.
+
+**Pourquoi** :
+- **Zéro réécriture des pages** : `vendeurs.html`, `acquereurs.html`, etc. fonctionnent telles quelles dans l'iframe. Compatible avec la stack vanilla (D001) sans introduire de framework/routeur.
+- **État conservé gratuitement** : masquer/afficher un iframe préserve scroll, filtres, formulaires — impossible à obtenir simplement avec une navigation pleine page.
+- **Réversible** : supprimer 2 fichiers + 1 redirection annule la feature.
+- **Auth partagée** : la session Supabase (localStorage, même origine) est commune à tous les iframes → pas de re-login par onglet.
+
+**Alternatives rejetées** :
+- **Refonte SPA** (React/Vue ou routeur maison) : contraire à D001, réécriture massive, perte de l'isolation naturelle entre pages.
+- **Navigation pleine page classique** : perd l'état à chaque changement de rubrique (le problème à résoudre).
+- **Barre du shell blanche** : testée puis abandonnée — l'utilisateur préfère la barre foncée façon navigateur. Logo rendu blanc via `filter: brightness(0) invert(1)` plutôt qu'un asset dédié.
+
+**Conséquences** :
+- **Calages dépendants de l'ancien header** : plusieurs pages ont des hauteurs/sticky calés sur le header (64px) désormais masqué dans le shell → corrigés par injection CSS embarquée (`.pipeline` height, `.search-bar-section` top). Tout nouveau composant calé sur `100vh - <header>` devra être vérifié dans le shell.
+- **Permissions iframe** : le micro (`micro.html`) exige `allow="microphone…"` sur l'iframe (sinon bloqué). Vérifié en live (flux audio OK).
+- **Mémoire** : N onglets = N pages chargées simultanément (comportement voulu ; déchargement des onglets inactifs non implémenté).
+- **Cache JS** : `app.html` charge `tab-shell.js` avec `?v=` pour éviter qu'un déploiement serve une version cachée obsolète.
+- **Accès direct** : seul `home.html` redirige vers le shell sur desktop. Taper une URL de rubrique directement affiche encore l'ancienne page plein écran (fallback ; bascule globale en attente d'arbitrage).
+- **Navigations JS internes** non interceptées (interception sur clics de liens uniquement) — ex. recherche globale de l'Accueil.
