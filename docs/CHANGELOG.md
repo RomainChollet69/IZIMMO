@@ -94,11 +94,36 @@ Correctif partagé → s'applique à toutes les pages protégées (acquereurs, v
 - `js/auth.js`
 - `css/mobile.css`
 
+### Cause profonde confirmée (analyse DOM/CSS complète)
+Le CSS legacy `@media (max-width:768px) { .header { display:grid … } }` (≈ ligne 2354
+d'`acquereurs.html`) ciblait l'**ancienne** structure DOM où `.logo`, `.nav-tabs` étaient
+enfants directs de `.header`. Le `header.js` actuel enveloppe tout dans `.header-inner`
+(un flex row) → le `display:grid` ne s'applique qu'à `.header-inner` (seul grid-item),
+qui reste un flex row plus large que l'écran → débordement coupé à droite, sans scroll
+possible (`body { overflow:hidden }`). D'où un header « fixe, coupé à droite ».
+→ La seule bonne réponse est de masquer `.header` sur mobile (fait dans `css/mobile.css`).
+
+### Cache (raison pour laquelle le fix « ne se voyait pas »)
+`vercel.json` posait un header `Cache-Control` sur `/(.*).html` et `/js/(.*)` mais **pas sur
+`/css/(.*)`** → `css/mobile.css` était mis en cache agressivement, donc l'ancien CSS persistait
+même après déploiement. Corrigé :
+- `vercel.json` : ajout d'un header `no-cache, must-revalidate` sur `/css/(.*)`.
+- Les 10 pages : lien `css/mobile.css` → `css/mobile.css?v=260610` (force le refetch).
+
+### ⚠️ Déploiement requis
+Ces correctifs sont sur la branche `claude/mobile-headers-issue-jst01g`. Tant qu'ils ne sont
+pas **mergés sur `main` et redéployés** sur avecleon.fr, le site live reste inchangé.
+Après déploiement, faire un **hard refresh** (ou recharger l'app) pour purger l'ancien cache.
+
 ### Point d'attention / dette technique
-- `acquereurs.html` (et probablement d'autres pages) conservent un ancien bloc
-  `@media (max-width:768px) { .header { display:grid … } }` (≈ ligne 2354) destiné à
-  l'ancien header mobile. Il est maintenant neutralisé par `display:none !important`, donc
-  inoffensif, mais devrait être nettoyé lors d'un passage de fond sur le CSS mobile.
+- Le bloc legacy `@media (max-width:768px) { .header { … } }` (≈ ligne 2354) est désormais
+  neutralisé (`display:none !important`) donc inoffensif, mais devrait être nettoyé lors d'un
+  passage de fond sur le CSS mobile.
+
+### Fichiers modifiés (cache)
+- `vercel.json`
+- `acquereurs.html`, `dvf.html`, `etude-marche.html`, `home.html`, `micro.html`,
+  `parametres.html`, `social.html`, `tutoriels.html`, `vendeurs.html`, `visites.html`
 
 ---
 
