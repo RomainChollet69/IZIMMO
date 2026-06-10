@@ -57,6 +57,76 @@ du navigateur Chrome connecté.
 
 ---
 
+## Session 2026-06-10 — Fix header desktop qui déborde sur mobile (race condition)
+
+### Contexte
+Bug remonté avec capture : sur mobile, le header desktop (`Léon. | Vendeurs | Acquéreurs…`)
+s'affichait en haut de page et débordait horizontalement (« Acquéreurs » tronqué en « Acqu »),
+en plus de la bottom nav mobile.
+
+### Cause racine
+Race condition entre `js/header.js` (injecte le header desktop `.header`) et `js/auth.js`
+(insère le header mobile `.m-header` juste avant `.header`, ce qui masque le desktop via
+`.m-header ~ .header { display:none }` dans `css/mobile.css`).
+
+Dans `auth.js`, `renderMobileHeader()` est appelé après `await getSession()`. Quand la session
+résout **avant** `DOMContentLoaded`, `.header` n'existe pas encore → `renderMobileHeader` sort
+immédiatement (`if (!desktopHeader) return`) → le header mobile n'est jamais inséré → le header
+desktop, injecté ensuite par `header.js`, s'affiche et déborde sur mobile.
+
+Le code rejouait déjà `renderUserProfile` sur l'event `leon:header-ready` mais avait **oublié
+`renderMobileHeader`**.
+
+### Correction (2 niveaux — ceinture + bretelles)
+1. `js/auth.js` : ajout de `renderMobileHeader(window._leonSessionUser)` dans le listener
+   `leon:header-ready`. Idempotent grâce au garde `if (document.querySelector('.m-header')) return`
+   → le header mobile est rendu exactement une fois quel que soit l'ordre de résolution.
+2. `css/mobile.css` : le header desktop `.header` / `.header-desktop` est désormais masqué
+   **inconditionnellement** sur mobile (≤768px), et plus seulement via `.m-header ~ .header`.
+   Ainsi, même si `.m-header` est injecté tardivement ou échoue, le header desktop ne peut
+   plus déborder. Vérifié : les 10 pages qui chargent `mobile.css` chargent toutes `auth.js`
+   et injectent `.m-header` → aucune page publique impactée, le header mobile reste visible
+   (`.m-header` ≠ `.header`).
+
+Correctif partagé → s'applique à toutes les pages protégées (acquereurs, vendeurs, dvf, visites…).
+
+### Fichiers modifiés
+- `js/auth.js`
+- `css/mobile.css`
+
+### Cause profonde confirmée (analyse DOM/CSS complète)
+Le CSS legacy `@media (max-width:768px) { .header { display:grid … } }` (≈ ligne 2354
+d'`acquereurs.html`) ciblait l'**ancienne** structure DOM où `.logo`, `.nav-tabs` étaient
+enfants directs de `.header`. Le `header.js` actuel enveloppe tout dans `.header-inner`
+(un flex row) → le `display:grid` ne s'applique qu'à `.header-inner` (seul grid-item),
+qui reste un flex row plus large que l'écran → débordement coupé à droite, sans scroll
+possible (`body { overflow:hidden }`). D'où un header « fixe, coupé à droite ».
+→ La seule bonne réponse est de masquer `.header` sur mobile (fait dans `css/mobile.css`).
+
+### Cache (raison pour laquelle le fix « ne se voyait pas »)
+`vercel.json` posait un header `Cache-Control` sur `/(.*).html` et `/js/(.*)` mais **pas sur
+`/css/(.*)`** → `css/mobile.css` était mis en cache agressivement, donc l'ancien CSS persistait
+même après déploiement. Corrigé :
+- `vercel.json` : ajout d'un header `no-cache, must-revalidate` sur `/css/(.*)`.
+- Les 10 pages : lien `css/mobile.css` → `css/mobile.css?v=260610` (force le refetch).
+
+### ⚠️ Déploiement requis
+Ces correctifs sont sur la branche `claude/mobile-headers-issue-jst01g`. Tant qu'ils ne sont
+pas **mergés sur `main` et redéployés** sur avecleon.fr, le site live reste inchangé.
+Après déploiement, faire un **hard refresh** (ou recharger l'app) pour purger l'ancien cache.
+
+### Point d'attention / dette technique
+- Le bloc legacy `@media (max-width:768px) { .header { … } }` (≈ ligne 2354) est désormais
+  neutralisé (`display:none !important`) donc inoffensif, mais devrait être nettoyé lors d'un
+  passage de fond sur le CSS mobile.
+
+### Fichiers modifiés (cache)
+- `vercel.json`
+- `acquereurs.html`, `dvf.html`, `etude-marche.html`, `home.html`, `micro.html`,
+  `parametres.html`, `social.html`, `tutoriels.html`, `vendeurs.html`, `visites.html`
+
+---
+
 ## Session 2026-06-09 — Navigation multi-onglets desktop (shell « façon navigateur »)
 
 ### Contexte
