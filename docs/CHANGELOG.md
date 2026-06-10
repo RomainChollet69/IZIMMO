@@ -4,6 +4,30 @@
 
 ---
 
+## Session 2026-06-10 (suite) — Optimisations UX (audit live + implémentation)
+
+### Contexte
+Après audit visuel des 9 rubriques dans le shell (en live), implémentation de 4 optimisations choisies par l'utilisateur. **Vérifié en direct sur la prod.**
+
+### Découvertes de l'audit (prémisses corrigées avant de coder)
+- La pastille « 🎯 N » verte sur les cartes = **nombre d'acquéreurs qui matchent** (`.match-indicator`), pas une relance. Signal positif déjà vert → rien à changer.
+- Le code couleur des relances (rouge en retard / jaune sous 3j / vert à venir) **existait déjà**, mais Vendeurs ne l'affichait qu'en carte dépliée — alors qu'**Acquéreurs le surfaçait déjà en compact**. Donc incohérence à corriger, pas code couleur à créer.
+- Carte DVF « grise » = **pas un bug** (Maps charge, 77 tuiles) — juste un délai + un centre par défaut sur Paris.
+
+### Modifications
+- **Shell (`tab-shell.js`)** : masque le FAB micro flottant `.bottom-micro-btn` (doublon avec l'onglet Vocal / le `+`). To Do conservé. Cache-bust `?v=20260610d`.
+- **Vendeurs (`vendeurs.html`)** : relances en retard / aujourd'hui affichées en vue compacte (`followupCompact`) → urgence visible sans déplier (parité avec Acquéreurs). Pas de doublon en vue étendue.
+- **DVF (`dvf.html`)** : centre par défaut Paris → **Lyon** (45.7640, 4.8357), secteur des utilisateurs (reste un fallback si géoloc refusée).
+- **Largeurs (`home.html`, `tutoriels.html`)** : conteneurs 960/900 → **1100px**. Formulaires (Paramètres) et carte vocale (Micro) laissés étroits volontairement.
+
+### Vérifications en direct
+FAB micro masqué ✅ · 9 relances en retard visibles en compact ✅ · carte DVF centrée Lyon (Caluire/Écully/Villeurbanne) ✅
+
+### Conseils d'audit NON retenus (mémo)
+Recherche/commande globale Cmd+K (gros chantier), restauration d'onglets, enrichissement desktop de l'Assistant vocal, calendrier Community 7j, remplissage Tutoriels.
+
+---
+
 ## Session 2026-06-10 — Shell multi-onglets : finitions design + correctifs (vérifié en live)
 
 ### Contexte
