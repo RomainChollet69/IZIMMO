@@ -195,7 +195,7 @@
         style.textContent =
             '.header,.header-desktop,[data-leon-header]{display:none!important;}' +
             '.search-bar-section{top:0!important;}' +
-            '.pipeline{height:calc(100vh - 86px)!important;}';
+            '.pipeline{height:calc(100vh - 88px)!important;}';
         (doc.head || doc.documentElement).appendChild(style);
     }
 
