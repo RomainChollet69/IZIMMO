@@ -215,9 +215,13 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Masquer le header desktop quand .m-header est présent */
-.m-header ~ .header,
-.m-header ~ .header-desktop {
+/* Masquer le header desktop sur mobile.
+   Il est TOUJOURS remplacé par .m-header (injecté par auth.js sur chaque page
+   protégée). On le masque inconditionnellement — et plus seulement via
+   `.m-header ~ .header` — pour éviter tout débordement horizontal si .m-header
+   est injecté tardivement (race avec header.js) ou échoue. */
+.header,
+.header-desktop {
     display: none !important;
 }
 

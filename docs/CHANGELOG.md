@@ -77,14 +77,28 @@ desktop, injecté ensuite par `header.js`, s'affiche et déborde sur mobile.
 Le code rejouait déjà `renderUserProfile` sur l'event `leon:header-ready` mais avait **oublié
 `renderMobileHeader`**.
 
-### Correction
-- `js/auth.js` : ajout de `renderMobileHeader(window._leonSessionUser)` dans le listener
-  `leon:header-ready`. Idempotent grâce au garde `if (document.querySelector('.m-header')) return`
-  → le header mobile est rendu exactement une fois quel que soit l'ordre de résolution.
-  Correctif partagé → s'applique à toutes les pages protégées (acquereurs, vendeurs, dvf, visites…).
+### Correction (2 niveaux — ceinture + bretelles)
+1. `js/auth.js` : ajout de `renderMobileHeader(window._leonSessionUser)` dans le listener
+   `leon:header-ready`. Idempotent grâce au garde `if (document.querySelector('.m-header')) return`
+   → le header mobile est rendu exactement une fois quel que soit l'ordre de résolution.
+2. `css/mobile.css` : le header desktop `.header` / `.header-desktop` est désormais masqué
+   **inconditionnellement** sur mobile (≤768px), et plus seulement via `.m-header ~ .header`.
+   Ainsi, même si `.m-header` est injecté tardivement ou échoue, le header desktop ne peut
+   plus déborder. Vérifié : les 10 pages qui chargent `mobile.css` chargent toutes `auth.js`
+   et injectent `.m-header` → aucune page publique impactée, le header mobile reste visible
+   (`.m-header` ≠ `.header`).
+
+Correctif partagé → s'applique à toutes les pages protégées (acquereurs, vendeurs, dvf, visites…).
 
 ### Fichiers modifiés
 - `js/auth.js`
+- `css/mobile.css`
+
+### Point d'attention / dette technique
+- `acquereurs.html` (et probablement d'autres pages) conservent un ancien bloc
+  `@media (max-width:768px) { .header { display:grid … } }` (≈ ligne 2354) destiné à
+  l'ancien header mobile. Il est maintenant neutralisé par `display:none !important`, donc
+  inoffensif, mais devrait être nettoyé lors d'un passage de fond sur le CSS mobile.
 
 ---
 
