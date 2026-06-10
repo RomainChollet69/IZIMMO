@@ -192,10 +192,13 @@
         // .pipeline : hauteur calée sur 100vh-230px (incluait l'ancien header) → recalculée
         //   pour le shell (header masqué) : il ne reste que la barre de recherche (~86px) au-dessus,
         //   donc les colonnes descendent jusqu'en bas de l'onglet.
+        // .bottom-micro-btn : FAB micro flottant masqué dans le shell (doublon avec
+        //   l'onglet « Assistant vocal » / le « + »). Le bouton To Do reste.
         style.textContent =
             '.header,.header-desktop,[data-leon-header]{display:none!important;}' +
             '.search-bar-section{top:0!important;}' +
-            '.pipeline{height:calc(100vh - 88px)!important;}';
+            '.pipeline{height:calc(100vh - 88px)!important;}' +
+            '.bottom-micro-btn{display:none!important;}';
         (doc.head || doc.documentElement).appendChild(style);
     }
 

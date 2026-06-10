@@ -8513,8 +8513,11 @@
             card.draggable = true;
             card.dataset.id = seller.id;
 
-            // Relance (toujours en vue étendue, jamais en compact)
+            // Relance : badge couleur (vert à venir / jaune sous 3j / rouge en retard).
+            // Les relances URGENTES (en retard ou aujourd'hui) sont aussi affichées en vue
+            // compacte pour repérage immédiat sans déplier la carte (parité avec acquéreurs).
             let followupFull = '';
+            let followupCompact = '';
             let showAlert = false;
             if (seller.reminder) {
                 const today = new Date(); today.setHours(0,0,0,0);
@@ -8525,6 +8528,7 @@
                 else if (diff === 0) { followupFull = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; showAlert = true; }
                 else if (diff <= 3) { followupFull = `<div class="card-followup followup-due">📅 Relance ${fmt}</div>`; }
                 else { followupFull = `<div class="card-followup followup-ok">📅 Relance ${fmt}</div>`; }
+                if (showAlert) followupCompact = followupFull;
             }
 
             // Property summary line for compact
@@ -8551,6 +8555,7 @@
                 compact += `<div class="card-info"><a href="tel:${escapeHtml(seller.phone)}" class="phone-link" style="color:inherit;text-decoration:none">📞 ${escapeHtml(seller.phone)}</a></div>`;
             }
             if (seller.status === 'off_market') compact += `<div class="off-market-badge">🔒 Off Market</div>`;
+            if (followupCompact) compact += followupCompact; // relance urgente visible sans déplier
             compact += '</div>';
 
             // === EXTENDED VIEW (extra info only, no duplicates) ===
@@ -8598,7 +8603,7 @@
             }
 
             // Relance
-            ext += followupFull;
+            if (!followupCompact) ext += followupFull; // évite le doublon si déjà en compact
 
             // Actions
             ext += `<div class="card-actions">
