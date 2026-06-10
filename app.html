@@ -69,17 +69,23 @@
             filter: brightness(0) invert(1);
         }
 
-        /* Bande d'onglets (scroll horizontal si débordement) */
+        /* Bande d'onglets : largeur naturelle, scroll horizontal si débordement.
+           flex 0 1 auto + min-width 0 → ne pousse pas le "+" à droite, mais peut
+           rétrécir/scroller si beaucoup d'onglets. */
         .shell-tabs {
             display: flex;
             align-items: stretch;
             gap: 2px;
-            flex: 1;
+            flex: 0 1 auto;
+            min-width: 0;
             overflow-x: auto;
             overflow-y: hidden;
             scrollbar-width: none;
         }
         .shell-tabs::-webkit-scrollbar { display: none; }
+
+        /* Espace flexible entre le "+" et la zone droite */
+        .shell-spacer { flex: 1 1 auto; }
 
         .shell-tab {
             display: flex;
@@ -242,11 +248,14 @@
         <!-- Onglets ouverts (rendus par tab-shell.js) -->
         <div class="shell-tabs" id="shellTabs"></div>
 
-        <!-- Bouton "+" : ouvrir une rubrique -->
+        <!-- Bouton "+" : ouvrir une rubrique (juste après les onglets) -->
         <div class="shell-plus-wrap">
             <button type="button" class="shell-plus-btn" id="shellPlusBtn" title="Ouvrir une rubrique">+</button>
             <div class="shell-plus-menu" id="shellPlusMenu"></div>
         </div>
+
+        <!-- Espace flexible : pousse cloche/profil à l'extrême droite -->
+        <div class="shell-spacer"></div>
 
         <!-- Zone droite : cloche relances + profil utilisateur (auth.js) -->
         <div class="shell-right">
