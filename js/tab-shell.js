@@ -65,13 +65,18 @@
             return;
         }
 
-        // src réel de l'iframe : page de base + éventuel paramètre de recherche.
-        const src = opts.search ? page + '?search=' + encodeURIComponent(opts.search) : page;
+        // src réel de l'iframe : URL complète fournie (opts.src, ex: une fiche acquéreur
+        // ouverte depuis une action Léon), sinon page de base + éventuel ?search=.
+        const src = opts.src ? opts.src
+                  : opts.search ? page + '?search=' + encodeURIComponent(opts.search)
+                  : page;
 
-        // Déjà ouvert → on l'active. Si une recherche est fournie, on recharge avec.
+        // Déjà ouvert → on l'active. Si une URL/recherche précise est fournie, on y navigue.
         const existing = findTabByPage(page);
         if (existing) {
-            if (opts.search) existing.viewEl.src = src;
+            if ((opts.src || opts.search) && existing.viewEl.getAttribute('src') !== src) {
+                existing.viewEl.src = src;
+            }
             activateTab(existing.id);
             return;
         }
@@ -169,6 +174,23 @@
      * et branche l'interception des liens. Même origine → accès direct au contentDocument.
      */
     function onViewLoaded(iframe) {
+        const win = iframe.contentWindow;
+
+        // Réconciliation : si l'iframe a navigué par JS (ex: action de l'assistant Léon ou
+        // recherche globale qui font `location.href = 'acquereurs.html?...'`, non interceptées
+        // car ce ne sont pas des clics de lien) vers une AUTRE rubrique que la sienne, on remet
+        // cet onglet sur sa page d'origine et on ouvre la rubrique réellement demandée dans son
+        // propre onglet — en conservant l'éventuelle fiche en paramètre (?buyer=…, #…).
+        let actualPage = null;
+        try { actualPage = win.location.pathname.split('/').pop() || HOME_PAGE; } catch (e) { /* cross-origin */ }
+        if (actualPage && actualPage !== iframe.dataset.page &&
+            (actualPage === HOME_PAGE || PAGES[actualPage])) {
+            const fullUrl = actualPage + win.location.search + win.location.hash;
+            iframe.src = iframe.dataset.page;          // restaure l'onglet sur sa page d'origine
+            openTab(actualPage, { src: fullUrl });     // ouvre/active la bonne rubrique (+ fiche)
+            return;
+        }
+
         let doc;
         try {
             doc = iframe.contentDocument;
@@ -221,7 +243,9 @@
             if (page !== HOME_PAGE && !PAGES[page]) return;
 
             e.preventDefault();
-            openTab(page);
+            // On conserve l'URL complète (query/hash) pour ouvrir une fiche précise si besoin.
+            const src = (a.getAttribute('href') || page).replace(/^\.?\//, '');
+            openTab(page, { src: src });
         }, true);
     }
 
