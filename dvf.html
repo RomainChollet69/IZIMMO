@@ -3558,8 +3558,9 @@
             btn.classList.toggle('active', dvfLayerActive);
             btn.innerHTML = dvfLayerActive ? '<i class="fa-solid fa-euro-sign"></i> DVF ✓' : '<i class="fa-solid fa-euro-sign"></i> DVF';
 
-            // Afficher/masquer marqueurs DVF + légende
-            markers.forEach(m => m.setMap(dvfLayerActive ? map : null));
+            // Affichage carte des ventes = PARCELLES cyan (via "Voir les ventes"), jamais les ronds.
+            // (renderSaleParcels ne dessine que si saleMarkersVisible est actif.)
+            if (dvfLayerActive) { renderSaleParcels(); } else { clearSaleParcels(); }
             document.getElementById('legendDVF').style.display = dvfLayerActive ? '' : 'none';
 
             // Afficher/masquer stats, filtres, liste
