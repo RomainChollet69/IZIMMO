@@ -1218,6 +1218,50 @@
             font-size: 13px;
         }
 
+        /* Panneau latéral "Historique des ventes" de la parcelle cliquée (façon cadastre.com) */
+        .parcel-panel {
+            position: absolute;
+            top: 56px;
+            right: 10px;
+            width: 320px;
+            max-height: calc(100% - 70px);
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            z-index: var(--z-map-controls);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            animation: parcelPanelIn 0.18s ease;
+        }
+        @keyframes parcelPanelIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+        .parcel-panel.open { display: flex; }
+        .parcel-panel-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid #F1F5F9;
+        }
+        .parcel-panel-title {
+            font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 800;
+            font-size: 18px; color: #243B53; line-height: 1.1;
+        }
+        .parcel-panel-sub { font-size: 11px; color: #9CA3AF; margin-top: 3px; }
+        .parcel-panel-close {
+            border: none; background: #F3F4F6; color: #64748B;
+            width: 28px; height: 28px; border-radius: 8px; font-size: 20px; line-height: 1;
+            cursor: pointer; flex-shrink: 0;
+        }
+        .parcel-panel-close:hover { background: #E5E7EB; color: #243B53; }
+        .parcel-panel-body { padding: 4px 16px 16px; overflow-y: auto; }
+        .parcel-sale-row {
+            border-top: 1px solid #F1F5F9; padding: 9px 0;
+            display: flex; justify-content: space-between; gap: 12px;
+        }
+        .parcel-sale-row:first-child { border-top: none; }
+        @media (max-width: 768px) {
+            .parcel-panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 10px; max-height: 45%; }
+        }
+
         /* InfoWindow Google Maps — overrides pour affichage complet */
         .gm-style-iw-c { padding: 0 !important; max-width: 340px !important; max-height: none !important; }
         .gm-style-iw-ch { padding-top: 0 !important; max-height: none !important; }
@@ -1841,6 +1885,18 @@
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
             <div id="map"></div>
+
+            <!-- Panneau latéral : historique des ventes de la parcelle cliquée (façon cadastre.com) -->
+            <div class="parcel-panel" id="parcelPanel">
+                <div class="parcel-panel-header">
+                    <div>
+                        <div class="parcel-panel-title" id="parcelPanelTitle">Parcelle</div>
+                        <div class="parcel-panel-sub" id="parcelPanelSub">Historique des ventes • DVF</div>
+                    </div>
+                    <button class="parcel-panel-close" id="parcelPanelClose" aria-label="Fermer">&times;</button>
+                </div>
+                <div class="parcel-panel-body" id="parcelPanelBody"></div>
+            </div>
 
             <!-- Panneau de sélection (étude de marché) -->
             <div class="selection-panel" id="selectionPanel">
@@ -3420,35 +3476,41 @@
                 google.maps.geometry.poly.containsLocation(new google.maps.LatLng(s.lat, s.lng), parcelHighlight));
             inParcel.sort((a, b) => String(b.date_mutation || '').localeCompare(String(a.date_mutation || '')));
 
-            const p = parcel.properties;
-            const surfP = p.contenance ? p.contenance.toLocaleString('fr-FR') + ' m²' : '';
-            let rows;
-            if (!inParcel.length) {
-                rows = `<div style="font-size:13px;color:#6B7280;padding:6px 0">Aucune vente DVF sur cette parcelle dans la zone chargée.</div>`;
+            openParcelPanel(parcel.properties, inParcel);
+        }
+
+        // Historique des ventes de la parcelle → panneau latéral droit (façon cadastre.com,
+        // la carte reste dégagée — au lieu d'une info-bulle posée sur le plan).
+        function openParcelPanel(p, sales) {
+            const panel = document.getElementById('parcelPanel');
+            document.getElementById('parcelPanelTitle').textContent = `Parcelle ${p.section} ${parseInt(p.numero, 10)}`;
+            document.getElementById('parcelPanelSub').textContent =
+                (p.contenance ? p.contenance.toLocaleString('fr-FR') + ' m² · ' : '') + 'Historique des ventes • DVF';
+            const body = document.getElementById('parcelPanelBody');
+            if (!sales.length) {
+                body.innerHTML = `<div style="font-size:13px;color:#6B7280;padding:10px 0">Aucune vente DVF sur cette parcelle dans la zone chargée.</div>`;
             } else {
-                rows = inParcel.map(s => {
+                body.innerHTML = sales.map(s => {
                     const dt = s.date_mutation ? new Date(s.date_mutation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
                     const surf = s.surface_reelle_bati || s.surface_terrain || 0;
                     const prix = s.valeur_fonciere ? Math.round(s.valeur_fonciere).toLocaleString('fr-FR') + ' €' : '—';
                     const m2 = (s.valeur_fonciere && surf) ? Math.round(s.valeur_fonciere / surf).toLocaleString('fr-FR') + ' €/m²' : '';
                     const type = s.type_local || '';
-                    return `<div style="border-top:1px solid #eee;padding:6px 0;display:flex;justify-content:space-between;gap:12px">
-                        <div><div style="font-size:12px;color:#243B53;font-weight:600">${dt}</div>
+                    return `<div class="parcel-sale-row">
+                        <div><div style="font-size:13px;color:#243B53;font-weight:600">${dt}</div>
                         <div style="font-size:11px;color:#6B7280">${type}${surf ? ' · ' + surf + ' m²' : ''}</div></div>
-                        <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#243B53">${prix}</div>
+                        <div style="text-align:right"><div style="font-size:14px;font-weight:700;color:#243B53">${prix}</div>
                         <div style="font-size:11px;color:#6B7280">${m2}</div></div>
                     </div>`;
                 }).join('');
             }
-            const content = `<div style="font-family:Inter,sans-serif;min-width:230px;max-width:300px">
-                <div style="font-weight:700;color:#243B53">Parcelle ${p.section} ${parseInt(p.numero, 10)}</div>
-                <div style="font-size:11px;color:#9CA3AF;margin-bottom:6px">${surfP ? surfP + ' · ' : ''}Historique des ventes • DVF</div>
-                <div style="max-height:240px;overflow-y:auto">${rows}</div>
-            </div>`;
-            infoWindow.setContent(content);
-            infoWindow.setPosition(e.latLng);
-            infoWindow.open(map);
+            panel.classList.add('open');
         }
+        function closeParcelPanel() {
+            document.getElementById('parcelPanel').classList.remove('open');
+            if (parcelHighlight) { parcelHighlight.setMap(null); parcelHighlight = null; }
+        }
+        document.getElementById('parcelPanelClose').addEventListener('click', closeParcelPanel);
 
         // ===== TOGGLE PANEL (MOBILE) =====
         document.getElementById('togglePanelBtn').addEventListener('click', () => {
