@@ -28,7 +28,9 @@ Retour utilisateur : le calque cadastral seul n'était pas le but ; ce qu'il veu
 Retour utilisateur : « les cercles ne sont pas intuitifs ». Il s'agissait des **bulles de clusters numérotées** (`MarkerClusterer`, ex. 122/162 ventes). cadastre.com n'affiche pas ça par défaut : carte épurée + parcelles + clic.
 - **`dvf.html`** : flag `saleMarkersVisible` (défaut **false**) → les marqueurs/clusters de ventes ne sont plus rendus par défaut (le `MarkerClusterer` n'est créé que si actif). Le **calque cadastral est auto-activé** à l'init (`cadastreToggle.click()` dans `initMap`) → on voit les parcelles à cliquer. Nouveau bouton **« Ventes »** (`salesMarkersToggle`) pour réafficher les marqueurs. Toute la donnée (stats, liste, graphe) reste dans le panneau de gauche.
 - **Vérifié en live** : après recherche, carte épurée **sans bulles**, bouton Cadastre actif, panneau gauche = 3733 ventes/stats. ✅
-- **Reste du plan DVF** (non fait) : panneau-liste latéral type cadastre.com pour le clic-parcelle (actuellement InfoWindow), cercle de recherche à rayon ajustable, requête DVF vocale (différenciateur Léon).
+- **CTA « Voir les X ventes sur la carte »** (`revealSalesBtn`, `toggleSalesMarkers()`) : bouton bien visible dans le panneau gauche (style gradient), avec le compteur de ventes mis à jour (`updateRevealSalesBtn()` appelé en fin de `renderMarkers`). Clic → révèle les ventes ; re-clic → « Masquer les ventes ». Remplace l'ancien petit toggle carte. Inspiré du bouton « Voir les X Parcelles » de cadastre.com.
+- **Vérifié en live** : « Voir les 3733 ventes sur la carte » → clic → ventes affichées + parcelles orange + clic parcelle « Parcelle AO 205 · Historique des ventes • DVF ». ✅
+- **Reste du plan DVF** (non fait) : panneau-liste latéral type cadastre.com pour le clic-parcelle (actuellement InfoWindow), clarification des filtres, requête DVF vocale (différenciateur Léon).
 
 ---
 
