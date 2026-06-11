@@ -69,7 +69,7 @@
             font-family: 'Inter', sans-serif;
             background: #1a1a2e;
             height: 100vh;
-            color: #e0e0e0;
+            color: #374151;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -369,8 +369,8 @@
         .side-panel {
             width: 380px;
             min-width: 380px;
-            background: #16213e;
-            border-right: 1px solid rgba(255,255,255,0.08);
+            background: #F8FAFC;
+            border-right: 1px solid rgba(15,23,42,0.10);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -379,7 +379,7 @@
 
         .search-section {
             padding: 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
         }
 
@@ -390,20 +390,20 @@
         .search-input {
             width: 100%;
             padding: 14px 16px 14px 44px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(15,23,42,0.10);
+            border: 1px solid rgba(15,23,42,0.12);
             border-radius: 12px;
-            color: #fff;
+            color: #243B53;
             font-size: 15px;
             font-family: 'Inter', sans-serif;
             outline: none;
             transition: all 0.3s;
         }
 
-        .search-input::placeholder { color: rgba(255,255,255,0.4); }
+        .search-input::placeholder { color: rgba(15,23,42,0.4); }
         .search-input:focus {
             border-color: #667eea;
-            background: rgba(255,255,255,0.12);
+            background: #ECEFF3;
             box-shadow: 0 0 0 3px rgba(102,126,234,0.2);
         }
 
@@ -421,8 +421,8 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: #1e2d4a;
-            border: 1px solid rgba(255,255,255,0.15);
+            background: #FFFFFF;
+            border: 1px solid rgba(15,23,42,0.15);
             border-radius: 0 0 12px 12px;
             max-height: 240px;
             overflow-y: auto;
@@ -435,20 +435,20 @@
         .search-option {
             padding: 12px 16px;
             cursor: pointer;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(15,23,42,0.05);
             transition: background 0.15s;
             font-size: 14px;
-            color: #e0e0e0;
+            color: #374151;
         }
 
         .search-option:hover { background: rgba(102,126,234,0.2); }
         .search-option:last-child { border-bottom: none; }
-        .search-context { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+        .search-context { font-size: 11px; color: rgba(15,23,42,0.4); margin-top: 3px; }
 
         /* Radius selector */
         .radius-section {
             padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -459,7 +459,7 @@
         .radius-label {
             font-size: 13px;
             font-weight: 600;
-            color: rgba(255,255,255,0.85);
+            color: rgba(15,23,42,0.85);
             white-space: nowrap;
         }
 
@@ -468,7 +468,7 @@
             -webkit-appearance: none;
             appearance: none;
             height: 6px;
-            background: rgba(255,255,255,0.15);
+            background: #ECEFF3;
             border-radius: 3px;
             outline: none;
         }
@@ -499,28 +499,28 @@
             padding: 10px 20px;
             cursor: pointer;
             flex-shrink: 0;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             background: transparent;
             transition: background 0.15s;
             flex-shrink: 0;
             user-select: none;
         }
-        .filter-toggle-bar:hover { background: rgba(255,255,255,0.04); }
+        .filter-toggle-bar:hover { background: #F1F5F9; }
         .filter-toggle-bar .fa-sliders-h {
             font-size: 11px;
-            color: rgba(255,255,255,0.75);
+            color: rgba(15,23,42,0.75);
         }
         .filter-toggle-bar span {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(255,255,255,0.75);
+            color: rgba(15,23,42,0.75);
             flex: 1;
         }
         .filter-toggle-chevron {
             font-size: 10px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(15,23,42,0.6);
             transition: transform 0.3s ease;
         }
         .filter-toggle-chevron.collapsed {
@@ -530,13 +530,13 @@
         /* Filter panel */
         .quick-filters {
             padding: 16px 20px 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
         }
 
         .filter-panel {
             padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             overflow: hidden;
             max-height: 50vh;
             flex-shrink: 0;
@@ -551,7 +551,7 @@
 
         .filter-panel::-webkit-scrollbar { width: 4px; }
         .filter-panel::-webkit-scrollbar-track { background: transparent; }
-        .filter-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+        .filter-panel::-webkit-scrollbar-thumb { background: #ECEFF3; border-radius: 2px; }
 
         .fp-section { margin-bottom: 16px; }
         .fp-section:last-child { margin-bottom: 0; }
@@ -561,7 +561,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.78);
+            color: rgba(15,23,42,0.78);
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -589,14 +589,14 @@
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.28);
-            background: rgba(255,255,255,0.06);
-            color: rgba(255,255,255,0.9);
+            border: 1px solid rgba(15,23,42,0.28);
+            background: #F1F5F9;
+            color: rgba(15,23,42,0.9);
             transition: all 0.15s;
             font-family: 'Inter', sans-serif;
         }
 
-        .fp-type-btn:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); color: #fff; }
+        .fp-type-btn:hover { border-color: rgba(15,23,42,0.5); background: #ECEFF3; color: #243B53; }
         .fp-type-btn.active {
             background: #667eea;
             border-color: #667eea;
@@ -617,17 +617,17 @@
             width: 100%;
             padding: 7px 10px;
             border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.25);
-            background: rgba(255,255,255,0.08);
-            color: #fff;
+            border: 1px solid rgba(15,23,42,0.25);
+            background: rgba(15,23,42,0.10);
+            color: #243B53;
             font-size: 13px;
             font-family: 'Inter', sans-serif;
             font-weight: 500;
             outline: none;
             transition: border-color 0.15s;
         }
-        .fp-input::placeholder { color: rgba(255,255,255,0.55); }
-        .fp-input::placeholder { color: rgba(255,255,255,0.25); }
+        .fp-input::placeholder { color: rgba(15,23,42,0.55); }
+        .fp-input::placeholder { color: rgba(15,23,42,0.25); }
         .fp-input:focus { border-color: #667eea; }
 
         .fp-input::-webkit-outer-spin-button,
@@ -636,7 +636,7 @@
 
         .fp-minmax-sep {
             font-size: 11px;
-            color: rgba(255,255,255,0.25);
+            color: rgba(15,23,42,0.25);
         }
 
         /* Filter counter + reset */
@@ -646,7 +646,7 @@
             justify-content: space-between;
             margin-top: 16px;
             padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            border-top: 1px solid rgba(15,23,42,0.06);
         }
 
         .fp-counter {
@@ -673,7 +673,7 @@
         /* Stats section */
         .stats-section {
             padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
         }
 
@@ -684,7 +684,7 @@
         }
 
         .stat-card {
-            background: rgba(255,255,255,0.05);
+            background: #F1F5F9;
             border-radius: 10px;
             padding: 12px;
             text-align: center;
@@ -694,12 +694,12 @@
             font-size: 22px;
             font-weight: 800;
             font-family: 'Barlow Semi Condensed', sans-serif;
-            color: #fff;
+            color: #243B53;
         }
 
         .stat-label {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             margin-top: 2px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -713,7 +713,7 @@
         /* DPE stats section */
         .dpe-stats-section {
             padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
             display: none;
         }
@@ -723,7 +723,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             margin-bottom: 12px;
             display: flex;
             align-items: center;
@@ -748,7 +748,7 @@
         .dpe-bar-track {
             flex: 1;
             height: 16px;
-            background: rgba(255,255,255,0.06);
+            background: #F1F5F9;
             border-radius: 4px;
             overflow: hidden;
         }
@@ -763,7 +763,7 @@
         .dpe-bar-pct {
             font-size: 11px;
             font-weight: 600;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             width: 36px;
             text-align: right;
         }
@@ -785,7 +785,7 @@
 
         .dpe-passoires-label {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             margin-top: 2px;
         }
 
@@ -793,7 +793,7 @@
             margin-top: 8px;
             text-align: center;
             font-size: 13px;
-            color: rgba(255,255,255,0.6);
+            color: rgba(15,23,42,0.6);
         }
 
         .dpe-median-badge {
@@ -810,7 +810,7 @@
         /* DPE filters container */
         .dpe-filters-container {
             padding: 12px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
         }
 
@@ -855,19 +855,19 @@
 
         .sales-section::-webkit-scrollbar { width: 6px; }
         .sales-section::-webkit-scrollbar-track { background: transparent; }
-        .sales-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+        .sales-section::-webkit-scrollbar-thumb { background: #ECEFF3; border-radius: 3px; }
 
         .sales-header {
             padding: 8px 8px 12px;
             font-size: 13px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .sale-card {
-            background: rgba(255,255,255,0.05);
+            background: #F1F5F9;
             border-radius: 10px;
             padding: 14px;
             margin-bottom: 8px;
@@ -877,7 +877,7 @@
         }
 
         .sale-card:hover {
-            background: rgba(255,255,255,0.08);
+            background: rgba(15,23,42,0.10);
             transform: translateX(2px);
         }
 
@@ -924,12 +924,12 @@
             font-size: 18px;
             font-weight: 800;
             font-family: 'Barlow Semi Condensed', sans-serif;
-            color: #fff;
+            color: #243B53;
         }
 
         .sale-details {
             font-size: 12px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             margin-top: 4px;
             line-height: 1.5;
         }
@@ -962,7 +962,7 @@
             left: 0;
             right: 0;
             height: 5px;
-            background: rgba(255,255,255,0.1);
+            background: #ECEFF3;
             border-radius: 3px;
         }
 
@@ -1050,14 +1050,14 @@
 
         .sale-detail-date {
             font-size: 12px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(15,23,42,0.4);
         }
 
         .sale-detail-price {
             font-size: 28px;
             font-weight: 800;
             font-family: 'Barlow Semi Condensed', sans-serif;
-            color: #fff;
+            color: #243B53;
             margin-bottom: 4px;
         }
 
@@ -1078,7 +1078,7 @@
         }
 
         .sale-detail-item {
-            background: rgba(255,255,255,0.05);
+            background: #F1F5F9;
             border-radius: 8px;
             padding: 10px 12px;
         }
@@ -1087,19 +1087,19 @@
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(15,23,42,0.4);
             margin-bottom: 4px;
         }
 
         .sale-detail-item-value {
             font-size: 15px;
             font-weight: 700;
-            color: #fff;
+            color: #243B53;
             font-family: 'Barlow Semi Condensed', sans-serif;
         }
 
         .sale-detail-info {
-            border-top: 1px solid rgba(255,255,255,0.08);
+            border-top: 1px solid rgba(15,23,42,0.10);
             padding-top: 12px;
         }
 
@@ -1108,11 +1108,11 @@
             justify-content: space-between;
             padding: 8px 0;
             font-size: 13px;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
+            border-bottom: 1px solid rgba(15,23,42,0.04);
         }
         .sale-detail-row:last-child { border-bottom: none; }
-        .sale-detail-row-label { color: rgba(255,255,255,0.5); }
-        .sale-detail-row-value { color: #fff; font-weight: 600; text-align: right; max-width: 60%; }
+        .sale-detail-row-label { color: rgba(15,23,42,0.5); }
+        .sale-detail-row-value { color: #243B53; font-weight: 600; text-align: right; max-width: 60%; }
 
         /* Map type toggle */
         .map-type-toggle {
@@ -1393,7 +1393,7 @@
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: rgba(255,255,255,0.3);
+            color: rgba(15,23,42,0.3);
         }
 
         .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
@@ -1411,7 +1411,7 @@
             border-radius: 4px;
             border: 1px solid rgba(102,126,234,0.3);
             background: transparent;
-            color: rgba(255,255,255,0.5);
+            color: rgba(15,23,42,0.5);
             font-size: 11px;
             font-family: 'Inter', sans-serif;
             cursor: pointer;
@@ -1460,7 +1460,7 @@
             align-items: center;
         }
         .selection-header-btn {
-            background: rgba(255,255,255,0.15);
+            background: #ECEFF3;
             border: none;
             color: #fff;
             padding: 4px 10px;
@@ -1478,8 +1478,8 @@
             flex: 1;
         }
         .selection-card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.08);
+            background: #F1F5F9;
+            border: 1px solid rgba(15,23,42,0.10);
             border-radius: 8px;
             padding: 10px 12px;
             margin-bottom: 6px;
@@ -1495,7 +1495,7 @@
         .selection-card-type {
             font-size: 12px;
             font-weight: 600;
-            color: #e0e0e0;
+            color: #374151;
         }
         .selection-card-price {
             font-size: 15px;
@@ -1504,7 +1504,7 @@
         }
         .selection-card-meta {
             font-size: 11px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(15,23,42,0.4);
             display: flex;
             justify-content: space-between;
         }
@@ -1512,9 +1512,9 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            color: rgba(255,255,255,0.6);
+            background: rgba(15,23,42,0.10);
+            border: 1px solid rgba(15,23,42,0.15);
+            color: rgba(15,23,42,0.6);
             cursor: pointer;
             font-size: 13px;
             width: 24px;
@@ -1530,14 +1530,14 @@
         .selection-empty {
             text-align: center;
             padding: 20px;
-            color: rgba(255,255,255,0.3);
+            color: rgba(15,23,42,0.3);
             font-size: 12px;
         }
 
         /* ===== GRAPHIQUE ÉVOLUTION PRIX ===== */
         .chart-section {
             padding: 16px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(15,23,42,0.10);
             flex-shrink: 0;
         }
         .chart-title {
@@ -1545,7 +1545,7 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(15,23,42,0.4);
             margin-bottom: 10px;
         }
         .price-chart { width: 100%; height: 120px; }
@@ -2618,7 +2618,7 @@
                 <polyline points="${points.join(' ')}" fill="none" stroke="#667eea" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 ${medians.map((v, i) => `
                     <circle cx="${xScale(i)}" cy="${yScale(v)}" r="3.5" fill="#667eea" stroke="#1a1a2e" stroke-width="2"/>
-                    <text x="${xScale(i)}" y="${H - 3}" text-anchor="middle" fill="rgba(255,255,255,0.35)" font-size="9" font-family="Inter">${years[i]}</text>
+                    <text x="${xScale(i)}" y="${H - 3}" text-anchor="middle" fill="rgba(15,23,42,0.35)" font-size="9" font-family="Inter">${years[i]}</text>
                     ${i === 0 || i === years.length - 1 || years.length <= 5
                         ? `<text x="${xScale(i)}" y="${yScale(v) - 8}" text-anchor="middle" fill="#fff" font-size="10" font-weight="600" font-family="Barlow Semi Condensed">${formatNumber(Math.round(v))}</text>`
                         : ''}
@@ -2994,13 +2994,13 @@
                 const dpeColor = DPE_COLORS[matchedDpe.dpeClass] || '#607D8B';
                 const dpeTextColor = matchedDpe.dpeClass >= 3 && matchedDpe.dpeClass <= 5 ? '#333' : '#fff';
                 dpeHtml = `
-                    <div style="margin-top:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:10px;border-left:3px solid ${dpeColor}">
-                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(255,255,255,0.4);margin-bottom:6px">DPE estimé</div>
+                    <div style="margin-top:12px;padding:12px;background:#F1F5F9;border-radius:10px;border-left:3px solid ${dpeColor}">
+                        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:rgba(15,23,42,0.4);margin-bottom:6px">DPE estimé</div>
                         <div style="display:flex;align-items:center;gap:10px">
                             <span style="display:inline-block;padding:4px 12px;border-radius:6px;background:${dpeColor};color:${dpeTextColor};font-weight:800;font-size:20px;font-family:'Barlow Semi Condensed',sans-serif">${dpeLabel}</span>
                             <div>
                                 <div style="font-size:14px;font-weight:600;color:#fff">${matchedDpe.conso || '—'} kWh/m²/an</div>
-                                <div style="font-size:12px;color:rgba(255,255,255,0.5)">GES : ${gesLabel} (${matchedDpe.ges || '—'} kgCO₂/m²/an)</div>
+                                <div style="font-size:12px;color:rgba(15,23,42,0.5)">GES : ${gesLabel} (${matchedDpe.ges || '—'} kgCO₂/m²/an)</div>
                             </div>
                         </div>
                     </div>
@@ -3021,7 +3021,7 @@
                         ${matchedDpe ? getDpeBadgeHtml(matchedDpe) : ''}
                     </div>
                     <div class="sale-detail-price">${formatPrice(price)}</div>
-                    <div style="color:rgba(255,255,255,0.6);font-size:14px;margin-bottom:6px;line-height:1.6">
+                    <div style="color:rgba(15,23,42,0.6);font-size:14px;margin-bottom:6px;line-height:1.6">
                         ${surfaceLabel ? surfaceLabel + ' — ' : ''}${date}
                         ${sale.distance ? '<br>📍 à ' + sale.distance + ' m' : ''}
                     </div>
@@ -3860,7 +3860,7 @@
             const medianEl = document.getElementById('dpeMedian');
 
             if (dpeList.length === 0) {
-                barsEl.innerHTML = '<div style="color:rgba(255,255,255,0.3);font-size:13px;text-align:center;padding:10px">Aucun DPE dans le secteur</div>';
+                barsEl.innerHTML = '<div style="color:rgba(15,23,42,0.3);font-size:13px;text-align:center;padding:10px">Aucun DPE dans le secteur</div>';
                 passoiresEl.textContent = '—';
                 medianEl.innerHTML = '';
                 return;
@@ -3900,7 +3900,7 @@
             const sorted = dpeList.map(d => d.dpeClass).sort((a, b) => a - b);
             const medianClass = sorted[Math.floor(sorted.length / 2)];
             const medColor = DPE_COLORS[medianClass] || '#607D8B';
-            medianEl.innerHTML = `Classe médiane : <span class="dpe-median-badge" style="background:${medColor}">${DPE_LABELS[medianClass]}</span> <span style="font-size:11px;color:rgba(255,255,255,0.4)">(${total} DPE)</span>`;
+            medianEl.innerHTML = `Classe médiane : <span class="dpe-median-badge" style="background:${medColor}">${DPE_LABELS[medianClass]}</span> <span style="font-size:11px;color:rgba(15,23,42,0.4)">(${total} DPE)</span>`;
         }
 
         function clearDpeMarkers() {
