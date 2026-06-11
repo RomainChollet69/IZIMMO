@@ -458,7 +458,8 @@
 
         .radius-label {
             font-size: 13px;
-            color: rgba(255,255,255,0.6);
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
             white-space: nowrap;
         }
 
@@ -507,19 +508,19 @@
         .filter-toggle-bar:hover { background: rgba(255,255,255,0.04); }
         .filter-toggle-bar .fa-sliders-h {
             font-size: 11px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.75);
         }
         .filter-toggle-bar span {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(255,255,255,0.5);
+            color: rgba(255,255,255,0.75);
             flex: 1;
         }
         .filter-toggle-chevron {
             font-size: 10px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.6);
             transition: transform 0.3s ease;
         }
         .filter-toggle-chevron.collapsed {
@@ -556,11 +557,11 @@
         .fp-section:last-child { margin-bottom: 0; }
 
         .fp-label {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255,255,255,0.78);
             margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
@@ -583,19 +584,19 @@
         }
 
         .fp-type-btn {
-            padding: 6px 12px;
+            padding: 7px 13px;
             border-radius: 8px;
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: transparent;
-            color: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.28);
+            background: rgba(255,255,255,0.06);
+            color: rgba(255,255,255,0.9);
             transition: all 0.15s;
             font-family: 'Inter', sans-serif;
         }
 
-        .fp-type-btn:hover { border-color: rgba(255,255,255,0.3); color: rgba(255,255,255,0.8); }
+        .fp-type-btn:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.12); color: #fff; }
         .fp-type-btn.active {
             background: #667eea;
             border-color: #667eea;
@@ -616,8 +617,8 @@
             width: 100%;
             padding: 7px 10px;
             border-radius: 6px;
-            border: 1px solid rgba(255,255,255,0.12);
-            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(255,255,255,0.08);
             color: #fff;
             font-size: 13px;
             font-family: 'Inter', sans-serif;
@@ -625,6 +626,7 @@
             outline: none;
             transition: border-color 0.15s;
         }
+        .fp-input::placeholder { color: rgba(255,255,255,0.55); }
         .fp-input::placeholder { color: rgba(255,255,255,0.25); }
         .fp-input:focus { border-color: #667eea; }
 
