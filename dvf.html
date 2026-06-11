@@ -1797,6 +1797,7 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn"><i class="fas fa-sliders"></i></button>
+            <button class="cadastre-toggle" id="salesMarkersToggle" style="right: 440px" title="Afficher/masquer les ventes sur la carte"><i class="fa-solid fa-location-dot"></i> Ventes</button>
             <button class="cadastre-toggle" id="cadastreToggle" title="Afficher les limites de parcelles (cadastre IGN)"><i class="fa-solid fa-vector-square"></i> Cadastre</button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
@@ -1849,6 +1850,9 @@
         let map;
         let markers = [];
         let markerCluster = null;
+        // Modèle cadastre.com : marqueurs/clusters de ventes MASQUÉS par défaut (carte épurée,
+        // on clique les parcelles pour l'historique). Toggle « Ventes » pour les réafficher.
+        let saleMarkersVisible = false;
         let infoWindow = null;
         // Constantes z-index pour marqueurs Google Maps (cohérent avec CSS vars)
         const Z_DPE_MARKER = 100;
@@ -1911,6 +1915,9 @@
 
             // Clic sur la carte → parcelle + son historique de ventes DVF (cf. onParcelClick)
             map.addListener('click', onParcelClick);
+
+            // Calque cadastral affiché par défaut : on voit les parcelles à cliquer (modèle cadastre.com)
+            document.getElementById('cadastreToggle').click();
 
             // Paramètres URL depuis le pipeline vendeurs : ?adresse=...&rayon=400
             const params = new URLSearchParams(window.location.search);
@@ -2714,8 +2721,9 @@
                 markers.push(marker);
             });
 
-            // Clustering des marqueurs pour une vue claire à tout zoom
-            if (typeof markerClusterer !== 'undefined' && markers.length > 0) {
+            // Clustering des marqueurs — uniquement si l'utilisateur a activé l'affichage des ventes
+            // (sinon carte épurée façon cadastre.com : on clique les parcelles).
+            if (saleMarkersVisible && typeof markerClusterer !== 'undefined' && markers.length > 0) {
                 markerCluster = new markerClusterer.MarkerClusterer({
                     map,
                     markers,
@@ -3289,6 +3297,13 @@
                 if (idx > -1) map.overlayMapTypes.removeAt(idx);
                 btn.classList.remove('active');
             }
+        });
+
+        // ===== TOGGLE "VENTES" : affiche/masque les marqueurs+clusters de ventes sur la carte =====
+        document.getElementById('salesMarkersToggle').addEventListener('click', () => {
+            saleMarkersVisible = !saleMarkersVisible;
+            document.getElementById('salesMarkersToggle').classList.toggle('active', saleMarkersVisible);
+            renderMarkers(currentFilteredSales);
         });
 
         // ===== CLIC PARCELLE → HISTORIQUE DES VENTES DVF (façon cadastre.com) =====
