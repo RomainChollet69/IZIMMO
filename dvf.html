@@ -1186,6 +1186,29 @@
         .cadastre-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .cadastre-toggle.active { background: #319834; color: #fff; }
 
+        /* CTA "Voir les X ventes sur la carte" (panneau gauche) */
+        .reveal-sales-btn {
+            width: 100%;
+            margin: 10px 0 4px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+        }
+        .reveal-sales-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4); }
+        .reveal-sales-btn.active { background: #64748B; box-shadow: none; }
+
         /* InfoWindow Google Maps — overrides pour affichage complet */
         .gm-style-iw-c { padding: 0 !important; max-width: 340px !important; max-height: none !important; }
         .gm-style-iw-ch { padding-top: 0 !important; max-height: none !important; }
@@ -1676,6 +1699,12 @@
                 <i class="fas fa-chevron-down filter-toggle-chevron collapsed" id="filterChevron"></i>
             </div>
 
+            <!-- CTA : révèle les ventes du secteur sur la carte (façon cadastre.com) -->
+            <button class="reveal-sales-btn" id="revealSalesBtn" onclick="toggleSalesMarkers()">
+                <i class="fa-solid fa-location-dot"></i>
+                <span id="revealSalesLabel">Voir les ventes sur la carte</span>
+            </button>
+
             <div class="filter-panel collapsed" id="filterPanel">
                 <!-- Caractéristiques min/max -->
                 <div class="fp-section">
@@ -1797,7 +1826,6 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn"><i class="fas fa-sliders"></i></button>
-            <button class="cadastre-toggle" id="salesMarkersToggle" style="right: 440px" title="Afficher/masquer les ventes sur la carte"><i class="fa-solid fa-location-dot"></i> Ventes</button>
             <button class="cadastre-toggle" id="cadastreToggle" title="Afficher les limites de parcelles (cadastre IGN)"><i class="fa-solid fa-vector-square"></i> Cadastre</button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
@@ -2753,6 +2781,7 @@
                     }
                 });
             }
+            updateRevealSalesBtn();
         }
 
         function renderSalesList(sales) {
@@ -3299,12 +3328,25 @@
             }
         });
 
-        // ===== TOGGLE "VENTES" : affiche/masque les marqueurs+clusters de ventes sur la carte =====
-        document.getElementById('salesMarkersToggle').addEventListener('click', () => {
+        // ===== CTA "VOIR LES X VENTES" : révèle/masque les ventes du secteur sur la carte =====
+        function toggleSalesMarkers() {
             saleMarkersVisible = !saleMarkersVisible;
-            document.getElementById('salesMarkersToggle').classList.toggle('active', saleMarkersVisible);
-            renderMarkers(currentFilteredSales);
-        });
+            renderMarkers(currentFilteredSales); // recrée (ou retire) marqueurs + clusters
+            updateRevealSalesBtn();
+        }
+        function updateRevealSalesBtn() {
+            const btn = document.getElementById('revealSalesBtn');
+            const lbl = document.getElementById('revealSalesLabel');
+            if (!btn || !lbl) return;
+            const n = currentFilteredSales.length;
+            if (saleMarkersVisible) {
+                lbl.textContent = 'Masquer les ventes';
+                btn.classList.add('active');
+            } else {
+                lbl.textContent = n ? `Voir les ${n.toLocaleString('fr-FR')} ventes sur la carte` : 'Voir les ventes sur la carte';
+                btn.classList.remove('active');
+            }
+        }
 
         // ===== CLIC PARCELLE → HISTORIQUE DES VENTES DVF (façon cadastre.com) =====
         // Au clic sur la carte : récupère la parcelle (API Carto IGN), la surligne, et liste
