@@ -565,6 +565,22 @@ GET https://api-adresse.data.gouv.fr/reverse/?lon={lng}&lat={lat}&limit=1
 
 ---
 
+### IGN Géoplateforme — WMTS Parcellaire Express (calque cadastral)
+
+Tuiles cartographiques publiques de l'IGN (limites de parcelles cadastrales), superposées sur la carte Google Maps de `dvf.html`.
+
+```
+GET https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0
+    &LAYER=CADASTRALPARCELS.PARCELLAIRE_EXPRESS&STYLE=normal&TILEMATRIXSET=PM
+    &TILEMATRIX={zoom}&TILECOL={x}&TILEROW={y}&FORMAT=image/png
+```
+- Utilisé dans : `dvf.html` → bouton « Cadastre » (`google.maps.ImageMapType` dans `map.overlayMapTypes`)
+- TileMatrixSet `PM` = Web Mercator (EPSG:3857) → compatible directement avec les coordonnées de tuiles Google Maps
+- Couche créée à la 1re activation ; visible à partir du zoom 12
+- **Auth** : Aucune (clé non requise sur la nouvelle Géoplateforme `data.geopf.fr`) | **Coût** : Gratuit
+
+---
+
 ### Google Maps JavaScript API
 
 Carte interactive pour la visualisation DVF/DPE.

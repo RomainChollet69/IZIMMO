@@ -4,6 +4,23 @@
 
 ---
 
+## Session 2026-06-10 (suite 2) — Fix navigation inter-rubriques + DVF v2 (calque cadastral IGN)
+
+### Fix : navigation JS inter-rubriques détournait l'onglet
+**Symptôme** : depuis le pipeline Vendeurs, une action de l'assistant Léon vers un acquéreur ouvrait la fiche acquéreur **dans l'iframe Vendeurs** → l'onglet affichait « Vendeurs » avec du contenu Acquéreurs.
+**Cause** : ces navigations se font par `location.href` (pas un clic de lien `<a>`), donc non interceptées.
+**Fix** (`js/tab-shell.js`) : **réconciliation au chargement** dans `onViewLoaded` — si une iframe se retrouve sur une autre rubrique que sa `dataset.page`, on la remet sur sa page d'origine et on ouvre la rubrique réellement demandée dans son propre onglet (en conservant la fiche en `?param`). L'intercepteur de liens transmet aussi désormais l'URL complète. Corrige aussi la recherche globale de l'Accueil. Cache-bust `?v=20260610e`.
+**Vérifié en live** : iframe Vendeurs naviguée vers `acquereurs.html?buyer=X` → onglet Acquéreurs créé + actif avec la fiche, iframe Vendeurs restaurée. ✅
+
+### DVF v2 — Phase 2 : calque cadastral IGN (inspiré de cadastre.com)
+Après étude de cadastre.com (outil de prospection riche : satellite, surcouches cadastrales, zones dessinables, identification propriétaire). **Reco** : ne pas cloner (leur moat = donnée propriétaire non-libre + hors positionnement Léon), mais reprendre les briques gratuites à forte valeur.
+- **Implémenté** (`dvf.html`) : bouton **« Cadastre »** qui superpose les **limites de parcelles** via le WMTS **IGN Parcellaire Express** (`data.geopf.fr`, gratuit, sans clé) en `google.maps.ImageMapType`. Toggle on/off, couche créée à la 1re activation, visible dès le zoom 12.
+- **Vérifié en live** : endpoint IGN OK (tuile 256×256 ~600ms), parcelles affichées au niveau rue sur Lyon, bouton actif en vert. ✅
+- **Constaté** : le toggle Plan/Satellite existait déjà (`mapTypeToggle`).
+- **Reste du plan DVF v2** (non fait) : cercle de recherche à rayon ajustable, panneau-liste des ventes triable, requête DVF vocale (le vrai différenciateur Léon).
+
+---
+
 ## Session 2026-06-10 (suite) — Optimisations UX (audit live + implémentation)
 
 ### Contexte
