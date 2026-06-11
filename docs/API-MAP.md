@@ -581,6 +581,20 @@ GET https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0
 
 ---
 
+### API Carto Cadastre (IGN) — parcelle au point cliqué
+
+Données vectorielles de parcelles cadastrales. Utilisé pour le clic-parcelle → historique des ventes DVF.
+
+```
+GET https://apicarto.ign.fr/api/cadastre/parcelle?geom={"type":"Point","coordinates":[lon,lat]}
+```
+- Utilisé dans : `dvf.html` → `onParcelClick()` (clic carte)
+- Retourne : GeoJSON FeatureCollection ; propriétés `section`, `numero`, `contenance` (m²), `idu`, `code_com`… + géométrie MultiPolygon
+- Rattachement des ventes : la donnée DVF de Léon n'ayant pas de réf. parcelle, on filtre `allSales` par **point-dans-polygone** (`google.maps.geometry.poly.containsLocation`)
+- **Auth** : Aucune | **Coût** : Gratuit | **CORS** : autorisé
+
+---
+
 ### Google Maps JavaScript API
 
 Carte interactive pour la visualisation DVF/DPE.

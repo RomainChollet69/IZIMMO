@@ -17,7 +17,13 @@ Après étude de cadastre.com (outil de prospection riche : satellite, surcouche
 - **Implémenté** (`dvf.html`) : bouton **« Cadastre »** qui superpose les **limites de parcelles** via le WMTS **IGN Parcellaire Express** (`data.geopf.fr`, gratuit, sans clé) en `google.maps.ImageMapType`. Toggle on/off, couche créée à la 1re activation, visible dès le zoom 12.
 - **Vérifié en live** : endpoint IGN OK (tuile 256×256 ~600ms), parcelles affichées au niveau rue sur Lyon, bouton actif en vert. ✅
 - **Constaté** : le toggle Plan/Satellite existait déjà (`mapTypeToggle`).
-- **Reste du plan DVF v2** (non fait) : cercle de recherche à rayon ajustable, panneau-liste des ventes triable, requête DVF vocale (le vrai différenciateur Léon).
+
+#### Recadrage : le vrai sujet = clic parcelle → historique des ventes DVF
+Retour utilisateur : le calque cadastral seul n'était pas le but ; ce qu'il veut (comme cadastre.com) = **cliquer une parcelle pour voir ses ventes DVF**. Le calque IGN n'est qu'un appui visuel optionnel.
+- **Implémenté** (`dvf.html`) : `map.addListener('click', onParcelClick)` → récupère la parcelle via l'**API Carto Cadastre IGN** (`apicarto.ign.fr/api/cadastre/parcelle`, gratuite, CORS OK), la surligne (`google.maps.Polygon`), et liste les ventes DVF chargées (`allSales`) dont le point tombe **dans la parcelle** (point-dans-polygone via `google.maps.geometry.poly.containsLocation` — la donnée DVF de Léon n'a pas de réf. parcelle, donc rattachement géométrique). InfoWindow « Parcelle X · Historique des ventes • DVF » (date, type, surface, prix, prix/m²). Ajout de `&libraries=geometry` au chargement Maps. Le recentrage carte reste géré par le drag du marqueur central (pas de conflit avec le clic).
+- **Vérifié en live** : clic sur « 19 Chemin des Petites Brosses, Caluire » → Parcelle AX 428, liste des ventes (400 702 € · 90 m² · 4452 €/m², etc.). ✅
+- **Limite assumée** : pas d'identification du propriétaire (donnée fermée/payante = moat cadastre.com).
+- **Reste du plan DVF v2** (non fait) : cercle de recherche à rayon ajustable, panneau-liste latéral triable, requête DVF vocale (différenciateur Léon).
 
 ---
 
