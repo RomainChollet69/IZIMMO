@@ -1953,9 +1953,9 @@
 
             // Clic sur la carte → parcelle + son historique de ventes DVF (cf. onParcelClick)
             map.addListener('click', onParcelClick);
-
-            // Calque cadastral affiché par défaut : on voit les parcelles à cliquer (modèle cadastre.com)
-            document.getElementById('cadastreToggle').click();
+            // NB : le calque cadastre IGN (lignes + lettres de sections) n'est PAS activé par défaut
+            // (trop chargé). Les parcelles vendues s'affichent en cyan via "Voir les ventes" ;
+            // le bouton "Cadastre" reste dispo pour réafficher le quadrillage complet.
 
             // Paramètres URL depuis le pipeline vendeurs : ?adresse=...&rayon=400
             const params = new URLSearchParams(window.location.search);
@@ -2036,11 +2036,14 @@
                 const radius = parseInt(document.getElementById('radiusSlider').value);
                 fetchDVFData(lat, lng, radius);
             }, () => {
-                // Géolocalisation refusée/indisponible → on reste sur la ville par défaut (Lyon).
-                // La géoloc est re-tentée à chaque ouverture de la carte (re-demande si l'utilisateur
-                // n'a pas encore décidé). NB : une permission explicitement « refusée » ne peut pas être
-                // re-sollicitée par le code — l'utilisateur doit la réautoriser dans son navigateur.
-                console.log('Géolocalisation non disponible — ville par défaut');
+                // Géolocalisation refusée/indisponible → on affiche d'emblée le secteur par défaut
+                // (Lyon) avec son cercle + ses ventes, façon cadastre.com (pas besoin de chercher une
+                // adresse). La géoloc reste re-tentée à chaque ouverture (re-demande si non décidé) ;
+                // une permission « refusée » ne peut pas être re-sollicitée par le code.
+                console.log('Géolocalisation non disponible — secteur par défaut (Lyon)');
+                currentCenter = { lat: DEFAULT_LAT, lng: DEFAULT_LNG };
+                const radius = parseInt(document.getElementById('radiusSlider').value);
+                fetchDVFData(DEFAULT_LAT, DEFAULT_LNG, radius);
             }, {
                 enableHighAccuracy: false,
                 timeout: 8000,
