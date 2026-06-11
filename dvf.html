@@ -1885,7 +1885,7 @@
             <button class="cadastre-toggle" id="cadastreToggle" title="Afficher les limites de parcelles (cadastre IGN)"><i class="fa-solid fa-vector-square"></i> Cadastre</button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
-            <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
+            <button class="map-type-toggle" id="mapTypeToggle">🗺️ Plan</button>
             <div id="map"></div>
 
             <!-- Panneau latéral : historique des ventes de la parcelle cliquée (façon cadastre.com) -->
@@ -1981,7 +1981,7 @@
         let currentFilter = 'all';
         let dvfLayerActive = true;
         let currentCenter = null;
-        let currentMapType = 'roadmap';
+        let currentMapType = 'hybrid'; // vue satellite (+ libellés rues) par défaut
         let addressFromLead = null; // Label géocodé quand on vient d'une fiche lead (?adresse=)
 
         // DVF local data (Supabase Storage)
@@ -2000,6 +2000,7 @@
             map = new google.maps.Map(document.getElementById('map'), {
                 center: { lat: DEFAULT_LAT, lng: DEFAULT_LNG },
                 zoom: DEFAULT_ZOOM,
+                mapTypeId: 'hybrid', // satellite + libellés par défaut
                 mapTypeControl: false,
                 streetViewControl: false,
                 fullscreenControl: false,
