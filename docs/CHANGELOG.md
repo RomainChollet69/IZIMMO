@@ -20,8 +20,13 @@ Après audit visuel des 9 rubriques dans le shell (en live), implémentation de 
 - **DVF (`dvf.html`)** : centre par défaut Paris → **Lyon** (45.7640, 4.8357), secteur des utilisateurs (reste un fallback si géoloc refusée).
 - **Largeurs (`home.html`, `tutoriels.html`)** : conteneurs 960/900 → **1100px**. Formulaires (Paramètres) et carte vocale (Micro) laissés étroits volontairement.
 
+#### Affinage suite retours utilisateur
+- **Cartes pas alourdies** : la relance en vue compacte est réduite à une **icône seule** (⚠️/🔔, classe `.card-followup-mini`), sans la date — détail conservé en vue dépliée. Sur Vendeurs ET Acquéreurs.
+- **DVF centré sur la zone de l'utilisateur** : la géoloc navigateur était `denied` côté Chrome (d'où le repli). Nouveau fallback **sans permission** : `centerOnUserArea()` recentre sur la **commune la plus fréquente des leads** (requête `sellers` → `cityFromAddress()` → géocodage BAN `api-adresse.data.gouv.fr`). Lyon ne reste que l'ultime fallback (aucun lead). La géoloc navigateur garde la priorité si réautorisée.
+
 ### Vérifications en direct
-FAB micro masqué ✅ · 9 relances en retard visibles en compact ✅ · carte DVF centrée Lyon (Caluire/Écully/Villeurbanne) ✅
+FAB micro masqué ✅ · relances en compact (icône seule, sans date) ✅ · `centerOnUserArea()` exécutée sans erreur sur données réelles (Caluire-et-Cuire → 45.798/4.849) ✅ · `cityFromAddress` OK sur échantillons ✅
+*(NB : carte parfois grise pendant les tests = throttling Maps dû aux rechargements répétés, pas un bug ; rendu OK en usage normal.)*
 
 ### Conseils d'audit NON retenus (mémo)
 Recherche/commande globale Cmd+K (gros chantier), restauration d'onglets, enrichissement desktop de l'Assistant vocal, calendrier Community 7j, remplissage Tutoriels.
