@@ -1109,6 +1109,8 @@
         .followup-ok { background: #d1f2eb; color: #0c5460; }
         .followup-due { background: #fff3cd; color: #856404; }
         .followup-overdue { background: #f8d7da; color: #721c24; animation: pulse 2s infinite; }
+        /* Variante compacte : pastille minimale (icône seule), pour ne pas alourdir la carte */
+        .card-followup-mini { padding: 2px 7px; font-size: 13px; line-height: 1.2; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -8528,7 +8530,14 @@
                 else if (diff === 0) { followupFull = `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`; showAlert = true; }
                 else if (diff <= 3) { followupFull = `<div class="card-followup followup-due">📅 Relance ${fmt}</div>`; }
                 else { followupFull = `<div class="card-followup followup-ok">📅 Relance ${fmt}</div>`; }
-                if (showAlert) followupCompact = followupFull;
+                // Vue compacte : indicateur minimal (icône seule, sans date) pour ne pas alourdir la carte.
+                // Le détail (date) reste en vue dépliée.
+                if (showAlert) {
+                    const ico = diff < 0 ? '⚠️' : '🔔';
+                    const cls = diff < 0 ? 'followup-overdue' : 'followup-due';
+                    const lbl = diff < 0 ? `Relance en retard (${fmt})` : "À relancer aujourd'hui";
+                    followupCompact = `<div class="card-followup card-followup-mini ${cls}" title="${lbl}">${ico}</div>`;
+                }
             }
 
             // Property summary line for compact

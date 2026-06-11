@@ -1287,6 +1287,8 @@
         .followup-ok { background: #d1f2eb; color: #0c5460; }
         .followup-due { background: #fff3cd; color: #856404; }
         .followup-overdue { background: #f8d7da; color: #721c24; animation: pulse 2s infinite; }
+        /* Variante compacte : pastille minimale (icône seule), pour ne pas alourdir la carte */
+        .card-followup-mini { padding: 2px 7px; font-size: 13px; line-height: 1.2; }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
@@ -5992,7 +5994,7 @@
                 const rd = new Date(buyer.reminder);
                 const fmt = rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
                 const diff = Math.ceil((rd - new Date().setHours(0,0,0,0)) / 86400000);
-                followupCompact = diff < 0 ? `<div class="card-followup followup-overdue">⚠️ Relance ${rd.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' })}</div>` : `<div class="card-followup followup-due">🔔 Aujourd'hui</div>`;
+                followupCompact = diff < 0 ? `<div class="card-followup card-followup-mini followup-overdue" title="Relance en retard">⚠️</div>` : `<div class="card-followup card-followup-mini followup-due" title="À relancer aujourd'hui">🔔</div>`;
                 if (diff < 0) alertTooltip = `Relance prévue le ${fmt} — en retard de ${Math.abs(diff)} jour${Math.abs(diff) > 1 ? 's' : ''}. Cliquer pour marquer comme effectuée.`;
                 else if (diff === 0) alertTooltip = `Relance à faire aujourd'hui. Cliquer pour marquer comme effectuée.`;
                 else alertTooltip = `Relance prévue le ${fmt}. Cliquer pour marquer comme effectuée.`;
