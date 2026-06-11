@@ -1208,6 +1208,15 @@
         }
         .reveal-sales-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(102, 126, 234, 0.4); }
         .reveal-sales-btn.active { background: #64748B; box-shadow: none; }
+        .reveal-sales-btn:disabled {
+            background: #475569;
+            color: #94A3B8;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
 
         /* InfoWindow Google Maps — overrides pour affichage complet */
         .gm-style-iw-c { padding: 0 !important; max-width: 340px !important; max-height: none !important; }
@@ -1699,10 +1708,11 @@
                 <i class="fas fa-chevron-down filter-toggle-chevron collapsed" id="filterChevron"></i>
             </div>
 
-            <!-- CTA : révèle les ventes du secteur sur la carte (façon cadastre.com) -->
-            <button class="reveal-sales-btn" id="revealSalesBtn" onclick="toggleSalesMarkers()">
-                <i class="fa-solid fa-location-dot"></i>
-                <span id="revealSalesLabel">Voir les ventes sur la carte</span>
+            <!-- CTA : révèle les ventes du secteur sur la carte (façon cadastre.com).
+                 Désactivé tant qu'aucune adresse n'a été cherchée (pas de données). -->
+            <button class="reveal-sales-btn" id="revealSalesBtn" onclick="toggleSalesMarkers()" disabled>
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span id="revealSalesLabel">Cherchez une adresse pour voir les ventes</span>
             </button>
 
             <div class="filter-panel collapsed" id="filterPanel">
@@ -3347,13 +3357,24 @@
         function updateRevealSalesBtn() {
             const btn = document.getElementById('revealSalesBtn');
             const lbl = document.getElementById('revealSalesLabel');
+            const ico = btn ? btn.querySelector('i') : null;
             if (!btn || !lbl) return;
             const n = currentFilteredSales.length;
+            if (n === 0) {
+                // Pas de données : tant qu'aucune adresse n'a été cherchée, le bouton est inactif
+                btn.disabled = true;
+                btn.classList.remove('active');
+                lbl.textContent = 'Cherchez une adresse pour voir les ventes';
+                if (ico) ico.className = 'fa-solid fa-magnifying-glass';
+                return;
+            }
+            btn.disabled = false;
+            if (ico) ico.className = 'fa-solid fa-location-dot';
             if (saleMarkersVisible) {
                 lbl.textContent = 'Masquer les ventes';
                 btn.classList.add('active');
             } else {
-                lbl.textContent = n ? `Voir les ${n.toLocaleString('fr-FR')} ventes sur la carte` : 'Voir les ventes sur la carte';
+                lbl.textContent = `Voir les ${n.toLocaleString('fr-FR')} ventes sur la carte`;
                 btn.classList.remove('active');
             }
         }
