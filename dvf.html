@@ -2749,39 +2749,49 @@
                 markers.push(marker);
             });
 
-            // Clustering des marqueurs — uniquement si l'utilisateur a activé l'affichage des ventes
-            // (sinon carte épurée façon cadastre.com : on clique les parcelles).
-            if (saleMarkersVisible && typeof markerClusterer !== 'undefined' && markers.length > 0) {
-                markerCluster = new markerClusterer.MarkerClusterer({
-                    map,
-                    markers,
-                    renderer: {
-                        render({ count, position }) {
-                            const clusterScale = Math.min(12 + Math.log2(count) * 4, 32);
-                            return new google.maps.Marker({
-                                position,
-                                label: {
-                                    text: String(count),
-                                    color: '#fff',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    fontFamily: 'Barlow Semi Condensed'
-                                },
-                                icon: {
-                                    path: google.maps.SymbolPath.CIRCLE,
-                                    fillColor: '#667eea',
-                                    fillOpacity: 0.9,
-                                    strokeColor: '#fff',
-                                    strokeWeight: 2,
-                                    scale: clusterScale
-                                },
-                                zIndex: 50
-                            });
-                        }
-                    }
+            // Affichage des ventes façon cadastre.com : on dessine les PARCELLES vendues remplies
+            // (cyan), pas des ronds/clusters. Source = markers[] (positions + ventes). Cf. renderSaleParcels().
+            renderSaleParcels();
+            updateRevealSalesBtn();
+        }
+
+        // ===== RENDU DES PARCELLES VENDUES (remplies, façon cadastre.com) =====
+        let saleParcelPolygons = [];
+        let saleParcelToken = 0;
+        function clearSaleParcels() {
+            saleParcelPolygons.forEach(p => p.setMap(null));
+            saleParcelPolygons = [];
+        }
+        async function renderSaleParcels() {
+            clearSaleParcels();
+            if (!saleMarkersVisible || markers.length === 0) return;
+            const token = ++saleParcelToken; // annule un rendu précédent si re-déclenché
+            const pts = markers.map(m => [m.getPosition().lng(), m.getPosition().lat()]);
+            const CHUNK = 80;                  // apicarto MultiPoint par lots
+            const seen = new Set();
+            for (let i = 0; i < pts.length; i += CHUNK) {
+                if (token !== saleParcelToken || !saleMarkersVisible) { clearSaleParcels(); return; }
+                const mp = { type: 'MultiPoint', coordinates: pts.slice(i, i + CHUNK) };
+                let json;
+                try {
+                    const resp = await fetch('https://apicarto.ign.fr/api/cadastre/parcelle?geom=' + encodeURIComponent(JSON.stringify(mp)));
+                    json = await resp.json();
+                } catch (e) { continue; }
+                if (token !== saleParcelToken || !saleMarkersVisible) { clearSaleParcels(); return; }
+                (json.features || []).forEach(f => {
+                    const p = f.properties;
+                    const idu = p.idu || (p.code_com + p.section + p.numero);
+                    if (seen.has(idu)) return;
+                    seen.add(idu);
+                    // Parcelle remplie, NON cliquable → le clic passe à la carte (onParcelClick → historique)
+                    saleParcelPolygons.push(new google.maps.Polygon({
+                        paths: geojsonToPaths(f.geometry),
+                        strokeColor: '#00E5FF', strokeOpacity: 0.95, strokeWeight: 1.5,
+                        fillColor: '#00E5FF', fillOpacity: 0.22,
+                        clickable: false, map: map, zIndex: 2
+                    }));
                 });
             }
-            updateRevealSalesBtn();
         }
 
         function renderSalesList(sales) {
