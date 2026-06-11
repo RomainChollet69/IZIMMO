@@ -1909,6 +1909,9 @@
             });
             infoWindow = new google.maps.InfoWindow({ maxWidth: 340 });
 
+            // Clic sur la carte → parcelle + son historique de ventes DVF (cf. onParcelClick)
+            map.addListener('click', onParcelClick);
+
             // Paramètres URL depuis le pipeline vendeurs : ?adresse=...&rayon=400
             const params = new URLSearchParams(window.location.search);
             const adresseParam = params.get('adresse');
@@ -3288,6 +3291,74 @@
             }
         });
 
+        // ===== CLIC PARCELLE → HISTORIQUE DES VENTES DVF (façon cadastre.com) =====
+        // Au clic sur la carte : récupère la parcelle (API Carto IGN), la surligne, et liste
+        // les ventes DVF chargées dont le point tombe à l'intérieur de la parcelle.
+        let parcelHighlight = null;
+
+        function geojsonToPaths(geometry) {
+            const paths = [];
+            const polys = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
+            polys.forEach(poly => poly.forEach(ring => {
+                paths.push(ring.map(c => ({ lat: c[1], lng: c[0] })));
+            }));
+            return paths;
+        }
+
+        async function onParcelClick(e) {
+            const lat = e.latLng.lat(), lng = e.latLng.lng();
+            const geom = encodeURIComponent(JSON.stringify({ type: 'Point', coordinates: [lng, lat] }));
+            let parcel = null;
+            try {
+                const resp = await fetch('https://apicarto.ign.fr/api/cadastre/parcelle?geom=' + geom);
+                const json = await resp.json();
+                parcel = json.features && json.features[0];
+            } catch (err) { return; }
+            if (!parcel) return;
+
+            // Surlignage de la parcelle cliquée
+            if (parcelHighlight) parcelHighlight.setMap(null);
+            parcelHighlight = new google.maps.Polygon({
+                paths: geojsonToPaths(parcel.geometry),
+                strokeColor: '#2962FF', strokeWeight: 2.5, fillColor: '#2962FF', fillOpacity: 0.10,
+                clickable: false, zIndex: 1, map: map
+            });
+
+            // Ventes DVF chargées situées DANS la parcelle (point-dans-polygone)
+            const inParcel = allSales.filter(s => s.lat && s.lng &&
+                google.maps.geometry.poly.containsLocation(new google.maps.LatLng(s.lat, s.lng), parcelHighlight));
+            inParcel.sort((a, b) => String(b.date_mutation || '').localeCompare(String(a.date_mutation || '')));
+
+            const p = parcel.properties;
+            const surfP = p.contenance ? p.contenance.toLocaleString('fr-FR') + ' m²' : '';
+            let rows;
+            if (!inParcel.length) {
+                rows = `<div style="font-size:13px;color:#6B7280;padding:6px 0">Aucune vente DVF sur cette parcelle dans la zone chargée.</div>`;
+            } else {
+                rows = inParcel.map(s => {
+                    const dt = s.date_mutation ? new Date(s.date_mutation).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+                    const surf = s.surface_reelle_bati || s.surface_terrain || 0;
+                    const prix = s.valeur_fonciere ? Math.round(s.valeur_fonciere).toLocaleString('fr-FR') + ' €' : '—';
+                    const m2 = (s.valeur_fonciere && surf) ? Math.round(s.valeur_fonciere / surf).toLocaleString('fr-FR') + ' €/m²' : '';
+                    const type = s.type_local || '';
+                    return `<div style="border-top:1px solid #eee;padding:6px 0;display:flex;justify-content:space-between;gap:12px">
+                        <div><div style="font-size:12px;color:#243B53;font-weight:600">${dt}</div>
+                        <div style="font-size:11px;color:#6B7280">${type}${surf ? ' · ' + surf + ' m²' : ''}</div></div>
+                        <div style="text-align:right"><div style="font-size:13px;font-weight:700;color:#243B53">${prix}</div>
+                        <div style="font-size:11px;color:#6B7280">${m2}</div></div>
+                    </div>`;
+                }).join('');
+            }
+            const content = `<div style="font-family:Inter,sans-serif;min-width:230px;max-width:300px">
+                <div style="font-weight:700;color:#243B53">Parcelle ${p.section} ${parseInt(p.numero, 10)}</div>
+                <div style="font-size:11px;color:#9CA3AF;margin-bottom:6px">${surfP ? surfP + ' · ' : ''}Historique des ventes • DVF</div>
+                <div style="max-height:240px;overflow-y:auto">${rows}</div>
+            </div>`;
+            infoWindow.setContent(content);
+            infoWindow.setPosition(e.latLng);
+            infoWindow.open(map);
+        }
+
         // ===== TOGGLE PANEL (MOBILE) =====
         document.getElementById('togglePanelBtn').addEventListener('click', () => {
             const panel = document.getElementById('sidePanel');
@@ -3725,7 +3796,7 @@
                 return;
             }
             const s = document.createElement('script');
-            s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&v=weekly&callback=initMap`;
+            s.src = `https://maps.googleapis.com/maps/api/js?key=${key}&v=weekly&libraries=geometry&callback=initMap`;
             s.async = true;
             s.defer = true;
             document.body.appendChild(s);
