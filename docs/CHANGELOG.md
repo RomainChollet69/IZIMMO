@@ -23,7 +23,12 @@ Retour utilisateur : le calque cadastral seul n'était pas le but ; ce qu'il veu
 - **Implémenté** (`dvf.html`) : `map.addListener('click', onParcelClick)` → récupère la parcelle via l'**API Carto Cadastre IGN** (`apicarto.ign.fr/api/cadastre/parcelle`, gratuite, CORS OK), la surligne (`google.maps.Polygon`), et liste les ventes DVF chargées (`allSales`) dont le point tombe **dans la parcelle** (point-dans-polygone via `google.maps.geometry.poly.containsLocation` — la donnée DVF de Léon n'a pas de réf. parcelle, donc rattachement géométrique). InfoWindow « Parcelle X · Historique des ventes • DVF » (date, type, surface, prix, prix/m²). Ajout de `&libraries=geometry` au chargement Maps. Le recentrage carte reste géré par le drag du marqueur central (pas de conflit avec le clic).
 - **Vérifié en live** : clic sur « 19 Chemin des Petites Brosses, Caluire » → Parcelle AX 428, liste des ventes (400 702 € · 90 m² · 4452 €/m², etc.). ✅
 - **Limite assumée** : pas d'identification du propriétaire (donnée fermée/payante = moat cadastre.com).
-- **Reste du plan DVF v2** (non fait) : cercle de recherche à rayon ajustable, panneau-liste latéral triable, requête DVF vocale (différenciateur Léon).
+
+#### DVF v3 : bascule complète sur le modèle cadastre.com (abandon des clusters)
+Retour utilisateur : « les cercles ne sont pas intuitifs ». Il s'agissait des **bulles de clusters numérotées** (`MarkerClusterer`, ex. 122/162 ventes). cadastre.com n'affiche pas ça par défaut : carte épurée + parcelles + clic.
+- **`dvf.html`** : flag `saleMarkersVisible` (défaut **false**) → les marqueurs/clusters de ventes ne sont plus rendus par défaut (le `MarkerClusterer` n'est créé que si actif). Le **calque cadastral est auto-activé** à l'init (`cadastreToggle.click()` dans `initMap`) → on voit les parcelles à cliquer. Nouveau bouton **« Ventes »** (`salesMarkersToggle`) pour réafficher les marqueurs. Toute la donnée (stats, liste, graphe) reste dans le panneau de gauche.
+- **Vérifié en live** : après recherche, carte épurée **sans bulles**, bouton Cadastre actif, panneau gauche = 3733 ventes/stats. ✅
+- **Reste du plan DVF** (non fait) : panneau-liste latéral type cadastre.com pour le clic-parcelle (actuellement InfoWindow), cercle de recherche à rayon ajustable, requête DVF vocale (différenciateur Léon).
 
 ---
 
