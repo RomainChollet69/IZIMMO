@@ -30,7 +30,8 @@ Retour utilisateur : « les cercles ne sont pas intuitifs ». Il s'agissait des 
 - **Vérifié en live** : après recherche, carte épurée **sans bulles**, bouton Cadastre actif, panneau gauche = 3733 ventes/stats. ✅
 - **CTA « Voir les X ventes sur la carte »** (`revealSalesBtn`, `toggleSalesMarkers()`) : bouton bien visible dans le panneau gauche (style gradient), avec le compteur de ventes mis à jour (`updateRevealSalesBtn()` appelé en fin de `renderMarkers`). Clic → révèle les ventes ; re-clic → « Masquer les ventes ». Remplace l'ancien petit toggle carte. Inspiré du bouton « Voir les X Parcelles » de cadastre.com.
 - **Vérifié en live** : « Voir les 3733 ventes sur la carte » → clic → ventes affichées + parcelles orange + clic parcelle « Parcelle AO 205 · Historique des ventes • DVF ». ✅
-- **Reste du plan DVF** (non fait) : panneau-liste latéral type cadastre.com pour le clic-parcelle (actuellement InfoWindow), clarification des filtres, requête DVF vocale (différenciateur Léon).
+- **Parcelles remplies au lieu des ronds** (retour utilisateur : « toujours les clusters ronds au lieu d'encadrer les parcelles ») : `renderSaleParcels()` remplace le `MarkerClusterer`. Au clic « Voir les ventes », les points de vente (`markers[]`) sont envoyés en lots à apicarto (`MultiPoint`, chunks de 80) → les géométries des parcelles vendues sont dessinées **remplies en cyan** (`google.maps.Polygon`, `clickable:false` → le clic traverse jusqu'à `onParcelClick` pour l'historique). Dédup par `idu`. Annulation propre via `saleParcelToken` si re-déclenché. **Vérifié en live** : parcelles cyan dessinées dans le secteur, plus aucun rond. ✅
+- **Reste du plan DVF** (non fait) : panneau-liste latéral type cadastre.com pour le clic-parcelle (actuellement InfoWindow), clarification des filtres (cartes titrées), requête DVF vocale (différenciateur Léon).
 
 ---
 
