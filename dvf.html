@@ -1162,6 +1162,29 @@
             background: #319834;
             color: #fff;
         }
+        /* Calque cadastral IGN (limites de parcelles) — même style que DVF/DPE */
+        .cadastre-toggle {
+            position: absolute;
+            top: 10px;
+            right: 340px;
+            z-index: var(--z-map-controls);
+            background: rgba(255,255,255,0.95);
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .cadastre-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .cadastre-toggle.active { background: #319834; color: #fff; }
 
         /* InfoWindow Google Maps — overrides pour affichage complet */
         .gm-style-iw-c { padding: 0 !important; max-width: 340px !important; max-height: none !important; }
@@ -1774,6 +1797,7 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn"><i class="fas fa-sliders"></i></button>
+            <button class="cadastre-toggle" id="cadastreToggle" title="Afficher les limites de parcelles (cadastre IGN)"><i class="fa-solid fa-vector-square"></i> Cadastre</button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🛰️ Satellite</button>
@@ -3228,6 +3252,40 @@
             currentMapType = currentMapType === 'roadmap' ? 'hybrid' : 'roadmap';
             map.setMapTypeId(currentMapType);
             document.getElementById('mapTypeToggle').textContent = currentMapType === 'roadmap' ? '🛰️ Satellite' : '🗺️ Plan';
+        });
+
+        // ===== CALQUE CADASTRAL (IGN Parcellaire Express — WMTS gratuit, sans clé) =====
+        // Superpose les limites de parcelles sur la carte (effet « cadastre.com »).
+        // Couche créée à la 1re activation pour ne rien charger tant que non demandé.
+        let cadastreLayer = null, cadastreVisible = false;
+        document.getElementById('cadastreToggle').addEventListener('click', () => {
+            if (!cadastreLayer) {
+                cadastreLayer = new google.maps.ImageMapType({
+                    name: 'Cadastre',
+                    tileSize: new google.maps.Size(256, 256),
+                    minZoom: 12,
+                    maxZoom: 20,
+                    opacity: 0.9,
+                    getTileUrl: (coord, zoom) => {
+                        const n = 1 << zoom; // évite les tuiles hors-monde (wrap)
+                        if (coord.x < 0 || coord.x >= n || coord.y < 0 || coord.y >= n) return null;
+                        return 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
+                            + '&LAYER=CADASTRALPARCELS.PARCELLAIRE_EXPRESS&STYLE=normal&TILEMATRIXSET=PM'
+                            + '&TILEMATRIX=' + zoom + '&TILECOL=' + coord.x + '&TILEROW=' + coord.y
+                            + '&FORMAT=image/png';
+                    }
+                });
+            }
+            cadastreVisible = !cadastreVisible;
+            const btn = document.getElementById('cadastreToggle');
+            if (cadastreVisible) {
+                map.overlayMapTypes.push(cadastreLayer);
+                btn.classList.add('active');
+            } else {
+                const idx = map.overlayMapTypes.getArray().indexOf(cadastreLayer);
+                if (idx > -1) map.overlayMapTypes.removeAt(idx);
+                btn.classList.remove('active');
+            }
         });
 
         // ===== TOGGLE PANEL (MOBILE) =====
