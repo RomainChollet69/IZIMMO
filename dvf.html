@@ -2006,7 +2006,8 @@
                 fullscreenControl: false,
                 clickableIcons: false, // désactive les POI Google (sinon clic = info-bulle native + bloque le clic-parcelle)
                 tilt: 45,              // vue aérienne 3D (oblique) en zoomant fort, façon cadastre.com
-                rotateControl: true,   // permet de pivoter la vue 3D
+                rotateControl: true,   // boutons rotation + inclinaison de la vue 3D (façon cadastre.com)
+                rotateControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
                 gestureHandling: 'greedy',
                 zoomControl: true,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }
