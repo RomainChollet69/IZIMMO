@@ -4,6 +4,27 @@
 
 ---
 
+## Session 2026-06-12 — Mise à jour des données DVF (toute la France, 2021–2025)
+
+### Refonte du pipeline DVF sur la source géolocalisée Etalab (geo-dvf)
+**Objectif** : rafraîchir les données de vente DVF pour **toute la France** avec la dernière version disponible (2025 désormais complet), en priorisant l'**affichage rapide** côté utilisateur.
+
+**Décision données** : passage de **2014–2025 (12 ans, 15,5 M ventes, ~600 Mo)** à **2021–2025 (5 ans, 7,1 M ventes, 278 Mo)**. Les 5 dernières années sont les seules pertinentes pour estimer un prix actuel ; -54 % de poids = affichage ~2× plus rapide. Choix utilisateur explicite (« je veux ce qui permette un affichage rapide »).
+
+**Source** : bascule de DVF+ Cerema (Lambert93, Box.com, non scriptable, nécessitait pyproj) vers **geo-dvf Etalab** (`files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dept}.csv.gz`) — URLs directes, **lat/lon WGS84 inclus** (plus besoin de pyproj), 1 ligne par local.
+
+**Nouveau script** (`scripts/generate-dvf-from-geodvf.py`) :
+- Télécharge les 485 fichiers (97 depts × 5 ans) puis traite **dept par dept** (mémoire faible).
+- **Agrégation par mutation** (`id_mutation`) — geo-dvf ayant 1 ligne/local, on regroupe pour avoir 1 vente = 1 entrée (prix unique, somme des surfaces bâties, terrain dédupliqué par parcelle), sinon prix/m² faussé.
+- Sortie **strictement identique** au format lu par `dvf.html` : `{dept,count,bbox,data}` avec `data = [[date_int, prix, type_code, sbati, sterr, lng, lat], …]` + `index.json` `{dept:{bbox,count,size}}`. Types : 1=Appart, 2=Maison, 3=Terrain/Dépendance, 4=Local pro, 5=Autre.
+- **Généré** : 7 104 464 ventes, 97 départements, 278 Mo, en 80s. ✅
+
+**`dvf.html`** : curseur « Année de vente » recalé **2014→2021** (min/value des deux `range` + libellé par défaut `2021 → 2025`) pour ne pas proposer d'années désormais vides.
+
+**Upload** : via `scripts/upload-dvf-storage.py` (bucket `dvf-data`, `x-upsert:true` → écrase l'ancien jeu). Nécessite `SUPABASE_SERVICE_ROLE_KEY` (manipulée par l'utilisateur, jamais par Claude).
+
+---
+
 ## Session 2026-06-10 (suite 2) — Fix navigation inter-rubriques + DVF v2 (calque cadastral IGN)
 
 ### Fix : navigation JS inter-rubriques détournait l'onglet
