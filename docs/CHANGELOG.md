@@ -6,6 +6,11 @@
 
 ## Session 2026-06-12 — Mise à jour des données DVF (toute la France, 2021–2025)
 
+### UI carte DVF : retrait du Cadastre + contrôle rotation/3D custom
+- **Bouton « Cadastre » retiré** (`dvf.html`) — n'apportait rien (les ventes s'affichent déjà en parcelles cyan). Suppression du bouton, de sa CSS et du calque WMTS IGN associé.
+- **Contrôle rotation/3D custom** remplaçant le contrôle natif Google (losange) jugé illisible : 3 boutons clairs (3D/2D, pivoter gauche, pivoter droite) en bas à droite. `rotateControl: false` + `addRotationControl()`/`rotateMap()`.
+- **Contrainte raster assumée** : l'imagerie oblique 45° de Google n'existe qu'à fort zoom → les boutons **zooment automatiquement à 18** (`enable3D()`) pour que l'effet 3D/rotation soit réellement visible (sinon « ça ne marche pas » en vue verticale). Rotation par quarts (N/E/S/O). *Limite* : pour une rotation fluide à tout niveau de zoom il faudrait une carte vectorielle (Map ID Google Cloud) — non mis en place.
+
 ### Refonte du pipeline DVF sur la source géolocalisée Etalab (geo-dvf)
 **Objectif** : rafraîchir les données de vente DVF pour **toute la France** avec la dernière version disponible (2025 désormais complet), en priorisant l'**affichage rapide** côté utilisateur.
 

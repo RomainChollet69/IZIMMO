@@ -1164,29 +1164,30 @@
             background: #319834;
             color: #fff;
         }
-        /* Calque cadastral IGN (limites de parcelles) — même style que DVF/DPE */
-        .cadastre-toggle {
-            position: absolute;
-            top: 10px;
-            right: 340px;
-            z-index: var(--z-map-controls);
+        /* Contrôle personnalisé rotation / inclinaison 3D de la carte (façon cadastre.com) */
+        .map-rotate-ctrl {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 0 10px 10px 0;
+        }
+        .map-rotate-ctrl button {
+            width: 40px;
+            height: 40px;
             background: rgba(255,255,255,0.95);
             border: none;
             border-radius: 8px;
-            padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            font-family: 'Inter', sans-serif;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            transition: all 0.2s;
             color: #333;
+            font-size: 15px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s;
         }
-        .cadastre-toggle:hover { background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .cadastre-toggle.active { background: #319834; color: #fff; }
+        .map-rotate-ctrl button:hover { background: #fff; color: #667eea; }
+        .map-rotate-ctrl button.active { background: #319834; color: #fff; }
 
         /* CTA "Voir les X ventes sur la carte" (panneau gauche) */
         .reveal-sales-btn {
@@ -1882,7 +1883,6 @@
         <!-- Map -->
         <div class="map-container">
             <button class="toggle-panel-btn" id="togglePanelBtn"><i class="fas fa-sliders"></i></button>
-            <button class="cadastre-toggle" id="cadastreToggle" title="Afficher les limites de parcelles (cadastre IGN)"><i class="fa-solid fa-vector-square"></i> Cadastre</button>
             <button class="dvf-toggle active" id="dvfToggle"><i class="fa-solid fa-euro-sign"></i> DVF ✓</button>
             <button class="dpe-toggle" id="dpeToggle">🏠 DPE</button>
             <button class="map-type-toggle" id="mapTypeToggle">🗺️ Plan</button>
@@ -2007,8 +2007,7 @@
                 fullscreenControl: false,
                 clickableIcons: false, // désactive les POI Google (sinon clic = info-bulle native + bloque le clic-parcelle)
                 tilt: 45,              // vue aérienne 3D (oblique) en zoomant fort, façon cadastre.com
-                rotateControl: true,   // boutons rotation + inclinaison de la vue 3D (façon cadastre.com)
-                rotateControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM },
+                rotateControl: false,  // contrôle natif (losange) peu lisible → remplacé par un contrôle custom (cf. addRotationControl)
                 gestureHandling: 'greedy',
                 zoomControl: true,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }
@@ -2017,9 +2016,9 @@
 
             // Clic sur la carte → parcelle + son historique de ventes DVF (cf. onParcelClick)
             map.addListener('click', onParcelClick);
-            // NB : le calque cadastre IGN (lignes + lettres de sections) n'est PAS activé par défaut
-            // (trop chargé). Les parcelles vendues s'affichent en cyan via "Voir les ventes" ;
-            // le bouton "Cadastre" reste dispo pour réafficher le quadrillage complet.
+            // Contrôle custom rotation/3D (façon cadastre.com), plus lisible que le contrôle natif.
+            addRotationControl();
+            // NB : les parcelles vendues s'affichent en cyan via "Voir les ventes".
 
             // Paramètres URL depuis le pipeline vendeurs : ?adresse=...&rayon=400
             const params = new URLSearchParams(window.location.search);
@@ -3398,39 +3397,52 @@
             document.getElementById('mapTypeToggle').textContent = currentMapType === 'roadmap' ? '🛰️ Satellite' : '🗺️ Plan';
         });
 
-        // ===== CALQUE CADASTRAL (IGN Parcellaire Express — WMTS gratuit, sans clé) =====
-        // Superpose les limites de parcelles sur la carte (effet « cadastre.com »).
-        // Couche créée à la 1re activation pour ne rien charger tant que non demandé.
-        let cadastreLayer = null, cadastreVisible = false;
-        document.getElementById('cadastreToggle').addEventListener('click', () => {
-            if (!cadastreLayer) {
-                cadastreLayer = new google.maps.ImageMapType({
-                    name: 'Cadastre',
-                    tileSize: new google.maps.Size(256, 256),
-                    minZoom: 12,
-                    maxZoom: 20,
-                    opacity: 0.9,
-                    getTileUrl: (coord, zoom) => {
-                        const n = 1 << zoom; // évite les tuiles hors-monde (wrap)
-                        if (coord.x < 0 || coord.x >= n || coord.y < 0 || coord.y >= n) return null;
-                        return 'https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0'
-                            + '&LAYER=CADASTRALPARCELS.PARCELLAIRE_EXPRESS&STYLE=normal&TILEMATRIXSET=PM'
-                            + '&TILEMATRIX=' + zoom + '&TILECOL=' + coord.x + '&TILEROW=' + coord.y
-                            + '&FORMAT=image/png';
-                    }
-                });
-            }
-            cadastreVisible = !cadastreVisible;
-            const btn = document.getElementById('cadastreToggle');
-            if (cadastreVisible) {
-                map.overlayMapTypes.push(cadastreLayer);
-                btn.classList.add('active');
-            } else {
-                const idx = map.overlayMapTypes.getArray().indexOf(cadastreLayer);
-                if (idx > -1) map.overlayMapTypes.removeAt(idx);
-                btn.classList.remove('active');
-            }
-        });
+        // ===== CONTRÔLE ROTATION / VUE 3D (custom, façon cadastre.com) =====
+        // Le contrôle natif Google (losange) est peu reconnaissable → on monte 3 boutons clairs
+        // (3D/2D, pivoter gauche, pivoter droite) en bas à droite, au-dessus du zoom.
+        // La rotation/inclinaison agit sur l'imagerie aérienne 45° (dispo en ville, ex. Lyon) ;
+        // l'effet est surtout visible en zoomant (zoom ≥ 18).
+        const ROTATION_STEP_DEG = 90;   // l'imagerie 45° ne tourne que par quarts (N/E/S/O)
+        const TILT_3D_MIN_ZOOM = 18;    // l'imagerie aérienne oblique 45° n'existe qu'à fort zoom
+        function addRotationControl() {
+            const ctrl = document.createElement('div');
+            ctrl.className = 'map-rotate-ctrl';
+            ctrl.innerHTML =
+                '<button data-act="tilt" title="Basculer en vue 3D / 2D"><i class="fa-solid fa-cube"></i></button>' +
+                '<button data-act="left" title="Pivoter à gauche"><i class="fa-solid fa-rotate-left"></i></button>' +
+                '<button data-act="right" title="Pivoter à droite"><i class="fa-solid fa-rotate-right"></i></button>';
+
+            ctrl.querySelector('[data-act="tilt"]').addEventListener('click', (e) => {
+                const is3D = (map.getTilt() || 0) > 0;
+                if (is3D) {
+                    map.setTilt(0);
+                } else {
+                    enable3D(); // zoome si besoin pour révéler l'imagerie oblique
+                }
+                e.currentTarget.classList.toggle('active', !is3D);
+            });
+            ctrl.querySelector('[data-act="left"]').addEventListener('click', () => rotateMap(-ROTATION_STEP_DEG));
+            ctrl.querySelector('[data-act="right"]').addEventListener('click', () => rotateMap(ROTATION_STEP_DEG));
+
+            map.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(ctrl);
+        }
+
+        // Active la vue 3D oblique. Comme l'imagerie 45° n'existe qu'à fort zoom, on zoome
+        // d'abord (sinon l'inclinaison n'a aucun effet visible et l'utilisateur croit que ça ne marche pas).
+        function enable3D() {
+            if (map.getZoom() < TILT_3D_MIN_ZOOM) map.setZoom(TILT_3D_MIN_ZOOM);
+            map.setTilt(45);
+        }
+
+        // Pivote la carte d'un quart de tour (imagerie aérienne 45°). On garantit l'inclinaison
+        // et le zoom nécessaires pour que la rotation soit réellement perceptible.
+        function rotateMap(deltaDeg) {
+            enable3D();
+            const heading = (((map.getHeading() || 0) + deltaDeg) % 360 + 360) % 360;
+            map.setHeading(heading);
+            const tiltBtn = document.querySelector('.map-rotate-ctrl [data-act="tilt"]');
+            if (tiltBtn) tiltBtn.classList.add('active');
+        }
 
         // ===== CTA "VOIR LES X VENTES" : révèle/masque les ventes du secteur sur la carte =====
         function toggleSalesMarkers() {
