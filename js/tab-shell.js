@@ -315,8 +315,36 @@
         }, true);
     }
 
-    // API publique (logo Accueil dans app.html, debug)
-    window.LeonShell = { open: openTab, activate: activateTab };
+    /**
+     * Ouvre la fiche d'un lead dans son onglet métier.
+     * Utilisé par le widget Relances, qui vit dans la frame parente (app.html) et ne
+     * peut donc pas appeler editSeller/editBuyer directement (ces fonctions sont dans
+     * l'iframe). Deux cas :
+     *  - Onglet déjà ouvert et page prête → on appelle editSeller/editBuyer dans l'iframe
+     *    (préserve scroll/filtres, pas de rechargement).
+     *  - Sinon → on (ré)ouvre l'onglet avec ?openLead=… que la page embarquée gère au load.
+     * @param {string} page - 'vendeurs.html' ou 'acquereurs.html'
+     * @param {string} id - UUID du lead
+     * @param {string} leadType - 'seller' ou 'buyer'
+     */
+    function openLead(page, id, leadType) {
+        const existing = findTabByPage(page);
+        if (existing) {
+            activateTab(existing.id);
+            const fnName = leadType === 'seller' ? 'editSeller' : 'editBuyer';
+            try {
+                const win = existing.viewEl.contentWindow;
+                if (win && typeof win[fnName] === 'function') {
+                    win[fnName](id);
+                    return;
+                }
+            } catch (e) { /* iframe pas prête → on bascule sur le rechargement avec param */ }
+        }
+        openTab(page, { src: page + '?openLead=' + encodeURIComponent(id) });
+    }
+
+    // API publique (logo Accueil dans app.html, widget relances, debug)
+    window.LeonShell = { open: openTab, activate: activateTab, openLead: openLead };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

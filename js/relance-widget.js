@@ -661,8 +661,20 @@
         snooze: snoozeRelance,
         dismiss: dismissRelance,
         goToLead: function (id, leadType) {
-            const currentPage = window.location.pathname.split('/').pop() || 'vendeurs.html';
             const targetPage = leadType === 'seller' ? 'vendeurs.html' : 'acquereurs.html';
+
+            // Desktop : le widget tourne dans la frame parente (app.html), les pages dans
+            // des iframes. On délègue au tab-shell qui ouvre/active le bon onglet et appelle
+            // editSeller/editBuyer dans l'iframe. editSeller n'existe pas ici, l'appel direct
+            // échouerait silencieusement.
+            if (window.LeonShell && typeof window.LeonShell.openLead === 'function') {
+                closePanel();
+                window.LeonShell.openLead(targetPage, id, leadType);
+                return;
+            }
+
+            // Hors shell (mobile, page autonome) : le widget partage le contexte de la page.
+            const currentPage = window.location.pathname.split('/').pop() || 'vendeurs.html';
 
             if (currentPage === targetPage || currentPage === '' && targetPage === 'vendeurs.html') {
                 // Same page: close panel and open the lead modal
