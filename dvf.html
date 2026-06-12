@@ -1974,6 +1974,7 @@
         }
 
         let radiusCircle = null;
+        let radiusEditTimeout = null; // débounce du redimensionnement du cercle à la souris
         let centerMarker = null;
         let userMarker = null;
         let allSales = [];
@@ -2330,7 +2331,19 @@
                     fillColor: '#667eea',
                     fillOpacity: 0.12,
                     clickable: false,
+                    editable: true,           // poignées sur les bords → redimensionner le rayon à la souris
                     map: map
+                });
+                // Redimensionnement par les bords : maj live du rayon (slider) + rechargement débounce.
+                radiusCircle.addListener('radius_changed', () => {
+                    const r = Math.round(radiusCircle.getRadius());
+                    const clamped = Math.max(parseInt(radiusSlider.min), Math.min(parseInt(radiusSlider.max), r));
+                    radiusSlider.value = clamped;
+                    radiusValue.textContent = clamped >= 1000 ? (clamped / 1000).toFixed(1).replace('.0', '') + ' km' : clamped + ' m';
+                    clearTimeout(radiusEditTimeout);
+                    radiusEditTimeout = setTimeout(() => {
+                        if (currentCenter) fetchDVFData(currentCenter.lat, currentCenter.lng, clamped);
+                    }, 450);
                 });
 
                 map.fitBounds(radiusCircle.getBounds());
