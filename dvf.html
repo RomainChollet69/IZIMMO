@@ -2005,6 +2005,8 @@
                 streetViewControl: false,
                 fullscreenControl: false,
                 clickableIcons: false, // désactive les POI Google (sinon clic = info-bulle native + bloque le clic-parcelle)
+                tilt: 45,              // vue aérienne 3D (oblique) en zoomant fort, façon cadastre.com
+                rotateControl: true,   // permet de pivoter la vue 3D
                 gestureHandling: 'greedy',
                 zoomControl: true,
                 zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }
@@ -2355,11 +2357,11 @@
                     cursor: 'grab',
                     icon: {
                         path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: '#667eea',
-                        fillOpacity: 0.5,
+                        fillColor: '#fff',
+                        fillOpacity: 1,
                         strokeColor: '#667eea',
-                        strokeWeight: 2,
-                        scale: 12
+                        strokeWeight: 3,
+                        scale: 6
                     },
                     title: 'Déplacer pour chercher ailleurs',
                     zIndex: Z_CENTER_MARKER
