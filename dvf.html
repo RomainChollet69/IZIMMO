@@ -1994,7 +1994,7 @@
         // Default: Lyon (fallback si géolocalisation refusée) — secteur principal des utilisateurs
         const DEFAULT_LAT = 45.7640;
         const DEFAULT_LNG = 4.8357;
-        const DEFAULT_ZOOM = 13;
+        const DEFAULT_ZOOM = 14;
 
         function initMap() {
             map = new google.maps.Map(document.getElementById('map'), {
@@ -2331,6 +2331,11 @@
                 });
 
                 map.fitBounds(radiusCircle.getBounds());
+                // Sur grand écran, fitBounds peut trop dézoomer (cercle minuscule) → on garantit
+                // un zoom mini pour que le secteur soit bien cadré.
+                google.maps.event.addListenerOnce(map, 'idle', () => {
+                    if (map.getZoom() < 14) map.setZoom(14);
+                });
 
                 renderFilteredSales();
                 collapseFilters();
