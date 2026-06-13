@@ -35,8 +35,18 @@ On **ne peut pas** désactiver le transfert à distance : il vit dans le compte 
 - **`parametres.html`** : le petit lien texte « Voir le tutoriel vidéo » devient une **vignette cliquable** (img/tutorials/vignette_tuto_portails.png) avec bouton play, ouvrant un lecteur modal YouTube (`openTutoVideoModal()`). Plus visible.
 - **`home.html`** : **bandeau promo** (gradient marque) en haut de l'accueil, affiché **uniquement** aux agents dont le transfert n'est pas encore activé (`email_forwarding_active !== true`). Met en avant LA grosse automatisation de Léon : titre, pitch, vignette vidéo, CTA « Voir le tutoriel » (modal) + « Configurer maintenant » (`parametres.html#email-forwarding`). Bouton masquer (localStorage `leon_dismiss_visit_promo`). Disparaît automatiquement une fois le transfert activé.
 
+### Correctif : moteur de recherche de l'accueil (atterrissait toujours sur Vendeurs)
+**Problème** : le champ de recherche de `home.html` envoyait **toujours** vers `vendeurs.html?search=` quel que soit le texte saisi (code « V1 »). Taper « acquéreur », « visite » ou un nom de client ramenait systématiquement sur le pipeline vendeurs.
+
+**Correctif** — vraie recherche live avec dropdown (`home.html`) :
+- **Clients** : interroge `sellers` + `buyers` (Supabase `.or()` sur first_name/last_name/city/phone/email, 6 max par table, debounce 220 ms). Clic → ouvre la **fiche** dans la bonne page : `LeonShell.openLead('vendeurs.html'|'acquereurs.html', id, 'seller'|'buyer')` dans le shell, sinon `?openLead=ID`.
+- **Raccourcis rubriques** : groupe « Aller à » par mot-clé insensible aux accents (vendeur, acquéreur, visite, marché/dvf, social, vocal, paramètres, tutoriels) → ouvre la rubrique (onglet dans le shell).
+- Navigation clavier (↑/↓/Entrée/Échap), clic extérieur ferme, sanitation du terme pour ne pas casser la syntaxe PostgREST `.or()` (virgules/parenthèses).
+- **Piège corrigé** : `LeonShell.openLead` attend `leadType` = `'seller'`/`'buyer'` (pour appeler `editSeller`/`editBuyer`), pas `'vendeur'`/`'acquereur'` → mapping ajouté, sinon ouverture du mauvais éditeur.
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
+- `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
 
 ---
 

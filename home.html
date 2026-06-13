@@ -273,6 +273,7 @@
         .search-section {
             max-width: 620px;
             margin: 0 auto 40px;
+            position: relative;
         }
 
         .search-bar-global {
@@ -333,6 +334,43 @@
             transform: scale(1.05);
             box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
         }
+
+        /* ===== RÉSULTATS DE RECHERCHE (dropdown) ===== */
+        .search-results {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            right: 0;
+            background: #FFFFFF;
+            border: 1.5px solid #E5E7EB;
+            border-radius: 16px;
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+            max-height: 380px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            text-align: left;
+        }
+        .search-results.open { display: block; }
+        .search-results-group {
+            font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+            color: #9CA3AF; padding: 12px 18px 6px;
+        }
+        .search-result-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 18px; cursor: pointer; transition: background 0.12s;
+        }
+        .search-result-item:hover, .search-result-item.active { background: #F3F4F6; }
+        .search-result-icon {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+        }
+        .search-result-icon.vendeur { background: #FFF3E0; color: #F57C00; }
+        .search-result-icon.acquereur { background: #E0F7FA; color: #00897B; }
+        .search-result-main { flex: 1; min-width: 0; }
+        .search-result-name { font-size: 14px; font-weight: 600; color: #2C3E50; }
+        .search-result-meta { font-size: 12px; color: #9CA3AF; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .search-results-empty { padding: 18px; text-align: center; color: #9CA3AF; font-size: 13px; }
 
         /* ===== GRILLE DE TUILES ===== */
         .tiles-grid {
@@ -619,6 +657,8 @@
                     <i class="fa-solid fa-microphone"></i>
                 </button>
             </div>
+            <!-- Résultats de recherche (clients vendeurs + acquéreurs) -->
+            <div class="search-results" id="searchResults"></div>
         </div>
 
         <!-- Grille de tuiles (7 modules) -->
@@ -785,23 +825,179 @@
         document.body.appendChild(overlay);
     }
 
-    /* === Recherche globale (V1 : redirect vers pipeline vendeurs) === */
+    /* === Recherche globale : clients (vendeurs + acquéreurs) + raccourcis pages ===
+     * Dropdown live. Tape un nom de client → ouvre sa fiche dans la bonne page ;
+     * tape "acquéreur", "visite"… → raccourci vers la rubrique. */
     (function initGlobalSearch() {
         const input = document.getElementById('globalSearch');
-        if (!input) return;
+        const resultsEl = document.getElementById('searchResults');
+        if (!input || !resultsEl) return;
 
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && this.value.trim()) {
-                const query = this.value.trim();
-                // Dans le shell desktop : ouvrir/activer l'onglet Vendeurs avec la recherche
-                // (sinon location.href écraserait l'onglet Accueil au lieu d'ouvrir un onglet).
-                const shell = (window.self !== window.top) ? window.parent.LeonShell : null;
-                if (shell) {
-                    shell.open('vendeurs.html', { search: query });
-                } else {
-                    window.location.href = 'vendeurs.html?search=' + encodeURIComponent(query);
-                }
+        // Rubriques navigables par mot-clé (insensible aux accents)
+        const SECTIONS = [
+            { kw: ['vendeur', 'vendeurs', 'bien', 'mandat'], page: 'vendeurs.html',   label: 'Pipeline vendeurs',     icon: 'fa-house' },
+            { kw: ['acquereur', 'acquereurs', 'acheteur'],    page: 'acquereurs.html', label: 'Pipeline acquéreurs',   icon: 'fa-key' },
+            { kw: ['visite', 'visites'],                      page: 'visites.html',    label: 'Visites',               icon: 'fa-calendar-check' },
+            { kw: ['marche', 'dvf', 'prix'],                  page: 'dvf.html',        label: 'Marché / DVF',          icon: 'fa-map-location-dot' },
+            { kw: ['social', 'community', 'reseaux', 'post'], page: 'social.html',     label: 'Community management',  icon: 'fa-share-nodes' },
+            { kw: ['vocal', 'micro', 'assistant', 'dictee'],  page: 'micro.html',      label: 'Assistant vocal',       icon: 'fa-microphone' },
+            { kw: ['parametre', 'parametres', 'reglage'],     page: 'parametres.html', label: 'Paramètres',            icon: 'fa-gear' },
+            { kw: ['tutoriel', 'tutoriels', 'tuto', 'aide'],  page: 'tutoriels.html',  label: 'Tutoriels',             icon: 'fa-graduation-cap' }
+        ];
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let items = [];   // liste plate : { kind:'page'|'lead', ... }
+
+        const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        const esc = (s) => { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; };
+        const fullName = (r) => [r.first_name, r.last_name].filter(Boolean).join(' ').trim() || 'Sans nom';
+
+        function isInShell() { return window.self !== window.top && window.parent.LeonShell; }
+
+        function openPage(page) {
+            if (isInShell()) window.parent.LeonShell.open(page);
+            else window.location.href = page;
+            closeResults();
+        }
+
+        function openLead(type, id) {
+            const page = type === 'vendeur' ? 'vendeurs.html' : 'acquereurs.html';
+            const leadType = type === 'vendeur' ? 'seller' : 'buyer'; // attendu par LeonShell.openLead
+            if (isInShell() && window.parent.LeonShell.openLead) {
+                window.parent.LeonShell.openLead(page, id, leadType);
+            } else if (isInShell()) {
+                window.parent.LeonShell.open(page, { src: page + '?openLead=' + encodeURIComponent(id) });
+            } else {
+                window.location.href = page + '?openLead=' + encodeURIComponent(id);
             }
+            closeResults();
+        }
+
+        function activate(item) {
+            if (item.kind === 'page') openPage(item.page);
+            else openLead(item.type, item.id);
+        }
+
+        function closeResults() {
+            resultsEl.classList.remove('open');
+            resultsEl.innerHTML = '';
+            items = [];
+            activeIndex = -1;
+        }
+
+        function itemRow(idx, cls, icon, name, meta) {
+            return `<div class="search-result-item" data-idx="${idx}">
+                <div class="search-result-icon ${cls}"><i class="fa-solid ${icon}"></i></div>
+                <div class="search-result-main">
+                    <div class="search-result-name">${esc(name)}</div>
+                    ${meta ? `<div class="search-result-meta">${esc(meta)}</div>` : ''}
+                </div>
+            </div>`;
+        }
+
+        function render(q, sellers, buyers) {
+            items = [];
+            let html = '';
+
+            // 1. Raccourcis rubriques (préfixe d'un mot-clé)
+            const nq = norm(q);
+            const sections = SECTIONS.filter(s => s.kw.some(k => k.startsWith(nq))).slice(0, 4);
+            if (sections.length) {
+                html += '<div class="search-results-group">Aller à</div>';
+                sections.forEach(s => {
+                    const idx = items.length;
+                    items.push({ kind: 'page', page: s.page });
+                    html += itemRow(idx, 'page', s.icon, s.label, '');
+                });
+            }
+
+            // 2. Vendeurs
+            if (sellers.length) {
+                html += '<div class="search-results-group">Vendeurs</div>';
+                sellers.forEach(s => {
+                    const idx = items.length;
+                    items.push({ kind: 'lead', type: 'vendeur', id: s.id });
+                    html += itemRow(idx, 'vendeur', 'fa-house', fullName(s), [s.city, s.address].filter(Boolean).join(' · '));
+                });
+            }
+
+            // 3. Acquéreurs
+            if (buyers.length) {
+                html += '<div class="search-results-group">Acquéreurs</div>';
+                buyers.forEach(b => {
+                    const idx = items.length;
+                    items.push({ kind: 'lead', type: 'acquereur', id: b.id });
+                    html += itemRow(idx, 'acquereur', 'fa-key', fullName(b), [b.city, b.property_type].filter(Boolean).join(' · '));
+                });
+            }
+
+            if (!items.length) html = '<div class="search-results-empty">Aucun résultat</div>';
+
+            resultsEl.innerHTML = html;
+            resultsEl.classList.add('open');
+            activeIndex = -1;
+            resultsEl.querySelectorAll('.search-result-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const it = items[parseInt(el.dataset.idx, 10)];
+                    if (it) activate(it);
+                });
+            });
+        }
+
+        async function doSearch(q) {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) return;
+                const uid = session.user.id;
+                // Neutralise les caractères qui cassent la syntaxe PostgREST .or() (virgules, parenthèses, *)
+                const safe = q.replace(/[,()*]/g, ' ').trim();
+                if (!safe) { closeResults(); return; }
+                const like = '%' + safe + '%';
+                const orFilter = `first_name.ilike.${like},last_name.ilike.${like},city.ilike.${like},phone.ilike.${like},email.ilike.${like}`;
+                const [sellersRes, buyersRes] = await Promise.all([
+                    supabaseClient.from('sellers').select('id, first_name, last_name, city, address, phone, email').eq('user_id', uid).or(orFilter).limit(6),
+                    supabaseClient.from('buyers').select('id, first_name, last_name, city, property_type, phone, email').eq('user_id', uid).or(orFilter).limit(6)
+                ]);
+                if (input.value.trim() !== q) return; // une frappe plus récente a eu lieu
+                render(q, sellersRes.data || [], buyersRes.data || []);
+            } catch (e) {
+                console.error('[Home] recherche error:', e);
+            }
+        }
+
+        input.addEventListener('input', function () {
+            const q = this.value.trim();
+            clearTimeout(debounceTimer);
+            if (q.length < 2) { closeResults(); return; }
+            debounceTimer = setTimeout(() => doSearch(q), 220);
+        });
+
+        input.addEventListener('keydown', function (e) {
+            const rows = resultsEl.querySelectorAll('.search-result-item');
+            if (e.key === 'ArrowDown' && rows.length) {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, rows.length - 1);
+                updateActive(rows);
+            } else if (e.key === 'ArrowUp' && rows.length) {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActive(rows);
+            } else if (e.key === 'Enter') {
+                if (activeIndex >= 0 && items[activeIndex]) activate(items[activeIndex]);
+                else if (items.length) activate(items[0]);
+            } else if (e.key === 'Escape') {
+                closeResults();
+            }
+        });
+
+        function updateActive(rows) {
+            rows.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+            if (rows[activeIndex]) rows[activeIndex].scrollIntoView({ block: 'nearest' });
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.search-section')) closeResults();
         });
     })();
 
