@@ -30,6 +30,10 @@ On **ne peut pas** désactiver le transfert à distance : il vit dans le compte 
 - **`js/header.js`** : ajout d'un bouton **roue ⚙️** dans `header-actions`, à côté de la cloche, lien direct vers `parametres.html`. Réutilise la classe `.alert-bell` (stylée par page) → look identique partout sans CSS supplémentaire. Les Paramètres restaient sinon cachés dans le menu déroulant du profil.
 - **Cache-buster** `header.js?v=260602 → 260613` sur les 4 pages qui chargent le header partagé (vendeurs, acquereurs, visites, parametres).
 
+### Mise en avant du tutoriel transfert portails
+- **`parametres.html`** : le petit lien texte « Voir le tutoriel vidéo » devient une **vignette cliquable** (img/tutorials/vignette_tuto_portails.png) avec bouton play, ouvrant un lecteur modal YouTube (`openTutoVideoModal()`). Plus visible.
+- **`home.html`** : **bandeau promo** (gradient marque) en haut de l'accueil, affiché **uniquement** aux agents dont le transfert n'est pas encore activé (`email_forwarding_active !== true`). Met en avant LA grosse automatisation de Léon : titre, pitch, vignette vidéo, CTA « Voir le tutoriel » (modal) + « Configurer maintenant » (`parametres.html#email-forwarding`). Bouton masquer (localStorage `leon_dismiss_visit_promo`). Disparaît automatiquement une fois le transfert activé.
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 

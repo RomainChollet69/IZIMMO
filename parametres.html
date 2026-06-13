@@ -2538,9 +2538,17 @@
                             <br>Astuce filtre : dans le champ <em>« De »</em>, mets <code>seloger.com OR leboncoin.fr OR bienici.com OR pap.fr OR logic-immo.com</code>.
                         </div>
                     </div>
-                    <a href="https://youtu.be/BHU4n1_9cCg" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;color:#667eea;font-size:13px;font-weight:600;text-decoration:none;">
-                        <i class="fa-solid fa-play-circle"></i> Voir le tutoriel vidéo
-                    </a>
+                    <div onclick="openTutoVideoModal()" style="margin-top:18px; cursor:pointer; border-radius:12px; overflow:hidden; position:relative; max-width:440px; box-shadow:0 4px 16px rgba(0,0,0,0.12); transition:transform .15s ease;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                        <img src="img/tutorials/vignette_tuto_portails.png" alt="Tutoriel : transfert des portails" style="width:100%; display:block;">
+                        <div style="position:absolute; inset:0; background:rgba(0,0,0,0.18); display:flex; align-items:center; justify-content:center;">
+                            <div style="width:64px; height:64px; background:linear-gradient(135deg,#667eea,#764ba2); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 18px rgba(0,0,0,0.35);">
+                                <i class="fa-solid fa-play" style="color:white; font-size:24px; margin-left:4px;"></i>
+                            </div>
+                        </div>
+                        <div style="position:absolute; bottom:0; left:0; right:0; padding:14px; background:linear-gradient(transparent, rgba(0,0,0,0.78)); color:white; font-size:15px; font-weight:700;">
+                            <i class="fa-solid fa-play-circle"></i> Voir le tutoriel vidéo (2 min)
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -2600,6 +2608,23 @@
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
+        }
+
+        // Ouvre le tutoriel vidéo (transfert portails) en lecteur modal
+        function openTutoVideoModal() {
+            const overlay = document.createElement('div');
+            overlay.id = 'tutoVideoOverlay';
+            overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:30000;display:flex;align-items:center;justify-content:center;padding:20px;';
+            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+            overlay.innerHTML = `
+                <div style="position:relative; width:100%; max-width:900px; aspect-ratio:16/9; background:black; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                    <button onclick="document.getElementById('tutoVideoOverlay').remove()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:18px; z-index:1; display:flex; align-items:center; justify-content:center;">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <iframe src="https://www.youtube.com/embed/BHU4n1_9cCg?autoplay=1" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+                </div>
+            `;
+            document.body.appendChild(overlay);
         }
 
         // ===== PROFILE CRUD =====

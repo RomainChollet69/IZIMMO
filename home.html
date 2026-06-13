@@ -569,6 +569,41 @@
             <p class="welcome-date" id="welcomeDate"></p>
         </div>
 
+        <!-- Promo automatisation visites (affiché uniquement si transfert non activé) -->
+        <div id="visitPromoBanner" style="display:none; position:relative; background:linear-gradient(135deg,#667eea,#764ba2); border-radius:18px; padding:26px 28px; margin-bottom:28px; color:white; box-shadow:0 8px 28px rgba(102,126,234,0.3); overflow:hidden;">
+            <button onclick="dismissVisitPromo()" title="Masquer" style="position:absolute; top:14px; right:14px; width:30px; height:30px; background:rgba(255,255,255,0.18); color:white; border:none; border-radius:50%; cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div style="display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:280px;">
+                    <div style="display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.2); padding:5px 12px; border-radius:20px; font-size:12px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; margin-bottom:12px;">
+                        <i class="fa-solid fa-bolt"></i> Automatisation
+                    </div>
+                    <h2 style="margin:0 0 8px; font-size:24px; font-weight:800; line-height:1.2;">Reçois tes demandes de visite automatiquement</h2>
+                    <p style="margin:0 0 18px; font-size:15px; line-height:1.5; opacity:0.95;">
+                        Connecte tes portails (SeLoger, LeBonCoin, Bien'ici…) à Léon : chaque demande arrive
+                        directement dans ta page Visites, sans copier-coller. <strong>C'est LA grosse automatisation de Léon.</strong>
+                    </p>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button onclick="openTutoVideoModal()" style="padding:12px 20px; background:white; color:#5B4BC4; border:none; border-radius:11px; font-size:14px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; display:inline-flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-play-circle"></i> Voir le tutoriel (2 min)
+                        </button>
+                        <a href="parametres.html#email-forwarding" style="padding:12px 20px; background:rgba(255,255,255,0.18); color:white; border:1.5px solid rgba(255,255,255,0.5); border-radius:11px; font-size:14px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-gear"></i> Configurer maintenant
+                        </a>
+                    </div>
+                </div>
+                <div onclick="openTutoVideoModal()" style="flex-shrink:0; cursor:pointer; position:relative; width:240px; max-width:100%; border-radius:12px; overflow:hidden; box-shadow:0 6px 20px rgba(0,0,0,0.25);">
+                    <img src="img/tutorials/vignette_tuto_portails.png" alt="Tutoriel transfert portails" style="width:100%; display:block;">
+                    <div style="position:absolute; inset:0; background:rgba(0,0,0,0.15); display:flex; align-items:center; justify-content:center;">
+                        <div style="width:54px; height:54px; background:rgba(255,255,255,0.95); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <i class="fa-solid fa-play" style="color:#5B4BC4; font-size:20px; margin-left:3px;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Barre de recherche globale + micro -->
         <div class="search-section">
             <div class="search-bar-global">
@@ -698,6 +733,53 @@
             dateEl.textContent = now.toLocaleDateString('fr-FR', options);
         }
     })();
+
+    /* === Promo automatisation visites (si transfert non activé) === */
+    (async function initVisitPromo() {
+        try {
+            if (localStorage.getItem('leon_dismiss_visit_promo') === '1') return;
+
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return;
+
+            const { data: integration } = await supabaseClient
+                .from('user_integrations')
+                .select('email_forwarding_active')
+                .eq('user_id', session.user.id)
+                .maybeSingle();
+
+            // Afficher uniquement si le transfert n'est PAS encore activé
+            if (integration?.email_forwarding_active === true) return;
+
+            const banner = document.getElementById('visitPromoBanner');
+            if (banner) banner.style.display = 'block';
+        } catch (e) {
+            console.error('[Home] initVisitPromo error:', e);
+        }
+    })();
+
+    function dismissVisitPromo() {
+        localStorage.setItem('leon_dismiss_visit_promo', '1');
+        const banner = document.getElementById('visitPromoBanner');
+        if (banner) banner.style.display = 'none';
+    }
+
+    // Ouvre le tutoriel vidéo (transfert portails) en lecteur modal
+    function openTutoVideoModal() {
+        const overlay = document.createElement('div');
+        overlay.id = 'tutoVideoOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:30000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div style="position:relative; width:100%; max-width:900px; aspect-ratio:16/9; background:black; border-radius:14px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+                <button onclick="document.getElementById('tutoVideoOverlay').remove()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:18px; z-index:1; display:flex; align-items:center; justify-content:center;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <iframe src="https://www.youtube.com/embed/BHU4n1_9cCg?autoplay=1" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
 
     /* === Recherche globale (V1 : redirect vers pipeline vendeurs) === */
     (function initGlobalSearch() {
