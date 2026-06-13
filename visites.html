@@ -7206,6 +7206,15 @@
         const warning = document.getElementById('blanketFwdWarning');
         if (!warning) return;
 
+        // Mode aperçu : visites.html?previewBlanketFwd=1 force l'affichage (validation visuelle)
+        if (new URLSearchParams(location.search).get('previewBlanketFwd') === '1') {
+            const ex = document.getElementById('blanketFwdExample');
+            if (ex) ex.textContent = ' (ex : facturation@efficity.com)';
+            warning.dataset.signal = 'preview';
+            warning.style.display = 'block';
+            return;
+        }
+
         const lastAt = integration?.non_portal_last_at;
         if (!lastAt) { warning.style.display = 'none'; return; }
 
@@ -7249,14 +7258,30 @@
                     <i class="fa-solid fa-shield-halved" style="color:#EF4444; font-size:22px;"></i>
                     <h3 style="margin:0; font-size:18px; color:#1F2937;">Désactiver le transfert de toute ta boîte</h3>
                 </div>
-                <p style="font-size:14px; color:#4B5563; line-height:1.6; margin:0 0 14px;">Dans <strong>Gmail</strong>, en 2 étapes :</p>
+                <p style="font-size:14px; color:#4B5563; line-height:1.6; margin:0 0 14px;">Dans <strong>Gmail</strong> : <em>Paramètres (⚙️) → Voir tous les paramètres → onglet <strong>Transfert et POP/IMAP</strong></em>. Tu dois voir ceci :</p>
+
+                <!-- Illustration des 2 boutons radio Gmail -->
+                <div style="border:1px solid #E5E7EB; border-radius:10px; padding:14px 16px; margin:0 0 18px; background:#FAFAFA;">
+                    <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:#9CA3AF; margin-bottom:12px;">Transfert :</div>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                        <span style="width:18px; height:18px; border-radius:50%; border:2px solid #16A34A; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <span style="width:8px; height:8px; border-radius:50%; background:#16A34A;"></span>
+                        </span>
+                        <span style="flex:1; min-width:0; font-size:13.5px; color:#1F2937;"><strong>Désactiver le transfert</strong></span>
+                        <span style="flex-shrink:0; font-size:12px; font-weight:700; color:#16A34A;"><i class="fa-solid fa-check"></i> à garder coché</span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="width:18px; height:18px; border-radius:50%; border:2px solid #D1D5DB; flex-shrink:0;"></span>
+                        <span style="flex:1; min-width:0; font-size:13.5px; color:#6B7280;">Transférer une copie des messages reçus à…</span>
+                        <span style="flex-shrink:0; font-size:12px; font-weight:700; color:#DC2626;"><i class="fa-solid fa-xmark"></i> envoie TOUT</span>
+                    </div>
+                </div>
+
                 <div style="font-size:14px; color:#374151; line-height:1.7;">
-                    <p style="margin:0 0 10px;"><strong>1. Désactive le transfert global</strong><br>
-                    Paramètres (⚙️) → <em>Voir tous les paramètres</em> → onglet <em>Transfert et POP/IMAP</em> → coche <strong>« Désactiver le transfert »</strong>.</p>
-                    <p style="margin:0 0 10px;"><strong>2. Crée un filtre ciblé sur les portails</strong><br>
-                    Onglet <em>Filtres et adresses bloquées</em> → <em>Créer un filtre</em>. Dans le champ <strong>« De »</strong>, colle :</p>
+                    <p style="margin:0 0 10px;"><strong>1.</strong> Laisse <strong>« Désactiver le transfert »</strong> sélectionné (ne choisis <strong>jamais</strong> le 2ᵉ bouton). Si le 2ᵉ est coché : re-coche le 1ᵉ et clique sur <em>Enregistrer les modifications</em>.</p>
+                    <p style="margin:0 0 10px;"><strong>2. Crée un filtre ciblé sur les portails</strong> — onglet <em>Filtres et adresses bloquées → Créer un filtre</em>. Dans le champ <strong>« De »</strong>, colle :</p>
                     <div style="background:#F3F4F6; border-radius:8px; padding:10px 12px; font-family:monospace; font-size:12.5px; color:#111827; margin:0 0 10px; word-break:break-all;">seloger.com OR leboncoin.fr OR bienici.com OR pap.fr OR logic-immo.com</div>
-                    <p style="margin:0;">Puis <em>Créer un filtre</em> → coche <strong>« Transférer à »</strong> et sélectionne ton adresse Léon.</p>
+                    <p style="margin:0;">Puis <em>Créer un filtre</em> → coche <strong>« Transférer à »</strong> et sélectionne ton adresse Léon. C'est le filtre qui transfère, pas le bouton du haut.</p>
                 </div>
                 <div style="display:flex; gap:8px; margin-top:22px; justify-content:flex-end;">
                     <a href="parametres.html#email-forwarding" style="padding:10px 16px; background:#F3F4F6; color:#374151; border-radius:10px; font-size:13px; font-weight:700; text-decoration:none;">Voir mes paramètres</a>
