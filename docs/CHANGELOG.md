@@ -53,6 +53,11 @@ Nouveau bouton dans la section Transfert : génère côté client un fichier `.x
 ### Page tuto « Recevoir tes leads automatiquement » (tutoriels.html)
 Nouvelle section détaillée sous les vidéos : parcours d'un lead (4 étapes illustrées, cercles numérotés → final vert), mise en place en 5 étapes, encadré visuel des 2 boutons radio Gmail (Désactiver le transfert ✓ / Transférer une copie ✗), liste du filtre et bouton « Télécharger mon filtre Gmail » (→ parametres.html#email-forwarding). Vidéo à refaire par-dessus par l'utilisateur.
 
+### Valorisation de la page Visites (tuto + emails)
+La page Visites était sous-vendue (« juste un agenda »). Ajout partout du vrai pitch : voir le nombre de contacts par bien (argument RDV vendeur), partager ses contacts, garder tout l'historique.
+- `tutoriels.html` : étape finale reformulée (« Tu retrouves automatiquement tes contacts dans Visites / prêts à être exploités, jamais perdus ») + paragraphe value-prop dans l'intro. Encadré radio retiré (mini-précaution intégrée à l'étape 3).
+- Emails de campagne A & B (`/tmp`, hors repo) : bloc value-prop ajouté (3 bénéfices).
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 - `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
