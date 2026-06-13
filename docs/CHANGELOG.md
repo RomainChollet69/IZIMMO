@@ -50,6 +50,9 @@ Les filtres Gmail réels d'un agent ont révélé des domaines expéditeurs **ab
 ### Bouton « Télécharger mon filtre Gmail » (parametres.html)
 Nouveau bouton dans la section Transfert : génère côté client un fichier `.xml` (format flux Atom des filtres Gmail) **pré-rempli avec l'adresse Léon de l'agent** + tous les domaines portails, prêt à importer dans Gmail (Paramètres → Filtres → Importer des filtres). Évite la saisie manuelle du filtre et garantit une liste complète. `downloadGmailFilter()` + constante `PORTAL_FILTER_FROM`. Pré-requis rappelé dans l'UI : adresse de transfert déjà ajoutée/confirmée. `green-acres.fr` ajouté à l'exemple de filtre (il était déjà dans l'allowlist serveur).
 
+### Page tuto « Recevoir tes leads automatiquement » (tutoriels.html)
+Nouvelle section détaillée sous les vidéos : parcours d'un lead (4 étapes illustrées, cercles numérotés → final vert), mise en place en 5 étapes, encadré visuel des 2 boutons radio Gmail (Désactiver le transfert ✓ / Transférer une copie ✗), liste du filtre et bouton « Télécharger mon filtre Gmail » (→ parametres.html#email-forwarding). Vidéo à refaire par-dessus par l'utilisateur.
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 - `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
