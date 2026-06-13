@@ -62,8 +62,12 @@ La page Visites était sous-vendue (« juste un agenda »). Ajout partout du vra
 ### Bloc « wahou » sur la page Visites pour les non-équipés
 Le bandeau de setup (`emailFwdSetupBanner`, affiché si transfert non activé) passe d'un encadré amber basique à un **bloc premium** : hero dégradé marque (badge « Ta fonctionnalité la plus puissante » + accroche « Tes leads des portails, captés tout seuls 🚀 » + CTA Voir comment / Activer maintenant) suivi des **4 cartes d'atouts** (messages IA, acquéreurs qualifiés, argument vendeur, historique). Même grille que `tutoriels.html`. Toggle inchangé (`checkEmailForwardingSetup`). + **aperçu mockup** de la page Visites (2 cartes biens, données FICTIVES — pas de capture réelle pour éviter d'exposer des noms/adresses clients RGPD) sous les atouts. Mockup enrichi : **photos de biens** (`img/tutorials/bien-1.jpg` / `bien-2.jpg`, avec repli sur icône maison via `onerror` si le fichier manque) + **boutons d'action** (envoyer message, partager, ajouter contact) + chevron, comme la vraie page. Même mockup dans `tutoriels.html`. ⚠️ Les 2 photos doivent être déposées dans `img/tutorials/` (non fournies — chat).
 
+### Atout « fini le tri des mails du matin »
+5ᵉ carte ajoutée aux grilles d'atouts (bloc Visites + tuto) + bullet en tête des emails A/B : « Tes demandes arrivent directement dans Léon, rangées et prêtes — tu ouvres, tout est là. » Formulé honnêtement (la page n'a pas de mise à jour live websocket/polling — les demandes apparaissent au chargement/rafraîchissement ; pas de claim « temps réel » au sens strict).
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
+- **Mise à jour temps réel** de la page Visites (Supabase realtime sur `visit_requests`) — rendrait le « tout apparaît en direct » littéralement vrai, sans rafraîchir.
 - `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
 
 ---
