@@ -1692,6 +1692,20 @@
         }
         .email-fwd-howto ol li { margin-bottom: 4px; }
         .email-fwd-howto ol strong { color: var(--text-dark); }
+        .email-fwd-warning {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            padding: 12px 14px;
+            background: #FFF4E5;
+            border: 1px solid #FFCC80;
+            border-radius: 10px;
+            font-size: 12.5px;
+            line-height: 1.5;
+            color: #6D4C00;
+        }
+        .email-fwd-warning i { color: #E65100; flex-shrink: 0; margin-top: 2px; }
+        .email-fwd-warning strong { color: #BF360C; }
     </style>
 </head>
 <body>
@@ -2513,9 +2527,17 @@
                         <li><strong>Copie</strong> l'adresse ci-dessus</li>
                         <li>Dans ta messagerie (Gmail, Outlook...), ajoute cette adresse comme <strong>adresse de transfert</strong> dans les parametres</li>
                         <li>Gmail enverra un email de confirmation — <strong>le lien apparaitra ici automatiquement</strong></li>
-                        <li>Clique sur le lien pour valider, puis cree une <strong>regle de transfert automatique</strong> pour les emails de SeLoger, LeBonCoin, BienIci, PAP, etc.</li>
+                        <li>Clique sur le lien pour valider, puis cree un <strong>filtre</strong> (Parametres → Filtres → Creer un filtre) qui transfere vers cette adresse <strong>uniquement</strong> les emails des portails (SeLoger, LeBonCoin, BienIci, PAP, Logic-Immo...)</li>
                         <li>Les demandes de visite apparaitront automatiquement dans ta page <strong><a href="visites.html" style="color:#667eea;">Visites</a></strong> !</li>
                     </ol>
+                    <div class="email-fwd-warning">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                        <div>
+                            <strong>Ne coche PAS « Transferer une copie des messages entrants »</strong> (transfert de toute ta boite).
+                            Cree bien un <strong>filtre cible</strong> sur les portails — sinon tes factures, emails persos et newsletters partent aussi vers Leon.
+                            <br>Astuce filtre : dans le champ <em>« De »</em>, mets <code>seloger.com OR leboncoin.fr OR bienici.com OR pap.fr OR logic-immo.com</code>.
+                        </div>
+                    </div>
                     <a href="https://youtu.be/BHU4n1_9cCg" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;color:#667eea;font-size:13px;font-weight:600;text-decoration:none;">
                         <i class="fa-solid fa-play-circle"></i> Voir le tutoriel vidéo
                     </a>

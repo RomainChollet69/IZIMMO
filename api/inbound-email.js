@@ -17,6 +17,45 @@ export const config = { api: { bodyParser: false } };
 
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
+// =================================================================
+// Allowlist des portails immobiliers (filtre expéditeur)
+// =================================================================
+// Beaucoup de consultants activent par erreur le transfert de TOUTE leur boîte
+// (au lieu d'un filtre Gmail ciblé) → des emails internes (facturation@efficity.com),
+// LinkedIn, newsletters... arrivent jusqu'à Léon. On rejette ici tout expéditeur
+// qui n'est PAS un portail immobilier connu, AVANT d'appeler Claude (coût + bruit).
+//
+// Matching : domaine racine avec sous-domaines (mail.seloger.com → seloger.com).
+// AJOUTER tout nouveau portail ici. ⚠️ Surveiller les logs "Expéditeur non-portail
+// rejeté" : un portail manquant = ses leads silencieusement ignorés.
+const PORTAL_SENDER_DOMAINS = [
+    // Portails d'annonces nationaux
+    'seloger.com',
+    'leboncoin.fr',
+    'bienici.com',
+    'pap.fr',
+    'logic-immo.com',
+    'logicimmo.com',
+    'meilleursagents.com',
+    'avendrealouer.fr',
+    'ouestfrance-immo.com',
+    'paruvendu.fr',
+    'green-acres.fr',
+    'green-acres.com',
+    // Figaro Immobilier & partenaires
+    'explorimmo.com',
+    'figaro-immo.com',
+    'properstar.com',
+    'properstar.fr',
+    // Haut de gamme
+    'bellesdemeures.com',
+    'luxresidence.com',
+    // Agrégateurs / spécialisés
+    'jinka.fr',
+    'superimmo.com',
+    'locservice.fr'
+];
+
 // Mots vides français ignorés lors du matching d'adresse
 const ADDRESS_STOP_WORDS = new Set([
     'de', 'du', 'des', 'la', 'le', 'les', 'l', 'et', 'à', 'a', 'en',
@@ -58,6 +97,15 @@ export default async function handler(req, res) {
         if (confirmResult) {
             console.log(`[InboundEmail] Confirmation transfert interceptée pour agent ${agent.user_id}`);
             return res.status(200).json({ message: 'Forwarding confirmation captured' });
+        }
+
+        // 4bis. Filtre expéditeur : ne traiter QUE les emails issus d'un portail immobilier.
+        // On lit le header "From" (expéditeur d'origine préservé par le transfert), PAS
+        // l'enveloppe `sender` qui, sur un transfert Gmail, porte l'adresse du consultant.
+        const originalFrom = fields.from || fields.From || fields.sender || '';
+        if (!isPortalSender(originalFrom)) {
+            console.log(`[InboundEmail] Expéditeur non-portail rejeté: "${originalFrom}" (recipient: ${recipient})`);
+            return res.status(200).json({ message: 'Sender not a known portal, ignored' });
         }
 
         // 5. Déduplication par email_message_id
@@ -180,6 +228,25 @@ function verifyMailgunSignature(fields) {
     const expected = hmac.digest('hex');
 
     return expected === signature;
+}
+
+// =================================================================
+// Filtre expéditeur : l'email provient-il d'un portail immobilier ?
+// =================================================================
+
+// Extrait le domaine d'un champ "From" ("Nom" <a@b.fr> ou a@b.fr) en minuscules.
+function extractSenderDomain(fromField) {
+    if (!fromField) return '';
+    const match = fromField.match(/[^\s<>@]+@([^\s<>]+)/);
+    if (!match) return '';
+    return match[1].toLowerCase().replace(/[>.,;]+$/, '');
+}
+
+// True si le domaine est dans l'allowlist (matching racine + sous-domaines).
+function isPortalSender(fromField) {
+    const domain = extractSenderDomain(fromField);
+    if (!domain) return false;
+    return PORTAL_SENDER_DOMAINS.some(d => domain === d || domain.endsWith('.' + d));
 }
 
 // =================================================================

@@ -4,6 +4,24 @@
 
 ---
 
+## Session 2026-06-13 — Filtre expéditeur portails (anti-bruit transfert emails)
+
+### Problème
+Beaucoup de consultants activent par erreur le transfert de **toute** leur boîte vers leur adresse `agent-xxxx@inbound.avecleon.fr` (au lieu d'un filtre Gmail ciblé). Résultat : `facturation@efficity.com`, LinkedIn, newsletters... arrivent jusqu'à Léon → bruit dans les logs Mailgun, coût Claude inutile, risque de faux leads.
+
+### Modifications
+- **`api/inbound-email.js`** : ajout d'une **allowlist stricte** d'expéditeurs (`PORTAL_SENDER_DOMAINS`) + filtre `isPortalSender()` appliqué **avant** l'appel à Claude (étape « 4bis »). On rejette tout email dont le header `From` n'est pas un domaine de portail connu (matching racine + sous-domaines, ex. `mail.seloger.com` → `seloger.com`). Lecture du header `From` (expéditeur d'origine préservé par le transfert), **pas** de l'enveloppe `sender`. Chaque rejet est loggé (`Expéditeur non-portail rejeté: …`) pour repérer un portail manquant.
+- **`parametres.html`** : réécriture de l'étape 4 des instructions de transfert (filtre obligatoire au lieu de « règle de transfert ») + **encadré d'avertissement** rouge/orange : ne PAS cocher « Transférer une copie des messages entrants », créer un filtre ciblé avec exemple de requête `De`.
+
+### Points d'attention
+- ⚠️ **Allowlist stricte = risque de perte silencieuse** : si un portail envoie depuis un domaine non listé, ses leads sont ignorés. **Surveiller les logs Vercel** `Expéditeur non-portail rejeté` et compléter `PORTAL_SENDER_DOMAINS` au besoin.
+- Les emails de confirmation de transfert Gmail/Outlook restent traités (interceptés à l'étape 4, avant le filtre).
+
+### Prochaines étapes possibles
+- Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
+
+---
+
 ## Session 2026-06-12 — Mise à jour des données DVF (toute la France, 2021–2025)
 
 ### UI carte DVF : retrait du Cadastre + contrôle rotation/3D custom
