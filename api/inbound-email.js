@@ -105,6 +105,8 @@ export default async function handler(req, res) {
         const originalFrom = fields.from || fields.From || fields.sender || '';
         if (!isPortalSender(originalFrom)) {
             console.log(`[InboundEmail] Expéditeur non-portail rejeté: "${originalFrom}" (recipient: ${recipient})`);
+            // Signal de "transfert toute la boîte" → avertissement ciblé sur la page Visites.
+            await flagNonPortalSender(agent.user_id, originalFrom);
             return res.status(200).json({ message: 'Sender not a known portal, ignored' });
         }
 
@@ -247,6 +249,24 @@ function isPortalSender(fromField) {
     const domain = extractSenderDomain(fromField);
     if (!domain) return false;
     return PORTAL_SENDER_DOMAINS.some(d => domain === d || domain.endsWith('.' + d));
+}
+
+// Horodate le dernier email non-portail reçu pour un agent (signal "transfert
+// toute la boîte"). La page Visites s'en sert pour un avertissement ciblé.
+// Best-effort : ne jamais faire échouer le webhook si l'update échoue.
+async function flagNonPortalSender(userId, fromField) {
+    try {
+        const supabaseAdmin = getSupabaseAdmin();
+        await supabaseAdmin
+            .from('user_integrations')
+            .update({
+                non_portal_last_at: new Date().toISOString(),
+                non_portal_last_sender: (fromField || '').substring(0, 200)
+            })
+            .eq('user_id', userId);
+    } catch (err) {
+        console.error('[InboundEmail] flagNonPortalSender error:', err.message);
+    }
 }
 
 // =================================================================

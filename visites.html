@@ -2163,6 +2163,30 @@
         </div>
     </div>
 
+    <!-- Avertissement ciblé : transfert "toute la boîte" détecté (emails non-portails reçus) -->
+    <div id="blanketFwdWarning" style="display:none; background:linear-gradient(135deg,#FEF2F2,#FFE4E6); border:1.5px solid #FCA5A5; border-radius:14px; padding:18px 22px; margin:12px 24px 0; box-shadow:0 2px 10px rgba(248,113,113,0.15);">
+        <div style="display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap;">
+            <div style="flex-shrink:0; width:42px; height:42px; background:#EF4444; border-radius:10px; display:flex; align-items:center; justify-content:center; color:white; font-size:20px;">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div style="flex:1; min-width:240px;">
+                <div style="font-size:15px; font-weight:700; color:#991B1B; margin-bottom:4px;">Ton Gmail transfère TOUTE ta boîte vers Léon</div>
+                <div style="font-size:13px; color:#7F1D1D; line-height:1.5;">
+                    On a reçu des emails qui ne viennent pas d'un portail<span id="blanketFwdExample"></span>. Léon les ignore, mais ils transitent quand même par nos serveurs.
+                    <strong>Pour protéger ta confidentialité, désactive le transfert global et crée un filtre ciblé sur les portails.</strong>
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start;">
+                <button onclick="openBlanketFwdHelp()" style="padding:10px 16px; background:linear-gradient(135deg,#EF4444,#DC2626); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-circle-question"></i> Comment faire ?
+                </button>
+                <button onclick="dismissBlanketFwdWarning()" title="Masquer" style="padding:10px 12px; background:white; color:#991B1B; border:1.5px solid #FCA5A5; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== MAIN CONTENT ===== -->
     <main class="visits-container" id="visitsContainer">
         <div class="visits-empty">
@@ -7164,12 +7188,83 @@
         if (!userId) return;
         const { data: integration } = await supabaseClient
             .from('user_integrations')
-            .select('email_forwarding_active')
+            .select('email_forwarding_active, non_portal_last_at, non_portal_last_sender')
             .eq('user_id', userId)
             .maybeSingle();
         const isActive = integration?.email_forwarding_active === true;
         const banner = document.getElementById('emailFwdSetupBanner');
         if (banner) banner.style.display = isActive ? 'none' : 'block';
+
+        renderBlanketFwdWarning(integration);
+    }
+
+    // Fenêtre pendant laquelle un email non-portail récent déclenche l'avertissement.
+    // Au-delà, on suppose que l'agent a corrigé son transfert (auto-réparation).
+    const BLANKET_FWD_WINDOW_DAYS = 14;
+
+    function renderBlanketFwdWarning(integration) {
+        const warning = document.getElementById('blanketFwdWarning');
+        if (!warning) return;
+
+        const lastAt = integration?.non_portal_last_at;
+        if (!lastAt) { warning.style.display = 'none'; return; }
+
+        // Récent ? (dans la fenêtre glissante)
+        const ageMs = Date.now() - new Date(lastAt).getTime();
+        const isRecent = ageMs < BLANKET_FWD_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+
+        // Masqué par l'agent pour CE signal précis ? (un nouvel email non-portail le ré-affiche)
+        const dismissed = localStorage.getItem('leon_dismiss_blanket_fwd') === lastAt;
+
+        if (!isRecent || dismissed) { warning.style.display = 'none'; return; }
+
+        // Exemple d'expéditeur concret pour rendre l'alerte convaincante
+        const exampleEl = document.getElementById('blanketFwdExample');
+        const sender = integration?.non_portal_last_sender || '';
+        const emailMatch = sender.match(/[^\s<>@]+@[^\s<>]+/);
+        if (exampleEl) {
+            exampleEl.textContent = emailMatch ? ` (ex : ${emailMatch[0].replace(/[>.,;]+$/, '')})` : '';
+        }
+
+        warning.dataset.signal = lastAt;
+        warning.style.display = 'block';
+    }
+
+    function dismissBlanketFwdWarning() {
+        const warning = document.getElementById('blanketFwdWarning');
+        if (warning?.dataset.signal) {
+            localStorage.setItem('leon_dismiss_blanket_fwd', warning.dataset.signal);
+        }
+        if (warning) warning.style.display = 'none';
+    }
+
+    function openBlanketFwdHelp() {
+        const overlay = document.createElement('div');
+        overlay.id = 'blanketFwdHelpOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:30000;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+        overlay.innerHTML = `
+            <div style="background:white; max-width:520px; width:100%; border-radius:16px; padding:28px; box-shadow:0 20px 60px rgba(0,0,0,0.3); font-family:Inter,sans-serif; max-height:90vh; overflow-y:auto;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+                    <i class="fa-solid fa-shield-halved" style="color:#EF4444; font-size:22px;"></i>
+                    <h3 style="margin:0; font-size:18px; color:#1F2937;">Désactiver le transfert de toute ta boîte</h3>
+                </div>
+                <p style="font-size:14px; color:#4B5563; line-height:1.6; margin:0 0 14px;">Dans <strong>Gmail</strong>, en 2 étapes :</p>
+                <div style="font-size:14px; color:#374151; line-height:1.7;">
+                    <p style="margin:0 0 10px;"><strong>1. Désactive le transfert global</strong><br>
+                    Paramètres (⚙️) → <em>Voir tous les paramètres</em> → onglet <em>Transfert et POP/IMAP</em> → coche <strong>« Désactiver le transfert »</strong>.</p>
+                    <p style="margin:0 0 10px;"><strong>2. Crée un filtre ciblé sur les portails</strong><br>
+                    Onglet <em>Filtres et adresses bloquées</em> → <em>Créer un filtre</em>. Dans le champ <strong>« De »</strong>, colle :</p>
+                    <div style="background:#F3F4F6; border-radius:8px; padding:10px 12px; font-family:monospace; font-size:12.5px; color:#111827; margin:0 0 10px; word-break:break-all;">seloger.com OR leboncoin.fr OR bienici.com OR pap.fr OR logic-immo.com</div>
+                    <p style="margin:0;">Puis <em>Créer un filtre</em> → coche <strong>« Transférer à »</strong> et sélectionne ton adresse Léon.</p>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:22px; justify-content:flex-end;">
+                    <a href="parametres.html#email-forwarding" style="padding:10px 16px; background:#F3F4F6; color:#374151; border-radius:10px; font-size:13px; font-weight:700; text-decoration:none;">Voir mes paramètres</a>
+                    <button onclick="document.getElementById('blanketFwdHelpOverlay').remove()" style="padding:10px 18px; background:linear-gradient(135deg,#EF4444,#DC2626); color:white; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:Inter,sans-serif;">J'ai compris</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
     }
 
     function openEmailFwdTutoVideo() {

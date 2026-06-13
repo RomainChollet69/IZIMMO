@@ -17,6 +17,15 @@ Beaucoup de consultants activent par erreur le transfert de **toute** leur boît
 - ⚠️ **Allowlist stricte = risque de perte silencieuse** : si un portail envoie depuis un domaine non listé, ses leads sont ignorés. **Surveiller les logs Vercel** `Expéditeur non-portail rejeté` et compléter `PORTAL_SENDER_DOMAINS` au besoin.
 - Les emails de confirmation de transfert Gmail/Outlook restent traités (interceptés à l'étape 4, avant le filtre).
 
+### Avertissement ciblé "transfert toute la boîte" (page Visites)
+- **Migration BDD** : `user_integrations` + colonnes `non_portal_last_at` (timestamptz) et `non_portal_last_sender` (text).
+- **`api/inbound-email.js`** : `flagNonPortalSender()` horodate le dernier email non-portail reçu par agent (best-effort, n'échoue jamais le webhook).
+- **`visites.html`** : bandeau rouge **affiché uniquement** aux agents pour qui on a reçu un email non-portail dans les **14 derniers jours** (fenêtre glissante = auto-réparation : s'il corrige son transfert, le bandeau disparaît seul). Argument **confidentialité** (et non bug, puisque le filtre serveur protège déjà). Bouton « Comment faire ? » (modale Gmail : désactiver transfert global + créer filtre ciblé) + bouton masquer (localStorage `leon_dismiss_blanket_fwd` = signal vu ; un nouvel email non-portail ré-affiche).
+- **`tutoriels.html`** : note ⚠️ « filtre ciblé, ne transférez pas toute votre boîte » sur la vignette tuto.
+
+### Rappel important
+On **ne peut pas** désactiver le transfert à distance : il vit dans le compte Gmail/Outlook du consultant. Seul lui peut le faire (Gmail → Transfert et POP/IMAP → Désactiver). Le filtre serveur rend ça non-bloquant ; le bandeau est un nudge confidentialité.
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 
