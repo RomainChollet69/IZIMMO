@@ -59,6 +59,9 @@ La page Visites était sous-vendue (« juste un agenda »). Ajout partout du vra
 - Emails de campagne A & B (`/tmp`, hors repo) : bloc value-prop ajouté.
 - Atouts « wahou » (réels, vérifiés dans le code) listés dans tuto + emails : messages rédigés par l'IA envoyés en 1 clic (confirmation/retour de visite/relance, SMS/WhatsApp/email — `generate-message.js`), **formulaire de qualification automatique** envoyé aux nouveaux contacts (en option — `sendAutoReplyIfEnabled` → `formulaire.html` → `submit-form.js`) qui crée le lead Acquéreur déjà qualifié (budget, secteur, type, délai…), nb de contacts par bien, partage + historique.
 
+### Bloc « wahou » sur la page Visites pour les non-équipés
+Le bandeau de setup (`emailFwdSetupBanner`, affiché si transfert non activé) passe d'un encadré amber basique à un **bloc premium** : hero dégradé marque (badge « Ta fonctionnalité la plus puissante » + accroche « Tes leads des portails, captés tout seuls 🚀 » + CTA Voir comment / Activer maintenant) suivi des **4 cartes d'atouts** (messages IA, acquéreurs qualifiés, argument vendeur, historique). Même grille que `tutoriels.html`. Toggle inchangé (`checkEmailForwardingSetup`).
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 - `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
