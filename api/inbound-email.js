@@ -31,6 +31,7 @@ const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const PORTAL_SENDER_DOMAINS = [
     // Portails d'annonces nationaux
     'seloger.com',
+    'myselogerpro.com',          // SeLoger Pro (leads pro)
     'leboncoin.fr',
     'bienici.com',
     'pap.fr',
@@ -40,9 +41,11 @@ const PORTAL_SENDER_DOMAINS = [
     'avendrealouer.fr',
     'ouestfrance-immo.com',
     'paruvendu.fr',
+    'paruvendupro.fr',           // ParuVendu Pro
     'green-acres.fr',
     'green-acres.com',
     // Figaro Immobilier & partenaires
+    'lefigaro.fr',               // couvre immobilier.lefigaro.fr, proprietes.lefigaro.fr
     'explorimmo.com',
     'figaro-immo.com',
     'properstar.com',
