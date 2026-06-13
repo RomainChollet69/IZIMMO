@@ -29,6 +29,7 @@ On **ne peut pas** désactiver le transfert à distance : il vit dans le compte 
 ### Accès rapide aux Paramètres dans le header
 - **`js/header.js`** : ajout d'un bouton **roue ⚙️** dans `header-actions`, à côté de la cloche, lien direct vers `parametres.html`. Réutilise la classe `.alert-bell` (stylée par page) → look identique partout sans CSS supplémentaire. Les Paramètres restaient sinon cachés dans le menu déroulant du profil.
 - **Cache-buster** `header.js?v=260602 → 260613` sur les 4 pages qui chargent le header partagé (vendeurs, acquereurs, visites, parametres).
+- **Généralisation à toutes les pages** : la roue est ajoutée aux 7 headers **inline** restants — `app.html` (barre sombre du shell : bouton qui ouvre Paramètres en **onglet** via `LeonShell.open('parametres.html')`), `home`, `dvf`, `social`, `tutoriels` (réutilisent `.alert-bell`, placés après la cloche), `micro` et `etude-marche` (sans cloche → gear inline-stylé). Rappel : dans le shell, les headers internes des pages sont masqués (`tab-shell.js`) — c'est la roue de la barre sombre qui sert ; en accès direct/mobile, c'est la roue du header de chaque page. Couverture = 11/11 pages auth.
 
 ### Mise en avant du tutoriel transfert portails
 - **`parametres.html`** : le petit lien texte « Voir le tutoriel vidéo » devient une **vignette cliquable** (img/tutorials/vignette_tuto_portails.png) avec bouton play, ouvrant un lecteur modal YouTube (`openTutoVideoModal()`). Plus visible.
