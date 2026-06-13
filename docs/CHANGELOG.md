@@ -26,6 +26,10 @@ Beaucoup de consultants activent par erreur le transfert de **toute** leur boît
 ### Rappel important
 On **ne peut pas** désactiver le transfert à distance : il vit dans le compte Gmail/Outlook du consultant. Seul lui peut le faire (Gmail → Transfert et POP/IMAP → Désactiver). Le filtre serveur rend ça non-bloquant ; le bandeau est un nudge confidentialité.
 
+### Accès rapide aux Paramètres dans le header
+- **`js/header.js`** : ajout d'un bouton **roue ⚙️** dans `header-actions`, à côté de la cloche, lien direct vers `parametres.html`. Réutilise la classe `.alert-bell` (stylée par page) → look identique partout sans CSS supplémentaire. Les Paramètres restaient sinon cachés dans le menu déroulant du profil.
+- **Cache-buster** `header.js?v=260602 → 260613` sur les 4 pages qui chargent le header partagé (vendeurs, acquereurs, visites, parametres).
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 

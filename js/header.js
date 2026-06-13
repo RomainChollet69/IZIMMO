@@ -48,6 +48,9 @@
                         <i class="fa-solid fa-bell"></i>
                         <span class="alert-badge" id="alertBadge" style="display: none;">0</span>
                     </button>
+                    <a href="parametres.html" class="alert-bell" id="headerSettingsBtn" title="Paramètres" style="text-decoration:none;">
+                        <i class="fa-solid fa-gear"></i>
+                    </a>
                     <div data-leon-header-extras></div>
                     <div class="header-separator"></div>
                     <div class="user-profile" id="userProfile"></div>
