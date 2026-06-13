@@ -56,7 +56,8 @@ Nouvelle section détaillée sous les vidéos : parcours d'un lead (4 étapes il
 ### Valorisation de la page Visites (tuto + emails)
 La page Visites était sous-vendue (« juste un agenda »). Ajout partout du vrai pitch : voir le nombre de contacts par bien (argument RDV vendeur), partager ses contacts, garder tout l'historique.
 - `tutoriels.html` : étape finale reformulée (« Tu retrouves automatiquement tes contacts dans Visites / prêts à être exploités, jamais perdus ») + paragraphe value-prop dans l'intro. Encadré radio retiré (mini-précaution intégrée à l'étape 3).
-- Emails de campagne A & B (`/tmp`, hors repo) : bloc value-prop ajouté (3 bénéfices).
+- Emails de campagne A & B (`/tmp`, hors repo) : bloc value-prop ajouté.
+- Atouts « wahou » (réels, vérifiés dans le code) listés dans tuto + emails : messages rédigés par l'IA envoyés en 1 clic (confirmation/retour de visite/relance, SMS/WhatsApp/email — `generate-message.js`), réponse auto aux nouveaux contacts (en option — `sendAutoReplyIfEnabled`), nb de contacts par bien, partage + historique.
 
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
