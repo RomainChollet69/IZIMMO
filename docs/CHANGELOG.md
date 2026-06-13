@@ -47,9 +47,11 @@ On **ne peut pas** désactiver le transfert à distance : il vit dans le compte 
 ### Allowlist portails complétée (domaines réels constatés dans Gmail)
 Les filtres Gmail réels d'un agent ont révélé des domaines expéditeurs **absents** de l'allowlist → ces leads auraient été **rejetés** (perte + faux flag « transfert global »). Ajouts dans `api/inbound-email.js` : `myselogerpro.com`, `paruvendupro.fr`, `lefigaro.fr` (couvre immobilier./proprietes.lefigaro.fr). Exemple de filtre « De » enrichi dans `parametres.html` + modale `visites.html` (+ template email d'activation) : `leboncoin.fr OR seloger.com OR myselogerpro.com OR bienici.com OR jinka.fr OR lefigaro.fr OR paruvendupro.fr OR pap.fr OR logic-immo.com OR meilleursagents.com`.
 
+### Bouton « Télécharger mon filtre Gmail » (parametres.html)
+Nouveau bouton dans la section Transfert : génère côté client un fichier `.xml` (format flux Atom des filtres Gmail) **pré-rempli avec l'adresse Léon de l'agent** + tous les domaines portails, prêt à importer dans Gmail (Paramètres → Filtres → Importer des filtres). Évite la saisie manuelle du filtre et garantit une liste complète. `downloadGmailFilter()` + constante `PORTAL_FILTER_FROM`. Pré-requis rappelé dans l'UI : adresse de transfert déjà ajoutée/confirmée. `green-acres.fr` ajouté à l'exemple de filtre (il était déjà dans l'allowlist serveur).
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
-- **Exporter/importer les filtres Gmail** : un agent bien configuré peut exporter ses filtres (XML) et les autres les importer — éviterait le filtre manuel et le risque de liste incomplète.
 - `acquereurs.html` et `visites.html` ne lisent pas `?search=` (seul `vendeurs.html` le fait) — à ajouter si on veut un atterrissage « recherche pré-remplie » par page.
 
 ---
