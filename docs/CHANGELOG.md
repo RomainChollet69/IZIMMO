@@ -99,6 +99,9 @@ Le bandeau de setup (`emailFwdSetupBanner`, affiché si transfert non activé) p
 ### Atout « fini le tri des mails du matin »
 5ᵉ carte ajoutée aux grilles d'atouts (bloc Visites + tuto) + bullet en tête des emails A/B : « Tes demandes arrivent directement dans Léon, rangées et prêtes — tu ouvres, tout est là. » Formulé honnêtement (la page n'a pas de mise à jour live websocket/polling — les demandes apparaissent au chargement/rafraîchissement ; pas de claim « temps réel » au sens strict).
 
+### Retrait de la gamification du landing
+La gamification ayant été archivée (`_archive/gamification.js`), le bloc « L'administratif devient addictif / points d'expérience, séries, niveaux » de `landing.html` (section CHIFFRES) est remplacé par « Moins d'administratif. Plus de terrain. » + un pitch automatisation/matching/relances. Les 4 stats (15s, 87%, 3x, 0€) sont conservées. Aucune autre mention gamification sur le landing.
+
 ### Section « Automatisation portails » sur le landing public
 Nouvelle section dans `landing.html` (page publique servie sur `/`, avant connexion), après la section CRM : label « Automatisation », titre « Tes leads des portails, captés tout seuls. », 3 feature-cards (fini le tri des mails / acquéreurs déjà qualifiés via formulaire auto / messages 1 clic) + visuel desktop = `img/page_visite.png`. Reprend le pattern `split-section` + reveal du landing.
 
