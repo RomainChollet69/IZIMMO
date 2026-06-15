@@ -501,6 +501,27 @@ Soumission du formulaire public de qualification acquéreur.
 
 ---
 
+### GET `/api/cron-visit-followup`
+
+Cron Vercel (`*/10 * * * *`) — email de suivi automatique post-visite.
+
+| Champ | Valeur |
+|-------|--------|
+| **Méthode** | GET (invoqué par Vercel Cron) |
+| **Auth** | Header `Authorization: Bearer ${CRON_SECRET}` (injecté par Vercel) |
+| **Réponse** | `{ ok, sent, skipped, candidates }` ou `401` si secret absent/invalide |
+
+**Logique** :
+1. Agents avec `profiles.visit_followup_enabled = true` (opt-in).
+2. Visites éligibles : `followup_sent_at IS NULL`, `status != 'annulee'`, `visit_time` non nul,
+   échéance (`visit_date`+`visit_time`+30 min, fuseau Europe/Paris) passée et dans la fenêtre 24h.
+3. Filtre : ≥ 1 lien du bien (`sellers.link_documents/link_virtual_tour/link_listing`) ET email visiteur valide.
+4. Envoi via `lib/mailgun-send.js` (template `lib/visit-followup-email.js`, Reply-To = email agent) puis `followup_sent_at = now()`.
+
+⚠️ Nécessite la variable d'env **`CRON_SECRET`** sur Vercel.
+
+---
+
 ## 2. APIs externes (serveur — generate-study)
 
 ### Overpass API (OpenStreetMap)

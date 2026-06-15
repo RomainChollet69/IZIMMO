@@ -4746,6 +4746,24 @@
                         <button type="button" class="link-add-btn" id="linkAddBtn" onclick="showLinkInput()">+ Ajouter un lien</button>
                     </div>
 
+                    <!-- Liens pour l'email de suivi post-visite (envoyés automatiquement au visiteur) -->
+                    <div class="form-section-title">📧 Liens du mail de suivi visite</div>
+                    <p style="font-size:12px;color:#7F8C8D;margin:-6px 0 14px">
+                        Envoyés automatiquement au visiteur 30 min après la visite (si activé dans Paramètres).
+                    </p>
+                    <div class="form-group">
+                        <label class="form-label">📄 Documents du bien (MyNotary, Drive…)</label>
+                        <input type="url" class="form-input" id="linkDocuments" placeholder="https://mynotary.com/… ou lien Drive">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🎥 Visite virtuelle (Matterport…)</label>
+                        <input type="url" class="form-input" id="linkVirtualTour" placeholder="https://my.matterport.com/show/?m=…">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">🔗 Annonce du bien</label>
+                        <input type="url" class="form-input" id="linkListing" placeholder="https://www.efficity.com/…">
+                    </div>
+
                     <!-- Documents joints -->
                     <div class="docs-section" id="docsSection">
                         <div class="docs-section-title">📎 Documents <span class="docs-count" id="docsCount"></span></div>
@@ -9683,6 +9701,10 @@
             linkPreviews = {};
             renderLinks();
             cancelAddLink();
+            // Reset liens typés du mail de suivi
+            document.getElementById('linkDocuments').value = '';
+            document.getElementById('linkVirtualTour').value = '';
+            document.getElementById('linkListing').value = '';
 
             // Reset notes
             currentNotes = [];
@@ -9788,6 +9810,10 @@
             currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
             linkPreviews = (seller.link_previews && typeof seller.link_previews === 'object') ? { ...seller.link_previews } : {};
             renderLinks();
+            // Liens typés du mail de suivi post-visite
+            document.getElementById('linkDocuments').value = seller.link_documents || '';
+            document.getElementById('linkVirtualTour').value = seller.link_virtual_tour || '';
+            document.getElementById('linkListing').value = seller.link_listing || '';
 
             const displayName = `${seller.first_name || ''} ${seller.last_name || ''}`.trim();
             document.querySelector('.modal-title').textContent = displayName || 'Modifier le lead';
@@ -10066,7 +10092,11 @@
                 commission_rate: parseFloat(document.getElementById('commissionRate').value) || 4,
                 commission_amount: parseFloat(document.getElementById('commissionAmount').value) || null,
                 links: currentLinks.length > 0 ? currentLinks : [],
-                link_previews: Object.keys(linkPreviews).length > 0 ? linkPreviews : {}
+                link_previews: Object.keys(linkPreviews).length > 0 ? linkPreviews : {},
+                // Liens typés pour l'email de suivi post-visite
+                link_documents: document.getElementById('linkDocuments').value.trim() || null,
+                link_virtual_tour: document.getElementById('linkVirtualTour').value.trim() || null,
+                link_listing: document.getElementById('linkListing').value.trim() || null
             };
 
             // Auto-relance : si RDV vendeur positionné et pas de relance manuelle → relance à J+15

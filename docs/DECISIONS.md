@@ -1645,3 +1645,22 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - **Cache JS** : `app.html` charge `tab-shell.js` avec `?v=` pour éviter qu'un déploiement serve une version cachée obsolète.
 - **Accès direct** : toutes les pages rubriques (+ `home.html`) portent un guard `<head>` qui redirige vers `app.html?open=<page>` en accès direct desktop → le shell s'ouvre sur le bon onglet (le shell lit `?open=`). Expérience cohérente quel que soit le point d'entrée. Mobile et contexte embarqué (iframe) exclus du guard.
 - **Navigations JS internes** non interceptées (interception sur clics de liens uniquement) — ex. recherche globale de l'Accueil.
+
+## D076 — Email de suivi post-visite : cron Vercel + liens typés sur le bien
+
+**Date** : 2026-06-13
+**Statut** : Actif
+
+**Contexte** : Envoyer automatiquement au visiteur, ~30 min après une visite, un email avec les liens du bien (documents, visite virtuelle, annonce).
+
+**Décisions** :
+- **Déclencheur = Vercel Cron** (`*/10 * * * *`) qui scanne les visites éligibles, plutôt qu'un setTimeout (impossible en serverless) ou un worker dédié. Abonnement Vercel Pro → crons fréquents autorisés.
+- **Liens typés stockés sur `sellers`** (3 colonnes dédiées) plutôt que dans le tableau `links` existant (non typé) : le template email doit distinguer documents / visite virtuelle / annonce. Réutilisés pour tous les visiteurs d'un même bien (saisis une fois).
+- **Idempotence via `visits.followup_sent_at`** : un seul envoi par visite, robuste aux exécutions multiples du cron.
+- **Heure murale Europe/Paris → instant UTC** calculé en JS via `Intl.DateTimeFormat` (gère été/hiver) ; le cron tourne en UTC.
+- **Opt-in par agent** (`profiles.visit_followup_enabled`) + garde-fous (annulée / sans email / sans lien) : envoi client-facing automatique = prudence.
+- **Fenêtre anti-backlog 24h** : au déploiement, on n'arrose pas l'historique des visites passées.
+
+**Alternatives rejetées** :
+- **Supabase pg_cron / Edge Function** : aurait dispersé la logique hors du code Vercel existant (Mailgun déjà câblé côté Vercel).
+- **Envoi au marquage « effectuée »** : écarté par l'utilisateur au profit du déclenchement à l'heure planifiée + 30 min.

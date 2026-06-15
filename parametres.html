@@ -1891,6 +1891,24 @@
             ">Enregistrer</button>
         </div>
 
+        <!-- Section Email de suivi post-visite -->
+        <div class="settings-section" id="visitFollowupSection">
+            <h2 class="section-title">🏠 Email de suivi après visite</h2>
+            <p style="font-size:13px; color:#78909C; margin-bottom:16px; line-height:1.5">
+                30 min après chaque visite, un email part automatiquement au visiteur avec les liens du bien
+                (documents, visite virtuelle, annonce). Les liens se renseignent sur la fiche de chaque bien
+                (onglet Vendeurs). Rien n'est envoyé si la visite est annulée, si aucun lien n'est rempli,
+                ou s'il n'y a pas d'email visiteur.
+            </p>
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; padding:14px 16px; background:#F9FAFB; border-radius:12px; border:1.5px solid #E1E8ED">
+                <input type="checkbox" id="visitFollowupToggle" style="width:18px; height:18px; accent-color:#667eea">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:#2C3E50">Activer l'email de suivi post-visite</div>
+                    <div style="font-size:12px; color:#78909C; margin-top:2px">Envoi automatique 30 min après l'heure de la visite</div>
+                </div>
+            </label>
+        </div>
+
         <!-- Section Tutoriel Import Contacts -->
         <div class="settings-section" id="contactsTutorial">
             <h2 class="section-title">📱 Importer ses contacts téléphoniques</h2>
@@ -2222,6 +2240,20 @@
                     this.checked = !enabled; // revert
                 } else {
                     alert(enabled ? 'Réponse automatique activée' : 'Réponse automatique désactivée');
+                }
+            });
+
+            // Email de suivi post-visite toggle
+            document.getElementById('visitFollowupToggle').addEventListener('change', async function() {
+                const enabled = this.checked;
+                const { error } = await supabaseClient.from('profiles')
+                    .update({ visit_followup_enabled: enabled })
+                    .eq('id', currentUserId);
+                if (error) {
+                    console.error('[Params] Visit followup update error:', error);
+                    this.checked = !enabled; // revert
+                } else {
+                    alert(enabled ? 'Email de suivi post-visite activé' : 'Email de suivi post-visite désactivé');
                 }
             });
 
@@ -2773,6 +2805,9 @@
                 }
                 document.getElementById('autoReplyShowPhoto').checked = data.auto_reply_show_photo !== false;
                 document.getElementById('autoReplyShowLogo').checked = data.auto_reply_show_logo || false;
+                // Email de suivi post-visite
+                const visitFollowupToggle = document.getElementById('visitFollowupToggle');
+                if (visitFollowupToggle) visitFollowupToggle.checked = data.visit_followup_enabled || false;
             }
         }
 

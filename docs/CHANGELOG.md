@@ -4,6 +4,40 @@
 
 ---
 
+## Session 2026-06-13 — Email de suivi automatique post-visite
+
+### Objectif
+Envoyer automatiquement au visiteur, ~30 min après l'heure planifiée d'une visite, un email
+avec les liens du bien (documents MyNotary/Drive, visite virtuelle Matterport, annonce).
+
+### Décisions validées (utilisateur)
+- Déclencheur : `visit_date` + `visit_time` (heure murale Europe/Paris) + 30 min.
+- Garde-fous : pas d'envoi si `status = 'annulee'`, sans email visiteur, ou sans aucun lien.
+- Stockage des liens : sur la fiche du bien (`sellers`), réutilisés pour tous les visiteurs.
+- Opt-in par agent (`profiles.visit_followup_enabled`, false par défaut).
+
+### Modifications
+- **Migration Supabase** : `sellers.link_documents/link_virtual_tour/link_listing` (TEXT),
+  `visits.followup_sent_at` (TIMESTAMPTZ, idempotence), `profiles.visit_followup_enabled` (BOOL),
+  + index partiel `idx_visits_followup_pending`.
+- **`api/cron-visit-followup.js`** (nouveau) : cron Vercel (`*/10 * * * *`), auth `CRON_SECRET`,
+  sélection des visites éligibles (non envoyées/non annulées, échéance passée, fenêtre 24h,
+  calcul de fuseau Europe/Paris avec gestion été/hiver), envoi Mailgun + `followup_sent_at`.
+- **`lib/visit-followup-email.js`** (nouveau) : template HTML (boutons des liens présents + signature).
+- **`lib/mailgun-send.js`** : support du `Reply-To` (le client répond directement à l'agent).
+- **`vercel.json`** : section `crons` + `maxDuration` du nouvel endpoint.
+- **`vendeurs.html`** : 3 champs liens dans la modale du bien (save/load/reset).
+- **`parametres.html`** : interrupteur « Email de suivi après visite » (visit_followup_enabled).
+- **`visites.html`** : indicateur par visite (envoyé / programmé / liens ou email manquants),
+  affiché uniquement si la feature est activée.
+
+### Points d'attention
+- ⚠️ Variable d'env **`CRON_SECRET`** à créer sur Vercel (sinon le cron répond 401, sans effet).
+- Visites sans `visit_time` : ignorées (pas d'heure → pas de calcul fiable de l'échéance).
+- Fenêtre anti-backlog de 24h : au 1er déploiement, aucune visite ancienne n'est arrosée.
+
+---
+
 ## Session 2026-06-13 — Filtre expéditeur portails (anti-bruit transfert emails)
 
 ### Problème

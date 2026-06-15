@@ -6,7 +6,45 @@
 
 ## En cours
 
-_(rien en cours)_
+### Email de suivi automatique post-visite (session 2026-06-13)
+
+> Objectif : 30 min après l'heure planifiée d'une visite, envoyer automatiquement
+> au visiteur un email avec les liens du bien (documents, visite virtuelle, annonce).
+
+**Décisions validées (utilisateur)**
+- Déclencheur : heure planifiée (`visit_date` + `visit_time`) + 30 min.
+- Garde-fou : ne jamais envoyer si `status = 'annulee'`.
+- Envoi auto MAIS uniquement si ≥ 1 lien rempli ET email visiteur valide.
+- Liens stockés sur la fiche du bien (`sellers`), réutilisés pour tous les visiteurs.
+- Activation : flag global par agent (`profiles`), opt-in (false par défaut).
+
+**Schéma Supabase**
+- [ ] `sellers` : `link_documents TEXT`, `link_virtual_tour TEXT`, `link_listing TEXT`
+- [ ] `visits` : `followup_sent_at TIMESTAMPTZ` (idempotence)
+- [ ] `profiles` : `visit_followup_enabled BOOLEAN DEFAULT false`
+
+**Backend — Cron Vercel**
+- [ ] `vercel.json` : `"crons": [{ "path": "/api/cron-visit-followup", "schedule": "*/10 * * * *" }]` + maxDuration
+- [ ] `api/cron-visit-followup.js` : auth `CRON_SECRET`, sélection visites éligibles
+      (non envoyées, non annulées, now ≥ visit+30min, fenêtre ≤ 24h, Europe/Paris),
+      join sellers/buyers, filtre liens+email, respect `visit_followup_enabled`,
+      envoi via `lib/mailgun-send.js` puis `followup_sent_at = now()`
+- [ ] `lib/visit-followup-email.js` : template HTML (boutons liens présents + signature + reply-to)
+
+**Frontend**
+- [ ] `vendeurs.html` : 3 champs liens dans la modale du bien (save/load) ; pré-remplir annonce depuis `links`
+- [ ] `visites.html` : indicateur par visite (envoyé / à venir / liens manquants)
+- [ ] `parametres.html` : interrupteur global « Email de suivi post-visite »
+
+**Env / Docs**
+- [ ] `CRON_SECRET` (Vercel) ; docs ARCHITECTURE / DECISIONS / CHANGELOG / API-MAP
+
+**Découpage** : Phase 1 = migration + champs fiche + template + cron (cœur).
+Phase 2 = toggle paramètres + indicateur visites + docs.
+
+---
+
+_(rien d'autre en cours)_
 
 ## À tester après déploiement (session 2026-05-26)
 

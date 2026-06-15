@@ -6,7 +6,13 @@
     { "source": "/landing.html", "destination": "/", "statusCode": 301 },
     { "source": "/landing-v2.html", "destination": "/", "statusCode": 301 }
   ],
+  "crons": [
+    { "path": "/api/cron-visit-followup", "schedule": "*/10 * * * *" }
+  ],
   "functions": {
+    "api/cron-visit-followup.js": {
+      "maxDuration": 60
+    },
     "api/parse-import-batch.js": {
       "maxDuration": 60
     },

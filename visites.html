@@ -710,6 +710,11 @@
         .visit-card-decision { font-size: 13px; font-weight: 600; margin-top: 3px; }
         .visit-card-decision.refus { color: #C62828; background: #FFEBEE; padding: 3px 8px; border-radius: 6px; display: inline-block; }
         .visit-card-notes { font-size: 12px; color: #94A3B8; font-style: italic; margin-top: 4px; max-height: 40px; overflow: hidden; }
+        /* Indicateur email de suivi post-visite */
+        .visit-followup-badge { font-size: 12px; font-weight: 600; margin-top: 6px; padding: 4px 10px; border-radius: 6px; display: inline-block; }
+        .visit-followup-badge.sent { background: #E8F5E9; color: #2E7D32; }
+        .visit-followup-badge.pending { background: #E3F2FD; color: #1565C0; }
+        .visit-followup-badge.warn { background: #FFF3E0; color: #E65100; }
         /* Vue condensée par défaut */
         .visit-card-details { display: none; }
         .visit-card.expanded .visit-card-details { display: block; }
@@ -2309,6 +2314,7 @@
     let activeSellers = [];
     let openAccordions = new Set();
     let _cachedAgencyName = null;
+    let visitFollowupEnabled = false; // profiles.visit_followup_enabled — gère l'affichage de l'indicateur de suivi
     let portalRequests = [];      // Demandes de visite portails (pending)
     let processedRequests = [];   // Demandes traitées (processed/accepted/dismissed)
     let visitRequestStats = {};   // Stats par seller_id : { contacts, processed }
@@ -2398,11 +2404,19 @@
         const userId = await getCurrentUserId();
         if (!userId) return [];
 
+        // Flag d'activation du mail de suivi (pour l'indicateur dans les cartes)
+        const { data: prof } = await supabaseClient
+            .from('profiles')
+            .select('visit_followup_enabled')
+            .eq('id', userId)
+            .maybeSingle();
+        visitFollowupEnabled = !!(prof && prof.visit_followup_enabled);
+
         const { data, error } = await supabaseClient
             .from('visits')
             .select(`
                 *,
-                sellers(id, first_name, last_name, address, budget, property_type, status, links, link_previews),
+                sellers(id, first_name, last_name, address, budget, property_type, status, links, link_previews, link_documents, link_virtual_tour, link_listing),
                 buyers(id, first_name, last_name, phone, email)
             `)
             .eq('user_id', userId)
@@ -3448,6 +3462,25 @@
         </div>`;
     }
 
+    // Indicateur de l'email de suivi post-visite (affiché seulement si la feature est activée).
+    // Reflète l'état réel : déjà envoyé, prêt à partir, ou bloqué (liens/email manquants).
+    function getFollowupBadge(visit) {
+        if (!visitFollowupEnabled) return '';
+        if (visit.status !== 'planifiee' && visit.status !== 'effectuee') return '';
+        if (visit.followup_sent_at) {
+            return '<div class="visit-followup-badge sent">✅ Mail de suivi envoyé</div>';
+        }
+        const s = visit.sellers || {};
+        const hasLink = s.link_documents || s.link_virtual_tour || s.link_listing;
+        if (!hasLink) {
+            return '<div class="visit-followup-badge warn">⚠️ Mail de suivi : liens du bien manquants</div>';
+        }
+        if (!getVisitorEmail(visit)) {
+            return '<div class="visit-followup-badge warn">⚠️ Mail de suivi : email visiteur manquant</div>';
+        }
+        return '<div class="visit-followup-badge pending">🕓 Mail de suivi programmé (30 min après la visite)</div>';
+    }
+
     function renderVisitCard(visit) {
         const dateStr = visit.visit_date
             ? new Date(visit.visit_date).toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short' })
@@ -3534,6 +3567,7 @@
                 ${pointsHtml}
                 ${dec ? `<div class="visit-card-decision${decisionClass}">${dec.emoji} ${dec.label}</div>` : ''}
                 ${visit.notes ? `<div class="visit-card-notes">${escapeHtml(visit.notes)}</div>` : ''}
+                ${getFollowupBadge(visit)}
                 ${actions}
             </div>
             <button type="button" class="visit-delete-btn" onclick="event.stopPropagation();confirmDeleteVisit('${visit.id}')" title="Supprimer"><i class="fa-solid fa-trash-can"></i></button>
