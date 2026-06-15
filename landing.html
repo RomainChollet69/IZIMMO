@@ -1472,56 +1472,189 @@
     </section>
 
     <!-- ===== SECTION : TÉMOIGNAGES =====
-         ⚠️ PLACEHOLDER — avis fictifs (vitrine pré-lancement). À REMPLACER par de vrais témoignages. -->
+         ⚠️ PLACEHOLDER — avis majoritairement fictifs (vitrine pré-lancement). À REMPLACER par de vrais témoignages.
+         (La phrase « Léon m'a redonné le goût de la prospection » provient d'un vrai message d'une conseillère.) -->
+    <style>
+        .testi-marquee { overflow: hidden; padding: 4px 0; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+        .testi-track { display: flex; gap: 24px; width: max-content; animation: testiScroll 80s linear infinite; }
+        .testi-marquee:hover .testi-track { animation-play-state: paused; }
+        @keyframes testiScroll { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+        .testi-card { flex: 0 0 380px; background: var(--bg-white); border: 1px solid var(--border-light); border-radius: 18px; padding: 26px; text-align: left; box-shadow: var(--shadow-md); }
+        .testi-stars { color: #FBBF24; font-size: 14px; letter-spacing: 2px; margin-bottom: 12px; }
+        .testi-quote { color: var(--text-secondary); font-size: 15px; line-height: 1.6; margin: 0 0 20px; }
+        .testi-author { display: flex; align-items: center; gap: 12px; }
+        .testi-avatar { width: 42px; height: 42px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+        .testi-name { font-weight: 700; color: var(--text-primary); font-size: 14px; }
+        .testi-role { color: var(--text-tertiary); font-size: 12.5px; }
+        @media (max-width: 768px) { .testi-card { flex-basis: 300px; } }
+        @media (prefers-reduced-motion: reduce) { .testi-track { animation: none; } }
+    </style>
     <section class="section" style="background: var(--bg-light);">
         <div class="container text-center">
             <div class="section-label reveal" style="margin: 0 auto 20px;">
                 <i class="fas fa-star"></i>
                 Témoignages
             </div>
-            <h2 class="display-title section-title reveal" style="max-width: 600px; margin: 0 auto 40px;">
-                Adopté <span class="gradient-text">sur le terrain.</span>
+            <h2 class="display-title section-title reveal" style="max-width: 640px; margin: 0 auto 40px;">
+                Léon, c'est <span class="gradient-text">le terrain qui valide.</span>
             </h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; max-width: 1040px; margin: 0 auto;">
-                <div class="reveal delay-1" style="background: var(--bg-white); border: 1px solid var(--border-light); border-radius: 18px; padding: 28px; text-align: left; box-shadow: var(--shadow-md);">
-                    <div style="color: #FBBF24; font-size: 14px; letter-spacing: 2px; margin-bottom: 14px;">★★★★★</div>
-                    <p style="color: var(--text-secondary); font-size: 15.5px; line-height: 1.65; margin: 0 0 22px;">
-                        « Avant, je notais mes leads sur des post-it et j'en perdais. Maintenant je dicte en sortie de rendez-vous et tout est rangé tout seul. Je ne reviens plus en arrière. »
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0;">SM</div>
-                        <div>
-                            <div style="font-weight: 700; color: var(--text-primary); font-size: 14.5px;">Sophie M.</div>
-                            <div style="color: var(--text-tertiary); font-size: 13px;">Mandataire indépendante · Lyon</div>
-                        </div>
+        </div>
+        <div class="testi-marquee">
+            <div class="testi-track">
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Léon m'a redonné le goût de la prospection. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">CM</div>
+                    <div>
+                        <div class="testi-name">Caroline M.</div>
+                        <div class="testi-role">Conseillère immobilière</div>
                     </div>
                 </div>
-                <div class="reveal delay-2" style="background: var(--bg-white); border: 1px solid var(--border-light); border-radius: 18px; padding: 28px; text-align: left; box-shadow: var(--shadow-md);">
-                    <div style="color: #FBBF24; font-size: 14px; letter-spacing: 2px; margin-bottom: 14px;">★★★★★</div>
-                    <p style="color: var(--text-secondary); font-size: 15.5px; line-height: 1.65; margin: 0 0 22px;">
-                        « Les demandes des portails arrivent directement dans Léon, déjà triées. Je commence ma journée avec mes leads prêts, sans fouiller mes mails. »
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0;">KB</div>
-                        <div>
-                            <div style="font-weight: 700; color: var(--text-primary); font-size: 14.5px;">Karim B.</div>
-                            <div style="color: var(--text-tertiary); font-size: 13px;">Conseiller immobilier · Lille</div>
-                        </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Je ne perds plus un seul lead vendeur. Du premier appel au mandat signé, chaque contact est suivi dans Léon. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">JP</div>
+                    <div>
+                        <div class="testi-name">Julien P.</div>
+                        <div class="testi-role">Mandataire · Nantes</div>
                     </div>
                 </div>
-                <div class="reveal delay-3" style="background: var(--bg-white); border: 1px solid var(--border-light); border-radius: 18px; padding: 28px; text-align: left; box-shadow: var(--shadow-md);">
-                    <div style="color: #FBBF24; font-size: 14px; letter-spacing: 2px; margin-bottom: 14px;">★★★★★</div>
-                    <p style="color: var(--text-secondary); font-size: 15.5px; line-height: 1.65; margin: 0 0 22px;">
-                        « Le rapprochement acquéreur / bien me fait gagner un temps fou. Léon me propose le bon acheteur pour chaque mandat, sans que je cherche. »
-                    </p>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0;">ER</div>
-                        <div>
-                            <div style="font-weight: 700; color: var(--text-primary); font-size: 14.5px;">Élodie R.</div>
-                            <div style="color: var(--text-tertiary); font-size: 13px;">Négociatrice · Bordeaux</div>
-                        </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Avec le tableau kanban, je vois où en est chaque vendeur d'un coup d'œil : à estimer, à relancer, mandat à signer. Je glisse la fiche d'une colonne à l'autre et rien ne traîne. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">NF</div>
+                    <div>
+                        <div class="testi-name">Nathalie F.</div>
+                        <div class="testi-role">Conseillère · Toulouse</div>
                     </div>
                 </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Chaque acquéreur reçoit automatiquement un formulaire qui qualifie son projet. J'arrive au rendez-vous en connaissant déjà son budget et son secteur. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">IB</div>
+                    <div>
+                        <div class="testi-name">Inès B.</div>
+                        <div class="testi-role">Négociatrice · Marseille</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Les messages de confirmation et de relance partent en un clic, rédigés pour moi. Mes clients me trouvent hyper réactif. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">TR</div>
+                    <div>
+                        <div class="testi-name">Thomas R.</div>
+                        <div class="testi-role">Mandataire · Rennes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Les demandes SeLoger et LeBonCoin tombent directement dans Léon, déjà triées. Fini le tri des mails le matin. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">SL</div>
+                    <div>
+                        <div class="testi-name">Sébastien L.</div>
+                        <div class="testi-role">Conseiller · Lyon</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Je dicte mes infos en sortie de rendez-vous : 15 secondes et la fiche est remplie. J'ai rangé les post-it. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">SM</div>
+                    <div>
+                        <div class="testi-name">Sophie M.</div>
+                        <div class="testi-role">Mandataire indépendante · Lyon</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Léon m'a redonné le goût de la prospection. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">CM</div>
+                    <div>
+                        <div class="testi-name">Caroline M.</div>
+                        <div class="testi-role">Conseillère immobilière</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Je ne perds plus un seul lead vendeur. Du premier appel au mandat signé, chaque contact est suivi dans Léon. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">JP</div>
+                    <div>
+                        <div class="testi-name">Julien P.</div>
+                        <div class="testi-role">Mandataire · Nantes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Avec le tableau kanban, je vois où en est chaque vendeur d'un coup d'œil : à estimer, à relancer, mandat à signer. Je glisse la fiche d'une colonne à l'autre et rien ne traîne. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">NF</div>
+                    <div>
+                        <div class="testi-name">Nathalie F.</div>
+                        <div class="testi-role">Conseillère · Toulouse</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Chaque acquéreur reçoit automatiquement un formulaire qui qualifie son projet. J'arrive au rendez-vous en connaissant déjà son budget et son secteur. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">IB</div>
+                    <div>
+                        <div class="testi-name">Inès B.</div>
+                        <div class="testi-role">Négociatrice · Marseille</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Les messages de confirmation et de relance partent en un clic, rédigés pour moi. Mes clients me trouvent hyper réactif. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">TR</div>
+                    <div>
+                        <div class="testi-name">Thomas R.</div>
+                        <div class="testi-role">Mandataire · Rennes</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Les demandes SeLoger et LeBonCoin tombent directement dans Léon, déjà triées. Fini le tri des mails le matin. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">SL</div>
+                    <div>
+                        <div class="testi-name">Sébastien L.</div>
+                        <div class="testi-role">Conseiller · Lyon</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testi-card" aria-hidden="true">
+                <div class="testi-stars">★★★★★</div>
+                <p class="testi-quote">« Je dicte mes infos en sortie de rendez-vous : 15 secondes et la fiche est remplie. J'ai rangé les post-it. »</p>
+                <div class="testi-author">
+                    <div class="testi-avatar">SM</div>
+                    <div>
+                        <div class="testi-name">Sophie M.</div>
+                        <div class="testi-role">Mandataire indépendante · Lyon</div>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </section>
