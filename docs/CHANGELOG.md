@@ -4,6 +4,27 @@
 
 ---
 
+## Session 2026-06-13 — Fix : clic sur une relance n'ouvrait plus la fiche
+
+### Problème
+Depuis le passage à la navigation desktop multi-onglets (shell `app.html` + iframes, cf. D075),
+cliquer sur une relance dans le panneau Relances ne menait plus à la fiche du lead. Le widget
+`js/relance-widget.js` vit dans la **frame parente** ; son `goToLead()` appelait `editSeller()`
+(qui n'existe que dans l'iframe) ou faisait un `window.location.href` cassant le shell.
+
+### Modifications
+- **`js/tab-shell.js`** : nouvelle API `window.LeonShell.openLead(page, id, leadType)` — active/ouvre
+  le bon onglet et appelle `editSeller`/`editBuyer` **dans** l'iframe (préserve scroll/filtres),
+  ou recharge avec `?openLead=` si l'onglet n'est pas prêt.
+- **`js/relance-widget.js`** : `goToLead()` délègue à `LeonShell.openLead()` quand le shell est
+  présent ; sinon (mobile / page autonome) garde l'appel direct à `editSeller`/`editBuyer`.
+
+### Règle (cf. D075)
+Tout widget de la barre du shell doit ouvrir une fiche via `LeonShell.openLead()`, jamais en
+appelant directement une fonction de page (inaccessible depuis la frame parente).
+
+---
+
 ## Session 2026-06-15 (suite 2) — Matching demandes portails → biens sous mandat (optimisation)
 
 **Symptôme** : une demande LeBonCoin (« Appartement 4 pièces 88 m² / 299 000 € », réf efficity 207218, lien LBC) ne matchait pas automatiquement avec le bien sous mandat correspondant.

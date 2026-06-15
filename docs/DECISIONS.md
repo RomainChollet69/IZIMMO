@@ -1645,6 +1645,7 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - **Cache JS** : `app.html` charge `tab-shell.js` avec `?v=` pour éviter qu'un déploiement serve une version cachée obsolète.
 - **Accès direct** : toutes les pages rubriques (+ `home.html`) portent un guard `<head>` qui redirige vers `app.html?open=<page>` en accès direct desktop → le shell s'ouvre sur le bon onglet (le shell lit `?open=`). Expérience cohérente quel que soit le point d'entrée. Mobile et contexte embarqué (iframe) exclus du guard.
 - **Navigations JS internes** non interceptées (interception sur clics de liens uniquement) — ex. recherche globale de l'Accueil.
+- **Widgets vivant dans la frame parente** (ex. panneau Relances, `js/relance-widget.js`) : ils ne peuvent pas appeler les fonctions des pages (`editSeller`/`editBuyer`), qui vivent dans l'iframe. Le shell expose donc `window.LeonShell.openLead(page, id, leadType)` : il active/ouvre le bon onglet et appelle la fonction d'ouverture de fiche **dans** l'iframe (ou recharge avec `?openLead=` si l'onglet n'est pas prêt). Tout nouveau widget de la barre doit passer par cette API, jamais appeler directement une fonction de page. (A corrigé la régression « clic sur une relance n'ouvrait plus la fiche ».)
 
 ## D076 — Email de suivi post-visite : cron Vercel + liens typés sur le bien
 
