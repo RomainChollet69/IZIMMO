@@ -4,6 +4,21 @@
 
 ---
 
+## Session 2026-06-15 (suite) — Pipeline Vendeurs : 2 bugs (scroll colonnes + prix vignette)
+
+### Bug 1 — impossible d'atteindre le bas des colonnes (dernière carte masquée)
+**Cause** : les colonnes (`overflow-y:auto`) n'avaient que `padding-bottom:24px` → en défilant à fond, la dernière carte restait derrière la pastille flottante « To Do » (absolue, ~50px du bas) et le bord bas.
+**Fix** (`vendeurs.html`, `.column`) : `padding-bottom` porté à **88px** pour laisser la dernière carte remonter au-dessus de la pastille.
+
+### Bug 2 — la mise à jour du prix ne se reflétait pas sur la vignette
+**Cause** : 2 champs prix coexistaient — `budget` (« Budget / Estimation ») et `mandate_price` (« Prix mandat »). La vignette d'un bien **sous mandat/compromis** affichait `mandate_price`, alors que l'utilisateur modifiait `budget` (le champ visible dans DÉTAILS) → aucun changement visible.
+**Décision** (choix utilisateur) : **un seul prix pilote la vignette**. `budget` devient le prix unique partout (vignette, commission, exports, édition inline), `mandate_price` en repli (`budget || mandate_price`). Cohérent avec le calcul de commission qui se basait déjà sur `budget` à la sauvegarde.
+**Fix** (`vendeurs.html`) :
+- 8 emplacements `(status mandate/compromis) && mandate_price ? mandate_price : budget` → `budget || mandate_price`.
+- `handlePriceChange()` (bouton « Modifier le prix ») met désormais aussi à jour `budget` (+ le champ du formulaire) pour que les baisses de prix se voient sur la vignette. `mandate_price` reste mis à jour pour l'historique des prix.
+
+---
+
 ## Session 2026-06-15 — Aperçu social (WhatsApp) : purge du branding WAIMMO
 
 **Symptôme** : en partageant `avecleon.fr` sur WhatsApp, l'aperçu affichait encore le nom + logo **WAIMMO**.
