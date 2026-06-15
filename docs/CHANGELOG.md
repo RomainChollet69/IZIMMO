@@ -64,8 +64,13 @@ avec les liens du bien (documents MyNotary/Drive, visite virtuelle Matterport, a
   `brand_color` (défaut neutre `#2C3E50`, validée anti-injection CSS), téléphone (`phone_pro`) en signature.
 - **`api/cron-visit-followup.js`** : passe `auto_reply_logo` / `brand_color` / `phone_pro` au template.
 - **`parametres.html`** : sélecteur de couleur de marque (logo/photo réutilisés de la réponse auto).
-- ⚠️ Rien d'Efficity n'est codé en dur — tout est par-agent (objectif : conseillers multi-agences).
+- ⚠️ Rien d'Efficity n'est codé en dur dans le template — tout passe par les réglages agent.
   Compte `romainchollet69@gmail.com` réglé sur le vert Efficity `#52AE32` (charte 2022).
+- **`lib/agency-branding.js`** (nouveau) : branding par défaut selon le domaine email
+  (`@efficity.com` / `@efficity.fr` → vert `#52AE32` + logo `/img/agencies/efficity.jpg`).
+  Fallback appliqué dans le cron quand l'agent n'a pas configuré couleur/logo ; ses réglages
+  persos restent prioritaires. Ajouter une agence = une ligne dans `AGENCY_PRESETS`.
+- **`img/agencies/efficity.jpg`** : logo Efficity officiel (charte 2022, version fond clair).
 
 ### Points d'attention
 - ⚠️ Variable d'env **`CRON_SECRET`** à créer sur Vercel (sinon le cron répond 401, sans effet).

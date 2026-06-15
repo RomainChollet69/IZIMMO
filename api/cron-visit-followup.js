@@ -15,6 +15,7 @@
 import { getSupabaseAdmin } from '../lib/auth.js';
 import { sendEmail } from '../lib/mailgun-send.js';
 import { buildVisitFollowupHtml } from '../lib/visit-followup-email.js';
+import { getAgencyBranding } from '../lib/agency-branding.js';
 
 const FOLLOWUP_DELAY_MS = 30 * 60 * 1000;        // 30 min après l'heure de visite
 const BACKFILL_WINDOW_MS = 24 * 60 * 60 * 1000;  // ne jamais relancer une visite > 24h (anti-backlog)
@@ -29,6 +30,11 @@ export default async function handler(req, res) {
 
     const supabaseAdmin = getSupabaseAdmin();
     const now = Date.now();
+
+    // URL de base du site (pour les logos hébergés dans /img).
+    const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+        ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+        : 'https://www.avecleon.fr';
 
     try {
         // 1. Agents ayant activé la feature (opt-in)
@@ -103,6 +109,16 @@ export default async function handler(req, res) {
                     agentEmail = (u && u.user && u.user.email) || '';
                 } catch (e) { agentEmail = ''; }
                 emailByUser.set(visit.user_id, agentEmail);
+            }
+
+            // Fallback branding par domaine email (ex: conseillers @efficity.com) si non
+            // configuré individuellement — les réglages persos de l'agent restent prioritaires.
+            if (!agent.brandColor || !agent.logoUrl) {
+                const branding = getAgencyBranding(agentEmail);
+                if (branding) {
+                    if (!agent.brandColor) agent.brandColor = branding.brandColor;
+                    if (!agent.logoUrl) agent.logoUrl = baseUrl + branding.logoPath;
+                }
             }
 
             // Prénom visiteur + désignation du bien
