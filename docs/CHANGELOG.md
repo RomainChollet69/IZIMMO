@@ -99,6 +99,9 @@ Le bandeau de setup (`emailFwdSetupBanner`, affiché si transfert non activé) p
 ### Atout « fini le tri des mails du matin »
 5ᵉ carte ajoutée aux grilles d'atouts (bloc Visites + tuto) + bullet en tête des emails A/B : « Tes demandes arrivent directement dans Léon, rangées et prêtes — tu ouvres, tout est là. » Formulé honnêtement (la page n'a pas de mise à jour live websocket/polling — les demandes apparaissent au chargement/rafraîchissement ; pas de claim « temps réel » au sens strict).
 
+### Section « Automatisation portails » sur le landing public
+Nouvelle section dans `landing.html` (page publique servie sur `/`, avant connexion), après la section CRM : label « Automatisation », titre « Tes leads des portails, captés tout seuls. », 3 feature-cards (fini le tri des mails / acquéreurs déjà qualifiés via formulaire auto / messages 1 clic) + visuel desktop = `img/page_visite.png`. Reprend le pattern `split-section` + reveal du landing.
+
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.
 - **Mise à jour temps réel** de la page Visites (Supabase realtime sur `visit_requests`) — rendrait le « tout apparaît en direct » littéralement vrai, sans rafraîchir.
