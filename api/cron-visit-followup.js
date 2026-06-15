@@ -34,7 +34,7 @@ export default async function handler(req, res) {
         // 1. Agents ayant activé la feature (opt-in)
         const { data: enabledProfiles, error: profErr } = await supabaseAdmin
             .from('profiles')
-            .select('id, full_name, agency_name, avatar_url, auto_reply_show_photo')
+            .select('id, full_name, agency_name, avatar_url, auto_reply_show_photo, auto_reply_logo, brand_color, phone_pro')
             .eq('visit_followup_enabled', true);
         if (profErr) throw profErr;
         if (!enabledProfiles || enabledProfiles.length === 0) {
@@ -89,7 +89,10 @@ export default async function handler(req, res) {
                 name: profile.full_name || '',
                 agency: profile.agency_name || '',
                 avatarUrl: profile.avatar_url || '',
-                showPhoto: profile.auto_reply_show_photo !== false
+                showPhoto: profile.auto_reply_show_photo !== false,
+                logoUrl: profile.auto_reply_logo || '',
+                brandColor: profile.brand_color || '',
+                phone: profile.phone_pro || ''
             };
 
             // Email de l'agent (reply-to) — résolu via auth admin, mis en cache

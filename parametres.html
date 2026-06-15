@@ -1908,6 +1908,18 @@
                     <div style="font-size:12px; color:#78909C; margin-top:2px">Envoi automatique 30 min après l'heure de la visite</div>
                 </div>
             </label>
+
+            <div style="margin-top:16px">
+                <label class="form-label">Couleur des boutons de l'email</label>
+                <div style="display:flex; align-items:center; gap:10px; margin-top:4px">
+                    <input type="color" id="brandColorPicker" value="#2C3E50" style="width:48px; height:36px; padding:2px; border:1.5px solid #E1E8ED; border-radius:8px; cursor:pointer; background:#fff">
+                    <span id="brandColorValue" style="font-size:13px; color:#78909C; font-family:monospace">#2C3E50</span>
+                </div>
+                <div style="font-size:12px; color:#78909C; margin-top:6px; line-height:1.5">
+                    La couleur de votre marque (boutons des emails). Le logo et la photo repris sont ceux
+                    de la section « Réponse automatique » ci-dessus.
+                </div>
+            </div>
         </div>
 
         <!-- Section Tutoriel Import Contacts -->
@@ -2255,6 +2267,23 @@
                     this.checked = !enabled; // revert
                 } else {
                     alert(enabled ? 'Email de suivi post-visite activé' : 'Email de suivi post-visite désactivé');
+                }
+            });
+
+            // Couleur de marque (boutons des emails)
+            const brandColorPicker = document.getElementById('brandColorPicker');
+            brandColorPicker.addEventListener('input', function() {
+                document.getElementById('brandColorValue').textContent = this.value;
+            });
+            brandColorPicker.addEventListener('change', async function() {
+                const color = this.value;
+                const { error } = await supabaseClient.from('profiles')
+                    .update({ brand_color: color })
+                    .eq('id', currentUserId);
+                if (error) {
+                    console.error('[Params] Brand color update error:', error);
+                } else {
+                    document.getElementById('brandColorValue').textContent = color + ' ✓';
                 }
             });
 
@@ -2809,6 +2838,10 @@
                 // Email de suivi post-visite
                 const visitFollowupToggle = document.getElementById('visitFollowupToggle');
                 if (visitFollowupToggle) visitFollowupToggle.checked = data.visit_followup_enabled || false;
+                // Couleur de marque
+                const brandColor = data.brand_color || '#2C3E50';
+                document.getElementById('brandColorPicker').value = brandColor;
+                document.getElementById('brandColorValue').textContent = brandColor;
             }
         }
 

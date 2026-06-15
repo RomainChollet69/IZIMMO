@@ -58,6 +58,15 @@ avec les liens du bien (documents MyNotary/Drive, visite virtuelle Matterport, a
 - **`visites.html`** : indicateur par visite (envoyé / programmé / liens ou email manquants),
   affiché uniquement si la feature est activée.
 
+### Personnalisation multi-agences (suite au 1er test réussi)
+- **Migration** : `profiles.brand_color` (couleur de marque par conseiller).
+- **`lib/visit-followup-email.js`** : en-tête = logo agence si présent (sinon nom), boutons à la
+  `brand_color` (défaut neutre `#2C3E50`, validée anti-injection CSS), téléphone (`phone_pro`) en signature.
+- **`api/cron-visit-followup.js`** : passe `auto_reply_logo` / `brand_color` / `phone_pro` au template.
+- **`parametres.html`** : sélecteur de couleur de marque (logo/photo réutilisés de la réponse auto).
+- ⚠️ Rien d'Efficity n'est codé en dur — tout est par-agent (objectif : conseillers multi-agences).
+  Compte `romainchollet69@gmail.com` réglé sur le vert Efficity `#52AE32` (charte 2022).
+
 ### Points d'attention
 - ⚠️ Variable d'env **`CRON_SECRET`** à créer sur Vercel (sinon le cron répond 401, sans effet).
 - Visites sans `visit_time` : ignorées (pas d'heure → pas de calcul fiable de l'échéance).
