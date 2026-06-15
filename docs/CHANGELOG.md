@@ -4,6 +4,18 @@
 
 ---
 
+## Session 2026-06-15 — Aperçu social (WhatsApp) : purge du branding WAIMMO
+
+**Symptôme** : en partageant `avecleon.fr` sur WhatsApp, l'aperçu affichait encore le nom + logo **WAIMMO**.
+**Cause** : l'image Open Graph `img/F.png` (référencée comme `og:image`/`twitter:image` par **les 14 pages**) était l'ancien logo cyan « WAIMMO — Zéro complexité. 100% leads. ». Les balises texte étaient déjà « Léon », mais la vignette image ne l'était pas.
+**Fix** :
+- Nouvelle vignette sociale **`img/og-leon.jpg`** (1200×630, **92 Ko**) : dégradé de marque + mascotte Léon + tagline « Fais ton métier, Léon fait le reste. » + `avecleon.fr`. Générée via Chrome headless à partir d'un gabarit HTML (vraie police Barlow Semi Condensed). JPEG choisi (92 Ko) car WhatsApp n'affiche pas les vignettes trop lourdes (PNG = 552 Ko).
+- `og:image`/`twitter:image` des 14 pages → `img/og-leon.jpg`. Favicon de `aide-vocale.html` (qui pointait aussi `F.png`) → `/fav_leon.svg`.
+- **Suppression** de `img/F.png` (ancien asset WAIMMO, devenu orphelin).
+**À noter** : WhatsApp **cache** les aperçus par URL de page → l'ancien visuel peut persister quelques jours. Pour tester immédiatement : partager avec un paramètre (`avecleon.fr/?v=2`) ou rafraîchir via le Sharing Debugger Meta.
+
+---
+
 ## Session 2026-06-13 — Email de suivi automatique post-visite
 
 ### Objectif
