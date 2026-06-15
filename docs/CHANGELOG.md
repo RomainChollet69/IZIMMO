@@ -4,6 +4,26 @@
 
 ---
 
+## Session 2026-06-15 (suite 2) — Matching demandes portails → biens sous mandat (optimisation)
+
+**Symptôme** : une demande LeBonCoin (« Appartement 4 pièces 88 m² / 299 000 € », réf efficity 207218, lien LBC) ne matchait pas automatiquement avec le bien sous mandat correspondant.
+
+**Diagnostic** (`api/inbound-email.js`, `matchSeller`) : ce n'était **pas** le changement de prix. Les emails LeBonCoin n'envoient **pas d'adresse postale**, juste le titre + prix + réf + lien. Or le matcher :
+- son seul chemin sans adresse comparait la réf email (207218, efficity) aux numéros des liens du bien (qui contiennent l'ID annonce LBC 3151902619) → ne matchaient jamais ;
+- n'utilisait ni la **surface**, ni les **pièces**, ni l'**URL de l'annonce**.
+
+**Optimisation** :
+- **Parser** : extraction de `property_surface`, `property_rooms`, `property_url` en plus.
+- **matchSeller** — 3 chemins ajoutés/renforcés :
+  1. *ID d'annonce* (priorité max) : URL du portail **et** réf email comparées aux liens du bien **et** à `mandate_reference` (réf efficity). Même annonce/réf = match `high`.
+  2. *Caractéristiques* (nouveau, clé pour LeBonCoin sans adresse) : type + **surface** (±5 %) + pièces + prix (±15 %), avec **candidat unique exigé** → faux positif quasi nul. Remplace l'ancien fallback « type+prix seuls » (désactivé pour faux positifs).
+  3. Adresse et ville/CP+prix : inchangés.
+- Select élargi (`rooms, surface, mandate_price, mandate_reference`). Helpers `normalizeType/toNum/toInt`.
+
+**Validation** : test unitaire 4 cas — lien présent → `high` (id-annonce) ; sans lien → `high` (caractéristiques) ; réf efficity en `mandate_reference` → `high` ; 2 biens identiques → **ambigu, aucun match** (sécurité). Le scénario réel (88 m² appart 299 000 € sans adresse) matche désormais en auto.
+
+---
+
 ## Session 2026-06-15 (suite) — Pipeline Vendeurs : 2 bugs (scroll colonnes + prix vignette)
 
 ### Bug 1 — impossible d'atteindre le bas des colonnes (dernière carte masquée)

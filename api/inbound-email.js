@@ -452,6 +452,9 @@ Extrais les informations et retourne UNIQUEMENT un JSON valide :
   "property_reference": "référence annonce" | null,
   "property_type": "appartement | maison | terrain | commerce" | null,
   "property_price": 350000 | null,
+  "property_surface": 88 | null,
+  "property_rooms": 4 | null,
+  "property_url": "https://www.leboncoin.fr/ad/.../123456789" | null,
   "portal_name": "seloger | leboncoin | bienici | pap | logicimmo | meilleursagents | jinka | autre" | null
 }
 
@@ -462,6 +465,9 @@ RÈGLES :
 - Détecte le portail depuis l'objet, l'expéditeur ou le contenu
 - Le téléphone doit être au format français (06/07) avec espaces
 - property_price en nombre entier sans symbole (ex: 515000). IMPORTANT : extrais le prix depuis la description du bien dans l'email (souvent en bas : "Maison 4 pièces 96 m² / 515000 €")
+- property_surface : surface en m² (nombre entier, ex: 88). Extrais-la du titre du bien ("Appartement 4 pièces 88 m²" → 88)
+- property_rooms : nombre de pièces (nombre entier, ex: 4). Extrais-le du titre ("4 pièces" → 4, "T3" → 3, "studio" → 1)
+- property_url : l'URL complète de l'annonce sur le portail si présente (ex: "Lien : https://www.leboncoin.fr/ad/ventes_immobilieres/3151902619"). Garde l'URL telle quelle.
 - property_reference : extrais la référence annonce si présente (ex: "Référence : 193576")
 - property_address : extrais l'adresse ou la ville si mentionnée
 - Retourne UNIQUEMENT le JSON, sans markdown`;
@@ -512,30 +518,36 @@ RÈGLES :
 // =================================================================
 
 async function matchSeller(userId, parsed) {
-    if (!parsed.property_address && !parsed.property_type && !parsed.property_reference) return null;
+    if (!parsed.property_address && !parsed.property_type && !parsed.property_reference
+        && !parsed.property_url && !parsed.property_surface) return null;
 
     const supabaseAdmin = getSupabaseAdmin();
     const { data: sellers } = await supabaseAdmin
         .from('sellers')
-        .select('id, first_name, last_name, address, property_type, budget, links')
+        .select('id, first_name, last_name, address, property_type, rooms, surface, budget, mandate_price, mandate_reference, links')
         .eq('user_id', userId)
         .in('status', ['mandate', 'commercialisation']); // Ne matcher qu'avec les biens sous mandat
 
     if (!sellers || sellers.length === 0) return null;
 
-    // 0. Matching par référence d'annonce (priorité maximale)
-    const reqRef = parsed.property_reference ? parsed.property_reference.replace(/\D/g, '') : '';
-    if (reqRef && reqRef.length >= 5) {
+    // Tous les nombres de 6+ chiffres d'une chaîne = identifiants d'annonces portail
+    const bigNums = (str) => (typeof str === 'string' ? (str.match(/\d{6,}/g) || []) : []);
+
+    // 0. Matching par identifiant d'annonce (priorité maximale, le plus fiable) :
+    //    on compare l'URL de l'annonce ET la référence de l'email aux liens du bien
+    //    ET à sa référence de mandat (ex: réf efficity). Même annonce / même réf = match sûr.
+    const emailIds = new Set(bigNums(parsed.property_url || ''));
+    const reqRefDigits = parsed.property_reference ? parsed.property_reference.replace(/\D/g, '') : '';
+    if (reqRefDigits.length >= 5) emailIds.add(reqRefDigits);
+
+    if (emailIds.size > 0) {
         for (const seller of sellers) {
-            const sellerLinks = seller.links || [];
-            for (const url of sellerLinks) {
-                if (typeof url !== 'string') continue;
-                // Extraire les nombres de 6+ chiffres des URLs
-                const nums = url.match(/(\d{6,})/g);
-                if (nums && nums.includes(reqRef)) {
-                    console.log(`[InboundEmail:Match] Référence ${reqRef} trouvée dans ${url}`);
-                    return { id: seller.id, confidence: 'high' };
-                }
+            const sellerIds = (seller.links || []).flatMap(bigNums);
+            const mref = (seller.mandate_reference || '').replace(/\D/g, '');
+            if (mref.length >= 5) sellerIds.push(mref);
+            if (sellerIds.some(id => emailIds.has(id))) {
+                console.log(`[InboundEmail:Match] ID annonce/réf [${[...emailIds].join(',')}] → seller ${seller.id}`);
+                return { id: seller.id, confidence: 'high' };
             }
         }
     }
@@ -594,12 +606,77 @@ async function matchSeller(userId, parsed) {
         }
     }
 
-    // 3. Fallback type + prix : DÉSACTIVÉ.
-    // Trop de faux positifs (bienici/SeLoger/Gingka envoient parfois sans adresse →
-    // toutes les demandes du même prix tombaient sur le même bien).
-    // Mieux vaut "Aucun bien matché" + matching manuel que mauvais match silencieux.
+    // 3. Matching par CARACTÉRISTIQUES du bien (type + surface + pièces + prix).
+    // Indispensable pour les portails (LeBonCoin...) qui n'envoient PAS l'adresse,
+    // seulement le titre "Appartement 4 pièces 88 m² / 299000 €".
+    // L'ancien fallback "type + prix seuls" était désactivé (trop de faux positifs) ;
+    // ici on exige la SURFACE (très discriminante) + un candidat UNIQUE → faux positif quasi nul.
+    {
+        const reqType = normalizeType(parsed.property_type);
+        const reqSurface = toNum(parsed.property_surface);
+        const reqRooms = toInt(parsed.property_rooms);
+        const reqPrice = toNum(parsed.property_price);
+
+        // Critère discriminant minimal requis : une surface (ou à défaut type + prix)
+        if (reqSurface || (reqType && reqPrice)) {
+            const candidates = sellers.filter(s => {
+                const sType = normalizeType(s.property_type);
+                const sSurface = toNum(s.surface);
+                const sRooms = toInt(s.rooms);
+                const sPrice = toNum(s.budget || s.mandate_price);
+
+                // Type : doit concorder si connu des deux côtés
+                if (reqType && sType && reqType !== sType) return false;
+                // Surface : si l'email en a une, on l'exige côté bien, tolérance ±5% (min 3 m²)
+                if (reqSurface) {
+                    if (!sSurface) return false;
+                    const tol = Math.max(3, reqSurface * 0.05);
+                    if (Math.abs(sSurface - reqSurface) > tol) return false;
+                }
+                // Pièces : doivent concorder si connues des deux côtés
+                if (reqRooms && sRooms && reqRooms !== sRooms) return false;
+                // Prix : tolérance ±15% (l'annonce portail peut différer du prix Léon)
+                if (reqPrice && sPrice && Math.abs(sPrice - reqPrice) > reqPrice * 0.15) return false;
+                return true;
+            });
+
+            if (candidates.length === 1) {
+                // Élevée si surface + (prix ou pièces) concordent, sinon medium
+                const strong = reqSurface && (reqPrice || reqRooms);
+                console.log(`[InboundEmail:Match] Caractéristiques (type:${reqType} surface:${reqSurface} pièces:${reqRooms} prix:${reqPrice}) → seller ${candidates[0].id}`);
+                return { id: candidates[0].id, confidence: strong ? 'high' : 'medium' };
+            }
+            // Plusieurs candidats → ambigu : on ne devine pas (évite un mauvais match silencieux).
+        }
+    }
 
     return null;
+}
+
+// Normalise un type de bien pour comparaison (appartement / maison / terrain / immeuble / local)
+function normalizeType(t) {
+    if (!t) return '';
+    const s = String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (s.includes('appart') || /\bt\d/.test(s) || s.includes('studio')) return 'appartement';
+    if (s.includes('maison') || s.includes('villa')) return 'maison';
+    if (s.includes('terrain')) return 'terrain';
+    if (s.includes('immeuble')) return 'immeuble';
+    if (s.includes('local') || s.includes('commerce') || s.includes('bureau')) return 'local';
+    return s.split(/\s+/)[0] || '';
+}
+
+// Convertit "299 000 €", "88 m²", "299000" en nombre (0 si vide/illisible)
+function toNum(v) {
+    if (v == null) return 0;
+    const n = parseFloat(String(v).replace(/[^\d.,]/g, '').replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+}
+
+// Extrait le premier entier d'une valeur ("T4" → 4, "4 pièces" → 4)
+function toInt(v) {
+    if (v == null) return 0;
+    const m = String(v).match(/\d+/);
+    return m ? parseInt(m[0], 10) : 0;
 }
 
 function normalizeAddress(address) {
