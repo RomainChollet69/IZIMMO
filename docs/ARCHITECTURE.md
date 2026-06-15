@@ -16,8 +16,8 @@ IZIMMO/
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth (redirige vers home.html)
-├── landing.html                # Page marketing / vitrine (v1, tutoiement)
-├── landing-v2.html             # Landing page premium Apple-style (v2, vouvoiement, scroll-reveal)
+├── landing.html                # Page marketing / vitrine (version PREMIUM, vouvoiement, scroll-reveal) — servie sur `/` via rewrite vercel.json (ex-v2)
+├── landing-v2.html             # ⚠️ Redirigé en 301 vers `/` dans vercel.json (contenu promu dans landing.html)
 ├── social.html                 # Moteur de contenu réseaux sociaux
 ├── parametres.html             # Paramètres utilisateur (profil, Calendar, préférences — gamification retirée)
 ├── micro.html                  # Assistant vocal — notes CRM, visites, agenda, commandes Léon, requêtes DVF
@@ -52,7 +52,7 @@ IZIMMO/
 │   ├── parse-import-batch.js   # Parsing import Excel/CSV de contacts
 │   ├── generate-message.js     # Génération SMS/WhatsApp/Email contextuel (Claude)
 │   ├── generate-social-post.js # Génération contenu réseaux sociaux (Claude)
-│   ├── inbound-email.js         # Webhook Mailgun : emails portails → visit_requests (Claude Haiku)
+│   ├── inbound-email.js         # Webhook Mailgun : emails portails → visit_requests (Claude Haiku). Allowlist `PORTAL_SENDER_DOMAINS` sur `From` avant Claude + flag "transfert toute la boîte" (`flagNonPortalSender`)
 │   ├── analyze-document.js     # Analyse de documents PDF
 │   ├── parse-voice-note.js     # Parsing notes vocales
 │   ├── map-columns.js          # Mapping colonnes pour imports
@@ -76,6 +76,7 @@ IZIMMO/
 │   ├── Logo_leon.svg           # Logo vectoriel
 │   ├── logo_200.png            # Logo header (toutes pages)
 │   ├── F.png                   # Logo Open Graph
+│   ├── page_visite.png         # Capture réelle de la page Visites (section "Automatisation portails" de landing.html + atouts visites.html)
 │   └── ORIGINALES/             # Assets design originaux
 │
 ├── docs/                       # Documentation vivante
@@ -405,10 +406,12 @@ romain-a1b2@inbound.avecleon.fr (Mailgun Inbound Parse)
 POST /api/inbound-email
   ├── 1. Vérification signature HMAC SHA256 Mailgun
   ├── 2. Résolution agent : recipient → user_integrations.inbound_email
-  ├── 3. Déduplication : UNIQUE(user_id, email_message_id)
-  ├── 4. Claude Haiku : extraction structurée (nom, tél, email, adresse, portail)
-  ├── 5. Matching sellers par adresse (waterfall : adresse > type+prix)
-  └── 6. INSERT visit_requests (status: pending)
+  ├── 3. Allowlist `PORTAL_SENDER_DOMAINS` sur le header `From` (AVANT Claude)
+  │      └── Non-portail → flag user_integrations (non_portal_last_at/sender) + HTTP 200 "ignored" (pas de parsing)
+  ├── 4. Déduplication : UNIQUE(user_id, email_message_id)
+  ├── 5. Claude Haiku : extraction structurée (nom, tél, email, adresse, portail)
+  ├── 6. Matching sellers par adresse (waterfall : adresse > type+prix)
+  └── 7. INSERT visit_requests (status: pending)
     │
     ▼
 visites.html — Bandeau "Nouvelles demandes"
@@ -421,6 +424,9 @@ visites.html — Bandeau "Nouvelles demandes"
 **Configuration agent** (parametres.html) :
 1. Adresse inbound générée automatiquement (prénom-token@inbound.avecleon.fr)
 2. L'agent crée une règle de transfert dans sa messagerie
+3. Bouton "Télécharger mon filtre Gmail" (`downloadGmailFilter()`) : génère côté client un `.xml` (flux Atom des filtres Gmail) pré-rempli avec l'adresse inbound (`shouldForwardTo`) + les domaines portails (`from`, constante `PORTAL_FILTER_FROM`), à importer dans Gmail → Filtres → Importer des filtres
+
+**Allowlist anti-bruit** (`PORTAL_SENDER_DOMAINS`, voir D077) : beaucoup d'agents transfèrent TOUTE leur boîte Gmail au lieu d'un filtre ciblé. L'allowlist stricte (matching racine + sous-domaines) rejette tout expéditeur non-portail AVANT Claude. Chaque rejet est loggé (`[InboundEmail] Expéditeur non-portail rejeté: …`) et horodaté sur `user_integrations` (`non_portal_last_at` / `non_portal_last_sender`). `visites.html` affiche alors un bandeau rouge ciblé (`renderBlanketFwdWarning`) aux seuls agents dont `non_portal_last_at` < 14 jours (fenêtre glissante auto-réparante), masquable via localStorage `leon_dismiss_blanket_fwd`. Aperçu : `visites.html?previewBlanketFwd=1`.
 
 ---
 
@@ -662,9 +668,11 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 
 | Colonne                    | Type    | Description                            |
 |----------------------------|---------|----------------------------------------|
-| `inbound_email`            | TEXT    | Adresse de transfert unique par agent  |
-| `inbound_email_token`      | TEXT    | Token secret pour validation webhook   |
-| `email_forwarding_active`  | BOOLEAN | Transfert actif ou non                 |
+| `inbound_email`            | TEXT        | Adresse de transfert unique par agent  |
+| `inbound_email_token`      | TEXT        | Token secret pour validation webhook   |
+| `email_forwarding_active`  | BOOLEAN     | Transfert actif ou non                 |
+| `non_portal_last_at`       | TIMESTAMPTZ | Dernier email non-portail rejeté (détection "transfert toute la boîte") — déclenche le bandeau visites.html si < 14 jours |
+| `non_portal_last_sender`   | TEXT        | `From` du dernier expéditeur non-portail rejeté (tronqué 200 car.) |
 
 ### Sécurité (RLS)
 

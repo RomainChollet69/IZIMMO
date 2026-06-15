@@ -1664,3 +1664,30 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives rejetées** :
 - **Supabase pg_cron / Edge Function** : aurait dispersé la logique hors du code Vercel existant (Mailgun déjà câblé côté Vercel).
 - **Envoi au marquage « effectuée »** : écarté par l'utilisateur au profit du déclenchement à l'heure planifiée + 30 min.
+
+---
+
+## D077 — Allowlist stricte des expéditeurs portails (anti-bruit transfert Gmail)
+
+**Date** : 2026-06-15
+**Statut** : Actif
+
+**Contexte** : Le webhook `/api/inbound-email` reçoit les emails que l'agent transfère depuis sa messagerie. En pratique, beaucoup d'agents configurent un transfert de TOUTE leur boîte Gmail au lieu d'un filtre ciblé sur les portails. Résultat : des emails parasites (efficity, LinkedIn, notaires, newsletters…) arrivent jusqu'au webhook, sont envoyés à Claude et polluent les `visit_requests`.
+
+**Décision** : Appliquer une **allowlist stricte** `PORTAL_SENDER_DOMAINS` sur le header `From` AVANT l'appel à Claude (matching racine + sous-domaines : `mail.seloger.com` matche `seloger.com`). Tout expéditeur non listé est rejeté (`200 { ignored: true }`, pas de parsing). Trois mécanismes complémentaires :
+- **Détection** : chaque rejet appelle `flagNonPortalSender()` qui horodate `non_portal_last_at` + `non_portal_last_sender` sur `user_integrations` (best-effort, n'échoue jamais le webhook).
+- **Nudge in-app** : `visites.html` affiche un bandeau rouge ciblé (`renderBlanketFwdWarning`) aux seuls agents dont `non_portal_last_at` < 14 jours — fenêtre glissante = auto-réparation une fois le filtre corrigé. Masquable (localStorage `leon_dismiss_blanket_fwd`).
+- **Self-service** : bouton "Télécharger mon filtre Gmail" (`downloadGmailFilter()`, `parametres.html`) génère un `.xml` de filtres Gmail pré-rempli (adresse inbound + domaines portails) pour que l'agent ne transfère QUE les portails.
+
+**Pourquoi** :
+- L'allowlist coupe le bruit à la source, avant tout coût Claude et toute insertion DB
+- Le nudge ciblé + auto-réparant n'embête que les agents réellement mal configurés, et disparaît dès la correction
+- Le filtre téléchargeable transforme le reproche ("vous transférez tout") en solution actionnable en 1 clic
+- La liste a été complétée à partir des vrais filtres Gmail d'un agent (couverture réelle, pas théorique)
+
+**Alternatives rejetées** :
+- **Blocklist** (rejeter les domaines connus comme parasites) : whack-a-mole sans fin, chaque nouvel expéditeur indésirable passe par défaut
+- **Allowlist permissive** (laisser passer le doute) : réintroduit le bruit qu'on cherche à éliminer
+
+**Conséquences** :
+- **Risque assumé** : un portail émettant depuis un domaine non listé voit son lead rejeté silencieusement. Mitigation : chaque rejet est loggé (`[InboundEmail] Expéditeur non-portail rejeté: …`) pour repérer un domaine manquant et l'ajouter à `PORTAL_SENDER_DOMAINS`.

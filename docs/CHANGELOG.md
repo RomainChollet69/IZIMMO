@@ -164,7 +164,13 @@ Le bandeau de setup (`emailFwdSetupBanner`, affiché si transfert non activé) p
 La gamification ayant été archivée (`_archive/gamification.js`), le bloc « L'administratif devient addictif / points d'expérience, séries, niveaux » de `landing.html` (section CHIFFRES) est remplacé par « Moins d'administratif. Plus de terrain. » + un pitch automatisation/matching/relances. Les 4 stats (15s, 87%, 3x, 0€) sont conservées. Aucune autre mention gamification sur le landing.
 
 ### Section « Automatisation portails » sur le landing public
-Nouvelle section dans `landing.html` (page publique servie sur `/`, avant connexion), après la section CRM : label « Automatisation », titre « Tes leads des portails, captés tout seuls. », 3 feature-cards (fini le tri des mails / acquéreurs déjà qualifiés via formulaire auto / messages 1 clic) + visuel desktop = `img/page_visite.png`. Reprend le pattern `split-section` + reveal du landing.
+Nouvelle section dans `landing.html` (page publique servie sur `/`, avant connexion), après la section CRM : label « Automatisation », titre « Vos leads des portails, captés tout seuls. » (vouvoiement, cohérent avec le reste du landing), 3 feature-cards (fini le tri des mails / acquéreurs déjà qualifiés via formulaire auto / messages 1 clic) + visuel desktop = `img/page_visite.png`. Reprend le pattern `split-section` + reveal du landing.
+
+### Bloc témoignages sur le landing (placeholder)
+Nouvelle section « Témoignages » avant le CTA final : 3 avis (5 étoiles, avatar initiales, nom + rôle/ville), titre « Adopté sur le terrain. ». ⚠️ **Avis FICTIFS** (vitrine pré-lancement, marqués placeholder en commentaire HTML) — à remplacer par de vrais témoignages.
+
+### Mise à jour documentation (audit de session)
+`docs/ARCHITECTURE.md` (landing.html = premium vouvoiement, allowlist inbound, colonnes `non_portal_last_*`, asset `page_visite.png`), `docs/API-MAP.md` (`/api/inbound-email` : allowlist `PORTAL_SENDER_DOMAINS` + flag détection + filtre Gmail téléchargeable), `docs/DECISIONS.md` (entrée **D077** — allowlist stricte des expéditeurs portails).
 
 ### Prochaines étapes possibles
 - Surfacer les expéditeurs rejetés dans un dashboard admin pour affiner l'allowlist sans lire les logs.

@@ -302,16 +302,22 @@ Webhook Mailgun pour réception et traitement des emails portails immobiliers tr
 1. Vérification signature HMAC SHA256 Mailgun (`MAILGUN_WEBHOOK_SIGNING_KEY`)
 2. Parsing multipart via `busboy` (extraction champs email)
 3. Identification de l'utilisateur via l'adresse `recipient` → lookup `user_integrations.inbound_email`
-4. Envoi du contenu email à Claude Haiku → extraction JSON (portail, nom, email, téléphone, date souhaitée, adresse du bien)
-5. Matching automatique `sellers` par adresse
-6. INSERT dans `visit_requests` (status: `pending`)
+4. **Allowlist `PORTAL_SENDER_DOMAINS` sur le header `From`** (filtre AVANT Claude) — matching racine + sous-domaines (ex. `mail.seloger.com` matche `seloger.com`). Tout expéditeur non-portail est rejeté : log `[InboundEmail] Expéditeur non-portail rejeté: …`, horodatage `flagNonPortalSender()` sur `user_integrations` (`non_portal_last_at` + `non_portal_last_sender`, best-effort), puis `200 { ignored: true }` — l'email n'est PAS parsé
+5. Envoi du contenu email à Claude Haiku → extraction JSON (portail, nom, email, téléphone, date souhaitée, adresse du bien)
+6. Matching automatique `sellers` par adresse
+7. INSERT dans `visit_requests` (status: `pending`)
+
+**Allowlist `PORTAL_SENDER_DOMAINS`** (anti-bruit "transfert toute la boîte", voir D077) : `seloger.com`, `myselogerpro.com`, `leboncoin.fr`, `bienici.com`, `pap.fr`, `logic-immo.com`, `logicimmo.com`, `meilleursagents.com`, `avendrealouer.fr`, `ouestfrance-immo.com`, `paruvendu.fr`, `paruvendupro.fr`, `green-acres.fr`, `green-acres.com`, `lefigaro.fr` (couvre immobilier./proprietes.lefigaro.fr), `explorimmo.com`, `figaro-immo.com`, `properstar.com`, `properstar.fr`, `bellesdemeures.com`, `luxresidence.com`, `jinka.fr`, `superimmo.com`, `locservice.fr`. Risque assumé : un portail émettant depuis un domaine non listé est rejeté silencieusement (mitigé par les logs).
 
 **Réponse** :
 ```json
 { "success": true, "visit_request_id": "uuid" }
 ```
+Expéditeur non-portail : `200 { "ignored": true }` (pas de parsing).
 
 **Erreurs** : `400` (signature invalide), `404` (utilisateur non trouvé), `502` (Claude échoue), `500` (erreur serveur)
+
+**Filtre Gmail téléchargeable** : `downloadGmailFilter()` dans `parametres.html` génère côté client un `.xml` (flux Atom des filtres Gmail) pré-rempli avec l'adresse inbound de l'agent (`shouldForwardTo`) + les domaines portails (`from`, constante `PORTAL_FILTER_FROM`), à importer via Gmail → Filtres → Importer des filtres. Permet à l'agent de ne transférer QUE les portails (au lieu de toute sa boîte) et donc d'éviter les rejets allowlist.
 
 **Variables d'environnement requises** : `MAILGUN_WEBHOOK_SIGNING_KEY`, `ANTHROPIC_API_KEY`
 
