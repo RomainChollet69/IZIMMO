@@ -501,11 +501,75 @@
             transform: translateX(-50%) translateY(0);
         }
 
+        /* ===== QUOI DE NEUF (nouveautés) ===== */
+        .whats-new { margin-top: 56px; }
+        .wn-head { text-align: center; margin-bottom: 24px; }
+        .wn-head h2 {
+            font-family: 'Barlow Semi Condensed', sans-serif;
+            font-weight: 800; font-size: 28px; text-transform: uppercase;
+            color: #243B53; letter-spacing: 0.5px;
+        }
+        .wn-head h2 i { color: #764ba2; margin-right: 8px; }
+        .wn-sub { display: block; color: #6B7280; font-size: 15px; margin-top: 6px; }
+
+        /* Carte vedette : le pipeline kanban en priorité */
+        .wn-featured {
+            display: flex; align-items: center; gap: 24px;
+            background: var(--gradient); border-radius: 18px; padding: 26px 28px;
+            color: #fff; text-decoration: none; margin-bottom: 18px;
+            box-shadow: 0 8px 28px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .wn-featured:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(102, 126, 234, 0.4); }
+        .wn-f-icon {
+            width: 66px; height: 66px; border-radius: 16px; flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.18);
+            display: flex; align-items: center; justify-content: center; font-size: 30px;
+        }
+        .wn-f-body { flex: 1; }
+        .wn-tag {
+            display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+            text-transform: uppercase; background: rgba(255, 255, 255, 0.2);
+            padding: 3px 11px; border-radius: 10px; margin-bottom: 9px;
+        }
+        .wn-f-body h3 {
+            font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 800;
+            font-size: 23px; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.1;
+        }
+        .wn-f-body p { font-size: 15px; opacity: 0.95; margin-top: 5px; }
+        .wn-f-arrow { font-size: 22px; opacity: 0.85; flex-shrink: 0; }
+
+        /* Grille des autres nouveautés */
+        .wn-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+        .wn-card {
+            background: #fff; border-radius: 14px; padding: 18px;
+            border: 1px solid rgba(0, 0, 0, 0.04); box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            position: relative;
+        }
+        .wn-card .wn-ic {
+            width: 40px; height: 40px; border-radius: 11px;
+            background: linear-gradient(135deg, #667eea18, #764ba218); color: #764ba2;
+            display: flex; align-items: center; justify-content: center; font-size: 17px; margin-bottom: 12px;
+        }
+        .wn-card h4 {
+            font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 700;
+            font-size: 17px; text-transform: uppercase; color: #243B53; letter-spacing: 0.2px;
+        }
+        .wn-card p { font-size: 13.5px; color: #475569; margin-top: 6px; line-height: 1.5; }
+        .wn-badge-new {
+            position: absolute; top: 14px; right: 14px;
+            font-size: 9px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+            color: #fff; background: var(--gradient); padding: 3px 8px; border-radius: 9px;
+        }
+
         /* ===== RESPONSIVE ===== */
 
         /* Tablette : 2 colonnes (8 tuiles = grille paire) */
         @media (max-width: 900px) {
             .tiles-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .wn-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
@@ -550,6 +614,13 @@
 
             .tile-fa-icon { font-size: 28px; }
             .tile-label { font-size: 13px; }
+
+            .whats-new { margin-top: 40px; }
+            .wn-head h2 { font-size: 23px; }
+            .wn-sub { font-size: 13px; }
+            .wn-featured { flex-direction: column; text-align: center; padding: 24px 20px; gap: 14px; }
+            .wn-f-arrow { display: none; }
+            .wn-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -739,6 +810,68 @@
 
 
         </div>
+
+        <!-- ===== Quoi de neuf : pipeline kanban en vedette + dernières nouveautés ===== -->
+        <section class="whats-new">
+            <div class="wn-head">
+                <h2><i class="fa-solid fa-bolt"></i> Quoi de neuf chez Léon</h2>
+                <span class="wn-sub">Les dernières améliorations, pensées pour te faire gagner du temps</span>
+            </div>
+
+            <!-- Vedette : le pipeline kanban -->
+            <a href="vendeurs.html" class="wn-featured">
+                <div class="wn-f-icon"><i class="fa-solid fa-table-columns"></i></div>
+                <div class="wn-f-body">
+                    <span class="wn-tag">À la une</span>
+                    <h3>Ton pipeline kanban, vendeurs &amp; acquéreurs</h3>
+                    <p>Tous tes leads sur un tableau visuel à colonnes. Glisse une carte d'une étape à l'autre, du premier contact jusqu'à la signature. Tes relances sont intégrées.</p>
+                </div>
+                <i class="fa-solid fa-arrow-right wn-f-arrow"></i>
+            </a>
+
+            <!-- Dernières nouveautés -->
+            <div class="wn-grid">
+
+                <div class="wn-card">
+                    <span class="wn-badge-new">Nouveau</span>
+                    <div class="wn-ic"><i class="fa-solid fa-envelope-circle-check"></i></div>
+                    <h4>Confirmation de visite automatique</h4>
+                    <p>Dès que tu programmes une visite, le visiteur reçoit un email de confirmation à tes couleurs.</p>
+                </div>
+
+                <div class="wn-card">
+                    <span class="wn-badge-new">Nouveau</span>
+                    <div class="wn-ic"><i class="fa-solid fa-bell"></i></div>
+                    <h4>Rappels de visite -24h / -4h</h4>
+                    <p>Léon relance le visiteur la veille puis le jour J, avec l'heure, l'adresse et l'itinéraire Maps.</p>
+                </div>
+
+                <div class="wn-card">
+                    <div class="wn-ic"><i class="fa-solid fa-paper-plane"></i></div>
+                    <h4>Email de suivi après visite</h4>
+                    <p>30 min après la visite, le visiteur reçoit un récap avec les liens du bien. Relance pro, sans y penser.</p>
+                </div>
+
+                <div class="wn-card">
+                    <div class="wn-ic"><i class="fa-solid fa-palette"></i></div>
+                    <h4>Tes emails à tes couleurs</h4>
+                    <p>Tous les emails de Léon prennent ta charte : ton logo, ta couleur de marque, ton téléphone en signature.</p>
+                </div>
+
+                <div class="wn-card">
+                    <div class="wn-ic"><i class="fa-solid fa-bullhorn"></i></div>
+                    <h4>Notifier les acquéreurs intéressés</h4>
+                    <p>Depuis la fiche d'un bien, un clic pour envoyer un message groupé aux acquéreurs au bon profil.</p>
+                </div>
+
+                <div class="wn-card">
+                    <div class="wn-ic"><i class="fa-solid fa-map-location-dot"></i></div>
+                    <h4>Carte du marché &amp; DVF</h4>
+                    <p>Toutes les ventes réelles de France (2021-2025). Clique une parcelle, vois son historique de prix.</p>
+                </div>
+
+            </div>
+        </section>
     </div>
 
     <!-- Toast notification -->

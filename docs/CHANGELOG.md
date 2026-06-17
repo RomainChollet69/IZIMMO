@@ -4,6 +4,26 @@
 
 ---
 
+## Session 2026-06-17 — Section "Quoi de neuf" sur la home (support réunion trimestrielle)
+
+Pour présenter Léon en réunion (60 personnes), ajout d'une section **"Quoi de neuf chez Léon"** directement sur `home.html` (le cockpit), sous la grille de tuiles.
+
+### Contenu
+- **Carte vedette "À la une"** : le **pipeline kanban** vendeurs & acquéreurs mis en avant en priorité (carte gradient pleine largeur → `vendeurs.html`).
+- **Grille de 6 nouveautés** (juin 2026, tirées des logs) : confirmation de visite auto (badge Nouveau), rappels -24h/-4h (badge Nouveau), email de suivi post-visite, emails à la charte de l'agent, notifier les acquéreurs intéressés, carte du marché & DVF.
+- DVF décrit sans "façon cadastre.com" (demande utilisateur) : "Clique une parcelle, vois son historique de prix".
+
+### Parcours
+Une 1re version `presentation.html` (page standalone projetable) avait été créée puis **abandonnée** : l'utilisateur préfère présenter depuis la home. Fichier supprimé, les nouveautés ont été reportées dans la home.
+
+### Fichier
+- `home.html` : nouveau bloc `.whats-new` (vedette `.wn-featured` + grille `.wn-grid`), CSS + responsive (3 cols desktop → 2 cols tablette → 1 col mobile, vedette empilée).
+
+### Vérification
+Rendu validé via preview (HTML/CSS rendus sans les scripts auth/redirect, car la home redirige vers login/app.html hors session) : carte vedette kanban + 6 cartes en 3 colonnes (desktop), grille 1 colonne + vedette empilée (mobile, vérifié par géométrie à 375px).
+
+---
+
 ## Session 2026-06-17 — Confirmation de visite automatique (à la programmation)
 
 Nouveau : email de confirmation au visiteur ~à la création d'une visite (gardée si créée dans les ~20 dernières min, via `visits.created_at` → pas de backfill des anciennes). Opt-in `profiles.visit_confirmation_enabled` + `visits.confirmation_sent_at`. Intégré au cron `cron-visit-reminder` (3 étapes : confirmation prioritaire, puis rappel 24h, puis 4h ; une confirmation imminente < 4h inhibe le rappel 4h pour éviter un doublon). `lib/visit-reminder-email.js` prend un paramètre `kind` (confirmation/reminder). Toggle dédié dans Paramètres.
