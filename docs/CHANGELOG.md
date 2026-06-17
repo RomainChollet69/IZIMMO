@@ -4,6 +4,10 @@
 
 ---
 
+## Session 2026-06-17 — Confirmation de visite automatique (à la programmation)
+
+Nouveau : email de confirmation au visiteur ~à la création d'une visite (gardée si créée dans les ~20 dernières min, via `visits.created_at` → pas de backfill des anciennes). Opt-in `profiles.visit_confirmation_enabled` + `visits.confirmation_sent_at`. Intégré au cron `cron-visit-reminder` (3 étapes : confirmation prioritaire, puis rappel 24h, puis 4h ; une confirmation imminente < 4h inhibe le rappel 4h pour éviter un doublon). `lib/visit-reminder-email.js` prend un paramètre `kind` (confirmation/reminder). Toggle dédié dans Paramètres.
+
 ## Session 2026-06-17 — Rappel de visite automatique (-24h / -4h)
 
 Nouveau : email de rappel envoyé au visiteur ~24h puis ~4h avant une visite planifiée, avec l'heure et l'adresse du bien (lien Google Maps). Opt-in agent. Mentionné dans la campagne d'activation (mails A/B).

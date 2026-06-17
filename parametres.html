@@ -1915,6 +1915,13 @@
                     <div style="font-size:12px; color:#78909C; margin-top:2px">Rappel automatique au visiteur 24h et 4h avant, avec l'adresse du bien</div>
                 </div>
             </label>
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; padding:14px 16px; background:#F9FAFB; border-radius:12px; border:1.5px solid #E1E8ED; margin-top:12px">
+                <input type="checkbox" id="visitConfirmationToggle" style="width:18px; height:18px; accent-color:#667eea">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:#2C3E50">Activer la confirmation de visite</div>
+                    <div style="font-size:12px; color:#78909C; margin-top:2px">Email de confirmation au visiteur dès qu'une visite est programmée (heure + adresse)</div>
+                </div>
+            </label>
 
             <div style="margin-top:16px">
                 <label class="form-label">Couleur des boutons de l'email</label>
@@ -2288,6 +2295,20 @@
                     this.checked = !enabled; // revert
                 } else {
                     alert(enabled ? 'Rappel de visite activé' : 'Rappel de visite désactivé');
+                }
+            });
+
+            // Confirmation de visite (à la programmation) toggle
+            document.getElementById('visitConfirmationToggle').addEventListener('change', async function() {
+                const enabled = this.checked;
+                const { error } = await supabaseClient.from('profiles')
+                    .update({ visit_confirmation_enabled: enabled })
+                    .eq('id', currentUserId);
+                if (error) {
+                    console.error('[Params] Visit confirmation update error:', error);
+                    this.checked = !enabled; // revert
+                } else {
+                    alert(enabled ? 'Confirmation de visite activée' : 'Confirmation de visite désactivée');
                 }
             });
 
@@ -2861,6 +2882,8 @@
                 if (visitFollowupToggle) visitFollowupToggle.checked = data.visit_followup_enabled || false;
                 const visitReminderToggle = document.getElementById('visitReminderToggle');
                 if (visitReminderToggle) visitReminderToggle.checked = data.visit_reminder_enabled || false;
+                const visitConfirmationToggle = document.getElementById('visitConfirmationToggle');
+                if (visitConfirmationToggle) visitConfirmationToggle.checked = data.visit_confirmation_enabled || false;
                 // Couleur de marque
                 const brandColor = data.brand_color || '#2C3E50';
                 document.getElementById('brandColorPicker').value = brandColor;
