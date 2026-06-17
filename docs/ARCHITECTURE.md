@@ -59,7 +59,15 @@ IZIMMO/
 │   ├── scrape-listing.js       # Scraping d'annonces immobilières
 │   ├── generate-study.js       # Génération étude de marché IA (2 passes Claude Sonnet, prompt adaptatif densité)
 │   ├── google-auth.js           # OAuth Google Calendar (POST=init nonce, GET=callback tokens)
-│   └── assistant.js             # Assistant unifié (orchestrate, draft_message, parse_workflow_response, calendar CRUD, visit requests)
+│   ├── assistant.js             # Assistant unifié (orchestrate, draft_message, parse_workflow_response, calendar CRUD, visit requests)
+│   ├── cron-visit-followup.js   # Cron Vercel (*/10) — email de suivi ~+30 min après la visite (docs du bien)
+│   └── cron-visit-reminder.js   # Cron Vercel (*/10) — confirmation à la programmation + rappels -24h / -4h au visiteur
+│
+├── lib/                        # Modules partagés serveur (non exposés en endpoints)
+│   ├── agency-branding.js      # Branding agence (logo, couleurs) pour les emails chartés Léon
+│   ├── mailgun-send.js         # Envoi d'email via Mailgun (EU)
+│   ├── visit-followup-email.js # Template HTML de l'email de suivi post-visite
+│   └── visit-reminder-email.js # Template HTML confirmation / rappels de visite (buildVisitReminderHtml)
 │
 ├── assistant.html              # Assistant organisationnel IA (agenda + messages)
 │
@@ -591,8 +599,22 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `rating`           | INT         | Note de visite (legacy 1-5, remplacé par feedback_rating) |
 | `notes`            | TEXT        | Observations libres                                  |
 | `feedback`         | TEXT        | Retour de visite (legacy)                            |
+| `followup_sent_at`     | TIMESTAMPTZ | Horodatage de l'email de suivi +30 min (envoi unique) |
+| `confirmation_sent_at` | TIMESTAMPTZ | Horodatage de l'email de confirmation (envoi unique) |
+| `reminder_24h_sent_at` | TIMESTAMPTZ | Horodatage du rappel -24h (envoi unique)             |
+| `reminder_4h_sent_at`  | TIMESTAMPTZ | Horodatage du rappel -4h (envoi unique)              |
 | `created_at`       | TIMESTAMPTZ | Date de création                                     |
 | `updated_at`       | TIMESTAMPTZ | Dernière modification                                |
+
+### Table `profiles`
+
+Préférences agent. Colonnes liées au cycle d'emails automatiques autour d'une visite (opt-in par étape, voir D078).
+
+| Colonne                      | Type    | Description                                              |
+|------------------------------|---------|----------------------------------------------------------|
+| `visit_followup_enabled`     | BOOLEAN | Opt-in email de suivi +30 min après la visite            |
+| `visit_reminder_enabled`     | BOOLEAN | Opt-in rappels de visite -24h / -4h                      |
+| `visit_confirmation_enabled` | BOOLEAN | Opt-in email de confirmation à la programmation          |
 
 ### Table `lead_notes`
 

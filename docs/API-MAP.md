@@ -528,6 +528,35 @@ Cron Vercel (`*/10 * * * *`) — email de suivi automatique post-visite.
 
 ---
 
+### GET `/api/cron-visit-reminder`
+
+Cron Vercel (`*/10 * * * *`, 2e cron du projet) — emails automatiques AVANT la visite : confirmation à la programmation + rappels -24h et -4h, envoyés au visiteur.
+
+| Champ | Valeur |
+|-------|--------|
+| **Méthode** | GET (invoqué par Vercel Cron) |
+| **Auth** | Header `Authorization: Bearer ${CRON_SECRET}` (injecté par Vercel) |
+| **Réponse** | `{ ok, sent, skipped, candidates }` ou `401` si secret absent/invalide |
+
+**Logique** (priorité dans la boucle : confirmation > rappel 24h > rappel 4h) :
+1. **Confirmation** (opt-in `profiles.visit_confirmation_enabled`, envoi unique via `visits.confirmation_sent_at`) :
+   à la création d'une visite. Garde-fou anti-backfill : seulement si `visits.created_at` < ~20 min
+   (n'arrose pas les visites créées avant l'activation).
+2. **Rappel -24h** et **-4h** (opt-in `profiles.visit_reminder_enabled`, envoi unique via
+   `visits.reminder_24h_sent_at` / `visits.reminder_4h_sent_at`) : fenêtre de déclenchement 15 min
+   (> intervalle du cron, donc pas de rappel en retard). Une confirmation imminente (< ~4h) inhibe le
+   rappel 4h pour éviter le doublon (met aussi `reminder_4h_sent_at`).
+3. Conversion heure murale Europe/Paris → instant UTC (gère été/hiver), le cron tourne en UTC.
+4. Email charté Léon (branding agence via `lib/agency-branding.js`, encart Quand/Adresse + lien Google Maps),
+   construit par `lib/visit-reminder-email.js` → `buildVisitReminderHtml({ kind, visitorFirstName, whenLabel, propertyAddress, mapUrl, agent })`
+   et envoyé via `lib/mailgun-send.js`.
+
+Réglages dans `parametres.html` (section « 🏠 Email de suivi après visite ») : 3 toggles (suivi post-visite, rappel de visite, confirmation de visite).
+
+⚠️ Nécessite la variable d'env **`CRON_SECRET`** sur Vercel.
+
+---
+
 ## 2. APIs externes (serveur — generate-study)
 
 ### Overpass API (OpenStreetMap)

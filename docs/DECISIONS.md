@@ -1692,3 +1692,27 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 
 **Conséquences** :
 - **Risque assumé** : un portail émettant depuis un domaine non listé voit son lead rejeté silencieusement. Mitigation : chaque rejet est loggé (`[InboundEmail] Expéditeur non-portail rejeté: …`) pour repérer un domaine manquant et l'ajouter à `PORTAL_SENDER_DOMAINS`.
+
+---
+
+## D078 — Cycle d'emails de visite (confirmation / rappels / suivi) piloté par cron
+
+**Date** : 2026-06-17
+**Statut** : Actif
+
+**Contexte** : Réduire les no-shows et soigner l'expérience du visiteur en l'accompagnant tout au long de la visite : un email de confirmation à la programmation, des rappels avant la visite, et un suivi avec les docs du bien après. La difficulté : une visite peut être créée par plusieurs canaux (page Visites, assistant vocal, sync agenda), donc on ne peut pas se reposer sur le canal de création pour déclencher les envois.
+
+**Décision** : Tout le cycle est piloté par **crons Vercel** (`*/10 * * * *`), avec opt-in par étape et garde-fous :
+- **Confirmation + rappels -24h / -4h** dans le même cron `api/cron-visit-reminder.js` (2e cron du projet ; priorité dans la boucle : confirmation > rappel 24h > rappel 4h). **Suivi +30 min** dans le cron existant `api/cron-visit-followup.js` (D076).
+- **Opt-in par étape** : `profiles.visit_confirmation_enabled`, `visit_reminder_enabled`, `visit_followup_enabled` (3 toggles dans `parametres.html`).
+- **Garde anti-backfill** pour la confirmation : envoyée seulement si `visits.created_at` < ~20 min, pour ne pas arroser l'historique au moment de l'activation.
+- **Anti-doublon par timestamp** : envoi unique via `confirmation_sent_at` / `reminder_24h_sent_at` / `reminder_4h_sent_at` / `followup_sent_at`. Une confirmation imminente (< ~4h) inhibe le rappel 4h (et marque quand même `reminder_4h_sent_at`).
+- **Fenêtre de déclenchement 15 min** pour les rappels (> intervalle du cron, donc jamais de rappel en retard) ; conversion heure murale Europe/Paris → UTC (gère été/hiver).
+- **Email charté** construit par `lib/visit-reminder-email.js` (`buildVisitReminderHtml`), branding agence via `lib/agency-branding.js`, envoi via `lib/mailgun-send.js`.
+
+**Alternatives rejetées** :
+- **Envoi synchrone à la création de la visite** : fragile car plusieurs points d'entrée (page Visites, assistant vocal, sync agenda) — il faudrait câbler l'envoi à chacun, avec risque d'oubli et de doublons. Le cron centralise la logique en un seul endroit.
+
+**Conséquences** :
+- Latence d'envoi ≤ 10 min (granularité du cron) — acceptable pour de la confirmation et des rappels.
+- Dépend de la variable d'env **`CRON_SECRET`** (auth `Authorization: Bearer ${CRON_SECRET}`).
