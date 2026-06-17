@@ -1908,6 +1908,13 @@
                     <div style="font-size:12px; color:#78909C; margin-top:2px">Envoi automatique 30 min après l'heure de la visite</div>
                 </div>
             </label>
+            <label style="display:flex; align-items:center; gap:12px; cursor:pointer; padding:14px 16px; background:#F9FAFB; border-radius:12px; border:1.5px solid #E1E8ED; margin-top:12px">
+                <input type="checkbox" id="visitReminderToggle" style="width:18px; height:18px; accent-color:#667eea">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:#2C3E50">Activer le rappel de visite</div>
+                    <div style="font-size:12px; color:#78909C; margin-top:2px">Rappel automatique au visiteur 24h et 4h avant, avec l'adresse du bien</div>
+                </div>
+            </label>
 
             <div style="margin-top:16px">
                 <label class="form-label">Couleur des boutons de l'email</label>
@@ -2267,6 +2274,20 @@
                     this.checked = !enabled; // revert
                 } else {
                     alert(enabled ? 'Email de suivi post-visite activé' : 'Email de suivi post-visite désactivé');
+                }
+            });
+
+            // Rappel de visite (-24h / -4h) toggle
+            document.getElementById('visitReminderToggle').addEventListener('change', async function() {
+                const enabled = this.checked;
+                const { error } = await supabaseClient.from('profiles')
+                    .update({ visit_reminder_enabled: enabled })
+                    .eq('id', currentUserId);
+                if (error) {
+                    console.error('[Params] Visit reminder update error:', error);
+                    this.checked = !enabled; // revert
+                } else {
+                    alert(enabled ? 'Rappel de visite activé' : 'Rappel de visite désactivé');
                 }
             });
 
@@ -2838,6 +2859,8 @@
                 // Email de suivi post-visite
                 const visitFollowupToggle = document.getElementById('visitFollowupToggle');
                 if (visitFollowupToggle) visitFollowupToggle.checked = data.visit_followup_enabled || false;
+                const visitReminderToggle = document.getElementById('visitReminderToggle');
+                if (visitReminderToggle) visitReminderToggle.checked = data.visit_reminder_enabled || false;
                 // Couleur de marque
                 const brandColor = data.brand_color || '#2C3E50';
                 document.getElementById('brandColorPicker').value = brandColor;

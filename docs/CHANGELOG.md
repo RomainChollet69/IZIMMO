@@ -4,6 +4,20 @@
 
 ---
 
+## Session 2026-06-17 — Rappel de visite automatique (-24h / -4h)
+
+Nouveau : email de rappel envoyé au visiteur ~24h puis ~4h avant une visite planifiée, avec l'heure et l'adresse du bien (lien Google Maps). Opt-in agent. Mentionné dans la campagne d'activation (mails A/B).
+
+### Fichiers
+- **Migration BDD** : `profiles.visit_reminder_enabled` (bool, opt-in) + `visits.reminder_24h_sent_at` / `reminder_4h_sent_at` (anti-doublon par étape).
+- **`api/cron-visit-reminder.js`** : cron Vercel (*/10 min), fenêtres -24h et -4h (déclenchement 15 min, pas de rappel en retard), garde-fous (statut ≠ annulee, email visiteur valide, opt-in). Réutilise la conversion fuseau Europe/Paris de `cron-visit-followup`.
+- **`lib/visit-reminder-email.js`** : `buildVisitReminderHtml` (charte Léon, branding agence, encart Quand/Adresse + itinéraire Maps).
+- **`vercel.json`** : 2e cron `/api/cron-visit-reminder` + function maxDuration 60.
+- **`parametres.html`** : toggle « Activer le rappel de visite » (section Email de suivi après visite).
+
+---
+
+
 ## Session 2026-06-13 — Fix : clic sur une relance n'ouvrait plus la fiche
 
 ### Problème
