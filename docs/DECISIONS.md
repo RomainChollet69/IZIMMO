@@ -1739,3 +1739,14 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Les budgets parfois stockés formatés (`"280 000 €"`) doivent être parsés (`parsePriceFront` / `toNum`) partout (score ET affichage) — sinon `parseInt` tronque à l'espace (`280`).
 - Migration `add_portal_references_to_sellers` (colonne `text[]`).
 - Un bien dont l'adresse ne contient pas la ville (ex : `9 Chemin du Plain Vallon`) ne marquera pas de points "ville" : il faut alors la réf (apprise) ou des points surface+prix. Conseiller aux agents de saisir l'adresse complète.
+
+## D080 — Retour du FAB micro flottant dans le shell desktop (réactivation)
+
+**Date** : 2026-06-18
+**Statut** : Actif (inverse le masquage du 2026-06-10, commit 6975a7d)
+
+**Contexte** : Le 2026-06-10, le FAB micro flottant (`.bottom-micro-btn` → popup `openMicroModal()`) avait été masqué dans le shell desktop via une règle injectée par `injectEmbeddedStyles()` (tab-shell.js), au motif qu'il faisait doublon avec l'onglet « Vocal ». À l'usage, l'utilisateur trouve la dictée rapide depuis n'importe quelle page bien plus pratique qu'un changement d'onglet.
+
+**Décision** : Retirer la règle `.bottom-micro-btn{display:none!important;}`. Le bouton et sa modale existaient déjà dans vendeurs/acquereurs/dvf/visites, ils réapparaissent tels quels. Cache-bust `tab-shell.js?v=20260618a`.
+
+**Conséquences** : Doublon assumé (onglet Vocal + FAB micro), arbitré en faveur de l'accès rapide à la dictée. Le bouton To Do de la barre du bas était déjà conservé, le FAB le rejoint.
