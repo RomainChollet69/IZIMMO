@@ -4,6 +4,19 @@
 
 ---
 
+## Session 2026-06-18 — Desktop : retour du micro flottant en bas de page
+
+### Réactivation du bouton micro dans le shell
+- Le FAB micro flottant (`.bottom-micro-btn` → popup `openMicroModal()`) avait été masqué dans le shell desktop le 2026-06-10 (jugé doublon avec l'onglet « Vocal »). Retour demandé par l'utilisateur : la dictée rapide depuis n'importe quelle page est plus pratique qu'un changement d'onglet.
+- Suppression de la règle `.bottom-micro-btn{display:none!important;}` injectée par `injectEmbeddedStyles()` dans `js/tab-shell.js`. Le bouton (déjà présent dans vendeurs/acquereurs/dvf/visites) et sa modale `#microModalOverlay` réapparaissent tels quels.
+- Cache-bust `tab-shell.js?v=20260618a` dans `app.html`.
+
+### Fichiers modifiés
+- `js/tab-shell.js`
+- `app.html`
+
+---
+
 ## Session 2026-06-18 — Visites : réordonnancement des biens (drag & drop) + astuce photo
 
 ### Réordonnancement vertical des biens

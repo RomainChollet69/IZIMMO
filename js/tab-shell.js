@@ -214,13 +214,13 @@
         // .pipeline : hauteur calée sur 100vh-230px (incluait l'ancien header) → recalculée
         //   pour le shell (header masqué) : il ne reste que la barre de recherche (~86px) au-dessus,
         //   donc les colonnes descendent jusqu'en bas de l'onglet.
-        // .bottom-micro-btn : FAB micro flottant masqué dans le shell (doublon avec
-        //   l'onglet « Assistant vocal » / le « + »). Le bouton To Do reste.
+        // .bottom-micro-btn : FAB micro flottant conservé dans le shell — la dictée
+        //   reste accessible directement depuis chaque page (popup openMicroModal),
+        //   en plus de l'onglet « Assistant vocal ». Le bouton To Do reste lui aussi.
         style.textContent =
             '.header,.header-desktop,[data-leon-header]{display:none!important;}' +
             '.search-bar-section{top:0!important;}' +
-            '.pipeline{height:calc(100vh - 88px)!important;}' +
-            '.bottom-micro-btn{display:none!important;}';
+            '.pipeline{height:calc(100vh - 88px)!important;}';
         (doc.head || doc.documentElement).appendChild(style);
     }
 
