@@ -2458,7 +2458,7 @@
 
         const { data, error } = await supabaseClient
             .from('sellers')
-            .select('id, first_name, last_name, address, budget, property_type, status, links, link_previews')
+            .select('id, first_name, last_name, address, budget, property_type, status, links, link_previews, portal_references')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 
@@ -5933,6 +5933,12 @@
     /** Extrait les références d'annonce depuis les URLs d'un seller */
     function extractRefsFromLinks(seller) {
         const refs = new Set();
+        // Références portail apprises lors d'un match manuel (Réf Pro, identiques sur tous
+        // les portails pour un même bien) : signal le plus fiable.
+        (seller.portal_references || []).forEach(r => {
+            const d = String(r).replace(/\D/g, '');
+            if (d.length >= 5) refs.add(d);
+        });
         const links = seller.links || [];
         for (const url of links) {
             if (typeof url !== 'string') continue;
@@ -5999,13 +6005,15 @@
             }
         }
 
-        // 1. Matching par adresse
-        if (req.property_address) {
+        // 1. Matching par adresse — ignoré si l'adresse n'est qu'une ville (faux positif :
+        //    tout bien stocké avec sa ville scorerait au max). On ne score que les biens
+        //    compatibles type/prix pour ne pas matcher un appart 280k sur une maison 469k.
+        if (req.property_address && !addressIsCityOnlyFront(req.property_address)) {
             const searchWords = normalizeAddressFront(req.property_address);
             if (searchWords.length > 0) {
                 // Calculer les scores pour tous les biens
                 const scored = matchableSellers
-                    .filter(s => s.address)
+                    .filter(s => s.address && isCompatibleSellerFront(s, req.property_type, reqPrice))
                     .map(seller => {
                         const sellerWords = normalizeAddressFront(seller.address);
                         const common = searchWords.filter(w => sellerWords.includes(w));
@@ -6059,6 +6067,7 @@
             if (reqCP || reqCityWords.length > 0) {
                 const cityMatches = matchableSellers.filter(s => {
                     if (!s.address) return false;
+                    if (!isCompatibleSellerFront(s, req.property_type, reqPrice)) return false; // type + prix cohérents
                     const sellerAddr = norm(s.address);
                     const cpOk = reqCP && sellerAddr.includes(reqCP);
                     const cityOk = reqCityWords.length > 0 && reqCityWords.some(w => sellerAddr.includes(w));
@@ -6066,15 +6075,9 @@
                     return (cpOk || cityOk) && priceOk;
                 });
 
+                // Candidat unique uniquement : plusieurs biens même ville + même tranche de prix
+                // = ambigu, on ne devine pas (mieux vaut "Aucun bien matché").
                 if (cityMatches.length === 1) {
-                    req.matched_seller_id = cityMatches[0].id;
-                    req.sellers = cityMatches[0];
-                    req.match_confidence = 'medium';
-                    return;
-                }
-                if (cityMatches.length > 1) {
-                    // Départager par proximité de prix
-                    cityMatches.sort((a, b) => Math.abs((a.budget || 0) - reqPrice) - Math.abs((b.budget || 0) - reqPrice));
                     req.matched_seller_id = cityMatches[0].id;
                     req.sellers = cityMatches[0];
                     req.match_confidence = 'medium';
@@ -6096,6 +6099,47 @@
             .replace(/[^a-z0-9\s]/g, ' ')
             .split(/\s+/)
             .filter(w => (w.length > 1 || /^\d+$/.test(w)) && !stopWords.has(w));
+    }
+
+    // Type normalis\u00e9 (appartement / maison / terrain / immeuble / local) pour comparaison.
+    function normalizeTypeFront(t) {
+        if (!t) return '';
+        const s = String(t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (s.includes('appart') || /\bt\d/.test(s) || s.includes('studio')) return 'appartement';
+        if (s.includes('maison') || s.includes('villa')) return 'maison';
+        if (s.includes('terrain')) return 'terrain';
+        if (s.includes('immeuble')) return 'immeuble';
+        if (s.includes('local') || s.includes('commerce') || s.includes('bureau')) return 'local';
+        return s.split(/\s+/)[0] || '';
+    }
+
+    const STREET_KEYWORDS_FRONT = /\b(rue|avenue|av|bd|boulevard|place|allee|chemin|impasse|cours|passage|route|voie|montee|quai|parc|square|sentier|clos|lotissement|traverse)\b/;
+
+    // Adresse "ville seule" (ex: "Caluire-et-Cuire") : ni mot de voie ni num\u00e9ro de rue.
+    // Insuffisante pour un match adresse fiable \u2192 on route vers le matching ville+prix.
+    function addressIsCityOnlyFront(raw) {
+        if (!raw) return true;
+        const norm = String(raw).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (STREET_KEYWORDS_FRONT.test(norm)) return false;
+        const nums = norm.match(/\d+/g) || [];
+        return !nums.some(n => n.length >= 1 && n.length <= 4); // un CP (5 chiffres) ne compte pas
+    }
+
+    // Parse un budget potentiellement format\u00e9 ("280 000 \u20ac" \u2192 280000, "469000" \u2192 469000).
+    function parsePriceFront(v) {
+        if (v == null) return 0;
+        const n = parseInt(String(v).replace(/[^\d]/g, ''), 10);
+        return isNaN(n) ? 0 : n;
+    }
+
+    // Garde-fou type + prix : emp\u00eache un appart 280k de matcher une maison 469k.
+    function isCompatibleSellerFront(seller, reqType, reqPrice, priceTol = 0.2) {
+        const rt = normalizeTypeFront(reqType);
+        const st = normalizeTypeFront(seller.property_type);
+        if (rt && st && rt !== st) return false;
+        const sp = parsePriceFront(seller.budget);
+        if (reqPrice && sp && Math.abs(sp - reqPrice) > reqPrice * priceTol) return false;
+        return true;
     }
 
     function applyFrontendMatching() {
@@ -6322,6 +6366,32 @@
         }).join('');
     }
 
+    // Extrait la référence portail d'une demande (colonne ou parsed_data, chiffres >= 5).
+    function refFromRequest(req) {
+        let r = req?.property_reference ? String(req.property_reference) : '';
+        if (!r && req?.parsed_data?.property_reference) r = String(req.parsed_data.property_reference);
+        r = r.replace(/\D/g, '');
+        return r.length >= 5 ? r : '';
+    }
+
+    // Mémorise la référence portail du contact sur le bien (best-effort, n'interrompt pas l'UI).
+    function learnPortalReference(req, sellerId, userId) {
+        const ref = refFromRequest(req);
+        const seller = activeSellers.find(s => s.id === sellerId);
+        if (!ref || !seller) return;
+        const existing = Array.isArray(seller.portal_references) ? seller.portal_references : [];
+        if (existing.includes(ref)) return;
+        const newRefs = [...existing, ref];
+        seller.portal_references = newRefs; // maj locale immédiate
+        supabaseClient.from('sellers')
+            .update({ portal_references: newRefs })
+            .eq('id', sellerId).eq('user_id', userId)
+            .then(({ error }) => {
+                if (error) console.error('[Visites] Apprentissage réf échoué:', error);
+                else console.log(`[Match] Référence ${ref} apprise sur le bien ${sellerId}`);
+            });
+    }
+
     async function updatePortalMatch(requestId, sellerId) {
         const userId = await getCurrentUserId();
         if (!userId) return;
@@ -6351,6 +6421,11 @@
             req.match_confidence = update.match_confidence;
             req.sellers = sellerId ? activeSellers.find(s => s.id === sellerId) : null;
         }
+
+        // Apprentissage : mémoriser la référence portail de ce contact sur le bien choisi.
+        // Cette réf (Réf Pro) est identique sur tous les portails pour un même bien → tous
+        // les futurs emails de ce bien matcheront automatiquement (cf. extractRefsFromLinks).
+        if (sellerId && req) learnPortalReference(req, sellerId, userId);
 
         const modal = document.getElementById('changeMatchModal');
         if (modal) modal.remove();

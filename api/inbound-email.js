@@ -524,7 +524,7 @@ async function matchSeller(userId, parsed) {
     const supabaseAdmin = getSupabaseAdmin();
     const { data: sellers } = await supabaseAdmin
         .from('sellers')
-        .select('id, first_name, last_name, address, property_type, rooms, surface, budget, mandate_price, mandate_reference, links')
+        .select('id, first_name, last_name, address, property_type, rooms, surface, budget, mandate_price, mandate_reference, links, portal_references')
         .eq('user_id', userId)
         .in('status', ['mandate', 'commercialisation']); // Ne matcher qu'avec les biens sous mandat
 
@@ -545,6 +545,12 @@ async function matchSeller(userId, parsed) {
             const sellerIds = (seller.links || []).flatMap(bigNums);
             const mref = (seller.mandate_reference || '').replace(/\D/g, '');
             if (mref.length >= 5) sellerIds.push(mref);
+            // Références portail apprises (Réf Pro, identiques sur tous les portails) :
+            // signal le plus fiable une fois qu'un match manuel les a renseignées.
+            (seller.portal_references || []).forEach(r => {
+                const d = String(r).replace(/\D/g, '');
+                if (d.length >= 5) sellerIds.push(d);
+            });
             if (sellerIds.some(id => emailIds.has(id))) {
                 console.log(`[InboundEmail:Match] ID annonce/réf [${[...emailIds].join(',')}] → seller ${seller.id}`);
                 return { id: seller.id, confidence: 'high' };
@@ -552,14 +558,18 @@ async function matchSeller(userId, parsed) {
         }
     }
 
-    // 1. Matching par adresse (score bidirectionnel, seuils assouplis)
-    if (parsed.property_address) {
+    // 1. Matching par adresse (score bidirectionnel, seuils assouplis).
+    //    Ignoré si l'adresse de l'email n'est qu'une ville (sinon faux positif : tout
+    //    bien stocké avec sa ville scorerait au max). On ne score que des biens compatibles
+    //    en type/prix pour éviter de matcher un appart 280k sur une maison 469k de la même rue.
+    if (parsed.property_address && !addressIsCityOnly(parsed.property_address)) {
         const searchWords = normalizeAddress(parsed.property_address);
         let bestMatch = null;
         let bestScore = 0;
 
         for (const seller of sellers) {
             if (!seller.address) continue;
+            if (!isCompatibleSeller(seller, parsed)) continue;
             const sellerWords = normalizeAddress(seller.address);
             const common = searchWords.filter(w => sellerWords.includes(w));
             // Score bidirectionnel : prend le max pour gérer les adresses partielles
@@ -589,6 +599,7 @@ async function matchSeller(userId, parsed) {
             const priceMargin = parsed.property_price * 0.15;
             const cityMatches = sellers.filter(s => {
                 if (!s.address || !s.budget) return false;
+                if (!isCompatibleSeller(s, parsed)) return false; // type cohérent + prix dans la marge
                 const sellerNorm = normalizeAddress(s.address).join(' ');
                 const cpOk = reqCP && sellerNorm.includes(reqCP);
                 const cityOk = cityWords.length > 0 && cityWords.some(w => sellerNorm.includes(w));
@@ -596,12 +607,10 @@ async function matchSeller(userId, parsed) {
                 return (cpOk || cityOk) && priceOk;
             });
 
+            // Candidat unique uniquement : plusieurs biens même ville + même tranche de prix
+            // = ambigu, on ne devine pas (mieux vaut "Aucun bien matché" qu'un mauvais match).
             if (cityMatches.length === 1) {
                 return { id: cityMatches[0].id, confidence: 'medium' };
-            }
-            if (cityMatches.length > 1) {
-                cityMatches.sort((a, b) => Math.abs((a.budget || 0) - parsed.property_price) - Math.abs((b.budget || 0) - parsed.property_price));
-                return { id: cityMatches[0].id, confidence: 'low' };
             }
         }
     }
@@ -677,6 +686,33 @@ function toInt(v) {
     if (v == null) return 0;
     const m = String(v).match(/\d+/);
     return m ? parseInt(m[0], 10) : 0;
+}
+
+// Mots-clés de voie : leur présence signale une vraie adresse (pas juste une ville).
+const STREET_KEYWORDS = /\b(rue|avenue|av|bd|boulevard|place|allee|chemin|impasse|cours|passage|route|voie|montee|quai|parc|square|sentier|clos|lotissement|traverse)\b/;
+
+// Une adresse "ville seule" (ex: "Caluire-et-Cuire", "CALUIRE-ET-CUIRE, 69300") n'a ni
+// mot de voie ni numéro de rue (1-4 chiffres) : insuffisante pour un match adresse fiable,
+// car n'importe quel bien stocké avec sa ville scorerait au maximum. On route alors vers
+// le matching ville+prix (étape 2) qui, lui, vérifie le prix.
+function addressIsCityOnly(raw) {
+    if (!raw) return true;
+    const norm = String(raw).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (STREET_KEYWORDS.test(norm)) return false;
+    const nums = norm.match(/\d+/g) || [];
+    return !nums.some(n => n.length >= 1 && n.length <= 4); // un CP (5 chiffres) ne compte pas
+}
+
+// Garde-fou : un bien n'est compatible avec une demande que si le type ne contredit pas
+// (appartement vs maison) et le prix ne s'écarte pas trop (anti-match "280k appart → 469k maison").
+function isCompatibleSeller(seller, parsed, priceTol = 0.2) {
+    const rType = normalizeType(parsed.property_type);
+    const sType = normalizeType(seller.property_type);
+    if (rType && sType && rType !== sType) return false;
+    const rPrice = toNum(parsed.property_price);
+    const sPrice = toNum(seller.budget || seller.mandate_price);
+    if (rPrice && sPrice && Math.abs(sPrice - rPrice) > rPrice * priceTol) return false;
+    return true;
 }
 
 function normalizeAddress(address) {
