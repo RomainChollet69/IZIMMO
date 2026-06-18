@@ -6350,7 +6350,7 @@
             const addr = s.address || `${s.first_name || ''} ${s.last_name || ''}`.trim() || 'Bien sans adresse';
             const subParts = [];
             if (s.property_type) subParts.push(s.property_type);
-            if (s.budget) subParts.push(`${parseInt(s.budget).toLocaleString('fr-FR')} €`);
+            if (s.budget) subParts.push(`${parsePriceFront(s.budget).toLocaleString('fr-FR')} €`);
             if (s.surface) subParts.push(`${s.surface} m²`);
             return `<div class="change-match-option" onclick="updatePortalMatch('${requestId}', '${s.id}')">
                 <div class="change-match-option-info">
@@ -6606,7 +6606,7 @@
         const exitDate = seller.updated_at ? new Date(seller.updated_at).toLocaleDateString('fr-FR', { month: 'short', year: 'numeric' }) : '';
 
         const metaParts = [];
-        if (finalPrice) metaParts.push(`💰 ${parseInt(finalPrice).toLocaleString('fr-FR')} €`);
+        if (finalPrice) metaParts.push(`💰 ${parsePriceFront(finalPrice).toLocaleString('fr-FR')} €`);
         if (seller.property_type) metaParts.push(`🏠 ${seller.property_type}`);
         if (seller.surface) metaParts.push(`📐 ${seller.surface} m²`);
         if (seller.rooms) metaParts.push(seller.rooms);
@@ -6823,7 +6823,7 @@
 
         const subParts = [];
         const price = seller.mandate_price || seller.budget;
-        if (price) subParts.push(`💰 ${parseInt(price).toLocaleString('fr-FR')} €`);
+        if (price) subParts.push(`💰 ${parsePriceFront(price).toLocaleString('fr-FR')} €`);
         if (seller.surface) subParts.push(`📐 ${seller.surface} m²`);
         if (subParts.length) lines.push(subParts.join(' · '));
 
