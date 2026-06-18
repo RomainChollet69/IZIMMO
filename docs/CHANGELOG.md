@@ -4,6 +4,21 @@
 
 ---
 
+## Session 2026-06-18 — Fix crash import par capture d'écran (vendeurs)
+
+### Modifications
+- **Bug corrigé** : l'import d'un lead vendeur par copie d'écran plantait avec « Erreur lors de l'extraction : Cannot read properties of null (reading 'style') »
+  - Cause racine : le bouton « Étude de marché » (`studyBtn`) est commenté dans le HTML (feature gelée), mais `openModal()` faisait encore `document.getElementById('studyBtn').style.display = 'none'` sans null-check → `null.style` plantait
+  - L'image était bien lue (l'API `analyze-document` répondait), c'est l'ouverture du formulaire pré-rempli qui crashait. En import, `openModal()` étant appelé dans un `try/catch`, l'erreur remontait comme « Erreur lors de l'extraction » ; en création normale, elle passait silencieusement (modal déjà ouvert avant le crash)
+  - Fix : ajout du même null-check que celui déjà présent ailleurs pour ce bouton (vendeurs.html:9781)
+
+### Fichiers modifiés
+- `vendeurs.html` — null-check sur `studyBtn` dans `openModal()` (ligne ~8933)
+
+### Points d'attention
+- Penser à retirer/null-checker toute référence DOM quand on commente un élément HTML (lesson capturée)
+
+
 ## Session 2026-06-17 — Section "Quoi de neuf" sur la home (support réunion trimestrielle)
 
 Pour présenter Léon en réunion (60 personnes), ajout d'une section **"Quoi de neuf chez Léon"** directement sur `home.html` (le cockpit), sous la grille de tuiles.

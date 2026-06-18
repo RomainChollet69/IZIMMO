@@ -8930,7 +8930,9 @@
                 document.getElementById('modalSubtitle').style.display = '';
                 submitBtn.textContent = 'Créer le Lead';
                 document.getElementById('dvfBtn').style.display = 'none';
-                document.getElementById('studyBtn').style.display = 'none';
+                // studyBtn commenté (feature gelée) : null-check pour éviter un crash de openModal
+                const studyBtn = document.getElementById('studyBtn');
+                if (studyBtn) studyBtn.style.display = 'none';
             }
 
             updateModalTabs();
