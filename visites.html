@@ -2458,7 +2458,7 @@
 
         const { data, error } = await supabaseClient
             .from('sellers')
-            .select('id, first_name, last_name, address, budget, property_type, status, links, link_previews, portal_references')
+            .select('id, first_name, last_name, address, budget, surface, property_type, status, links, link_previews, portal_references')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 
@@ -3399,9 +3399,17 @@
 
     let draggedAccordion = null;
 
+    // Active/désactive draggable sur l'accordéon parent de la poignée.
+    // Indispensable : au dragstart, event.target est l'élément draggable lui-même (pas
+    // la poignée saisie) — un guard "closest('.accordion-drag-handle')" échouerait toujours.
+    // On rend donc l'accordéon draggable UNIQUEMENT pendant qu'on presse la poignée (≡).
+    function setAccordionDraggable(event, enable) {
+        const acc = event.target.closest('.property-accordion');
+        if (acc) acc.setAttribute('draggable', enable ? 'true' : 'false');
+    }
+
     function handleAccordionDragStart(event, sellerId) {
-        // Seul le handle (≡) initie le réordonnancement ; ailleurs, on laisse le clic/sélection normaux.
-        if (!event.target.closest('.accordion-drag-handle')) { event.preventDefault(); return; }
+        // Le drag n'est possible que si la poignée (≡) a activé draggable (cf. setAccordionDraggable).
         draggedAccordion = event.currentTarget;
         event.dataTransfer.effectAllowed = 'move';
         try { event.dataTransfer.setData('text/leon-accordion', sellerId); } catch (e) { /* ignore */ }
@@ -3432,6 +3440,7 @@
     function handleAccordionDragEnd() {
         if (!draggedAccordion) return;
         draggedAccordion.classList.remove('dragging');
+        draggedAccordion.setAttribute('draggable', 'false'); // re-verrouille jusqu'au prochain mousedown sur la poignée
         draggedAccordion = null;
         saveVisitOrderFromDom();
     }
@@ -3560,12 +3569,12 @@
             visitCards += visitDropZone + '</div>';
         }
 
-        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}" draggable="true"
+        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}" draggable="false"
             ondragstart="handleAccordionDragStart(event, '${sellerId}')"
             ondragover="handleAccordionDragOver(event)"
             ondragend="handleAccordionDragEnd()">
             <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
-                <span class="accordion-drag-handle" onclick="event.stopPropagation()" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>
+                <span class="accordion-drag-handle" onmousedown="setAccordionDraggable(event, true)" onmouseup="setAccordionDraggable(event, false)" onclick="event.stopPropagation()" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>
                 ${photoHtml}
                 <div class="accordion-property-info">
                     <div class="accordion-address">${escapeHtml(address)}</div>
@@ -6132,15 +6141,67 @@
         return isNaN(n) ? 0 : n;
     }
 
-    // Garde-fou type + prix : emp\u00eache un appart 280k de matcher une maison 469k.
-    function isCompatibleSellerFront(seller, reqType, reqPrice, priceTol = 0.2) {
+    // Parse une surface ("80.28 m\u00b2", "80,28" \u2192 80.28).
+    function parseSurfaceFront(v) {
+        if (v == null) return 0;
+        const n = parseFloat(String(v).replace(',', '.').replace(/[^\d.]/g, ''));
+        return isNaN(n) ? 0 : n;
+    }
+
+    // Score de correspondance bien <-> demande (syst\u00e8me de points).
+    // Priorit\u00e9s : VILLE (1, 50 pts) > SURFACE (2, 40 pts) > PRIX (3, 25 pts).
+    // Prix tol\u00e9rant (baisse non saisie dans L\u00e9on). Type = garde-fou strict (-1 = exclu).
+    // Miroir de scoreSellerForRequest (api/inbound-email.js).
+    function scoreSellerForRequestFront(seller, reqAddress, reqType, reqPrice, reqSurface) {
         const rt = normalizeTypeFront(reqType);
         const st = normalizeTypeFront(seller.property_type);
-        if (rt && st && rt !== st) return false;
-        const sp = parsePriceFront(seller.budget);
-        if (reqPrice && sp && Math.abs(sp - reqPrice) > reqPrice * priceTol) return false;
-        return true;
+        if (rt && st && rt !== st) return -1; // type incompatible = exclu
+
+        let score = 0;
+
+        // VILLE (50) + bonus adresse pr\u00e9cise (jusqu'\u00e0 25)
+        if (reqAddress && seller.address) {
+            const reqNorm = normalizeAddressFront(reqAddress);
+            const sellerNorm = normalizeAddressFront(seller.address);
+            const sellerJoined = sellerNorm.join(' ');
+            const cpMatch = reqNorm.join(' ').match(/\b(\d{5})\b/);
+            const reqCP = cpMatch ? cpMatch[1] : '';
+            const cityWords = reqNorm.filter(w => !/^\d+$/.test(w) && w.length > 2);
+            const cpOk = reqCP && sellerJoined.includes(reqCP);
+            const cityOk = cityWords.length > 0 && cityWords.some(w => sellerJoined.includes(w));
+            if (cpOk || cityOk) score += 50;
+            if (!addressIsCityOnlyFront(reqAddress)) {
+                const common = reqNorm.filter(w => sellerNorm.includes(w));
+                const overlap = Math.max(common.length / Math.max(reqNorm.length, 1), common.length / Math.max(sellerNorm.length, 1));
+                score += Math.round(overlap * 25);
+            }
+        }
+
+        // SURFACE (40)
+        const sSurf = parseSurfaceFront(seller.surface);
+        if (reqSurface && sSurf) {
+            const d = Math.abs(sSurf - reqSurface) / reqSurface;
+            if (d <= 0.03) score += 40;
+            else if (d <= 0.07) score += 28;
+            else if (d <= 0.12) score += 15;
+        }
+
+        // PRIX (25), tol\u00e9rant aux baisses non saisies
+        const sPrice = parsePriceFront(seller.budget);
+        if (reqPrice && sPrice) {
+            const ad = Math.abs(sPrice - reqPrice) / reqPrice;
+            if (ad <= 0.03) score += 25;
+            else if (ad <= 0.08) score += 18;
+            else if (ad <= 0.15) score += 12;
+            else if (sPrice > reqPrice && (sPrice - reqPrice) / reqPrice <= 0.30) score += 8;
+        }
+
+        return score;
     }
+
+    const MATCH_ACCEPT_MIN_FRONT = 60;
+    const MATCH_HIGH_MIN_FRONT = 90;
+    const MATCH_MARGIN_FRONT = 12;
 
     function applyFrontendMatching() {
         portalRequests.forEach(req => frontendMatchSeller(req));

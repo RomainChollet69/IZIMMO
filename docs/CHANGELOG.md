@@ -4,6 +4,25 @@
 
 ---
 
+## Session 2026-06-18 — Fix : drag & drop des biens (Visites) ne démarrait jamais
+
+### Bug
+- Le réordonnancement vertical des biens (page Visites) ne fonctionnait pas du tout. Cause : le guard `ondragstart` testait `event.target.closest('.accordion-drag-handle')`, mais au `dragstart` `event.target` est l'élément `draggable` source (l'accordéon), pas la poignée saisie → `closest()` renvoyait toujours `null` → `preventDefault()` systématique.
+
+### Correctif
+- `.property-accordion` passe à `draggable="false"` par défaut.
+- Nouveau helper `setAccordionDraggable(event, enable)` : la poignée (≡) active `draggable` au `onmousedown` et le désactive au `onmouseup` (clic simple).
+- `handleAccordionDragStart` : suppression du guard cassé.
+- `handleAccordionDragEnd` : re-verrouille `draggable="false"` après le drop.
+- Drag des contacts (`handleContactDragStart`) inchangé, reste indépendant.
+- Leçon consignée : `tasks/lessons.md` L023.
+
+### Fichiers modifiés
+- `visites.html`
+- `tasks/lessons.md`
+
+---
+
 ## Session 2026-06-18 — Desktop : retour du micro flottant en bas de page
 
 ### Réactivation du bouton micro dans le shell
