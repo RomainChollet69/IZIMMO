@@ -556,6 +556,17 @@
             background: #f0f2f5;
         }
         .accordion-photo img { width: 100%; height: 100%; object-fit: cover; }
+        .accordion-photo.empty { display: flex; align-items: center; justify-content: center; color: #C4C9D4; font-size: 18px; }
+        /* Astuce affichée quand un bien n'a pas de photo (lien portail au lieu d'un lien réseau) */
+        .photo-hint-line {
+            display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;
+            font-size: 11.5px; color: #8A93A2; background: #F4F6F9;
+            border: 1px solid #E6EAF0; border-radius: 6px; padding: 3px 8px; max-width: 100%;
+        }
+        .photo-hint-line a { color: #667eea; text-decoration: none; font-weight: 600; }
+        .photo-hint-line a:hover { text-decoration: underline; }
+        .photo-hint-line .photo-hint-close { background: none; border: none; color: #B0B7C3; cursor: pointer; font-size: 12px; padding: 0 2px; line-height: 1; flex-shrink: 0; }
+        .photo-hint-line .photo-hint-close:hover { color: #6B7280; }
         .accordion-property-info { flex: 1; min-width: 0; }
         .accordion-address {
             font-weight: 700;
@@ -2843,6 +2854,14 @@
                 ? `<img class="mv-property-photo" src="${escapeHtml(photo)}" onerror="this.style.display='none'" alt="">`
                 : `<div class="mv-property-photo" style="display:flex;align-items:center;justify-content:center;color:var(--m-text-tertiary)"><i class="fa-solid fa-house"></i></div>`;
 
+            // Même astuce que sur l'accordéon desktop : lien réseau manquant => pas de photo.
+            const photoHintHtml = (!photo && seller && key !== 'no_seller' && !photoHintDismissed())
+                ? `<div class="photo-hint-line" data-photo-hint>
+                        <a href="vendeurs.html?openLead=${seller.id}" onclick="event.stopPropagation()" title="Ouvrir la fiche du bien"><i class="fa-solid fa-circle-plus"></i> Lien réseau (efficity, IAD) = photo affichée</a>
+                        <button type="button" class="photo-hint-close" onclick="event.stopPropagation(); dismissPhotoHint()" title="Ne plus afficher">✕</button>
+                   </div>`
+                : '';
+
             // Badges
             let badges = '';
             const totalVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee').length + group.contactCount;
@@ -2874,6 +2893,7 @@
                         <div class="mv-property-address">${escapeHtml(address)}</div>
                         <div class="mv-property-seller">${escapeHtml(sellerName)}</div>
                         <div class="mv-property-badges">${badges}</div>
+                        ${photoHintHtml}
                     </div>
                     ${shareBtnHtml}
                     <i class="fa-solid fa-chevron-down mv-property-chevron"></i>
@@ -3329,6 +3349,15 @@
         });
     }
 
+    // Astuce "photo manquante" : masquable définitivement (localStorage), même message pour tous les biens.
+    function photoHintDismissed() {
+        try { return localStorage.getItem('leon_visit_photo_hint') === 'off'; } catch (e) { return false; }
+    }
+    function dismissPhotoHint() {
+        try { localStorage.setItem('leon_visit_photo_hint', 'off'); } catch (e) { /* mode privé */ }
+        document.querySelectorAll('[data-photo-hint]').forEach(el => el.remove());
+    }
+
     function renderPropertyAccordion(sellerId, group) {
         const seller = group.seller;
         let address = 'Bien non renseigné';
@@ -3347,6 +3376,14 @@
         const photo = seller ? getSellerPhoto(seller) : null;
         const photoHtml = photo
             ? `<div class="accordion-photo"><img src="${escapeHtml(photo)}" onerror="this.parentElement.style.display='none'" alt=""></div>`
+            : `<div class="accordion-photo empty"><i class="fa-solid fa-image"></i></div>`;
+        // Astuce cliquable quand le bien n'a pas de photo : inviter à coller un lien réseau (efficity, IAD)
+        // sur la fiche. Masquable une fois pour toutes. Pas affichée si le bien n'est pas rattaché.
+        const photoHintHtml = (!photo && seller && !photoHintDismissed())
+            ? `<div class="photo-hint-line" data-photo-hint>
+                    <a href="vendeurs.html?openLead=${sellerId}" onclick="event.stopPropagation()" title="Ouvrir la fiche du bien"><i class="fa-solid fa-circle-plus"></i> Ajoute un lien réseau (efficity, IAD) pour voir la photo</a>
+                    <button type="button" class="photo-hint-close" onclick="event.stopPropagation(); dismissPhotoHint()" title="Ne plus afficher">✕</button>
+               </div>`
             : '';
 
         const contacts = group.contacts || [];
@@ -3443,6 +3480,7 @@
                     <div class="accordion-address">${escapeHtml(address)}</div>
                     <div class="accordion-seller">${escapeHtml(sellerName)}${propertyInfo ? ' — ' + escapeHtml(propertyInfo) : ''}</div>
                     ${portalStatsHtml}
+                    ${photoHintHtml}
                 </div>
                 <div class="accordion-badges">${badges}</div>
                 <button class="accordion-contact-btn" onclick="event.stopPropagation(); contactSellerBuyers('${sellerId}')" title="Envoyer un message à tous les contacts ayant fiche acquéreur">
