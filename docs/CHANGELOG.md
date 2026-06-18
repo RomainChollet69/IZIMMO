@@ -14,6 +14,12 @@ La vignette d'un bien (carte Visites) vient de l'og:image scrapée du lien d'ann
 - **`vendeurs.html`** : **auto-réparation** — à l'ouverture d'une fiche, les liens dont l'aperçu a échoué ou n'a pas d'image sont **re-scrapés** (persistés à l'enregistrement) ; guard de `fetchLinkPreview` ajusté (re-scrape si pas d'image).
 - **Data-fix** : aperçu du bien concerné (Stéphanie DUPUY, Plain Vallon) corrigé avec la vraie photo.
 
+### Nettoyage global des aperçus cassés (suite)
+- **Audit BDD** : requête sur tous les `sellers` dont aucun aperçu n'a de vraie photo (logo/svg/erreur/vide).
+- **efficity** : seul domaine réparable. 2 biens cassés au total (DUPUY + appartement Chabanière `d598351a` qui stockait le logo) → corrigés. La vraie photo `/photos/l/4.png` vient bien de la 2e og:image.
+- **`api/scrape-listing.js`** : `efficityFallback` ne **devine plus** l'URL photo (il construisait `/photos/xxl/2.png`, inexistant → 404 = image cassée). Le nom de fichier varie (4.png, 01.JPG, page-de-garde.jpg). Le fallback ne reconstruit plus qu'un titre lisible si la page est inaccessible.
+- **Constat documenté** : ~70 biens leboncoin/seloger/pap restent sans photo (`image_url: null`) car ces portails renvoient **403 anti-bot** sur toute requête serveur. immo5k renvoie une carte de visite générique. Irrécupérable par scraping, ce n'est pas un bug Léon.
+
 
 ## Session 2026-06-18b — Date de relance : autoriser le champ vide (vendeurs)
 
