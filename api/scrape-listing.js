@@ -30,8 +30,23 @@ function extractTitle(html) {
     return titleMatch ? titleMatch[1].trim() : null;
 }
 
+// Récupère TOUTES les valeurs d'une meta (certaines pages ont plusieurs og:image,
+// ex. efficity met d'abord son logo, puis la vraie photo du bien).
+function extractAllMeta(html, property) {
+    const out = [];
+    const re = new RegExp(
+        `<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']+)["']` +
+        `|<meta[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["']${property}["']`, 'gi');
+    let m;
+    while ((m = re.exec(html)) !== null) out.push((m[1] || m[2] || '').trim());
+    return out;
+}
+
 function extractImage(html) {
-    return extractMeta(html, 'og:image') || extractMeta(html, 'twitter:image') || null;
+    const candidates = [...extractAllMeta(html, 'og:image'), ...extractAllMeta(html, 'twitter:image')];
+    // Préférer une vraie photo : écarter logos / svg / placeholders.
+    const real = candidates.find(u => u && !/\.svg(?:$|\?)/i.test(u) && !/logo/i.test(u));
+    return real || candidates[0] || null;
 }
 
 // --- Fallbacks spécifiques par domaine (pour le mode preview) ---
@@ -80,19 +95,25 @@ export default async function handler(req, res) {
     if (req.method === 'OPTIONS') return res.status(200).end();
     if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-    const user = await verifyAuth(req);
-    if (!user) return res.status(401).json({ error: 'Non authentifié' });
+    // Filet anti-crash : toute exception (ex. verifyAuth qui throw) doit renvoyer du JSON,
+    // jamais la page d'erreur HTML de Vercel (sinon le client stocke un JSON.parse raté en dur).
+    try {
+        const user = await verifyAuth(req);
+        if (!user) return res.status(401).json({ error: 'Non authentifié' });
 
-    const { url, mode } = req.body || {};
-    if (!url) return res.status(400).json({ error: 'URL manquante' });
+        const { url, mode } = req.body || {};
+        if (!url) return res.status(400).json({ error: 'URL manquante' });
 
-    // Mode 'preview' : extraction rapide OG tags, pas d'IA
-    if (mode === 'preview') {
-        return handlePreview(req, res, url);
+        // Mode 'preview' : extraction rapide OG tags, pas d'IA
+        if (mode === 'preview') {
+            return handlePreview(req, res, url);
+        }
+        // Mode par défaut : extraction complète via Claude Haiku
+        return handleFullScrape(req, res, url);
+    } catch (err) {
+        console.error('[scrape-listing] handler crash:', err.message);
+        return res.status(200).json({ image_url: null, title: null, error: 'handler_error' });
     }
-
-    // Mode par défaut : extraction complète via Claude Haiku
-    return handleFullScrape(req, res, url);
 }
 
 // --- Mode preview : OG tags + fallback domaine ---

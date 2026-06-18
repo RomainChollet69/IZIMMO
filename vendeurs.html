@@ -9573,7 +9573,8 @@
         }
 
         async function fetchLinkPreview(url) {
-            if (linkPreviews[url] && !linkPreviews[url].loading) return;
+            // On (re)scrape si aucun aperçu, ou si l'aperçu existant n'a pas d'image (erreur passée).
+            if (linkPreviews[url] && (linkPreviews[url].loading || linkPreviews[url].image_url)) return;
             linkPreviews[url] = { loading: true };
             renderLinks();
             try {
@@ -9825,6 +9826,12 @@
             currentLinks = Array.isArray(seller.links) ? [...seller.links] : [];
             linkPreviews = (seller.link_previews && typeof seller.link_previews === 'object') ? { ...seller.link_previews } : {};
             renderLinks();
+            // Auto-réparation : re-scrape les liens dont l'aperçu a échoué ou n'a pas d'image
+            // (ex. ancien scrape qui avait planté). L'aperçu corrigé est persisté à l'enregistrement.
+            currentLinks.forEach(u => {
+                const p = linkPreviews[u];
+                if (!p || (!p.image_url && !p.loading)) fetchLinkPreview(u);
+            });
             // Liens typés du mail de suivi post-visite
             document.getElementById('linkDocuments').value = seller.link_documents || '';
             document.getElementById('linkVirtualTour').value = seller.link_virtual_tour || '';

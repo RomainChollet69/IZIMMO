@@ -4,6 +4,17 @@
 
 ---
 
+## Session 2026-06-18 — Fix : photo du bien absente sur la page Visites
+
+### Problème
+La vignette d'un bien (carte Visites) vient de l'og:image scrapée du lien d'annonce (`sellers.link_previews[url].image_url`, via `getSellerPhoto`). Pour un bien efficity, `link_previews` contenait une **erreur** figée (« An error occurred… not valid JSON ») : le scrape avait planté côté plateforme (réponse non-JSON) et le front l'avait stockée. De plus, les pages efficity exposent **2 og:image** (le logo efficity en premier, puis la vraie photo) → même réussi, le scrape prenait le logo.
+
+### Corrections
+- **`api/scrape-listing.js`** : `extractImage` collecte désormais TOUS les og:image/twitter:image et **écarte les logos/svg** (prend la vraie photo). + **filet anti-crash** : le handler est enveloppé d'un try/catch renvoyant du JSON (plus jamais la page d'erreur HTML de Vercel qui faisait planter le `JSON.parse` client).
+- **`vendeurs.html`** : **auto-réparation** — à l'ouverture d'une fiche, les liens dont l'aperçu a échoué ou n'a pas d'image sont **re-scrapés** (persistés à l'enregistrement) ; guard de `fetchLinkPreview` ajusté (re-scrape si pas d'image).
+- **Data-fix** : aperçu du bien concerné (Stéphanie DUPUY, Plain Vallon) corrigé avec la vraie photo.
+
+
 ## Session 2026-06-18b — Date de relance : autoriser le champ vide (vendeurs)
 
 ### Modifications
