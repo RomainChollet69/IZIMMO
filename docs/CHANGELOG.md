@@ -36,6 +36,24 @@
 
 ---
 
+## Session 2026-06-18 — Matching portail : système de points (ville > surface > prix)
+
+### Évolution
+Remplacement de la cascade de règles (adresse → ville+prix → caractéristiques) par un **score pondéré**, dans `api/inbound-email.js` (`scoreSellerForRequest`) et `visites.html` (`scoreSellerForRequestFront`). La **référence** (Réf Pro, cf. apprentissage) reste prioritaire et absolue (étape 0).
+
+### Barème (sur ~140 points)
+- **VILLE** (priorité 1) : 50 pts si CP exact ou nom de ville présent dans l'adresse du bien, + bonus jusqu'à 25 pts si l'email porte une vraie adresse de rue qui recoupe le bien.
+- **SURFACE** (priorité 2) : 40 / 28 / 15 pts selon l'écart (≤3% / ≤7% / ≤12%).
+- **PRIX** (priorité 3) : 25 / 18 / 12 pts (≤3% / ≤8% / ≤15%). **Tolérant aux baisses non saisies dans Léon** : si le prix Léon est plus haut que le portail (jusqu'à +30%), 8 pts au lieu de 0.
+- **TYPE** : garde-fou strict, un appartement ne matche jamais une maison (score -1, exclu).
+
+### Sélection
+Meilleur bien retenu si **score ≥ 60 ET écart ≥ 12 avec le 2e** (sinon ambigu → "Aucun bien matché", l'agent matche à la main et la réf est apprise). Confiance haute si score ≥ 90.
+
+### Vérifié
+Simulation sur les biens réels de Caluire : maison 469k/121m² → Duculty (103, autres exclus par type) ; email "appartement" à 469k → aucun match (ambigu) ; surface formatée (`"80.28 m²"`) et budget formaté (`"280 000 €"`) parsés correctement.
+
+
 ## Session 2026-06-18 — Fix matching portail : faux matchs + apprentissage de la référence
 
 ### Bug
