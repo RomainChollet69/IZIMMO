@@ -4,6 +4,20 @@
 
 ---
 
+## Session 2026-06-18 — Visites : réordonnancement des biens (drag & drop) + astuce photo
+
+### Réordonnancement vertical des biens
+- Chaque bien de la page Visites (accordéon desktop) a une **poignée** (`fa-grip-vertical`) à gauche du header pour le **glisser verticalement** et changer son ordre.
+- Ordre **mémorisé par utilisateur** : `localStorage` clé `leon_visit_order_<userId>` (id mis en cache dans `getCurrentUserId`). Réappliqué au rendu **desktop ET mobile** via `applyVisitOrder()`.
+- **Tri stable** : les biens non encore positionnés à la main gardent le tri par défaut (visites planifiées d'abord, etc.) et se rangent à la suite.
+- Sortable HTML5 (`handleAccordionDragStart/DragOver/DragEnd`) **gaté par la poignée** : le reste du header garde le clic/dépliage normal. `handleContactDrop` protégé pour ne pas confondre un réordonnancement avec un dépôt de contact.
+- **Mobile** : pas de drag tactile (HTML5 DnD non tactile), mais la liste mobile **respecte l'ordre** défini sur desktop.
+
+### Astuce "photo manquante" sur les biens sans photo
+- Quand un bien n'a pas de photo (lien portail au lieu d'un lien réseau), une **ligne cliquable** sous l'adresse invite à coller un lien réseau (efficity, IAD) et **ouvre la fiche** (`vendeurs.html?openLead=ID`). **Masquable définitivement** (`localStorage leon_visit_photo_hint`). Desktop + mobile.
+- Astuce équivalente ajoutée dans la fiche bien (`vendeurs.html`, section "Liens d'annonces").
+
+
 ## Session 2026-06-18 — Fix : photo du bien absente sur la page Visites
 
 ### Problème
