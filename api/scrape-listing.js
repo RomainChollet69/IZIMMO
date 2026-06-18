@@ -57,10 +57,10 @@ const DOMAIN_FALLBACKS = {
 
 function efficityFallback(url) {
     // URL: /achat-immobilier/maison_96-m2_lyon_69009_28165417/
-    const idMatch = url.match(/[_-](\d{6,})\/?(?:\?.*)?$/);
-    if (!idMatch) return { image_url: null, title: null };
-    const listingId = idMatch[1];
-    const image_url = `https://d1q967606ga7w2.cloudfront.net/common/house/${listingId}/photos/xxl/2.png`;
+    // On ne devine PAS l'URL de la photo : le nom de fichier varie (4.png, 01.JPG,
+    // page-de-garde.jpg...) et une URL devinée renvoie un 404 = image cassée.
+    // La vraie photo vient de l'og:image (2e balise) quand le fetch de page réussit.
+    // Ce fallback ne sert qu'à reconstruire un titre lisible si la page est inaccessible.
     let title = null;
     const pathMatch = url.match(/\/([^/]+)_(\d+)\/?(?:\?.*)?$/);
     if (pathMatch) {
@@ -71,7 +71,7 @@ function efficityFallback(url) {
             .replace(/\b\w/g, c => c.toUpperCase())
             .trim();
     }
-    return { image_url, title };
+    return { image_url: null, title };
 }
 
 function getDomainFallback(url) {
