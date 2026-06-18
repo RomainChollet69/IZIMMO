@@ -1716,3 +1716,26 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Conséquences** :
 - Latence d'envoi ≤ 10 min (granularité du cron) — acceptable pour de la confirmation et des rappels.
 - Dépend de la variable d'env **`CRON_SECRET`** (auth `Authorization: Bearer ${CRON_SECRET}`).
+
+
+## D079 — Matching demande portail → bien : score pondéré + apprentissage de la référence
+
+**Date** : 2026-06-18
+**Statut** : Actif (fait évoluer [[D070]] et D077)
+
+**Contexte** : Le matching des demandes de visite portail vers un bien sous mandat était une cascade de règles (adresse → ville+prix → caractéristiques). Bug constaté en production : un bien dont l'adresse stockée contenait la ville complète (`120 Chemin de Crépieux 69300 Caluire-et-Cuire`) captait toutes les demandes de la ville, car un match sur la **seule ville** passait en "high" sans vérifier prix ni type (un appartement 280k matchait une maison 469k). Les emails portail n'envoient souvent que la ville comme adresse.
+
+**Décision** : Remplacer la cascade par un **système de points**, identique côté backend (`scoreSellerForRequest`, api/inbound-email.js) et frontend (`scoreSellerForRequestFront`, visites.html). Trois mécanismes empilés :
+1. **Référence (Réf Pro) = signal absolu.** Si la réf de l'email correspond à un identifiant du bien (URL `links`, `mandate_reference`) ou à une réf apprise (`sellers.portal_references`), match immédiat haute confiance. C'est le signal le plus fiable car la Réf Pro est identique sur tous les portails pour un même bien.
+2. **Score pondéré** (sinon), priorités demandées par le métier : **VILLE** (50 pts + bonus adresse précise jusqu'à 25) > **SURFACE** (40/28/15 selon écart ≤3/7/12 %) > **PRIX** (25/18/12 selon écart ≤3/8/15 %). Le prix est **tolérant aux baisses non saisies dans Léon** : si le prix Léon est plus haut que le portail (jusqu'à +30 %), on accorde 8 pts au lieu de 0. Le **TYPE** est un garde-fou strict (appartement ≠ maison → bien exclu, score -1). Match retenu si **score ≥ 60 ET écart ≥ 12 avec le 2e** ; sinon "Aucun bien matché" (mieux qu'un mauvais match). Confiance haute si score ≥ 90.
+3. **Apprentissage** : au match manuel (`updatePortalMatch` → `learnPortalReference`), la Réf Pro du contact est mémorisée dans `sellers.portal_references` (colonne `text[]`). Les futurs emails de ce bien matchent alors automatiquement via le mécanisme 1. Boucle auto-réparante.
+
+**Alternatives rejetées** :
+- **Garder la cascade en corrigeant juste le bug ville** : ne répond pas au besoin métier (pondération ville > surface > prix) et reste fragile (ordre des règles arbitraire).
+- **Hard-gate sur le prix** (rejet si écart > X %) : incompatible avec les baisses de prix non répercutées dans Léon. Le prix doit être un critère gradué, jamais éliminatoire.
+- **Devinette quand plusieurs candidats proches** (ancien "low confidence") : source de faux positifs. On préfère "Aucun bien matché" + correction manuelle (qui nourrit l'apprentissage).
+
+**Conséquences** :
+- Les budgets parfois stockés formatés (`"280 000 €"`) doivent être parsés (`parsePriceFront` / `toNum`) partout (score ET affichage) — sinon `parseInt` tronque à l'espace (`280`).
+- Migration `add_portal_references_to_sellers` (colonne `text[]`).
+- Un bien dont l'adresse ne contient pas la ville (ex : `9 Chemin du Plain Vallon`) ne marquera pas de points "ville" : il faut alors la réf (apprise) ou des points surface+prix. Conseiller aux agents de saisir l'adresse complète.

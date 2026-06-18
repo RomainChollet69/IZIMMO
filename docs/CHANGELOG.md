@@ -4,6 +4,15 @@
 
 ---
 
+## Session 2026-06-18 — Fix : prix tronqué (280 € au lieu de 280 000 €) sur Visites
+
+### Bug
+Dans la modale "Associer un bien" (et la vue Archive, la liste change-match), le prix d'un bien au budget stocké formaté (`"280 000 €"`) s'affichait `280 €`. Cause : `parseInt("280 000 €")` s'arrête au premier espace → `280`.
+
+### Correctif
+Les 3 affichages de prix de `visites.html` passent par `parsePriceFront` (retrait de tous les non-chiffres avant `toLocaleString`). Gère les deux formats stockés (`"280 000 €"` et `"280000"`). Voir note budget dans `docs/ARCHITECTURE.md` (table `sellers`).
+
+
 ## Session 2026-06-18 — Fix : drag & drop des biens (Visites) ne démarrait jamais
 
 ### Bug

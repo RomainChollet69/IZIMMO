@@ -418,8 +418,8 @@ POST /api/inbound-email
   │      └── Non-portail → flag user_integrations (non_portal_last_at/sender) + HTTP 200 "ignored" (pas de parsing)
   ├── 4. Déduplication : UNIQUE(user_id, email_message_id)
   ├── 5. Claude Haiku : extraction structurée (nom, tél, email, adresse, portail)
-  ├── 6. Matching sellers par adresse (waterfall : adresse > type+prix)
-  └── 7. INSERT visit_requests (status: pending)
+  ├── 6. Matching sellers : référence (Réf Pro) sinon score pondéré ville > surface > prix
+  └── 7. INSERT visit_requests (status: pending, match_confidence)
     │
     ▼
 visites.html — Bandeau "Nouvelles demandes"
@@ -435,6 +435,13 @@ visites.html — Bandeau "Nouvelles demandes"
 3. Bouton "Télécharger mon filtre Gmail" (`downloadGmailFilter()`) : génère côté client un `.xml` (flux Atom des filtres Gmail) pré-rempli avec l'adresse inbound (`shouldForwardTo`) + les domaines portails (`from`, constante `PORTAL_FILTER_FROM`), à importer dans Gmail → Filtres → Importer des filtres
 
 **Allowlist anti-bruit** (`PORTAL_SENDER_DOMAINS`, voir D077) : beaucoup d'agents transfèrent TOUTE leur boîte Gmail au lieu d'un filtre ciblé. L'allowlist stricte (matching racine + sous-domaines) rejette tout expéditeur non-portail AVANT Claude. Chaque rejet est loggé (`[InboundEmail] Expéditeur non-portail rejeté: …`) et horodaté sur `user_integrations` (`non_portal_last_at` / `non_portal_last_sender`). `visites.html` affiche alors un bandeau rouge ciblé (`renderBlanketFwdWarning`) aux seuls agents dont `non_portal_last_at` < 14 jours (fenêtre glissante auto-réparante), masquable via localStorage `leon_dismiss_blanket_fwd`. Aperçu : `visites.html?previewBlanketFwd=1`.
+
+**Matching demande → bien** (voir D079). Logique identique côté backend (`scoreSellerForRequest`, api/inbound-email.js) et frontend (`scoreSellerForRequestFront`, visites.html, re-match des demandes non matchées au chargement) :
+1. **Référence (Réf Pro)** : si la réf de l'email correspond à un identifiant d'annonce du bien (URL `links`, `mandate_reference`) ou à une réf apprise (`portal_references`), match immédiat haute confiance. Signal le plus fiable car identique sur tous les portails.
+2. **Score pondéré** (sinon) : VILLE (50 pts + bonus adresse précise 25) > SURFACE (40/28/15 selon écart) > PRIX (25/18/12, tolérant aux baisses non saisies : prix Léon plus haut que le portail jusqu'à +30% = 8 pts). Le TYPE est un garde-fou strict (appartement ≠ maison → exclu). Match retenu si score ≥ 60 ET écart ≥ 12 avec le 2e bien ; sinon "Aucun bien matché" (l'agent matche à la main).
+3. **Apprentissage** : au match manuel (`updatePortalMatch` → `learnPortalReference`), la Réf Pro du contact est mémorisée dans `sellers.portal_references` → tous les futurs emails de ce bien matchent automatiquement (boucle 1).
+
+Les budgets parfois stockés formatés (`"280 000 €"`) sont parsés via `parsePriceFront` / `toNum` (retrait des non-chiffres) pour le score ET l'affichage.
 
 ---
 
@@ -470,7 +477,10 @@ visites.html — Bandeau "Nouvelles demandes"
 | `position`      | INT         | Ordre dans la colonne du pipeline                        |
 | `created_at`    | TIMESTAMPTZ | Date de création                                         |
 | `estimated_works` | NUMERIC   | Estimation travaux (€) — impacte le matching budget      |
+| `portal_references` | TEXT[]  | Réfs d'annonce portail (Réf Pro) apprises au match manuel — matching auto des demandes (voir D079) |
 | `updated_at`    | TIMESTAMPTZ | Dernière modification (trigger auto)                     |
+
+> Note : `budget` est parfois stocké formaté (`"280 000 €"`) selon la source de saisie. Toujours le parser via retrait des non-chiffres (`parsePriceFront` / `toNum`) avant calcul ou affichage.
 
 ### Table `buyers`
 
