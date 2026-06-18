@@ -558,104 +558,21 @@ async function matchSeller(userId, parsed) {
         }
     }
 
-    // 1. Matching par adresse (score bidirectionnel, seuils assouplis).
-    //    Ignoré si l'adresse de l'email n'est qu'une ville (sinon faux positif : tout
-    //    bien stocké avec sa ville scorerait au max). On ne score que des biens compatibles
-    //    en type/prix pour éviter de matcher un appart 280k sur une maison 469k de la même rue.
-    if (parsed.property_address && !addressIsCityOnly(parsed.property_address)) {
-        const searchWords = normalizeAddress(parsed.property_address);
-        let bestMatch = null;
-        let bestScore = 0;
+    // 1. Système de points : ville (priorité 1) > surface (2) > prix (3).
+    //    On score chaque bien, on prend le meilleur s'il dépasse le seuil ET devance
+    //    nettement le 2e (sinon ambigu -> pas de match, l'agent matche à la main).
+    const scored = sellers
+        .map(s => ({ seller: s, score: scoreSellerForRequest(s, parsed) }))
+        .filter(x => x.score >= 0)
+        .sort((a, b) => b.score - a.score);
 
-        for (const seller of sellers) {
-            if (!seller.address) continue;
-            if (!isCompatibleSeller(seller, parsed)) continue;
-            const sellerWords = normalizeAddress(seller.address);
-            const common = searchWords.filter(w => sellerWords.includes(w));
-            // Score bidirectionnel : prend le max pour gérer les adresses partielles
-            const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
-            const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
-            const score = Math.max(scoreFromSearch, scoreFromSeller);
-
-            if (score > bestScore) {
-                bestScore = score;
-                bestMatch = seller;
-            }
-        }
-
-        if (bestMatch && bestScore >= 0.4) {
-            return { id: bestMatch.id, confidence: bestScore >= 0.6 ? 'high' : 'medium' };
-        }
-    }
-
-    // 2. Matching ville/CP + prix (quand l'adresse est juste une ville)
-    if (parsed.property_address && parsed.property_price) {
-        const normAddr = normalizeAddress(parsed.property_address).join(' ');
-        const cpMatch = normAddr.match(/\b(69\d{3}|01\d{3}|38\d{3}|42\d{3})\b/);
-        const reqCP = cpMatch ? cpMatch[1] : '';
-        const cityWords = normalizeAddress(parsed.property_address).filter(w => !/^\d+$/.test(w) && w.length > 2);
-
-        if (reqCP || cityWords.length > 0) {
-            const priceMargin = parsed.property_price * 0.15;
-            const cityMatches = sellers.filter(s => {
-                if (!s.address || !s.budget) return false;
-                if (!isCompatibleSeller(s, parsed)) return false; // type cohérent + prix dans la marge
-                const sellerNorm = normalizeAddress(s.address).join(' ');
-                const cpOk = reqCP && sellerNorm.includes(reqCP);
-                const cityOk = cityWords.length > 0 && cityWords.some(w => sellerNorm.includes(w));
-                const priceOk = Math.abs(s.budget - parsed.property_price) <= priceMargin;
-                return (cpOk || cityOk) && priceOk;
-            });
-
-            // Candidat unique uniquement : plusieurs biens même ville + même tranche de prix
-            // = ambigu, on ne devine pas (mieux vaut "Aucun bien matché" qu'un mauvais match).
-            if (cityMatches.length === 1) {
-                return { id: cityMatches[0].id, confidence: 'medium' };
-            }
-        }
-    }
-
-    // 3. Matching par CARACTÉRISTIQUES du bien (type + surface + pièces + prix).
-    // Indispensable pour les portails (LeBonCoin...) qui n'envoient PAS l'adresse,
-    // seulement le titre "Appartement 4 pièces 88 m² / 299000 €".
-    // L'ancien fallback "type + prix seuls" était désactivé (trop de faux positifs) ;
-    // ici on exige la SURFACE (très discriminante) + un candidat UNIQUE → faux positif quasi nul.
-    {
-        const reqType = normalizeType(parsed.property_type);
-        const reqSurface = toNum(parsed.property_surface);
-        const reqRooms = toInt(parsed.property_rooms);
-        const reqPrice = toNum(parsed.property_price);
-
-        // Critère discriminant minimal requis : une surface (ou à défaut type + prix)
-        if (reqSurface || (reqType && reqPrice)) {
-            const candidates = sellers.filter(s => {
-                const sType = normalizeType(s.property_type);
-                const sSurface = toNum(s.surface);
-                const sRooms = toInt(s.rooms);
-                const sPrice = toNum(s.budget || s.mandate_price);
-
-                // Type : doit concorder si connu des deux côtés
-                if (reqType && sType && reqType !== sType) return false;
-                // Surface : si l'email en a une, on l'exige côté bien, tolérance ±5% (min 3 m²)
-                if (reqSurface) {
-                    if (!sSurface) return false;
-                    const tol = Math.max(3, reqSurface * 0.05);
-                    if (Math.abs(sSurface - reqSurface) > tol) return false;
-                }
-                // Pièces : doivent concorder si connues des deux côtés
-                if (reqRooms && sRooms && reqRooms !== sRooms) return false;
-                // Prix : tolérance ±15% (l'annonce portail peut différer du prix Léon)
-                if (reqPrice && sPrice && Math.abs(sPrice - reqPrice) > reqPrice * 0.15) return false;
-                return true;
-            });
-
-            if (candidates.length === 1) {
-                // Élevée si surface + (prix ou pièces) concordent, sinon medium
-                const strong = reqSurface && (reqPrice || reqRooms);
-                console.log(`[InboundEmail:Match] Caractéristiques (type:${reqType} surface:${reqSurface} pièces:${reqRooms} prix:${reqPrice}) → seller ${candidates[0].id}`);
-                return { id: candidates[0].id, confidence: strong ? 'high' : 'medium' };
-            }
-            // Plusieurs candidats → ambigu : on ne devine pas (évite un mauvais match silencieux).
+    if (scored.length > 0) {
+        const best = scored[0];
+        const secondScore = scored[1] ? scored[1].score : 0;
+        if (best.score >= MATCH_ACCEPT_MIN && (best.score - secondScore) >= MATCH_MARGIN) {
+            const confidence = best.score >= MATCH_HIGH_MIN ? 'high' : 'medium';
+            console.log(`[InboundEmail:Match] Score ${best.score} (2e: ${secondScore}) → seller ${best.seller.id} [${confidence}]`);
+            return { id: best.seller.id, confidence };
         }
     }
 
@@ -703,17 +620,66 @@ function addressIsCityOnly(raw) {
     return !nums.some(n => n.length >= 1 && n.length <= 4); // un CP (5 chiffres) ne compte pas
 }
 
-// Garde-fou : un bien n'est compatible avec une demande que si le type ne contredit pas
-// (appartement vs maison) et le prix ne s'écarte pas trop (anti-match "280k appart → 469k maison").
-function isCompatibleSeller(seller, parsed, priceTol = 0.2) {
+// Score de correspondance bien <-> demande (système de points).
+// Priorités demandées : VILLE (1) > SURFACE (2) > PRIX (3).
+// Le prix est volontairement tolérant : la baisse de prix n'est pas toujours saisie dans
+// Léon, donc un prix Léon plus élevé que le portail reste acceptable.
+// Le TYPE est un garde-fou strict : un appartement ne matche jamais une maison (-> -1, exclu).
+function scoreSellerForRequest(seller, parsed) {
     const rType = normalizeType(parsed.property_type);
     const sType = normalizeType(seller.property_type);
-    if (rType && sType && rType !== sType) return false;
+    if (rType && sType && rType !== sType) return -1; // type incompatible = exclu
+
+    let score = 0;
+
+    // --- VILLE (priorité 1, 50 pts) + bonus adresse précise (jusqu'à 25 pts) ---
+    if (parsed.property_address && seller.address) {
+        const reqNorm = normalizeAddress(parsed.property_address);
+        const sellerNorm = normalizeAddress(seller.address);
+        const sellerJoined = sellerNorm.join(' ');
+        const cpMatch = reqNorm.join(' ').match(/\b(\d{5})\b/);
+        const reqCP = cpMatch ? cpMatch[1] : '';
+        const cityWords = reqNorm.filter(w => !/^\d+$/.test(w) && w.length > 2);
+        const cpOk = reqCP && sellerJoined.includes(reqCP);
+        const cityOk = cityWords.length > 0 && cityWords.some(w => sellerJoined.includes(w));
+        if (cpOk || cityOk) score += 50;
+        // Bonus si l'email porte une vraie adresse (pas juste la ville) qui recoupe le bien
+        if (!addressIsCityOnly(parsed.property_address)) {
+            const common = reqNorm.filter(w => sellerNorm.includes(w));
+            const overlap = Math.max(common.length / Math.max(reqNorm.length, 1), common.length / Math.max(sellerNorm.length, 1));
+            score += Math.round(overlap * 25);
+        }
+    }
+
+    // --- SURFACE (priorité 2, 40 pts) ---
+    const rSurf = toNum(parsed.property_surface);
+    const sSurf = toNum(seller.surface);
+    if (rSurf && sSurf) {
+        const d = Math.abs(sSurf - rSurf) / rSurf;
+        if (d <= 0.03) score += 40;
+        else if (d <= 0.07) score += 28;
+        else if (d <= 0.12) score += 15;
+    }
+
+    // --- PRIX (priorité 3, 25 pts, tolérant aux baisses non saisies) ---
     const rPrice = toNum(parsed.property_price);
     const sPrice = toNum(seller.budget || seller.mandate_price);
-    if (rPrice && sPrice && Math.abs(sPrice - rPrice) > rPrice * priceTol) return false;
-    return true;
+    if (rPrice && sPrice) {
+        const ad = Math.abs(sPrice - rPrice) / rPrice;
+        if (ad <= 0.03) score += 25;
+        else if (ad <= 0.08) score += 18;
+        else if (ad <= 0.15) score += 12;
+        // Prix Léon plus haut que le portail = baisse probablement non saisie -> on tolère
+        else if (sPrice > rPrice && (sPrice - rPrice) / rPrice <= 0.30) score += 8;
+    }
+
+    return score;
 }
+
+// Seuils d'acceptation du score (sur ~140 max).
+const MATCH_ACCEPT_MIN = 60;   // en deça : on ne matche pas (mieux vaut "Aucun bien matché")
+const MATCH_HIGH_MIN = 90;     // au dessus : confiance haute
+const MATCH_MARGIN = 12;       // écart minimal avec le 2e pour éviter l'ambiguïté
 
 function normalizeAddress(address) {
     return address

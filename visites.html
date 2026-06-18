@@ -6014,90 +6014,25 @@
             }
         }
 
-        // 1. Matching par adresse — ignoré si l'adresse n'est qu'une ville (faux positif :
-        //    tout bien stocké avec sa ville scorerait au max). On ne score que les biens
-        //    compatibles type/prix pour ne pas matcher un appart 280k sur une maison 469k.
-        if (req.property_address && !addressIsCityOnlyFront(req.property_address)) {
-            const searchWords = normalizeAddressFront(req.property_address);
-            if (searchWords.length > 0) {
-                // Calculer les scores pour tous les biens
-                const scored = matchableSellers
-                    .filter(s => s.address && isCompatibleSellerFront(s, req.property_type, reqPrice))
-                    .map(seller => {
-                        const sellerWords = normalizeAddressFront(seller.address);
-                        const common = searchWords.filter(w => sellerWords.includes(w));
-                        const scoreFromSearch = common.length / Math.max(searchWords.length, 1);
-                        const scoreFromSeller = common.length / Math.max(sellerWords.length, 1);
-                        return { seller, score: Math.max(scoreFromSearch, scoreFromSeller) };
-                    })
-                    .filter(s => s.score >= 0.3)
-                    .sort((a, b) => b.score - a.score);
+        // 1. Système de points : ville (priorité 1) > surface (2) > prix (3).
+        //    On prend le meilleur bien s'il dépasse le seuil ET devance nettement le 2e ;
+        //    sinon ambigu → "Aucun bien matché" (l'agent matche à la main, réf apprise).
+        const reqSurface = parseSurfaceFront(req.property_surface || req.parsed_data?.property_surface);
+        const scoredSellers = matchableSellers
+            .map(s => ({ seller: s, score: scoreSellerForRequestFront(s, req.property_address, req.property_type, reqPrice, reqSurface) }))
+            .filter(x => x.score >= 0)
+            .sort((a, b) => b.score - a.score);
 
-                if (scored.length === 1) {
-                    req.matched_seller_id = scored[0].seller.id;
-                    req.sellers = scored[0].seller;
-                    req.match_confidence = scored[0].score >= 0.6 ? 'high' : 'medium';
-                    return;
-                }
-
-                // Plusieurs biens avec le même score d'adresse → départager par prix
-                if (scored.length > 1 && reqPrice) {
-                    const topScore = scored[0].score;
-                    const tied = scored.filter(s => Math.abs(s.score - topScore) < 0.05);
-                    if (tied.length > 1) {
-                        tied.sort((a, b) => Math.abs((a.seller.budget || 0) - reqPrice) - Math.abs((b.seller.budget || 0) - reqPrice));
-                    }
-                    req.matched_seller_id = tied[0].seller.id;
-                    req.sellers = tied[0].seller;
-                    req.match_confidence = topScore >= 0.6 ? 'high' : 'medium';
-                    return;
-                }
-
-                // Plusieurs biens, pas de prix → prendre le meilleur score si nettement supérieur
-                if (scored.length > 1 && scored[0].score > scored[1].score + 0.15) {
-                    req.matched_seller_id = scored[0].seller.id;
-                    req.sellers = scored[0].seller;
-                    req.match_confidence = scored[0].score >= 0.6 ? 'high' : 'medium';
-                    return;
-                }
+        if (scoredSellers.length > 0) {
+            const best = scoredSellers[0];
+            const secondScore = scoredSellers[1] ? scoredSellers[1].score : 0;
+            if (best.score >= MATCH_ACCEPT_MIN_FRONT && (best.score - secondScore) >= MATCH_MARGIN_FRONT) {
+                req.matched_seller_id = best.seller.id;
+                req.sellers = best.seller;
+                req.match_confidence = best.score >= MATCH_HIGH_MIN_FRONT ? 'high' : 'medium';
+                console.log(`[Match] Score ${best.score} (2e: ${secondScore}) → ${best.seller.address || best.seller.id} [${req.match_confidence}]`);
             }
         }
-
-        // 2. Matching par ville/CP + prix (quand l'adresse du portail est juste "VILLE, CP")
-        if (req.property_address && reqPrice) {
-            const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ');
-            const reqAddr = norm(req.property_address);
-            // Extraire code postal de la demande
-            const cpMatch = reqAddr.match(/\b(69\d{3}|01\d{3}|38\d{3}|42\d{3})\b/);
-            const reqCP = cpMatch ? cpMatch[1] : '';
-            // Extraire mots de ville (hors CP et chiffres de rue)
-            const reqCityWords = reqAddr.replace(/\d+/g, ' ').split(/\s+/).filter(w => w.length > 2);
-
-            if (reqCP || reqCityWords.length > 0) {
-                const cityMatches = matchableSellers.filter(s => {
-                    if (!s.address) return false;
-                    if (!isCompatibleSellerFront(s, req.property_type, reqPrice)) return false; // type + prix cohérents
-                    const sellerAddr = norm(s.address);
-                    const cpOk = reqCP && sellerAddr.includes(reqCP);
-                    const cityOk = reqCityWords.length > 0 && reqCityWords.some(w => sellerAddr.includes(w));
-                    const priceOk = s.budget && Math.abs(s.budget - reqPrice) <= reqPrice * 0.15;
-                    return (cpOk || cityOk) && priceOk;
-                });
-
-                // Candidat unique uniquement : plusieurs biens même ville + même tranche de prix
-                // = ambigu, on ne devine pas (mieux vaut "Aucun bien matché").
-                if (cityMatches.length === 1) {
-                    req.matched_seller_id = cityMatches[0].id;
-                    req.sellers = cityMatches[0];
-                    req.match_confidence = 'medium';
-                    return;
-                }
-            }
-        }
-
-        // 3. Fallback type + prix : DÉSACTIVÉ (cf. api/inbound-email.js).
-        // Trop de faux positifs sur bienici/SeLoger/Gingka — on préfère
-        // afficher "Aucun bien matché" et laisser l'agent matcher à la main.
     }
 
     function normalizeAddressFront(address) {
