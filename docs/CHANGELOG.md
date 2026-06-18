@@ -17,6 +17,27 @@
 
 ---
 
+## Session 2026-06-18 — Fix matching portail : faux matchs + apprentissage de la référence
+
+### Bug
+Les demandes de visite portail (LeBonCoin, SeLoger, ParuVendu, Jinka, Bien'ici) étaient matchées au mauvais bien. Cas réel : tous les contacts du bien DUPUY (appartement, 9 Chemin du Plain Vallon, 280 000€, réf portail 219559) atterrissaient sur le bien Duculty (maison, 120 Chemin de Crépieux, 469 000€).
+
+### Cause
+Le bien Duculty a sa **ville complète** dans l'adresse stockée (`... 69300 Caluire-et-Cuire`), DUPUY non (`9 Chemin du Plain Vallon`). Les emails portail n'ont souvent que la ville comme adresse. Le match par adresse scorait alors la ville à 1.0 contre Duculty et renvoyait "high" **sans vérifier ni le prix ni le type**. Duculty devenait un aimant pour tout Caluire (apparts, commerce à 20k, etc.).
+
+### Corrections (`api/inbound-email.js` matchSeller + `visites.html` frontendMatchSeller)
+- **Adresse "ville seule"** (sans mot de voie ni numéro de rue) n'est plus un match adresse fiable → routée vers le matching ville+prix (`addressIsCityOnly` / `addressIsCityOnlyFront`).
+- **Garde-fou type + prix** sur tous les chemins (`isCompatibleSeller`) : jamais un appartement matché sur une maison, ni un écart de prix > 20%.
+- **Étape ville+prix** : candidat unique uniquement, plus de devinette "low confidence" (mieux vaut "Aucun bien matché" qu'un mauvais match).
+- **Apprentissage de la référence** : nouvelle colonne `sellers.portal_references` (text[]). Au match manuel (`updatePortalMatch` → `learnPortalReference`), la Réf Pro du contact est mémorisée sur le bien. Cette réf étant identique sur tous les portails, **tous les futurs emails de ce bien matchent automatiquement en "high"** (étape 0 référence, backend + front).
+- Parsing prix robuste côté front (`"280 000 €"` → `280000`).
+
+### Migration + data-fix
+- Migration `add_portal_references_to_sellers`.
+- `DUPUY.portal_references = {219559}`, `Duculty.portal_references = {205976}`.
+- Réaffectation des 4 demandes réf 219559 → DUPUY ; détachement de 3 demandes incompatibles restées sur Duculty (1 commerce 20k, 2 apparts 320k).
+
+
 ## Session 2026-06-18 — Visites : réordonnancement des biens (drag & drop) + astuce photo
 
 ### Réordonnancement vertical des biens
