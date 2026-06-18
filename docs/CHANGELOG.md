@@ -4,6 +4,18 @@
 
 ---
 
+## Session 2026-06-18b — Date de relance : autoriser le champ vide (vendeurs)
+
+### Modifications
+- **Comportement corrigé** : vider la « Date de relance » d'un lead vendeur puis « Mettre à jour » réassignait automatiquement une relance (J+15 après le RDV), impossible de laisser le champ vide
+  - Cause : l'auto-relance se déclenchait à CHAQUE update dès que `appointment_date` était présent et `reminder` vide (`handleFormSubmit`, ~ligne 10115)
+  - Fix : l'auto-relance ne se déclenche désormais que si le RDV est **nouvellement positionné/modifié** dans l'édition en cours. On mémorise la date RDV chargée dans `appointmentDate.dataset.loaded` et on compare à la valeur au submit (`rdvChanged`). Si l'utilisateur vide la relance sans toucher au RDV, le champ vide est respecté
+  - La fonctionnalité utile reste : poser un RDV crée toujours une relance auto J+15 si la relance est vide
+
+### Fichiers modifiés
+- `vendeurs.html` — `dataset.loaded` au chargement (édition + nouveau lead), condition `rdvChanged` dans l'auto-relance
+
+
 ## Session 2026-06-18 — Fix crash import par capture d'écran (vendeurs)
 
 ### Modifications

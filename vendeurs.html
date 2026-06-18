@@ -9690,6 +9690,7 @@
             // Reset RDV + commission
             document.getElementById('rdvDone').checked = false;
             document.getElementById('appointmentDate').value = '';
+            document.getElementById('appointmentDate').dataset.loaded = '';
             document.getElementById('appointmentDateGroup').style.display = 'none';
             document.getElementById('commissionRate').value = 4;
             document.getElementById('commissionAmount').value = '';
@@ -9794,6 +9795,8 @@
             document.getElementById('reminder').value = seller.reminder || '';
             document.getElementById('rdvDone').checked = seller.rdv_done || false;
             document.getElementById('appointmentDate').value = seller.appointment_date || '';
+            // Mémorise la date RDV chargée : l'auto-relance ne se déclenche que si le RDV change
+            document.getElementById('appointmentDate').dataset.loaded = seller.appointment_date || '';
             document.getElementById('appointmentDateGroup').style.display = seller.rdv_done ? '' : 'none';
             // Co-contact
             document.getElementById('contact2Name').value = seller.contact2_name || '';
@@ -10111,8 +10114,11 @@
                 link_listing: document.getElementById('linkListing').value.trim() || null
             };
 
-            // Auto-relance : si RDV vendeur positionné et pas de relance manuelle → relance à J+15
-            if (sellerData.appointment_date && !sellerData.reminder) {
+            // Auto-relance : uniquement quand un RDV est nouvellement positionné/modifié dans cette édition.
+            // Si l'utilisateur vide volontairement la relance sans toucher au RDV, on respecte le champ vide.
+            const rdvInput = document.getElementById('appointmentDate');
+            const rdvChanged = (rdvInput.dataset.loaded || '') !== (rdvInput.value || '');
+            if (sellerData.appointment_date && !sellerData.reminder && rdvChanged) {
                 const rdvDate = new Date(sellerData.appointment_date);
                 rdvDate.setDate(rdvDate.getDate() + DAYS_AUTO_REMINDER_AFTER_RDV);
                 sellerData.reminder = rdvDate.toISOString().split('T')[0];
