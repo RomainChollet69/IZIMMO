@@ -557,6 +557,16 @@
         }
         .accordion-photo img { width: 100%; height: 100%; object-fit: cover; }
         .accordion-photo.empty { display: flex; align-items: center; justify-content: center; color: #C4C9D4; font-size: 18px; }
+        /* Poignée de réordonnancement vertical des biens (drag & drop) */
+        .accordion-drag-handle {
+            display: flex; align-items: center; justify-content: center;
+            color: #C4C9D4; cursor: grab; padding: 0 4px; flex-shrink: 0;
+            font-size: 14px; align-self: stretch;
+        }
+        .accordion-drag-handle:hover { color: #667eea; }
+        .accordion-drag-handle:active { cursor: grabbing; }
+        .property-accordion.dragging { opacity: 0.45; }
+        .property-accordion.dragging .property-accordion-header { background: #EEF1FB; }
         /* Astuce affichée quand un bien n'a pas de photo (lien portail au lieu d'un lien réseau) */
         .photo-hint-line {
             display: inline-flex; align-items: center; gap: 8px; margin-top: 5px;
@@ -2238,7 +2248,7 @@
     </div>
 
     <!-- ===== MAIN CONTENT ===== -->
-    <main class="visits-container" id="visitsContainer">
+    <main class="visits-container" id="visitsContainer" ondragover="handleAccordionDragOver(event)">
         <div class="visits-empty">
             <i class="fa-solid fa-calendar-check"></i>
             <p>Chargement...</p>
@@ -2314,9 +2324,11 @@
     };
 
     // ===== AUTH =====
+    let cachedUserId = null; // mémorisé pour les clés localStorage synchrones (ordre des biens)
     async function getCurrentUserId() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (!session) { window.location.href = 'login.html'; return null; }
+        cachedUserId = session.user.id;
         return session.user.id;
     }
 
@@ -2842,7 +2854,7 @@
         }
 
         let html = '';
-        sortedKeys.forEach(key => {
+        applyVisitOrder(sortedKeys).forEach(key => {
             const group = groups[key];
             const seller = group.seller;
             const isOpen = mobileOpenSections.has(key);
@@ -3337,7 +3349,7 @@
         });
 
         let html = '';
-        sortedKeys.forEach(key => {
+        applyVisitOrder(sortedKeys).forEach(key => {
             html += renderPropertyAccordion(key, groups[key]);
         });
         container.innerHTML = html;
@@ -3347,6 +3359,81 @@
             const el = document.querySelector(`.property-accordion[data-seller-id="${id}"]`);
             if (el) el.classList.add('open');
         });
+    }
+
+    // ===== ORDRE MANUEL DES BIENS (drag & drop vertical) =====
+    // L'utilisateur peut réordonner les biens à la main ; l'ordre est mémorisé par utilisateur
+    // (localStorage). Les biens non encore positionnés gardent le tri par défaut, à la suite.
+    function visitOrderKey() { return `leon_visit_order_${cachedUserId || 'anon'}`; }
+
+    function getSavedVisitOrder() {
+        try {
+            const raw = localStorage.getItem(visitOrderKey());
+            const arr = raw ? JSON.parse(raw) : null;
+            return Array.isArray(arr) ? arr : null;
+        } catch (e) { return null; }
+    }
+
+    // Réordonne `keys` selon l'ordre sauvegardé. Tri stable : les biens absents de
+    // l'ordre sauvegardé conservent leur position relative issue du tri par défaut.
+    function applyVisitOrder(keys) {
+        const order = getSavedVisitOrder();
+        if (!order || !order.length) return keys;
+        const pos = new Map(order.map((id, i) => [id, i]));
+        return [...keys].sort((a, b) => {
+            const pa = pos.has(a) ? pos.get(a) : Infinity;
+            const pb = pos.has(b) ? pos.get(b) : Infinity;
+            return pa - pb;
+        });
+    }
+
+    // Enregistre l'ordre courant lu directement depuis le DOM (après un drop).
+    function saveVisitOrderFromDom() {
+        const container = document.getElementById('visitsContainer');
+        if (!container) return;
+        const ids = [...container.querySelectorAll('.property-accordion')]
+            .map(el => el.dataset.sellerId).filter(Boolean);
+        if (!ids.length) return;
+        try { localStorage.setItem(visitOrderKey(), JSON.stringify(ids)); } catch (e) { /* mode privé */ }
+    }
+
+    let draggedAccordion = null;
+
+    function handleAccordionDragStart(event, sellerId) {
+        // Seul le handle (≡) initie le réordonnancement ; ailleurs, on laisse le clic/sélection normaux.
+        if (!event.target.closest('.accordion-drag-handle')) { event.preventDefault(); return; }
+        draggedAccordion = event.currentTarget;
+        event.dataTransfer.effectAllowed = 'move';
+        try { event.dataTransfer.setData('text/leon-accordion', sellerId); } catch (e) { /* ignore */ }
+        // Décalé pour que le navigateur capture l'image de drag avant l'opacité
+        setTimeout(() => draggedAccordion && draggedAccordion.classList.add('dragging'), 0);
+    }
+
+    function getAccordionAfterY(container, y) {
+        const els = [...container.querySelectorAll('.property-accordion:not(.dragging)')];
+        let closest = { offset: -Infinity, element: null };
+        for (const child of els) {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) closest = { offset, element: child };
+        }
+        return closest.element;
+    }
+
+    function handleAccordionDragOver(event) {
+        if (!draggedAccordion) return; // ne pas interférer avec le drag de contacts
+        event.preventDefault();
+        const container = document.getElementById('visitsContainer');
+        const after = getAccordionAfterY(container, event.clientY);
+        if (after == null) container.appendChild(draggedAccordion);
+        else if (after !== draggedAccordion) container.insertBefore(draggedAccordion, after);
+    }
+
+    function handleAccordionDragEnd() {
+        if (!draggedAccordion) return;
+        draggedAccordion.classList.remove('dragging');
+        draggedAccordion = null;
+        saveVisitOrderFromDom();
     }
 
     // Astuce "photo manquante" : masquable définitivement (localStorage), même message pour tous les biens.
@@ -3473,8 +3560,12 @@
             visitCards += visitDropZone + '</div>';
         }
 
-        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}">
+        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}" draggable="true"
+            ondragstart="handleAccordionDragStart(event, '${sellerId}')"
+            ondragover="handleAccordionDragOver(event)"
+            ondragend="handleAccordionDragEnd()">
             <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
+                <span class="accordion-drag-handle" onclick="event.stopPropagation()" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>
                 ${photoHtml}
                 <div class="accordion-property-info">
                     <div class="accordion-address">${escapeHtml(address)}</div>
@@ -4766,6 +4857,7 @@
     function handleContactDrop(event, target) {
         event.preventDefault();
         target.classList.remove('drag-over');
+        if (draggedAccordion) return; // c'est un réordonnancement de bien, pas un contact déposé
         const contactId = event.dataTransfer.getData('text/plain');
         if (contactId) openPlanFromContact(contactId);
     }
