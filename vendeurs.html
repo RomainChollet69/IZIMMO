@@ -2815,7 +2815,7 @@
                 background: none;
                 border: none;
                 border-bottom: 2px solid transparent;
-                padding: 6px 10px;
+                padding: 9px 10px; /* ~37px de haut : cible tactile confortable pour la nav colonnes */
                 font-size: 13px;
                 font-weight: 600;
                 color: var(--m-text-secondary, #4A5568);
@@ -9434,16 +9434,27 @@
 
                 // Annexes
                 if (Array.isArray(fields.annexes) && fields.annexes.length > 0) {
+                    // Reset d'abord : une nouvelle dictée d'annexes REMPLACE les précédentes
+                    // (sinon une 2e dictée cumule à tort avec les annexes déjà cochées)
+                    document.querySelectorAll('input[name="annexes"]').forEach(cb => cb.checked = false);
                     fields.annexes.forEach(a => {
                         const cb = document.querySelector(`input[name="annexes"][value="${a}"]`);
                         if (cb) cb.checked = true;
                     });
                 }
 
-                // Notes uniquement si Claude a extrait une info complémentaire
+                // Notes : on CUMULE au lieu d'écraser pour qu'une 2e dictée complète
+                // la note existante (et ne détruise pas ce que l'agent a déjà saisi/dicté)
                 if (fields.notes) {
                     const noteInput = document.getElementById('noteInput');
-                    if (noteInput) noteInput.value = fields.notes;
+                    if (noteInput) {
+                        const existing = noteInput.value.trim();
+                        if (!existing) {
+                            noteInput.value = fields.notes;
+                        } else if (!existing.includes(fields.notes.trim())) {
+                            noteInput.value = existing + '\n' + fields.notes;
+                        }
+                    }
                 }
 
                 if (statusEl) {
@@ -12272,7 +12283,7 @@
         </div>
     </div>
 
-    <script src="js/relance-widget.js"></script>
+    <script src="js/relance-widget.js?v=260619"></script>
     <script src="js/todo-widget.js"></script>
     <script src="js/onboarding.js"></script>
 

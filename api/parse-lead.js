@@ -93,7 +93,14 @@ Dictée : "Appartement rez-de-chaussée vue sur parc pas de vis-à-vis DPE C, il
 Dictée : "Appartement 75m2 trois chambres à Villeurbanne, c'est du particulier à particulier, trouvé en pige"
 → property_type: "appartement", surface: 75, description: "3 chambres", address: "Villeurbanne", source: "pige", status: "competitor", notes: null
 
+Dictée : "mets la source en recommandation et le statut en lead tiède"
+→ source: "recommandation", status: "warm" (commande directe : applique la valeur demandée, tous les autres champs null)
+
+Dictée : "passe le statut en chaud et le type de bien en maison"
+→ status: "hot", property_type: "maison"
+
 Règles :
+- COMMANDES DIRECTES : si l'agent donne une instruction explicite ("mets la source en X", "passe le statut en Y", "change le type en Z", "marque-le comme chaud"), applique-la directement et renvoie la valeur correspondante, même hors contexte narratif. Une commande n'est PAS une invention : c'est une consigne explicite.
 - NE METS JAMAIS dans notes des infos qui décrivent le bien (étage, chambres, orientation, état, DPE...)
 - NE METS JAMAIS dans description des infos relationnelles (appel, rappeler, impression...)
 - Règle simple : cette info serait-elle sur une annonce immobilière ? Si oui → description. Si non → notes.
@@ -162,7 +169,11 @@ Dictée : "Cherche T3 lumineux étage élevé avec balcon à Lyon 3, budget 3000
 Dictée : "Couple primo-accédant, maison avec jardin et garage, 4 pièces minimum, rénové, recommandé par Marc"
 → property_type: "maison", rooms: "T4", description: "Rénové", criteria: ["jardin", "garage"], source: "recommandation", referrer_name: "Marc", notes: "Couple primo-accédant."
 
+Dictée : "mets la source en leboncoin et le secteur sur Lyon 6"
+→ source: "leboncoin", sector: "Lyon 6" (commande directe : applique la valeur demandée, tous les autres champs null)
+
 Règles :
+- COMMANDES DIRECTES : si l'agent donne une instruction explicite ("mets la source en X", "change le secteur en Y", "ajoute le critère parking"), applique-la directement et renvoie la valeur correspondante, même hors contexte narratif. Une commande n'est PAS une invention : c'est une consigne explicite.
 - NE METS JAMAIS dans notes des infos qui décrivent le bien (étage, orientation, état, lumineux...)
 - NE METS JAMAIS dans description des infos relationnelles (appel, rappeler, impression, projet...)
 - Règle simple : cette info serait-elle sur une annonce immobilière ? Si oui → description. Si non → notes.

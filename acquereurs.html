@@ -2469,7 +2469,7 @@
                 background: none;
                 border: none;
                 border-bottom: 2px solid transparent;
-                padding: 6px 10px;
+                padding: 9px 10px; /* ~37px de haut : cible tactile confortable pour la nav colonnes */
                 font-size: 13px;
                 font-weight: 600;
                 color: var(--m-text-secondary, #4A5568);
@@ -6723,6 +6723,9 @@
 
                 // Criteria checkboxes
                 if (Array.isArray(fields.criteria) && fields.criteria.length > 0) {
+                    // Reset d'abord : une nouvelle dictée de critères REMPLACE les précédents
+                    // (sinon une 2e dictée cumule à tort avec les critères déjà cochés)
+                    document.querySelectorAll('input[name="criteria"]').forEach(cb => cb.checked = false);
                     fields.criteria.forEach(c => {
                         const cb = document.querySelector(`input[name="criteria"][value="${c}"]`);
                         if (cb) cb.checked = true;
@@ -6771,10 +6774,18 @@
                 // Reminder date
                 if (fields.reminder) document.getElementById('reminder').value = fields.reminder;
 
-                // Notes uniquement si Claude a extrait une info complémentaire
+                // Notes : on CUMULE au lieu d'écraser pour qu'une 2e dictée complète
+                // la note existante (et ne détruise pas ce que l'agent a déjà saisi/dicté)
                 if (fields.notes) {
                     const noteInput = document.getElementById('noteInput');
-                    if (noteInput) noteInput.value = fields.notes;
+                    if (noteInput) {
+                        const existing = noteInput.value.trim();
+                        if (!existing) {
+                            noteInput.value = fields.notes;
+                        } else if (!existing.includes(fields.notes.trim())) {
+                            noteInput.value = existing + '\n' + fields.notes;
+                        }
+                    }
                 }
 
                 if (statusEl) {
@@ -9283,7 +9294,7 @@
             <button class="move-popup-cancel" id="movePopupCancel">Annuler</button>
         </div>
     </div>
-    <script src="js/relance-widget.js"></script>
+    <script src="js/relance-widget.js?v=260619"></script>
     <script src="js/todo-widget.js"></script>
 
     <!-- Modal Personnalisation Colonnes -->

@@ -265,8 +265,9 @@
                 max-width: 100vw;
                 right: -100vw;
             }
-            .relance-filters { gap: 4px; padding: 10px 14px; }
-            .relance-filter-btn { font-size: 11px; padding: 5px 10px; }
+            .relance-filters { gap: 6px; padding: 12px 14px; }
+            /* Cibles tactiles confortables sur mobile (~38px, > recommandation 44px sur l'axe large) */
+            .relance-filter-btn { font-size: 13px; padding: 10px 14px; }
             .relance-list { padding: 8px 14px; }
         }
     `;

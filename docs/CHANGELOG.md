@@ -4,6 +4,75 @@
 
 ---
 
+## Session 2026-06-19 (suite 2) — Dictée vocale : commandes directes + bugs d'enchaînement
+
+### Problème signalé
+Sur la fiche lead vendeur, l'utilisateur dicte d'abord nom/prénom/adresse/téléphone (OK), puis enchaîne une 2ᵉ dictée « mets la source en recommandation » / « mets le statut en lead tiède » : ces deux champs ne bougent pas. Question : reconnaissance ou impossibilité d'enchaîner les dictées ?
+
+### Diagnostic
+Problème de **reconnaissance**, pas d'enchaînement. Le code de remplissage (`vendeurs.html` `parseSellerDictation`) réapplique source/statut à chaque dictée sans garde « si vide » → l'enchaînement fonctionne. Mais l'API `/api/parse-lead` renvoyait `null` : le prompt (claude-haiku-4-5) est conçu pour de la **narration descriptive**, pas pour des **commandes impératives** (« mets la source en X »), qu'il ignorait par prudence (consigne « ne jamais inventer »).
+
+### Modifications
+- `api/parse-lead.js` : ajout d'une règle « COMMANDES DIRECTES » + exemples dans les deux prompts (vendeur ET acquéreur) : une instruction explicite doit être appliquée directement, ce n'est pas une invention.
+- `vendeurs.html` + `acquereurs.html` : 2 bugs d'enchaînement corrigés au passage —
+  - **Annexes/critères** : reset des cases avant de recocher (sinon une 2ᵉ dictée cumulait à tort avec la précédente).
+  - **Notes** : cumul au lieu d'écrasement (avec garde anti-doublon) pour qu'une 2ᵉ dictée complète la note sans détruire l'existant.
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/api/parse-lead.js`
+- `/Users/user/Documents/Izimmo/vendeurs.html`
+- `/Users/user/Documents/Izimmo/acquereurs.html`
+
+### Vérifié
+- `node --check api/parse-lead.js` OK ; `vendeurs.html` se charge sans erreur console (preview, mode démo).
+- Logique notes/annexes rejouée sur DOM jouet (preview) : notes cumulées sans doublon, annexes correctement remplacées (seul `jardin` coché après une 2ᵉ dictée `parking,garage` → `jardin`).
+- Non vérifiable en local : le flux complet audio → `/api/parse-lead` → Anthropic (exige déploiement Vercel + clé). À retester en prod par une vraie dictée de commande.
+
+### Points d'attention
+- Mismatch préexistant non bloquant : le prompt vendeur peut renvoyer `source: "boucheaoreille"`, valeur absente du `<select>` (donc ignorée au remplissage). À harmoniser si la source « bouche à oreille » doit être supportée.
+
+### Commit
+À pousser sur `main` (déploiement Vercel auto).
+
+---
+
+## Session 2026-06-19 (suite) — Audit responsive mobile + cibles tactiles des pipelines
+
+### Objectif
+Demande : « appliquer sur la version mobile les modifications récentes du main ». Investigation : l'app n'a **pas** de code mobile séparé. Le web (HTML/CSS/JS) est responsive via `css/mobile.css` + media queries `@media (max-width: 768px)`, et est déjà déployé sur Vercel avec toutes les features de juin. Le seul build figé est l'app native Capacitor (`www/` + `ios/`, datée du 1er juin), mais l'utilisateur a confirmé que les conseillers utilisent le **site sur navigateur mobile**. Décision : auditer le rendu mobile (390px) des features récentes + audit responsive complet des pipelines, et corriger les cibles tactiles trop petites.
+
+### Constat audit (vérifié visuellement en mode démo à 390px)
+Les features de juin sont **déjà responsive et propres** sur mobile : accueil « Quoi de neuf » (carte vedette + grille 1 colonne), modale message groupé (`group-message.js`), badges matching 🎯, fiche bien Visites, panneau adresse parcelle DVF, toggles mails de visite. Les pipelines sont bien construits sur mobile : card-deck swipe, bottom sheet de détail soignée, modale « Déplacer vers… », onglets de colonnes sticky. Aucun débordement horizontal. Aucune feature cassée.
+
+### Modifications (cibles tactiles trop petites)
+- `js/relance-widget.js` (bloc `@media max-width:768px`) : chips-filtres du widget relances passaient de 25px de haut (font 11px / padding 5px 10px, **plus petites que sur desktop**) à ~38px (font 13px / padding 10px 14px). C'est l'incohérence la plus nette : le mobile réduisait la cible au lieu de l'agrandir.
+- `vendeurs.html` + `acquereurs.html` (bloc `@media max-width:768px`, `.mobile-tab`) : onglets de navigation des colonnes passés de 31px à ~37px de haut (padding 6px→9px). Strictement mobile (`.mobile-tabs` est `display:none` par défaut hors media query).
+- `app.html`, `home.html`, `vendeurs.html`, `acquereurs.html` : ajout du cache-bust `?v=260619` sur l'include `js/relance-widget.js` (il était inclus sans version, contrairement à la convention `?v=` du projet → les conseillers avec le JS en cache n'auraient pas reçu la correction).
+
+### Choix assumés
+- `.phone-link` (lien `tel:` dans la carte compacte, 14px) laissé tel quel : la carte entière est tapable pour ouvrir le détail (où le téléphone est gros et bien tapable) ; agrandir ce lien volerait des taps destinés à ouvrir la fiche.
+- Éléments à 32px (`mv-pill`, `mv-view-btn`, share-btn de Visites) laissés tels quels : taille secondaire acceptable, gonfler à 44px nuirait à la densité voulue par le design.
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/js/relance-widget.js`
+- `/Users/user/Documents/Izimmo/vendeurs.html`
+- `/Users/user/Documents/Izimmo/acquereurs.html`
+- `/Users/user/Documents/Izimmo/app.html`
+- `/Users/user/Documents/Izimmo/home.html`
+
+### Vérifié (preview 390px, mode démo)
+- Chips relances : 38px (font 13px) après cache-bust, confirmé serveur (`relance-widget.js?v=` sert bien le nouveau CSS). Onglets colonnes : 37px. Aucun débordement horizontal.
+- Non-régression desktop : `.mobile-tab` n'est stylé que dans `@media (max-width:768px)` (display:none par défaut, ligne 2640 vendeurs).
+
+### Points d'attention / hors scope
+- **App native Capacitor figée au 1er juin** (`www/`, `ios/App/App/public/`) : non rebuildée. Si des conseillers utilisent l'app installée (et non le navigateur), lancer `npm run mobile:sync` puis resoumettre aux stores.
+- Petit bug de contenu repéré (non responsive) : une note de démo affiche « signéavant » (espace manquant) dans la bottom sheet de détail vendeur.
+
+### Commit
+À pousser sur `main` (déploiement Vercel auto).
+
+---
+
 ## Session 2026-06-19 (suite) — Déduplication de la modale « Message groupé »
 
 ### Objectif
