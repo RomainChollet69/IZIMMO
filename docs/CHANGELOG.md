@@ -4,6 +4,39 @@
 
 ---
 
+## Session 2026-06-19 (suite 6) — Nouvelle source vendeur « 👥 Réseau perso » (`reseau`)
+
+### Besoin
+Ajouter une source de lead pour la prospection de la sphère personnelle de l'agent (amis, famille, voisins — « liste chaude »), jusque-là classée à tort en `recommandation`/`autre`.
+
+### Décision
+Valeur technique `reseau`, label « 👥 Réseau perso ». **Distincte de `recommandation`** : ici l'agent sollicite sa propre sphère (pas d'apporteur tiers), là un tiers apporte le lead. Cf. décision D086.
+
+### Vérification DB (préalable)
+`sellers.source` = `text` libre, **aucune contrainte CHECK** (vérifié via Supabase MCP) → aucune migration nécessaire.
+
+### Modifications (4 touchpoints, pour éviter tout mismatch silencieux)
+- `vendeurs.html` `<select id="source">` : ajout `<option value="reseau">👥 Réseau perso</option>` (après Recommandation).
+- `vendeurs.html` `SOURCE_MAP` (import CSV, ~ligne 12500) : ajout `'reseau': 'reseau'`.
+- `js/supabase-config.js` `SOURCE_CONFIG` : ajout `reseau` (label + couleurs ambre #FFF9C4/#F57F17) — sinon `getSourceTag()` retombe sur « Autre ».
+- `api/parse-lead.js` prompt vendeur : ajout règle de détection `reseau` avec consigne explicite pour la distinguer de `recommandation` (cercle perso vs apport tiers).
+
+### Fichiers modifiés
+- `/home/user/IZIMMO/vendeurs.html`
+- `/home/user/IZIMMO/js/supabase-config.js`
+- `/home/user/IZIMMO/api/parse-lead.js`
+- `/home/user/IZIMMO/docs/DECISIONS.md` (D086)
+- `/home/user/IZIMMO/docs/CHANGELOG.md`
+
+### Vérifié
+- Les 4 enumérations de sources couvrent désormais `reseau` ; le rendu des cartes (`getSourceTag`/`SOURCE_CONFIG`) gère la valeur dynamiquement, pas de filtre source hardcodé ailleurs.
+- DB sans contrainte → insertion `reseau` acceptée.
+
+### Point d'attention
+- Détection IA `reseau` vs `recommandation` sur cas ambigus (« recommandé par un ami ») : à surveiller sur dictées réelles, ajuster la consigne du prompt si besoin.
+
+---
+
 ## Session 2026-06-19 (suite 5) — Harmonisation enums prompt IA vendeur ↔ formulaire vendeurs.html
 
 ### Problème

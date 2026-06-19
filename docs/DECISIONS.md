@@ -1856,3 +1856,29 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - `parametres.html` garde de redirection (haut de page) : ajout de `[?&]calendar=` à la regex `oauth` pour que le retour de callback (`?calendar=connected|error`) reste en top-level et affiche le toast, au lieu d'être renvoyé vers le shell en perdant le paramètre.
 
 **Conséquences** : La connexion Calendar fonctionne désormais en desktop (shell). `select_account` (D084) est conservé, sans nuisance. À valider en prod par un consultant qui avait le 403 (Fanny Joets, Philippe Bouvry).
+
+---
+
+## D086 — Nouvelle source vendeur « Réseau perso » (`reseau`), distincte de « Recommandation »
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : Les sources de leads vendeurs ne couvraient pas la prospection de la sphère personnelle de l'agent (amis, famille, voisins — « liste chaude »). Ces leads étaient classés à tort en `recommandation` ou `autre`, faussant les stats d'origine.
+
+**Distinction métier (le cœur de la décision)** :
+- `recommandation` = un **tiers apporte** le lead (d'où le champ `referrer_name` = l'apporteur).
+- `reseau` = **l'agent sollicite sa propre sphère** directement, **sans apporteur tiers**.
+Les fusionner aurait mélangé deux mécaniques commerciales différentes.
+
+**Alternatives de nommage envisagées** : « Liste chaude » (jargon prospection), « Sphère d'influence » (terme officiel mais long/jargonneux). Retenu : **`reseau`** / label « 👥 Réseau perso » — court, clair à l'affichage, « perso » lève l'ambiguïté avec recommandation.
+
+**Décision** : Ajout de la valeur `reseau` sur les 4 touchpoints qui énumèrent les sources, pour éviter tout mismatch silencieux (cf. le bug `boucheaoreille`/`ascenseur` de la session précédente) :
+1. `<option value="reseau">` dans `<select id="source">` (vendeurs.html)
+2. Entrée `SOURCE_CONFIG.reseau` (js/supabase-config.js) — sinon `getSourceTag()` retombe sur « Autre »
+3. `SOURCE_MAP` (import CSV, vendeurs.html) — reconnaissance à l'import
+4. Prompt vendeur (api/parse-lead.js) — détection à la dictée, avec consigne explicite pour distinguer reseau (cercle perso) de recommandation (apport tiers)
+
+Vérifié au préalable côté DB : `sellers.source` est en `text` libre, **aucune contrainte CHECK** → pas de migration nécessaire.
+
+**Conséquences** : Le rendu des cartes (`getSourceTag`) gère la nouvelle valeur dynamiquement, aucun autre point à modifier (pas de filtre source hardcodé). La fiabilité de la détection IA `reseau` vs `recommandation` repose sur la consigne du prompt — à surveiller sur cas réels ambigus (« recommandé par un ami »).

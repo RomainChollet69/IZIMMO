@@ -4601,6 +4601,7 @@
                             <option value="">Sélectionnez une source</option>
                             <option value="boitage">📬 Boîtage</option>
                             <option value="recommandation">🤝 Recommandation</option>
+                            <option value="reseau">👥 Réseau perso</option>
                             <option value="pige">📰 Pige</option>
                             <option value="siteimmo">🌐 Site Immo</option>
                             <option value="efficity">🏢 Efficity</option>
@@ -12496,7 +12497,7 @@
                 return null;
             };
             const sourceRaw = (get('source') || '').toLowerCase();
-            const SOURCE_MAP = { 'boitage': 'boitage', 'recommandation': 'recommandation', 'pige': 'pige', 'siteimmo': 'siteimmo', 'efficity': 'efficity', 'internet': 'internet', 'ancien_client': 'ancien_client', 'acquereur': 'acquereur' };
+            const SOURCE_MAP = { 'boitage': 'boitage', 'recommandation': 'recommandation', 'reseau': 'reseau', 'pige': 'pige', 'siteimmo': 'siteimmo', 'efficity': 'efficity', 'internet': 'internet', 'ancien_client': 'ancien_client', 'acquereur': 'acquereur' };
             const source = Object.keys(SOURCE_MAP).find(k => sourceRaw.includes(k)) || 'autre';
             return {
                 seller: {

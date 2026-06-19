@@ -35,7 +35,8 @@ Retourne un JSON avec ces champs :
 - "budget": number ou null — prix/estimation en euros (nombre pur, sans € ni espace)
 - "source": string ou null — source du lead parmi ces valeurs exactes :
   - "pige" (si le mot "pige" ou "en pige" est mentionné)
-  - "recommandation" (si "recommandation", "recommandé par" ou "bouche à oreille" est mentionné — le bouche-à-oreille est une forme de recommandation)
+  - "recommandation" (si "recommandation", "recommandé par" ou "bouche à oreille" est mentionné — le bouche-à-oreille est une forme de recommandation ; un TIERS apporte le lead)
+  - "reseau" (si le vendeur fait partie du cercle PERSONNEL de l'agent : "ami", "amie", "famille", "proche", "voisin", "réseau perso", "réseau personnel" ou "liste chaude" — c'est l'agent qui sollicite sa propre sphère, SANS apporteur tiers)
   - "boitage" (si "boîtage", "boitage" ou "boîte aux lettres" est mentionné)
   - "siteimmo" (si "site immo", "site immobilier" ou "internet" est mentionné)
   - "efficity" (si "efficity" est mentionné)

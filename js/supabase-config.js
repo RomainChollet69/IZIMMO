@@ -15,6 +15,7 @@ const supabaseClient = window.__LEON_DEMO_CLIENT__ || supabase.createClient(SUPA
 const SOURCE_CONFIG = {
     boitage: { label: '📬 Boîtage', bg: '#DCEDC8', color: '#33691E' },
     recommandation: { label: '🤝 Recommandation', bg: '#B3E5FC', color: '#01579B' },
+    reseau: { label: '👥 Réseau perso', bg: '#FFF9C4', color: '#F57F17' }, // Sphère perso de l'agent (amis, famille, voisins) — distincte de recommandation (apport tiers)
     pige: { label: '📰 Pige', bg: '#F8BBD0', color: '#880E4F' },
     siteimmo: { label: '🌐 Site Immo', bg: '#D1C4E9', color: '#4527A0' },
     efficity: { label: '🏢 Efficity', bg: '#B2DFDB', color: '#004D40' },
