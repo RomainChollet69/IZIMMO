@@ -4,6 +4,26 @@
 
 ---
 
+## Session 2026-06-20 — Fusion de comptes (gmail → efficity)
+
+### Contexte
+Romain avait 2 comptes Google : `romainchollet69@gmail.com` (toutes les données, actif) et `rchollet@efficity.com` (quasi vide). Il voulait que les mails auto (Reply-To + CC) partent depuis l'adresse efficity. Comme l'identité d'envoi dérive du `user_id` propriétaire (auth.users.email), on a migré toutes les données vers le compte efficity.
+
+### Opération (SQL prod, MCP Supabase — pas de changement de code)
+- Migration en **transaction unique** : `UPDATE user_id` gmail→efficity sur les 18 tables à `user_id` + `UPDATE profiles.id`. Conflit `UNIQUE(user_id)` sur `social_profiles` résolu en supprimant la coquille vide d'efficity (0 post) avant de déplacer la vraie.
+- **Dry-run** préalable (BEGIN…ROLLBACK) : 0 ligne restante côté gmail, aucune erreur de contrainte.
+- **Sauvegarde / réversibilité** : schéma `merge_backup` (table `account_merge_log` avec from/to user_id + ids pré-existants efficity ; backup complet du social_profile supprimé).
+
+### Résultat vérifié
+contacts 1941, visit_requests 113, buyers 58, visits 48, sellers 30, profil/agenda/social → tous sur efficity. 0 ligne restée sur gmail.
+
+### Points d'attention / suites
+- **Google Agenda à reconnecter** avec le compte efficity : le token dans `user_integrations` pointe encore vers l'agenda gmail.
+- **Se connecter avec rchollet@efficity.com** désormais. Le compte gmail (auth.users) est conservé mais vide (réversibilité) ; supprimable plus tard.
+- Les prochains crons de visite utiliseront automatiquement rchollet@efficity.com en Reply-To/CC (résolu via `visit.user_id`).
+
+---
+
 ## Session 2026-06-20 — DVF mobile : refonte en 2 cadres (menu + carte)
 
 ### Problème
