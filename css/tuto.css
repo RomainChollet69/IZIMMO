@@ -259,3 +259,49 @@ body {
 .next-link i.lead { color: #667eea; font-size: 16px; width: 20px; text-align: center; }
 .next-link .next-title { font-weight: 700; font-size: 14px; flex: 1; }
 .next-link i.arrow { color: #cbd5e1; font-size: 13px; }
+
+/* ============================================================
+   DESKTOP (≥ 769px)
+   Le mobile-nav.css masque la bottom-nav au-delà de 768px ; ici
+   on optimise la LECTURE : header aligné sur la colonne de contenu,
+   largeur exploitée, listes denses en 2 colonnes.
+   Le gabarit reste une colonne lisible (≈ 880px), pas pleine largeur.
+   ============================================================ */
+@media (min-width: 769px) {
+    body { background: #eef1f6; }
+
+    /* Gouttière commune header / contenu → tout s'aligne sur la même colonne.
+       max() garde un minimum d'air sur les écrans 769–880px. */
+    .page-header {
+        padding-top: 44px;
+        padding-bottom: 52px;
+        padding-left: max(28px, calc((100% - 880px) / 2));
+        padding-right: max(28px, calc((100% - 880px) / 2));
+    }
+    .header-back { font-size: 14px; margin-bottom: 20px; }
+    .header-title { font-size: 36px; }
+    .header-subtitle { font-size: 15.5px; max-width: 720px; }
+
+    .content {
+        max-width: none;
+        margin: 0;
+        padding-top: 40px;
+        padding-bottom: 80px;
+        padding-left: max(28px, calc((100% - 880px) / 2));
+        padding-right: max(28px, calc((100% - 880px) / 2));
+    }
+
+    /* Listes denses → 2 colonnes pour exploiter la largeur et réduire le scroll */
+    .field-list,
+    .pipe-cols,
+    .next-links {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        align-items: start;
+    }
+    .step + .step { margin-top: 12px; }
+
+    /* Bloc CTA : ne pas l'étirer plein écran, le garder centré et compact */
+    .cta { max-width: 560px; margin-left: auto; margin-right: auto; margin-top: 16px; }
+}
