@@ -566,6 +566,8 @@
         }
         .accordion-drag-handle:hover { color: #667eea; }
         .accordion-drag-handle:active { cursor: grabbing; }
+        /* Empêche la sélection de texte qui, sinon, est "embarquée" par le drag sur plusieurs biens */
+        .property-accordion-header { user-select: none; -webkit-user-select: none; }
         .property-accordion.dragging { opacity: 0.45; }
         .property-accordion.dragging .property-accordion-header { background: #EEF1FB; }
         /* Astuce affichée quand un bien n'a pas de photo (lien portail au lieu d'un lien réseau) */
@@ -3399,21 +3401,28 @@
     }
 
     let draggedAccordion = null;
-
-    // Active/désactive draggable sur l'accordéon parent de la poignée.
-    // Indispensable : au dragstart, event.target est l'élément draggable lui-même (pas
-    // la poignée saisie) — un guard "closest('.accordion-drag-handle')" échouerait toujours.
-    // On rend donc l'accordéon draggable UNIQUEMENT pendant qu'on presse la poignée (≡).
-    function setAccordionDraggable(event, enable) {
-        const acc = event.target.closest('.property-accordion');
-        if (acc) acc.setAttribute('draggable', enable ? 'true' : 'false');
-    }
+    // Le réordonnancement n'est autorisé que si le drag a démarré sur la poignée (≡).
+    // L'accordéon est toujours draggable=true ; ce flag (armé au mousedown de la poignée)
+    // distingue un vrai drag de réordonnancement d'un drag accidentel ailleurs dans le header.
+    // Au dragstart, event.target est l'élément draggable lui-même, donc on ne peut pas
+    // savoir d'où vient le drag autrement que par ce flag.
+    let dragArmed = false;
+    function armAccordionDrag() { dragArmed = true; }
+    document.addEventListener('mouseup', () => { dragArmed = false; });
 
     function handleAccordionDragStart(event, sellerId) {
-        // Le drag n'est possible que si la poignée (≡) a activé draggable (cf. setAccordionDraggable).
+        // Le dragstart d'une carte contact (draggable) remonte jusqu'ici : ne pas l'intercepter,
+        // sinon le drag contact→visite serait annulé.
+        if (event.target && event.target.closest && event.target.closest('.visit-card')) return;
+        if (!dragArmed) { event.preventDefault(); return; } // drag hors poignée → on annule
         draggedAccordion = event.currentTarget;
         event.dataTransfer.effectAllowed = 'move';
         try { event.dataTransfer.setData('text/leon-accordion', sellerId); } catch (e) { /* ignore */ }
+        // Image de drag = uniquement l'en-tête (pas l'accordéon ouvert entier)
+        try {
+            const header = draggedAccordion.querySelector('.property-accordion-header');
+            if (header) event.dataTransfer.setDragImage(header, 20, 20);
+        } catch (e) { /* ignore */ }
         // Décalé pour que le navigateur capture l'image de drag avant l'opacité
         setTimeout(() => draggedAccordion && draggedAccordion.classList.add('dragging'), 0);
     }
@@ -3439,9 +3448,9 @@
     }
 
     function handleAccordionDragEnd() {
+        dragArmed = false;
         if (!draggedAccordion) return;
         draggedAccordion.classList.remove('dragging');
-        draggedAccordion.setAttribute('draggable', 'false'); // re-verrouille jusqu'au prochain mousedown sur la poignée
         draggedAccordion = null;
         saveVisitOrderFromDom();
     }
@@ -3570,12 +3579,12 @@
             visitCards += visitDropZone + '</div>';
         }
 
-        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}" draggable="false"
+        return `<div class="property-accordion${isOpen ? ' open' : ''}" data-seller-id="${sellerId}" draggable="true"
             ondragstart="handleAccordionDragStart(event, '${sellerId}')"
             ondragover="handleAccordionDragOver(event)"
             ondragend="handleAccordionDragEnd()">
             <div class="property-accordion-header" onclick="toggleAccordion('${sellerId}')">
-                <span class="accordion-drag-handle" onmousedown="setAccordionDraggable(event, true)" onmouseup="setAccordionDraggable(event, false)" onclick="event.stopPropagation()" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>
+                <span class="accordion-drag-handle" onmousedown="armAccordionDrag()" onclick="event.stopPropagation()" title="Glisser pour réordonner"><i class="fa-solid fa-grip-vertical"></i></span>
                 ${photoHtml}
                 <div class="accordion-property-info">
                     <div class="accordion-address">${escapeHtml(address)}</div>
