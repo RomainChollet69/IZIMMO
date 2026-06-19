@@ -4,6 +4,27 @@
 
 ---
 
+## Session 2026-06-19 (suite) — DVF mobile simplifié : barre de recherche flottante
+
+### Problème
+Le DVF mobile ne fonctionnait pas bien : la barre de recherche d'adresse était enfouie dans le panneau plein écran (`#sidePanel`), accessible seulement via le bouton flottant « réglages ». Pour chercher une adresse il fallait ouvrir le panneau (qui recouvre toute la carte), taper, sélectionner, et le panneau restait ouvert par-dessus la carte. Lourd et contre-intuitif. Demande : la carte plein écran avec une barre de recherche directement dessus.
+
+### Modifications (`dvf.html`)
+- **Barre de recherche flottante** : `setupMobileSearchBar()` déplace le node `.search-section` du panneau vers `.map-container` sur mobile (≤768px). Le node conserve `#searchInput`/`#searchDropdown` et leurs listeners (déplacement, pas duplication). CSS : barre flottante pleine largeur en haut, fond blanc + ombre.
+- **Boutons de couche** (DVF/DPE/Plan) descendus sous la barre de recherche (`top: 62px`), compactés, pour éviter la collision en haut.
+- **Auto-révélation des ventes** : dans `selectAddress()`, sur mobile on passe `saleMarkersVisible = true` avant le fetch, donc les parcelles vendues s'affichent directement après la recherche (plus de bouton « Voir les ventes » intermédiaire).
+- **Desktop inchangé** : la recherche reste dans le panneau latéral (le shell `app.html` charge DVF en iframe à 1280px > 768).
+
+### Vérifié (preview, viewport mobile 375px + desktop 1280px)
+- Mobile : `.search-section` rattachée à `.map-container`, barre flottante (top 8, pleine largeur), boutons DVF/DPE/Plan alignés à top 62 sans collision, panneau replié, zéro erreur console.
+- Desktop (iframe shell) : recherche toujours dans `.side-panel`, intact.
+- Chargement réel des ventes + auto-révélation non testables en preview (mode démo non authentifié) — reposent sur le flag `saleMarkersVisible` et le chemin de rendu existants.
+
+### Commit
+`feat(dvf): mobile simplifié` — poussé sur `main`.
+
+---
+
 ## Session 2026-06-19 (suite) — Refonte mobile L2 : cartes pipelines (déplacement rapide + densité)
 
 ### Contexte
