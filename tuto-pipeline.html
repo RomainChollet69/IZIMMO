@@ -1,0 +1,159 @@
+<!--
+  tuto-pipeline.html
+  Tutoriel : déplacer un lead d'une étape à l'autre (desktop + mobile).
+  Page guide statique (pas d'auth), accessible depuis tutoriels.html.
+  Comportements alignés sur vendeurs.html / acquereurs.html (drag desktop, bouton 📂 mobile).
+  Dépendances : css/tuto.css, js/mobile-nav.js
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Léon. — Déplacer un lead dans le pipeline</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/tuto.css?v=260619">
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="tutoriels.html" class="header-back"><i class="fa-solid fa-arrow-left"></i> Tous les tutoriels</a>
+        <div class="header-eyebrow">Premiers pas</div>
+        <div class="header-title">Déplacer un lead</div>
+        <div class="header-subtitle">Faire avancer une carte d'une étape à l'autre, sur ordinateur comme sur mobile.</div>
+    </div>
+
+    <div class="content">
+
+        <div class="tip-box">
+            <div class="tip-box-icon">↔️</div>
+            <div class="tip-box-text">
+                <strong>L'idée</strong><br>
+                Ton pipeline est un tableau de colonnes. Faire avancer un lead, c'est déplacer sa carte vers la colonne suivante. C'est enregistré tout seul, et certaines colonnes déclenchent des actions utiles.
+            </div>
+        </div>
+
+        <!-- DESKTOP -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-desktop"></i> Sur ordinateur : glisser-déposer</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <div class="step-title">Attrape la carte</div>
+                        <div class="step-text">Clique sur la carte du lead et garde le bouton enfoncé. Elle devient légèrement transparente.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <div class="step-title">Glisse vers la bonne colonne</div>
+                        <div class="step-text">Déplace la souris : une <strong>ligne turquoise</strong> indique où la carte va se poser, et la colonne cible se surligne.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <div class="step-title">Relâche</div>
+                        <div class="step-text">La carte se pose et sa nouvelle étape est <strong>sauvegardée immédiatement</strong>. Rien d'autre à faire.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-mobile-screen"></i> Sur mobile : le bouton 📂</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <div class="step-title">Repère le bouton dossier</div>
+                        <div class="step-text">En bas à droite de chaque carte, tape sur l'icône <span class="ui-btn">📂</span> (« Déplacer »). Pas besoin de faire glisser au doigt.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <div class="step-title">Choisis l'étape</div>
+                        <div class="step-text">Un menu liste toutes les colonnes (sauf l'étape actuelle). Tape celle où tu veux envoyer le lead.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <div class="step-title">C'est déplacé</div>
+                        <div class="step-text">Le menu se ferme, la carte change d'étape et c'est enregistré. Simple et rapide d'une seule main.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLONNES QUI DÉCLENCHENT -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-bolt"></i> Les colonnes qui déclenchent une action</div>
+            <p style="font-size:13.5px;color:#475569;line-height:1.6;margin-bottom:14px">
+                Certaines étapes du pipeline <strong>Vendeurs</strong> font plus que ranger la carte :
+            </p>
+            <div class="pipe-cols">
+                <div class="pipe-col" style="--col:#66BB6A">
+                    <span class="pipe-col-icon">📋</span>
+                    <div><div class="pipe-col-label">Sous mandats</div><div class="pipe-col-desc">À la 1ʳᵉ fois : te demande la date de signature, puis te montre les acquéreurs qui correspondent 🎯</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#78909C">
+                    <span class="pipe-col-icon">🏢</span>
+                    <div><div class="pipe-col-label">Concurrents / PAP</div><div class="pipe-col-desc">Te demande l'URL de l'annonce et récupère agence, prix et description automatiquement</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#AB47BC">
+                    <span class="pipe-col-icon">✅</span>
+                    <div><div class="pipe-col-label">Vendus</div><div class="pipe-col-desc">Clôt le mandat et fête la vente 🎉</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tip-box is-success" style="margin-bottom:26px">
+            <div class="tip-box-icon">💾</div>
+            <div class="tip-box-text"><strong>Toujours sauvegardé.</strong> Chaque déplacement met à jour l'étape du lead en base immédiatement, sur les deux pipelines (vendeurs et acquéreurs). Pas de bouton « Enregistrer » à chercher.</div>
+        </div>
+
+        <!-- ASTUCE VOCALE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-microphone"></i> Tu peux aussi le dire à Léon</div>
+            <div class="voice-example">
+                <div class="voice-phrase">M. Laurent a signé le mandat ce matin</div>
+                <div class="voice-result"><i class="fa-solid fa-check"></i> Note « Mandat signé » sur la fiche, prête à passer en Sous mandats</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <div class="cta-title">À toi de jouer</div>
+            <div class="cta-sub">Fais avancer un lead d'une colonne.</div>
+            <a href="vendeurs.html" class="cta-btn"><i class="fa-solid fa-house"></i> Ouvrir mon pipeline</a>
+        </div>
+
+        <!-- SUITE -->
+        <div class="section" style="margin-top:28px">
+            <div class="section-title"><i class="fa-solid fa-forward"></i> Et après ?</div>
+            <div class="next-links">
+                <a href="tuto-vendeur.html" class="next-link">
+                    <i class="fa-solid fa-house lead"></i>
+                    <span class="next-title">Créer ton premier vendeur</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a href="aide-vocale.html" class="next-link">
+                    <i class="fa-solid fa-microphone lead"></i>
+                    <span class="next-title">Tout ce que tu peux dire à Léon</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/mobile-nav.js"></script>
+</body>
+</html>

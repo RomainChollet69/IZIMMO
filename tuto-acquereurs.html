@@ -1,0 +1,231 @@
+<!--
+  tuto-acquereurs.html
+  Tutoriel : gérer les acquéreurs et comprendre le matching.
+  Page guide statique (pas d'auth), accessible depuis tutoriels.html.
+  Libellés UI alignés sur acquereurs.html, formulaire.html, supabase-config.js.
+  Dépendances : css/tuto.css, js/mobile-nav.js
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Léon. — Gérer les acquéreurs & le matching</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/tuto.css?v=260619">
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="tutoriels.html" class="header-back"><i class="fa-solid fa-arrow-left"></i> Tous les tutoriels</a>
+        <div class="header-eyebrow">Premiers pas</div>
+        <div class="header-title">Acquéreurs & matching</div>
+        <div class="header-subtitle">Ajouter un acquéreur, capter ses critères et laisser Léon le rapprocher de tes biens.</div>
+    </div>
+
+    <div class="content">
+
+        <div class="tip-box">
+            <div class="tip-box-icon">🔑</div>
+            <div class="tip-box-text">
+                <strong>L'idée</strong><br>
+                Chaque acquéreur a des critères (villes, type, budget, surface…). Léon les compare en continu à tes mandats et te signale les biens qui collent. Plus la fiche est complète, plus le matching est juste.
+            </div>
+        </div>
+
+        <!-- AJOUTER -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-user-plus"></i> Ajouter un acquéreur</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <div class="step-title">Ouvre la page Acquéreurs</div>
+                        <div class="step-text">Clique sur <span class="ui-btn"><i class="fa-solid fa-plus"></i> Lead</span> en haut à droite. La fenêtre <strong>« Nouvel Acquéreur »</strong> s'ouvre.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <div class="step-title">Renseigne le contact et la recherche</div>
+                        <div class="step-text">Obligatoires : <strong>Prénom</strong>, <strong>Nom</strong>, <strong>Type de bien</strong> et au moins une ville dans <strong>Secteur / Villes</strong>. Le reste affine le matching.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <div class="step-title">Choisis la colonne puis enregistre</div>
+                        <div class="step-text">Par défaut l'acquéreur arrive dans <strong>Nouveaux Acquéreurs</strong> 🆕. Tu pourras le faire passer en recherche active ensuite.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRITÈRES -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-sliders"></i> Les critères de recherche</div>
+            <div class="field-list">
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Type de bien <span class="req">*</span></div>
+                        <div class="field-desc">Appartement, Maison, Appart. ou Maison, Terrain, Immeuble.</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Secteur / Villes <span class="req">*</span></div>
+                        <div class="field-desc">Une ou plusieurs villes. C'est le critère le plus structurant du matching.</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Typologie</div>
+                        <div class="field-desc">T1 à T5+, en multi-sélection.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Surface min & Budget maximum</div>
+                        <div class="field-desc">Surface plancher et plafond de prix. Pèsent fort dans le score.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Pré-accord bancaire & Délai projet</div>
+                        <div class="field-desc">Pour prioriser les acquéreurs prêts à acheter vite.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Annexes & Éléments rédhibitoires</div>
+                        <div class="field-desc">Parking, jardin… et les « non négociables » (RDC, vis-à-vis, bruit…).</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOURCES -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-tags"></i> Les sources disponibles</div>
+            <div class="chips">
+                <span class="chip">🟠 Le Bon Coin</span>
+                <span class="chip">🔵 SeLoger</span>
+                <span class="chip">🌐 Autres plateformes</span>
+                <span class="chip">🏢 Efficity</span>
+                <span class="chip">🤝 Recommandation</span>
+                <span class="chip">📞 Appel entrant</span>
+                <span class="chip">📱 Réseaux sociaux</span>
+                <span class="chip">📌 Autre</span>
+            </div>
+        </div>
+
+        <!-- PIPELINE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-table-columns"></i> Les 5 colonnes du pipeline</div>
+            <div class="pipe-cols">
+                <div class="pipe-col" style="--col:#42A5F5">
+                    <span class="pipe-col-icon">🆕</span>
+                    <div><div class="pipe-col-label">Nouveaux Acquéreurs</div><div class="pipe-col-desc">Tout nouveau contact arrive ici</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#66BB6A">
+                    <span class="pipe-col-icon">🔍</span>
+                    <div><div class="pipe-col-label">En recherche active</div><div class="pipe-col-desc">Acquéreurs que tu travailles</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#AB47BC">
+                    <span class="pipe-col-icon">🎉</span>
+                    <div><div class="pipe-col-label">Achetés avec moi</div><div class="pipe-col-desc">Transaction conclue grâce à toi</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#FB8C00">
+                    <span class="pipe-col-icon">🔄</span>
+                    <div><div class="pipe-col-label">Achetés ailleurs</div><div class="pipe-col-desc">Ont acheté hors de ton réseau</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#BDBDBD">
+                    <span class="pipe-col-icon">❌</span>
+                    <div><div class="pipe-col-label">Plus en recherche</div><div class="pipe-col-desc">Projet abandonné ou en pause</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FORMULAIRE PUBLIC -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-link"></i> Faire remplir le formulaire à ta place</div>
+            <div class="tip-box is-info" style="margin-bottom:14px">
+                <div class="tip-box-icon">📲</div>
+                <div class="tip-box-text">Léon te donne un <strong>lien de formulaire public</strong> à partager (SMS, WhatsApp, bio Insta…). L'acquéreur répond en 8 étapes rapides ; dès qu'il valide, sa fiche se crée toute seule dans <strong>Nouveaux Acquéreurs</strong>, déjà qualifiée. Zéro saisie pour toi.</div>
+            </div>
+            <div class="voice-example" style="border-left-color:#60a5fa">
+                <div class="voice-result" style="color:#475569"><i class="fa-solid fa-check"></i> Type de bien → Pièces → Secteur → Budget → Surface → Critères → Délai/Banque → Coordonnées</div>
+            </div>
+        </div>
+
+        <!-- MATCHING -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-bullseye"></i> Le matching, en clair</div>
+            <p style="font-size:13.5px;color:#475569;line-height:1.6;margin-bottom:14px">
+                Léon compare chaque acquéreur à tes biens et calcule un <strong>score sur 100</strong>. Un badge <span class="ui-pill">🎯 nombre</span> apparaît sur la carte de l'acquéreur dès qu'au moins un bien dépasse <strong>75 %</strong> de correspondance. Clique dessus (ou ouvre l'onglet <strong>Matching</strong> de la fiche) pour voir les biens classés.
+            </p>
+            <div class="tip-box is-warn" style="margin-bottom:14px">
+                <div class="tip-box-icon">🚫</div>
+                <div class="tip-box-text">Trois critères <strong>éliminent</strong> un bien d'office : prix au-delà du budget +20 %, localisation incompatible, et type de bien incompatible (maison ↔ appartement).</div>
+            </div>
+            <div class="field-list">
+                <div class="field-row"><div style="flex:1"><div class="field-name">Budget · 30 pts</div><div class="field-desc">Le poids le plus lourd : dans le budget = score plein.</div></div></div>
+                <div class="field-row"><div style="flex:1"><div class="field-name">Localisation · 25 pts</div><div class="field-desc">Ville exacte = 25 pts, même département = 12 pts.</div></div></div>
+                <div class="field-row"><div style="flex:1"><div class="field-name">Type de bien · 15 pts</div><div class="field-desc">Correspondance exacte = 15 pts.</div></div></div>
+                <div class="field-row"><div style="flex:1"><div class="field-name">Surface · 15 pts</div><div class="field-desc">Au-dessus de la surface min = score plein.</div></div></div>
+                <div class="field-row"><div style="flex:1"><div class="field-name">Annexes · 15 pts</div><div class="field-desc">Proportion d'annexes recherchées qui collent.</div></div></div>
+                <div class="field-row"><div style="flex:1"><div class="field-name">Pièces · 10 pts</div><div class="field-desc">Typologie identique = 10 pts.</div></div></div>
+            </div>
+            <div class="tip-box is-success" style="margin-top:14px;margin-bottom:0">
+                <div class="tip-box-icon">📅</div>
+                <div class="tip-box-text">Depuis un bien correspondant tu peux <strong>planifier une visite</strong> en un clic, ou <strong>écarter</strong> un match qui ne convient pas (tu pourras le restaurer).</div>
+            </div>
+        </div>
+
+        <!-- ASTUCE VOCALE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-microphone"></i> Plus rapide : dicte-le à Léon</div>
+            <div class="voice-example">
+                <div class="voice-phrase">Nouvel acquéreur recommandé par Loup Borgna : Sophie Karayannis, 06 31 29 41 54, budget 250 000 euros, cherche T3 à Lyon 7ème</div>
+                <div class="voice-result"><i class="fa-solid fa-check"></i> Fiche acquéreur créée, source recommandation + critères remplis</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <div class="cta-title">À toi de jouer</div>
+            <div class="cta-sub">Ajoute un acquéreur et regarde le badge 🎯 apparaître.</div>
+            <a href="acquereurs.html" class="cta-btn"><i class="fa-solid fa-key"></i> Ouvrir mon pipeline Acquéreurs</a>
+        </div>
+
+        <!-- SUITE -->
+        <div class="section" style="margin-top:28px">
+            <div class="section-title"><i class="fa-solid fa-forward"></i> Et après ?</div>
+            <div class="next-links">
+                <a href="tuto-vendeur.html" class="next-link">
+                    <i class="fa-solid fa-house lead"></i>
+                    <span class="next-title">Créer ton premier vendeur</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a href="tuto-pipeline.html" class="next-link">
+                    <i class="fa-solid fa-arrows-left-right lead"></i>
+                    <span class="next-title">Déplacer un lead dans le pipeline</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/mobile-nav.js"></script>
+</body>
+</html>

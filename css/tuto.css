@@ -1,0 +1,261 @@
+/*
+ * tuto.css
+ * Feuille de style partagée des pages de tutoriel dédiées (tuto-*.html).
+ * Reprend la charte Léon : gradient violet, Barlow titres, Inter corps.
+ * Mobile-first ; un seul fichier pour éviter la duplication entre tutos.
+ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: #f8fafc;
+    color: #1a1a2e;
+    min-height: 100vh;
+    padding-bottom: 100px;
+}
+
+/* ===== HEADER GRADIENT ===== */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 20px 28px;
+    color: white;
+}
+.header-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    margin-bottom: 16px;
+}
+.header-back:hover { color: white; }
+.header-eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 6px;
+}
+.header-title {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+}
+.header-subtitle {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.78);
+    margin-top: 6px;
+    line-height: 1.5;
+    max-width: 560px;
+}
+
+/* ===== LAYOUT ===== */
+.content { padding: 22px 16px; max-width: 640px; margin: 0 auto; }
+
+/* ===== TIP BOX (intro / aparté) ===== */
+.tip-box {
+    background: #ede9fe;
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 26px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.tip-box-icon { font-size: 20px; flex-shrink: 0; line-height: 1.3; }
+.tip-box-text { font-size: 13px; color: #4c1d95; line-height: 1.55; }
+.tip-box-text strong { font-weight: 700; }
+
+/* Variantes de couleur pour les encadrés */
+.tip-box.is-info  { background: #e0f2fe; }
+.tip-box.is-info  .tip-box-text { color: #075985; }
+.tip-box.is-warn  { background: #fff7ed; border: 1px solid #fed7aa; }
+.tip-box.is-warn  .tip-box-text { color: #9a3412; }
+.tip-box.is-success { background: #dcfce7; }
+.tip-box.is-success .tip-box-text { color: #166534; }
+
+/* ===== SECTION ===== */
+.section { margin-bottom: 30px; }
+.section-title {
+    font-family: 'Barlow Semi Condensed', sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #334155;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-title i { color: #667eea; font-size: 16px; }
+
+/* ===== ÉTAPES NUMÉROTÉES ===== */
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    background: white;
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+.step + .step { margin-top: 10px; }
+.step-num {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.step-body { flex: 1; }
+.step-title { font-weight: 700; font-size: 15px; color: #1a1a2e; margin-bottom: 4px; }
+.step-text { font-size: 13.5px; color: #475569; line-height: 1.55; }
+.step-text strong { color: #1a1a2e; font-weight: 600; }
+
+/* Pastille "bouton" pour citer un libellé UI exact */
+.ui-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: #667eea;
+    color: white;
+    font-weight: 700;
+    font-size: 12.5px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.ui-pill {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4338ca;
+    font-weight: 600;
+    font-size: 12.5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid #e0e7ff;
+}
+
+/* ===== LISTE DE CHAMPS (formulaire) ===== */
+.field-list { display: flex; flex-direction: column; gap: 8px; }
+.field-row {
+    background: white;
+    border-radius: 12px;
+    padding: 12px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+.field-name { font-weight: 700; font-size: 13.5px; color: #1a1a2e; }
+.field-name .req { color: #ef4444; }
+.field-desc { font-size: 12.5px; color: #64748b; line-height: 1.5; margin-top: 2px; }
+.field-tag {
+    flex-shrink: 0;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+.field-tag.req-tag { background: #fee2e2; color: #b91c1c; }
+.field-tag.opt-tag { background: #f1f5f9; color: #64748b; }
+
+/* ===== PIPELINE : colonnes en chips ===== */
+.pipe-cols { display: flex; flex-direction: column; gap: 8px; }
+.pipe-col {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 11px 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-left: 4px solid var(--col, #cbd5e1);
+}
+.pipe-col-icon { font-size: 18px; flex-shrink: 0; }
+.pipe-col-label { font-weight: 700; font-size: 13.5px; color: #1a1a2e; text-transform: uppercase; letter-spacing: 0.3px; }
+.pipe-col-desc { font-size: 12px; color: #64748b; margin-top: 1px; }
+
+/* ===== CHIPS SOURCES ===== */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* ===== "EXEMPLE VOCAL" ===== */
+.voice-example {
+    background: white;
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    border-left: 3px solid #a78bfa;
+}
+.voice-phrase { font-size: 14px; font-style: italic; color: #1a1a2e; line-height: 1.5; }
+.voice-phrase::before { content: '\201C'; }
+.voice-phrase::after  { content: '\201D'; }
+.voice-result { font-size: 12px; color: #64748b; margin-top: 6px; display: flex; gap: 6px; align-items: flex-start; }
+.voice-result i { color: #22c55e; margin-top: 2px; }
+
+/* ===== CTA ===== */
+.cta {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 22px;
+    text-align: center;
+    color: white;
+    margin-top: 12px;
+}
+.cta-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.cta-sub { font-size: 13px; color: rgba(255, 255, 255, 0.82); margin-bottom: 14px; }
+.cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    color: #667eea;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 22px;
+    border-radius: 12px;
+    text-decoration: none;
+}
+
+/* ===== NEXT / AUTRES TUTOS ===== */
+.next-links { display: flex; flex-direction: column; gap: 8px; }
+.next-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 12px;
+    padding: 13px 15px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    text-decoration: none;
+    color: #1a1a2e;
+}
+.next-link i.lead { color: #667eea; font-size: 16px; width: 20px; text-align: center; }
+.next-link .next-title { font-weight: 700; font-size: 14px; flex: 1; }
+.next-link i.arrow { color: #cbd5e1; font-size: 13px; }

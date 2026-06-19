@@ -1,0 +1,240 @@
+<!--
+  tuto-vendeur.html
+  Tutoriel : créer son premier lead vendeur dans Léon.
+  Page guide statique (pas d'auth), accessible depuis tutoriels.html.
+  Libellés UI alignés sur vendeurs.html + js/pipeline-config.js.
+  Dépendances : css/tuto.css, js/mobile-nav.js
+-->
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Léon. — Créer ton premier vendeur</title>
+    <link rel="icon" type="image/svg+xml" href="/fav_leon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/tuto.css?v=260619">
+</head>
+<body>
+
+    <div class="page-header">
+        <a href="tutoriels.html" class="header-back"><i class="fa-solid fa-arrow-left"></i> Tous les tutoriels</a>
+        <div class="header-eyebrow">Premiers pas</div>
+        <div class="header-title">Créer ton premier vendeur</div>
+        <div class="header-subtitle">Ajouter un mandat potentiel à ton pipeline et comprendre où il atterrit.</div>
+    </div>
+
+    <div class="content">
+
+        <div class="tip-box">
+            <div class="tip-box-icon">🏠</div>
+            <div class="tip-box-text">
+                <strong>L'idée</strong><br>
+                Chaque vendeur que tu rencontres (boîtage, pige, recommandation…) devient une carte dans ton pipeline. Tu la fais avancer au fil de tes échanges, jusqu'au mandat puis à la vente.
+            </div>
+        </div>
+
+        <!-- ÉTAPE PAR ÉTAPE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-list-ol"></i> En 3 étapes</div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-body">
+                        <div class="step-title">Ouvre la page Vendeurs</div>
+                        <div class="step-text">Depuis l'accueil, va sur <span class="ui-pill">Vendeurs</span>. En haut à droite de la barre de recherche, clique sur <span class="ui-btn"><i class="fa-solid fa-plus"></i> Lead</span>.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-body">
+                        <div class="step-title">Remplis la fiche « Nouveau lead »</div>
+                        <div class="step-text">Une fenêtre s'ouvre. Tu n'es obligé de renseigner que <strong>4 champs</strong> (voir plus bas), le reste se complète quand tu en sais plus. Saisis au minimum le nom et d'où vient ce contact.</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-body">
+                        <div class="step-title">Clique sur « Créer le Lead »</div>
+                        <div class="step-text">Ta fiche apparaît tout en haut de la colonne <strong>Leads chaudes</strong> 🔥. C'est le point d'entrée par défaut de tout nouveau vendeur.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAMPS OBLIGATOIRES -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-pen-to-square"></i> Les 4 champs obligatoires</div>
+            <div class="field-list">
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Statut du Lead <span class="req">*</span></div>
+                        <div class="field-desc">Le degré de maturité du prospect (chaude, tiède, froide…). Pré-réglé sur « chaude ».</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Source du Lead <span class="req">*</span></div>
+                        <div class="field-desc">D'où vient ce contact. Si tu choisis une source d'apport, un champ « Apporteur d'affaire » apparaît.</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Nom du contact <span class="req">*</span></div>
+                        <div class="field-desc">Le nom complet. Tu peux corriger prénom / nom séparément via le petit lien sous le champ.</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Date de contact <span class="req">*</span></div>
+                        <div class="field-desc">Quand tu as rencontré ce vendeur. Sert de repère dans ton suivi.</div>
+                    </div>
+                    <span class="field-tag req-tag">Requis</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHAMPS UTILES -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-circle-plus"></i> Les champs qui font la différence</div>
+            <div class="field-list">
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Téléphone & Email</div>
+                        <div class="field-desc">Indispensables pour relancer en un clic depuis la fiche.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Adresse, Type de bien, Pièces, Surface</div>
+                        <div class="field-desc">Décrivent le bien. La surface alimente le matching avec tes acquéreurs.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Date de relance</div>
+                        <div class="field-desc">Le jour où tu veux être rappelé. Léon te le remonte dans tes relances du jour 🔔.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">Budget / Estimation</div>
+                        <div class="field-desc">Le prix envisagé. Sert au matching et à ton calcul de commission.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+                <div class="field-row">
+                    <div style="flex:1">
+                        <div class="field-name">📝 Notes & 📎 Documents</div>
+                        <div class="field-desc">Notes horodatées (avec dictée 🎤) et pièces jointes (DPE, mandat…). Rien ne se perd.</div>
+                    </div>
+                    <span class="field-tag opt-tag">Optionnel</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOURCES -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-tags"></i> Les sources disponibles</div>
+            <div class="chips">
+                <span class="chip">📬 Boîtage</span>
+                <span class="chip">🤝 Recommandation</span>
+                <span class="chip">📰 Pige</span>
+                <span class="chip">🌐 Site Immo</span>
+                <span class="chip">🏢 Efficity</span>
+                <span class="chip">💻 Internet</span>
+                <span class="chip">🔄 Ancien Client</span>
+                <span class="chip">🏡 Acquéreur</span>
+                <span class="chip">📌 Autre</span>
+            </div>
+        </div>
+
+        <!-- PIPELINE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-table-columns"></i> Où va ta fiche : les colonnes</div>
+            <div class="pipe-cols">
+                <div class="pipe-col" style="--col:#FF6B6B">
+                    <span class="pipe-col-icon">🔥</span>
+                    <div><div class="pipe-col-label">Leads chaudes</div><div class="pipe-col-desc">Prospects prêts à moins de 30 jours — point d'entrée par défaut</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#FFA726">
+                    <span class="pipe-col-icon">🟠</span>
+                    <div><div class="pipe-col-label">Leads tièdes</div><div class="pipe-col-desc">Prospects à 30 / 60 jours</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#42A5F5">
+                    <span class="pipe-col-icon">🔵</span>
+                    <div><div class="pipe-col-label">Leads froides</div><div class="pipe-col-desc">Prospects à 60 jours et plus</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#9B59B6">
+                    <span class="pipe-col-icon">🔒</span>
+                    <div><div class="pipe-col-label">Off Market</div><div class="pipe-col-desc">Biens visitables hors mandat</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#66BB6A">
+                    <span class="pipe-col-icon">📋</span>
+                    <div><div class="pipe-col-label">Sous mandats</div><div class="pipe-col-desc">Mandats signés</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#FB8C00">
+                    <span class="pipe-col-icon">📝</span>
+                    <div><div class="pipe-col-label">Sous compromis</div><div class="pipe-col-desc">Compromis signé, en attente d'acte</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#78909C">
+                    <span class="pipe-col-icon">🏢</span>
+                    <div><div class="pipe-col-label">Concurrents / PAP</div><div class="pipe-col-desc">Biens chez la concurrence</div></div>
+                </div>
+                <div class="pipe-col" style="--col:#AB47BC">
+                    <span class="pipe-col-icon">✅</span>
+                    <div><div class="pipe-col-label">Vendus</div><div class="pipe-col-desc">Biens vendus</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASTUCE VOCALE -->
+        <div class="section">
+            <div class="section-title"><i class="fa-solid fa-microphone"></i> Plus rapide : dicte-le à Léon</div>
+            <div class="voice-example">
+                <div class="voice-phrase">Nouveau vendeur : Jean Martin, 06 12 34 56 78, appartement T4 75m² à Lyon 2ème, j'ai rendez-vous demain à 14h</div>
+                <div class="voice-result"><i class="fa-solid fa-check"></i> Fiche vendeur créée avec tous les champs + rappel du RDV</div>
+            </div>
+            <div class="tip-box is-info" style="margin-top:12px;margin-bottom:0">
+                <div class="tip-box-icon">💡</div>
+                <div class="tip-box-text">Pas besoin de remplir le formulaire à la main : appuie sur le micro et parle. Voir le <a href="aide-vocale.html" style="color:#075985;font-weight:700">guide vocal complet</a>.</div>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="cta">
+            <div class="cta-title">À toi de jouer</div>
+            <div class="cta-sub">Crée ton premier vendeur en moins d'une minute.</div>
+            <a href="vendeurs.html" class="cta-btn"><i class="fa-solid fa-house"></i> Ouvrir mon pipeline Vendeurs</a>
+        </div>
+
+        <!-- SUITE -->
+        <div class="section" style="margin-top:28px">
+            <div class="section-title"><i class="fa-solid fa-forward"></i> Et après ?</div>
+            <div class="next-links">
+                <a href="tuto-pipeline.html" class="next-link">
+                    <i class="fa-solid fa-arrows-left-right lead"></i>
+                    <span class="next-title">Déplacer un lead dans le pipeline</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+                <a href="tuto-acquereurs.html" class="next-link">
+                    <i class="fa-solid fa-key lead"></i>
+                    <span class="next-title">Gérer les acquéreurs & le matching</span>
+                    <i class="fa-solid fa-chevron-right arrow"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/mobile-nav.js"></script>
+</body>
+</html>
