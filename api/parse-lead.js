@@ -35,9 +35,8 @@ Retourne un JSON avec ces champs :
 - "budget": number ou null — prix/estimation en euros (nombre pur, sans € ni espace)
 - "source": string ou null — source du lead parmi ces valeurs exactes :
   - "pige" (si le mot "pige" ou "en pige" est mentionné)
-  - "recommandation" (si "recommandation" ou "recommandé par" est mentionné)
+  - "recommandation" (si "recommandation", "recommandé par" ou "bouche à oreille" est mentionné — le bouche-à-oreille est une forme de recommandation)
   - "boitage" (si "boîtage", "boitage" ou "boîte aux lettres" est mentionné)
-  - "boucheaoreille" (si "bouche à oreille" est mentionné)
   - "siteimmo" (si "site immo", "site immobilier" ou "internet" est mentionné)
   - "efficity" (si "efficity" est mentionné)
   - "autre" (si une autre source est mentionnée mais ne correspond à aucune ci-dessus)
@@ -45,7 +44,7 @@ Retourne un JSON avec ces champs :
 - "referrer_name": string ou null — nom de l'apporteur d'affaire (ex: "recommandé par Patrick Durand" → "Patrick Durand", "recommandation de Sophie Martin" → "Sophie Martin"). Seulement si la source est "recommandation" ET qu'un nom est mentionné après.
 - "property_type": string ou null — parmi "appartement", "maison", "terrain", "immeuble" (si le type de bien est mentionné)
 - "surface": number ou null — surface du bien en m² (nombre pur, sans unité. Ex: 65, 120)
-- "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage", "piscine", "ascenseur"] (UNIQUEMENT celles explicitement mentionnées)
+- "annexes": array ou null — parmi ["parking", "cave", "balcon", "jardin", "garage", "piscine"] (UNIQUEMENT celles explicitement mentionnées)
 - "notes": string ou null — informations COMMERCIALES et RELATIONNELLES (voir règles ci-dessous)
 - "status": string ou null — parmi ces valeurs exactes :
   - "hot" (si "chaud/chaude", "urgent", "très intéressé", "prêt à vendre", "RDV" est mentionné)

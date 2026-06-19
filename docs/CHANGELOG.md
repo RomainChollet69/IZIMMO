@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-06-19 (suite 5) — Harmonisation enums prompt IA vendeur ↔ formulaire vendeurs.html
+
+### Problème
+Le prompt vendeur de `api/parse-lead.js` pouvait renvoyer des valeurs d'enum absentes du formulaire, donc **silencieusement perdues** au remplissage (la boucle de matching de `parseSellerDictation` ne trouvait aucune option/checkbox correspondante) :
+- `source: "boucheaoreille"` (déclenché par « bouche à oreille ») — aucune `<option>` dans `<select id="source">`.
+- `annexes: "ascenseur"` — aucune checkbox `name="annexes"` côté vendeur.
+
+Audit des autres enums du prompt vendeur : `status` (hot/warm/cold/off_market/competitor/mandate/sold/lost) et `property_type` (appartement/maison/terrain/immeuble) sont **tous** présents dans leurs `<select>` respectifs — aucun autre mismatch.
+
+### Décision
+Aligner le prompt sur l'UI (source de vérité de ce qui est réellement stockable), plutôt que d'ajouter des valeurs d'enum côté DB/UI — impact minimal, aucun risque sur la contrainte `source`, `SOURCE_CONFIG` (supabase-config.js) ou le `SOURCE_MAP` d'import CSV.
+- `boucheaoreille` → replié dans **`recommandation`** : le bouche-à-oreille est sémantiquement une recommandation/apport ; bonus, ça active la capture de `referrer_name`.
+- `ascenseur` → retiré de l'enum `annexes` du prompt **vendeur** uniquement.
+
+NB : le prompt **acheteur** conserve `ascenseur` (champs `criteria`/`annexes`) car la checkbox `name="criteria" value="ascenseur"` existe bien dans `acquereurs.html` (ligne 3768) — valide côté acheteur.
+
+### Fichiers modifiés
+- `/home/user/IZIMMO/api/parse-lead.js` (prompt vendeur : lignes ~38 source, ~47 annexes)
+- `/home/user/IZIMMO/docs/CHANGELOG.md`
+
+### Vérifié
+- Plus aucune valeur du prompt vendeur sans cible UI (source, status, property_type, annexes tous couverts).
+- Aucune référence résiduelle à `boucheaoreille` ; `ascenseur` ne subsiste que dans le prompt acheteur (légitime).
+
+---
+
 ## Session 2026-06-19 (suite 4) — Bug 403 Google Calendar : VRAIE cause = OAuth lancé dans l'iframe
 
 ### Diagnostic final (capture décisive)
