@@ -40,6 +40,7 @@ Le DVF mobile ne fonctionnait pas bien : la barre de recherche d'adresse était 
 - **Boutons de couche** (DVF/DPE/Plan) descendus sous la barre de recherche (`top: 62px`), compactés, pour éviter la collision en haut.
 - **Auto-révélation des ventes** : dans `selectAddress()`, sur mobile on passe `saleMarkersVisible = true` avant le fetch, donc les parcelles vendues s'affichent directement après la recherche (plus de bouton « Voir les ventes » intermédiaire).
 - **Desktop inchangé** : la recherche reste dans le panneau latéral (le shell `app.html` charge DVF en iframe à 1280px > 768).
+- **Correctif suivi** : le bas de la carte (légende, contrôles) passait sous la bottom nav (`.m-nav`). `.main-container` soustrait désormais le header mobile (`--m-header-h`) ET la nav (`--m-bottom-bar-h`) + `env(safe-area-inset-bottom)`, en `100dvh` (suit le viewport réel malgré les barres dynamiques). Reprend le pattern de `vendeurs.html`.
 
 ### Vérifié (preview, viewport mobile 375px + desktop 1280px)
 - Mobile : `.search-section` rattachée à `.map-container`, barre flottante (top 8, pleine largeur), boutons DVF/DPE/Plan alignés à top 62 sans collision, panneau replié, zéro erreur console.
