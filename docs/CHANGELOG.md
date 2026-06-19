@@ -46,9 +46,10 @@ Le DVF mobile ne fonctionnait pas bien : la barre de recherche d'adresse était 
 - Mobile : `.search-section` rattachée à `.map-container`, barre flottante (top 8, pleine largeur), boutons DVF/DPE/Plan alignés à top 62 sans collision, panneau replié, zéro erreur console.
 - Desktop (iframe shell) : recherche toujours dans `.side-panel`, intact.
 - Chargement réel des ventes + auto-révélation non testables en preview (mode démo non authentifié) — reposent sur le flag `saleMarkersVisible` et le chemin de rendu existants.
+- **Suppression de la légende prix/m²** : les ventes s'affichent en parcelles cyan uniformes (`renderSaleParcels`, `#00E5FF`), plus en pastilles colorées par prix. La légende `#legendDVF` (vert→violet par tranche) ne correspondait donc plus à rien et chevauchait le bouton filtres (FAB) sur mobile. Retrait du bloc HTML + de la ligne JS qui togglait son affichage. Légende DPE conservée (marqueurs DPE réellement colorés par classe). NB : `getPriceColor()` n'est plus utilisé que pour les ronds invisibles (markers jamais ajoutés à la carte) — dead code candidat à un nettoyage ultérieur.
 
 ### Commit
-`feat(dvf): mobile simplifié` — poussé sur `main`.
+`feat(dvf): mobile simplifié` (+ correctifs suivis) — poussé sur `main`.
 
 ---
 
