@@ -61,6 +61,18 @@ demo.html → app OK ; pipelines vendeurs (30) / acquéreurs (57) rendus, noms a
 
 ---
 
+## Session 2026-06-19 — Visites : message groupé aux contacts d'un bien (sans redirection)
+
+### Évolution
+"Envoyer un message à tous les contacts d'un bien" redirigeait vers le pipeline Acquéreurs (`leon_pending_notify` + `window.location.href`). Désormais la modale de message groupé s'ouvre **directement sur la page Visites**.
+
+### Détails
+- Nouveau module autonome **`js/group-message.js`** (`GroupMessage.open({ recipients, context, defaultTemplate })`) : modale Email (BCC) / WhatsApp / SMS, 100% client (`mailto:` / `wa.me` / `sms:`), templates (baisse de prix, nouveau bien, visite groupée, libre) + variables `[salutation]` (par destinataire) et `[adresse]/[prix]/[ville]/[type]/[date]` (contexte du bien). Styles inline, aucune dépendance aux globals de la page → réutilisable partout.
+- **`visites.html`** : `contactSellerBuyers` charge les fiches acquéreurs du bien (id, prénom, nom, civilité, email, tél) et appelle `GroupMessage.open` avec le contexte pré-rempli. Ajout de `city` au select `loadActiveSellers`.
+- `acquereurs.html` inchangé (flux inline conservé). **À faire** : migrer acquereurs.html vers le module partagé pour dédupliquer.
+- Testé en conditions réelles (module chargé, modale rendue, sujet/corps pré-remplis, compteurs Email/WhatsApp/SMS corrects, `[salutation]` conservé pour la perso à l'envoi).
+
+
 ## Session 2026-06-19 — Fix : drag des biens (Visites) embarquait plusieurs cartes
 
 ### Bug
