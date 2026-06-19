@@ -1977,14 +1977,9 @@
                     <div class="loading-bar"><div class="loading-bar-fill"></div></div>
                 </div>
             </div>
-            <div class="map-legend" id="legendDVF">
-                <div class="legend-title">Prix au m²</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#4CAF50"></div> &lt; 2 000 €/m²</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#FFC107"></div> 2 000 - 4 000 €/m²</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#FF9800"></div> 4 000 - 6 000 €/m²</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#F44336"></div> 6 000 - 8 000 €/m²</div>
-                <div class="legend-item"><div class="legend-dot" style="background:#9C27B0"></div> &gt; 8 000 €/m²</div>
-            </div>
+            <!-- Légende "Prix au m²" (pastilles de couleur) supprimée : les ventes
+                 s'affichent en parcelles cyan uniformes (renderSaleParcels), plus en
+                 ronds colorés par prix. La légende ne correspondait donc plus à rien. -->
             <div class="map-legend" id="legendDPE" style="display:none;bottom:30px;left:220px;">
                 <div class="legend-title">Classe DPE</div>
                 <div class="legend-item"><div class="legend-dot" style="background:var(--dpe-a)"></div> A</div>
@@ -3696,7 +3691,6 @@
             // Affichage carte des ventes = PARCELLES cyan (via "Voir les ventes"), jamais les ronds.
             // (renderSaleParcels ne dessine que si saleMarkersVisible est actif.)
             if (dvfLayerActive) { renderSaleParcels(); } else { clearSaleParcels(); }
-            document.getElementById('legendDVF').style.display = dvfLayerActive ? '' : 'none';
 
             // Afficher/masquer stats, filtres, liste
             document.querySelector('.quick-filters').style.display = dvfLayerActive ? '' : 'none';
