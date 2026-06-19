@@ -1856,3 +1856,22 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - `parametres.html` garde de redirection (haut de page) : ajout de `[?&]calendar=` à la regex `oauth` pour que le retour de callback (`?calendar=connected|error`) reste en top-level et affiche le toast, au lieu d'être renvoyé vers le shell en perdant le paramètre.
 
 **Conséquences** : La connexion Calendar fonctionne désormais en desktop (shell). `select_account` (D084) est conservé, sans nuisance. À valider en prod par un consultant qui avait le 403 (Fanny Joets, Philippe Bouvry).
+
+
+## D086 — DVF mobile : barre de recherche flottante sur la carte (sortie du panneau)
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : Le DVF mobile « ne marchait pas bien ». La barre de recherche d'adresse était enfouie dans le panneau plein écran (`#sidePanel`), accessible seulement via le bouton flottant « réglages ». Chercher une adresse imposait : ouvrir le panneau (qui recouvre toute la carte) → taper → sélectionner → le panneau restait ouvert par-dessus la carte. Lourd et contre-intuitif sur un format où la carte devrait être l'écran principal.
+
+**Décision** :
+- **Déplacer le node `.search-section`** (et non le dupliquer) du panneau vers `.map-container` sur mobile via `setupMobileSearchBar()`. Le node conserve `#searchInput`/`#searchDropdown` et leurs listeners déjà attachés → aucune logique d'autocomplétion dupliquée. CSS dédié dans la media query `≤768px` : barre flottante pleine largeur en haut, fond blanc + ombre.
+- **Boutons de couche** (DVF/DPE/Plan) descendus sous la barre de recherche et compactés (évite la collision en haut).
+- **Auto-révéler les ventes** après sélection d'adresse sur mobile (`saleMarkersVisible = true` dans `selectAddress()`), supprimant le bouton intermédiaire « Voir les ventes ». Le rendu (`renderSaleParcels`) ne s'active que si ce flag est vrai, le chemin de rendu existant est réutilisé tel quel.
+
+**Alternatives écartées** :
+- Dupliquer un second champ de recherche mobile flottant : duplique la logique d'autocomplétion (dropdown, debounce, sélection) → risque de divergence. Le déplacement de node est plus simple et sans doublon.
+- Garder le modèle cadastre.com (carte épurée, ventes masquées jusqu'au clic « Voir les ventes ») sur mobile : un tap de plus, peu intuitif sur petit écran. On privilégie le feedback immédiat (taper l'adresse → voir les ventes). Le desktop conserve le modèle épuré.
+
+**Conséquences** : Desktop inchangé (la recherche reste dans le panneau latéral ; en desktop, DVF est chargé en iframe via le shell `app.html` à >768px). Limite connue : si l'utilisateur franchit le seuil 768px sans recharger (rotation tablette), le node déplacé n'est pas remis en place — cas marginal, accepté (cohérent avec les autres checks `innerWidth <= 768` one-shot de la page). Vérifié en preview (mobile 375px : barre flottante + boutons repositionnés + 0 erreur ; desktop 1280px iframe : recherche dans le panneau). Chargement réel des ventes non testable en preview (mode démo non authentifié).

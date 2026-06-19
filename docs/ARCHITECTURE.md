@@ -385,6 +385,15 @@ Google Maps initialisé (maps-config.js)
                   complément (étage/porte), date DPE, alerte passoire
 ```
 
+**Mobile (≤ 768px)** : carte plein écran comme écran principal. La barre de
+recherche est sortie du panneau et posée en flottant sur la carte
+(`setupMobileSearchBar()` déplace le node `.search-section` dans `.map-container`).
+Après sélection d'une adresse, les ventes sont révélées automatiquement
+(`saleMarkersVisible = true` dans `selectAddress()`). Filtres/stats/sélection
+restent accessibles via le bouton flottant « réglages » (panneau en overlay).
+Le clic sur une parcelle ouvre le panneau « Historique des ventes » (bottom sheet)
+avec l'adresse géocodée. Voir [D086](DECISIONS.md).
+
 **Pipeline de données DPE** :
 ```
 Dump ADEME (63 Go gzip SQL)
