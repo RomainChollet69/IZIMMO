@@ -1638,6 +1638,31 @@
                 left: 14px;
             }
 
+            /* ===== DVF MOBILE SIMPLIFIÉ =====
+               La barre de recherche est sortie du panneau et posée en flottant sur la carte
+               (cf. setupMobileSearchBar). La carte devient l'écran principal : on tape une
+               adresse directement dessus. Filtres/stats restent dispo via le bouton réglages. */
+            .map-container > .search-section {
+                position: absolute;
+                top: calc(8px + env(safe-area-inset-top, 0px));
+                left: 10px;
+                right: 10px;
+                padding: 0;
+                border-bottom: none;
+                z-index: var(--z-search-dropdown);
+            }
+            .map-container > .search-section .search-input {
+                background: #fff;
+                border-color: rgba(15,23,42,0.06);
+                box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            }
+            /* Boutons de couche (DVF/DPE/Plan) : descendus sous la barre de recherche, compactés */
+            .dvf-toggle, .dpe-toggle, .map-type-toggle {
+                top: calc(62px + env(safe-area-inset-top, 0px));
+                padding: 7px 10px;
+                font-size: 12px;
+            }
+
             .map-legend { bottom: 10px; left: 10px; font-size: 11px; padding: 8px 12px; }
 
             /* Panneau sélection — pleine largeur en bas sur mobile */
@@ -2209,6 +2234,10 @@
             currentCenter = { lat, lng };
             map.setCenter({ lat, lng });
             map.setZoom(16);
+
+            // Mobile : on révèle directement les ventes du secteur (pas de bouton intermédiaire).
+            // Le rendu (renderSaleParcels) ne s'active que si saleMarkersVisible est vrai.
+            if (window.innerWidth <= 768) saleMarkersVisible = true;
 
             const radius = parseInt(document.getElementById('radiusSlider').value);
             fetchDVFData(lat, lng, radius);
@@ -3606,6 +3635,19 @@
                 ? '<i class="fas fa-sliders"></i>'
                 : '<i class="fas fa-times"></i>';
         });
+
+        // ===== DVF MOBILE : BARRE DE RECHERCHE FLOTTANTE =====
+        // On déplace le bloc de recherche du panneau vers la carte (flottant en haut).
+        // Le node conserve #searchInput/#searchDropdown et leurs listeners : on déplace, on ne duplique pas.
+        function setupMobileSearchBar() {
+            if (window.innerWidth > 768) return;
+            const section = document.querySelector('#sidePanel .search-section');
+            const mapContainer = document.querySelector('.map-container');
+            if (section && mapContainer && section.parentElement !== mapContainer) {
+                mapContainer.appendChild(section);
+            }
+        }
+        setupMobileSearchBar();
 
         // Sur mobile, démarrer avec le panel fermé pour montrer la carte
         if (window.innerWidth <= 768) {
