@@ -389,14 +389,15 @@ Google Maps initialisé (maps-config.js)
                   complément (étage/porte), date DPE, alerte passoire
 ```
 
-**Mobile (≤ 768px)** : carte plein écran comme écran principal. La barre de
-recherche est sortie du panneau et posée en flottant sur la carte
-(`setupMobileSearchBar()` déplace le node `.search-section` dans `.map-container`).
-Après sélection d'une adresse, les ventes sont révélées automatiquement
-(`saleMarkersVisible = true` dans `selectAddress()`). Filtres/stats/sélection
-restent accessibles via le bouton flottant « réglages » (panneau en overlay).
-Le clic sur une parcelle ouvre le panneau « Historique des ventes » (bottom sheet)
-avec l'adresse géocodée. Voir [D086](DECISIONS.md).
+**Mobile (≤ 768px)** : disposition empilée à **2 cadres** — un cadre **menu** en
+haut (`.side-panel`, `max-height:46vh`, défilant) et un cadre **carte** en dessous
+(`.map-container`, `flex:1`). Le menu est épuré : barre de recherche d'adresse,
+rayon, filtres (type, année, « Plus de filtres »), et le bouton principal « Voir
+les ventes » épinglé en bas (`position:sticky`). Stats / liste des ventes / graphe
+sont masqués sur mobile. L'affichage des ventes (parcelles cyan) se déclenche au
+clic sur « Voir les ventes » (`toggleSalesMarkers`). Le clic sur une parcelle ouvre
+le panneau « Historique des ventes » (bottom sheet) avec l'adresse géocodée.
+Voir [D086](DECISIONS.md) (historique) et [D087](DECISIONS.md) (refonte 2 cadres).
 
 **Pipeline de données DPE** :
 ```

@@ -1861,7 +1861,7 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 ## D086 — DVF mobile : barre de recherche flottante sur la carte (sortie du panneau)
 
 **Date** : 2026-06-19
-**Statut** : Actif
+**Statut** : ⚠️ Remplacé par [D087](#d087) le 2026-06-20 (la barre flottante et l'auto-révélation ont été abandonnées au profit d'une disposition à 2 cadres). Conservé pour l'historique.
 
 **Contexte** : Le DVF mobile « ne marchait pas bien ». La barre de recherche d'adresse était enfouie dans le panneau plein écran (`#sidePanel`), accessible seulement via le bouton flottant « réglages ». Chercher une adresse imposait : ouvrir le panneau (qui recouvre toute la carte) → taper → sélectionner → le panneau restait ouvert par-dessus la carte. Lourd et contre-intuitif sur un format où la carte devrait être l'écran principal.
 
@@ -1896,3 +1896,29 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - *Retirer `mobile-nav.js` des guides* : casserait la cohérence de navigation mobile (la barre du bas est présente partout). On garde la nav, on charge juste son CSS.
 
 **Conséquences** : Tout nouveau guide doit charger `css/mobile.css` **puis** `css/tuto.css`. `mobile.css` étant intégralement sous `@media (max-width:768px)` (+ masquage `.m-nav`/FABs en desktop), aucun impact desktop. Le lot « Fonctionnalités avancées » (DVF, Réseaux, Assistant, Import, Google Agenda) suivra le même gabarit.
+
+
+## D087 — DVF mobile : refonte en 2 cadres (menu + carte) au lieu de la carte plein écran
+
+**Date** : 2026-06-20
+**Statut** : Actif (remplace [D086](#d086))
+
+**Contexte** : La version issue de D086 (carte plein écran + barre de recherche flottante posée dessus + FAB « réglages » ouvrant un overlay plein écran avec filtres/stats) restait peu pratique : l'overlay recouvrait la carte, les filtres et le bouton « Voir les ventes » étaient enfouis, et le mélange carte/contrôles superposés manquait de clarté. Demande utilisateur : « la carte dans un cadre et le menu dans un autre, avec un bouton principal voir les ventes, une barre de recherche d'adresse et les filtres ».
+
+**Décisions de cadrage (validées par l'utilisateur via questions)** :
+- Disposition **menu en haut, carte en dessous** (on cherche/filtre, puis la carte des résultats s'affiche dessous).
+- Menu **épuré** : recherche + bouton « Voir les ventes » + filtres uniquement (pas de stats ni liste des ventes).
+
+**Décision** :
+- Disposition empilée à 2 cadres dans la media query `≤768px` : `.side-panel` = cadre menu en haut (carte blanche arrondie, `flex:0 1 auto`, `max-height:46vh`, `overflow-y:auto`) ; `.map-container` = cadre carte en dessous (`flex:1 1 auto`, `min-height:240px`, `border-radius` + `overflow:hidden`). `.main-container` en flex column avec `gap` + `padding`.
+- Bouton « Voir les ventes » épinglé en bas du menu (`position:sticky; bottom:8px; order:5`) → CTA toujours visible, après les filtres.
+- Masquage mobile de `stats-section`, `sales-section`, `chart-section`, `dpe-stats-section`. Le détail d'une vente passe par le clic sur une parcelle (panneau « Historique des ventes »).
+- Affichage des ventes piloté par le bouton (suppression de l'auto-révélation mobile dans `selectAddress()`).
+- Suppression de l'ancienne mécanique D086 : `setupMobileSearchBar()` (la recherche reste dans le menu), l'overlay slide-up + FAB, le démarrage `collapsed`.
+
+**Alternatives écartées** :
+- Garder la carte plein écran avec contrôles flottants (D086) : rejeté par l'utilisateur (peu lisible, contrôles enfouis).
+- Carte ~60 % en haut / menu compact, ou carte en haut / menu en bas : l'utilisateur a explicitement choisi menu en haut + carte en dessous.
+- Bouton non sticky (simple fin de liste) : le CTA pouvait sortir du viewport au scroll → sticky retenu.
+
+**Conséquences** : Desktop inchangé (sidebar + carte côte à côte). Sur mobile, le menu défile légèrement (~47px) quand « Plus de filtres » est replié ; le bouton sticky reste visible et « Plus de filtres » est joignable juste au-dessus. Vérifié en preview (375px, header authentifié simulé) : layout correct, fonctions clés OK, pas d'erreur JS hors `RefererNotAllowedMapError` (clé Maps restreinte au domaine de prod). Rendu réel des ventes à confirmer sur le déploiement.

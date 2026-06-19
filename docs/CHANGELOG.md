@@ -4,6 +4,30 @@
 
 ---
 
+## Session 2026-06-20 — DVF mobile : refonte en 2 cadres (menu + carte)
+
+### Problème
+La version mobile DVF précédente (carte plein écran + barre de recherche flottante posée dessus + FAB réglages ouvrant un overlay) n'était pas pratique. Demande utilisateur : « la carte dans un cadre et le menu dans un autre, avec un bouton principal voir les ventes, une barre de recherche d'adresse et les filtres ».
+
+### Décisions de cadrage (validées par l'utilisateur)
+- Disposition : **menu en haut, carte en dessous** (on cherche/filtre, puis la carte des résultats s'affiche).
+- Contenu du menu : **épuré** — recherche + bouton « Voir les ventes » + filtres uniquement (pas de stats ni liste des ventes).
+
+### Modifications (`dvf.html`)
+- **Disposition empilée à 2 cadres** (media query ≤768px) : `.main-container` en flex column, `padding`+`gap`. `.side-panel` devient un **cadre menu** en haut (carte blanche arrondie, `flex:0 1 auto`, `max-height:46vh`, défilant). `.map-container` devient un **cadre carte** en dessous (`flex:1 1 auto`, `min-height:240px`, coins arrondis, `overflow:hidden`).
+- **Bouton « Voir les ventes » épinglé** (`position:sticky; bottom:8px; order:5`) en bas du cadre menu, après les filtres → CTA toujours visible.
+- **Menu épuré** : `stats-section`, `sales-section`, `chart-section`, `dpe-stats-section` masqués sur mobile (`display:none`). Le détail d'une vente passe par le clic sur une parcelle (panneau historique inchangé).
+- **Reveal par bouton** : suppression de l'auto-révélation mobile dans `selectAddress()` — les parcelles cyan s'affichent au clic sur « Voir les ventes ».
+- **Retrait de l'ancienne mécanique** : `setupMobileSearchBar()` (la recherche revient dans le menu, plus de barre flottante sur la carte), l'overlay slide-up + FAB du panneau, le démarrage `collapsed`. Contrôles de couche (DVF/DPE/Plan) remontés en haut du cadre carte (`top:10px`).
+
+### Vérifié (preview mobile 375px, header authentifié simulé)
+- Menu (haut, ~363px, défilant) : recherche dans `.side-panel`, rayon, année, type, « Plus de filtres » accessible, bouton « Voir les ventes » sticky visible. Carte (bas, ~289px) encadrée. Stats/liste masquées. `toggleFilters()` OK, fonctions clés définies, pas d'erreur JS (hors `RefererNotAllowedMapError` Google Maps, normal sur localhost).
+
+### Commit
+`feat(dvf): refonte mobile en 2 cadres` — poussé sur `main`.
+
+---
+
 ## Session 2026-06-20 — Refonte de la barre de navigation mobile + toggle Pipeline
 
 Demande utilisateur : barre du bas mobile = **Accueil · Pipeline · 🎙️ · Marché · Visites**.
