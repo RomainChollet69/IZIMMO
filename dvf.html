@@ -2607,15 +2607,6 @@
             return Math.round(price / surface);
         }
 
-        function getPriceColor(priceM2) {
-            if (!priceM2) return '#607D8B';
-            if (priceM2 < 2000) return '#4CAF50';
-            if (priceM2 < 4000) return '#FFC107';
-            if (priceM2 < 6000) return '#FF9800';
-            if (priceM2 < 8000) return '#F44336';
-            return '#9C27B0';
-        }
-
         function getPriceClass(priceM2) {
             if (!priceM2) return '';
             if (priceM2 < 2000) return 'price-low';
@@ -2732,178 +2723,15 @@
 
             const toRender = parcels.slice(0, MAX_PARCELS);
 
+            // Marqueurs position-only : JAMAIS ajoutés à la carte (les ventes
+            // s'affichent en parcelles cyan via renderSaleParcels). Ils servent de
+            // source de positions à renderSaleParcels() et d'ancre InfoWindow à
+            // showSaleDetail(). 1 marqueur par parcelle (centroïde).
             toRender.forEach(parcelSales => {
                 const lat = parseFloat(parcelSales[0].lat);
                 const lng = parseFloat(parcelSales[0].lng);
                 if (!lat || !lng) return;
-
-                const count = parcelSales.length;
-
-                // Median price/m² for color
-                const pricesM2 = parcelSales.map(s => getPricePerM2(s)).filter(p => p && p > 0);
-                pricesM2.sort((a, b) => a - b);
-                const medianPriceM2 = pricesM2.length > 0 ? pricesM2[Math.floor(pricesM2.length / 2)] : null;
-                const color = getPriceColor(medianPriceM2);
-
-                // Scale: 8 for single sale, grows with log for groups
-                const scale = count === 1 ? 8 : Math.min(8 + Math.log2(count) * 3, 20);
-
-                const marker = new google.maps.Marker({
-                    position: { lat, lng },
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: color,
-                        fillOpacity: 0.85,
-                        strokeColor: '#fff',
-                        strokeWeight: 1.5,
-                        scale: Math.round(scale)
-                    },
-                    label: count > 1 ? {
-                        text: String(count),
-                        color: '#fff',
-                        fontSize: '10px',
-                        fontWeight: '700'
-                    } : undefined
-                });
-
-                // Build InfoWindow content
-                let content;
-                if (count === 1) {
-                    const sale = parcelSales[0];
-                    const type = getType(sale);
-                    const price = parseFloat(sale.valeur_fonciere);
-                    const surfaceBati = parseFloat(sale.surface_reelle_bati || 0);
-                    const surfaceTerrain = parseFloat(sale.surface_terrain || 0);
-                    const priceM2 = getPricePerM2(sale);
-                    const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                    const dvfUid = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-                    const singleIdx = currentFilteredSales.indexOf(sale);
-                    // Surfaces : bâtie + terrain (séparées pour les maisons)
-                    const isHouse = type === 'maison';
-                    let surfaceHtml = '';
-                    if (surfaceBati && surfaceTerrain && isHouse) {
-                        surfaceHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🏠 ${surfaceBati} m² bâtis · 🌳 ${surfaceTerrain} m² terrain</div>`;
-                    } else if (surfaceBati) {
-                        surfaceHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">📐 ${surfaceBati} m²</div>`;
-                    } else if (surfaceTerrain) {
-                        surfaceHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🌳 ${surfaceTerrain} m² terrain</div>`;
-                    }
-                    content = `
-                        <div style="font-family:Inter,sans-serif;min-width:220px;max-width:300px;color:#2C3E50;padding:4px 2px">
-                            <div id="${dvfUid}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
-                            <div style="font-weight:700;font-size:14px;margin-bottom:6px">${getTypeIcon(type)} ${capitalize(type)}</div>
-                            ${surfaceHtml}
-                            <div style="font-size:20px;font-weight:800;color:#667eea;margin-bottom:4px">${formatPrice(price)}</div>
-                            <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:4px">
-                                ${priceM2 ? `<span style="font-size:13px;font-weight:600;color:#555">${formatNumber(priceM2)} €/m²</span>` : ''}
-                                <span style="font-size:12px;color:#999">📅 ${date}</span>
-                            </div>
-                            ${sale.distance ? `<div style="font-size:11px;color:#999;margin-bottom:6px">📍 à ${sale.distance} m du centre</div>` : ''}
-                            <button onclick="toggleSelection(${singleIdx}); var sel=isSelected(currentFilteredSales[${singleIdx}]); this.innerHTML=(sel?'<i class=\\'fas fa-check\\'></i> Sélectionné':'<i class=\\'fas fa-bookmark\\'></i> Sélectionner'); this.style.background=sel?'#667eea':'#f0f4ff'; this.style.color=sel?'#fff':'#667eea'; this.style.borderColor=sel?'#667eea':'#667eea'" style="margin-top:4px;padding:5px 12px;border-radius:6px;border:1px solid #667eea;background:#f0f4ff;color:#667eea;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s"><i class="fas fa-bookmark"></i> Sélectionner</button>
-                        </div>
-                    `;
-                    // Reverse geocoding avec cache à l'ouverture
-                    const dvfLat = lat, dvfLng = lng, dvfAddrId = dvfUid + '_addr';
-                    marker.addListener('click', async () => {
-                        const label = await cachedReverseGeocode(dvfLat, dvfLng);
-                        const el = document.getElementById(dvfAddrId);
-                        if (el && label) {
-                            el.style.fontStyle = 'normal';
-                            el.style.color = '#2C3E50';
-                            el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + label;
-                        } else if (el) { el.textContent = 'Adresse non trouvée'; }
-                    });
-                } else {
-                    // Multi-sale parcel: show summary + list
-                    const dvfUidMulti = 'dvf_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
-                    const prices = parcelSales.map(s => parseFloat(s.valeur_fonciere)).filter(p => p > 0);
-                    const minPrice = Math.min(...prices);
-                    const maxPrice = Math.max(...prices);
-                    const salesListHtml = parcelSales.slice(0, 10).map((sale, i) => {
-                        const saleIdx = currentFilteredSales.indexOf(sale);
-                        const type = getType(sale);
-                        const price = parseFloat(sale.valeur_fonciere);
-                        const sBati = parseFloat(sale.surface_reelle_bati || 0);
-                        const sTerrain = parseFloat(sale.surface_terrain || 0);
-                        const sType = getType(sale);
-                        const priceM2Sale = getPricePerM2(sale);
-                        const date = sale.date_mutation ? new Date(sale.date_mutation).toLocaleDateString('fr-FR') : '—';
-                        const detailId = dvfUidMulti + '_detail_' + i;
-                        // Surface compact pour la ligne résumé
-                        let surfText = '';
-                        if (sBati) surfText = ` · ${sBati} m²`;
-                        else if (sTerrain) surfText = ` · ${sTerrain} m² terr.`;
-                        // Détail complet pour le panneau déplié
-                        let detailSurfHtml = '';
-                        if (sBati && sTerrain && sType === 'maison') {
-                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🏠 ${sBati} m² bâtis · 🌳 ${sTerrain} m² terrain</div>`;
-                        } else if (sBati) {
-                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">📐 ${sBati} m²</div>`;
-                        } else if (sTerrain) {
-                            detailSurfHtml = `<div style="font-size:12px;color:#555;margin-bottom:4px">🌳 ${sTerrain} m² terrain</div>`;
-                        }
-                        return `<div style="border-bottom:1px solid #eee">
-                            <div style="display:flex;align-items:center;gap:6px;padding:6px 4px;cursor:pointer" onclick="var d=document.getElementById('${detailId}');var open=d.style.display!=='none';d.style.display=open?'none':'block';this.querySelector('.iw-chevron').classList.toggle('fa-chevron-down',open);this.querySelector('.iw-chevron').classList.toggle('fa-chevron-up',!open)">
-                                <i class="fas fa-chevron-down iw-chevron" style="font-size:9px;color:#bbb;flex-shrink:0;width:12px;text-align:center"></i>
-                                <div style="flex:1;min-width:0">
-                                    <div style="display:flex;justify-content:space-between;align-items:center">
-                                        <span style="font-size:12px">${getTypeIcon(type)} <strong>${capitalize(type)}</strong>${surfText}</span>
-                                        <strong style="font-size:13px;color:#667eea">${formatPrice(price)}</strong>
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#777;margin-top:1px">
-                                        <span>${date}</span>
-                                        ${priceM2Sale ? `<span>${formatNumber(priceM2Sale)} €/m²</span>` : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            <div id="${detailId}" style="display:none;padding:6px 8px 10px 24px;background:#f8f9ff;border-radius:0 0 6px 6px">
-                                ${detailSurfHtml}
-                                ${priceM2Sale ? `<div style="font-size:12px;color:#555;margin-bottom:3px">💰 ${formatNumber(priceM2Sale)} €/m²</div>` : ''}
-                                <div style="font-size:12px;color:#555;margin-bottom:3px">📅 ${date}</div>
-                                ${sale.distance ? `<div style="font-size:12px;color:#555;margin-bottom:6px">📍 à ${sale.distance} m du centre</div>` : ''}
-                                <button onclick="event.stopPropagation(); toggleSelection(${saleIdx}); var sel=isSelected(currentFilteredSales[${saleIdx}]); this.innerHTML=(sel?'<i class=\\'fas fa-check\\'></i> Sélectionné':'<i class=\\'fas fa-bookmark\\'></i> Sélectionner'); this.style.background=sel?'#667eea':'#f0f4ff'; this.style.color=sel?'#fff':'#667eea'" style="padding:4px 10px;border-radius:5px;border:1px solid #667eea;background:#f0f4ff;color:#667eea;font-size:11px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px"><i class="fas fa-bookmark"></i> Sélectionner</button>
-                            </div>
-                        </div>`;
-                    }).join('');
-                    content = `
-                        <div style="font-family:Inter,sans-serif;min-width:260px;max-width:340px;color:#2C3E50;padding:4px 2px">
-                            <div id="${dvfUidMulti}_addr" style="font-size:12px;color:#999;font-style:italic;margin-bottom:8px">Recherche de l'adresse…</div>
-                            <div style="font-size:14px;font-weight:700;margin-bottom:4px"><i class="fas fa-city" style="color:#667eea;margin-right:4px"></i> ${count} ventes sur cette parcelle</div>
-                            <div style="display:flex;gap:12px;align-items:baseline;margin-bottom:8px">
-                                <span style="font-size:18px;font-weight:800;color:#667eea">${formatPrice(minPrice)} → ${formatPrice(maxPrice)}</span>
-                                ${medianPriceM2 ? `<span style="font-size:12px;color:#555">méd. ${formatNumber(medianPriceM2)} €/m²</span>` : ''}
-                            </div>
-                            <div style="font-size:11px;color:#999;margin-bottom:4px">Cliquer une vente pour voir le détail</div>
-                            ${salesListHtml}
-                            ${count > 10 ? `<div style="font-size:12px;color:#999;padding-top:6px;font-style:italic">+ ${count - 10} autres ventes…</div>` : ''}
-                        </div>
-                    `;
-                    // Reverse geocoding avec cache pour parcelle multi-ventes
-                    const multiLat = lat, multiLng = lng, multiAddrId = dvfUidMulti + '_addr';
-                    marker.addListener('click', async () => {
-                        const label = await cachedReverseGeocode(multiLat, multiLng);
-                        const el = document.getElementById(multiAddrId);
-                        if (el && label) {
-                            el.style.fontStyle = 'normal';
-                            el.style.color = '#2C3E50';
-                            el.innerHTML = '<i class="fas fa-map-pin" style="color:#667eea;margin-right:4px"></i>' + label;
-                        } else if (el) { el.textContent = 'Adresse non trouvée'; }
-                    });
-                }
-
-                marker.addListener('click', () => {
-                    infoWindow.setContent(content);
-                    infoWindow.open(map, marker);
-                    // Pour les parcelles multi-ventes, l'utilisateur choisit dans l'InfoWindow
-                    // Pour les parcelles mono-vente, on affiche directement le détail
-                    if (count === 1) {
-                        const saleIndex = currentFilteredSales.indexOf(parcelSales[0]);
-                        if (saleIndex >= 0) showSaleDetail(saleIndex, true);
-                    }
-                });
-
-                marker._parcelSales = parcelSales;
-                markers.push(marker);
+                markers.push(new google.maps.Marker({ position: { lat, lng } }));
             });
 
             // Affichage des ventes façon cadastre.com : on dessine les PARCELLES vendues remplies
@@ -4095,6 +3923,6 @@
         })();
     </script>
 
-    <script src="js/mobile-nav.js"></script>
+    <script src="js/mobile-nav.js?v=260620"></script>
 </body>
 </html>
