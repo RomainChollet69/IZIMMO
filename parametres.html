@@ -15,7 +15,7 @@
         (function () {
             var topLevel = window.self === window.top;
             var desktop = window.innerWidth > 768;
-            var oauth = /access_token|refresh_token|[?&]code=/.test(location.hash + location.search);
+            var oauth = /access_token|refresh_token|[?&]code=|[?&]calendar=/.test(location.hash + location.search);
             if (topLevel && desktop && !oauth) location.replace('app.html?open=parametres.html');
         })();
     </script>
@@ -2470,7 +2470,12 @@
                 }
 
                 const { auth_url } = await response.json();
-                window.location.href = auth_url;
+                // L'OAuth doit s'ouvrir sur la fenêtre PRINCIPALE. Dans le shell desktop
+                // (app.html), cette page tourne dans une <iframe> ; or Google refuse d'être
+                // affiché en iframe (X-Frame-Options) et renvoie une page 403 « vous n'avez
+                // pas accès à cette page ». window.top casse l'iframe et navigue tout l'onglet
+                // vers l'écran de consentement Google.
+                (window.top || window).location.href = auth_url;
             } catch (err) {
                 console.error('[Calendar] Erreur connexion:', err);
                 showCalendarToast('Erreur de connexion. Vérifie ta connexion internet.', 'error');

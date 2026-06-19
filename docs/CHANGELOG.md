@@ -4,6 +4,25 @@
 
 ---
 
+## Session 2026-06-19 (suite 4) — Bug 403 Google Calendar : VRAIE cause = OAuth lancé dans l'iframe
+
+### Diagnostic final (capture décisive)
+La capture d'un consultant montre la page 403 Google **avec le header Léon visible et l'URL restée `avecleon.fr/app.html`** : la page de consentement Google se chargeait **dans l'iframe** du shell desktop. Google refuse le framing (X-Frame-Options) → 403. Rien à voir avec Efficity / comptes multiples / Workspace. Confirmé par la base : 23 comptes `@efficity.com` connectés (4 le jour même), tous via mobile (parametres.html top-level) ; le 403 ne touchait que le desktop via le shell `app.html`.
+
+### Modifications
+- `parametres.html` `connectGoogleCalendar()` : `window.location.href` → `(window.top || window).location.href` (casse l'iframe, navigue la fenêtre principale).
+- `parametres.html` garde de redirection : ajout de `[?&]calendar=` à la regex pour préserver le retour de callback et afficher le toast.
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/parametres.html`
+- `/Users/user/Documents/Izimmo/docs/DECISIONS.md` (D085)
+
+### Vérifié
+- Cause prouvée par la capture (header Léon + URL app.html sur la page 403) et par la base (connexions OK en mobile, 403 en desktop shell).
+- À valider en prod : clic « Connecter Google Calendar » depuis le shell desktop doit désormais ouvrir `accounts.google.com` en plein onglet (plus de 403 en iframe).
+
+---
+
 ## Session 2026-06-19 (suite 3) — Bug liaison Google Calendar (403) : forcer le sélecteur de compte
 
 ### Problème signalé

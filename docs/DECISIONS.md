@@ -1840,3 +1840,19 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Si le 403 persiste pour certains consultants : blocage Workspace **par Organizational Unit** (efficity restreint les apps tierces pour certains profils mais pas les directeurs) → l'IT efficity doit ajouter l'app en *trusted* (client ID `1053118371289-btb18tscr2q6gs33ekeomjncs3jmuq14`). Contournement immédiat : navigation privée avec uniquement le compte pro.
 
 **Conséquences** : Un clic de plus (choix du compte) pour les utilisateurs mono-compte, mais élimine le 403 multi-comptes. Changement à très faible risque. Non vérifiable en local (fonction serverless + flux Google réel) : à valider en prod par un consultant qui avait l'erreur.
+
+
+## D085 — Bug 403 Google Calendar : l'OAuth se lançait dans l'iframe du shell (vraie cause)
+
+**Date** : 2026-06-19
+**Statut** : Actif (corrige et complète D084)
+
+**Contexte** : Suite du 403 « vous n'avez pas accès à cette page » au moment de connecter Google Calendar. D084 (forcer `select_account`) n'a rien changé. La capture décisive d'un consultant montre la page 403 Google affichée **avec le header Léon toujours visible et l'URL qui reste `avecleon.fr/app.html`** : la page OAuth de Google se chargeait donc **dans l'iframe** du shell desktop.
+
+**Cause racine** : Le shell desktop `app.html` empile les rubriques dans des `<iframe>`. `connectGoogleCalendar()` (parametres.html) faisait `window.location.href = auth_url`, ce qui navigue **l'iframe** vers `accounts.google.com`. Or Google refuse d'être affiché en iframe (X-Frame-Options) et renvoie un **403**. Ça n'avait donc rien à voir avec Efficity, les comptes multiples, ni un blocage Workspace. Données à l'appui : 23 comptes `@efficity.com` connectés (dont 4 le jour même) car connectés depuis le mobile (parametres.html en top-level, sans shell iframe) ; les utilisateurs desktop via le shell tombaient sur le 403.
+
+**Décision** :
+- `parametres.html` `connectGoogleCalendar()` : `window.location.href` → `(window.top || window).location.href` pour casser l'iframe et naviguer la fenêtre principale (même origine, accès `window.top` autorisé).
+- `parametres.html` garde de redirection (haut de page) : ajout de `[?&]calendar=` à la regex `oauth` pour que le retour de callback (`?calendar=connected|error`) reste en top-level et affiche le toast, au lieu d'être renvoyé vers le shell en perdant le paramètre.
+
+**Conséquences** : La connexion Calendar fonctionne désormais en desktop (shell). `select_account` (D084) est conservé, sans nuisance. À valider en prod par un consultant qui avait le 403 (Fanny Joets, Philippe Bouvry).
