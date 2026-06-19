@@ -4,6 +4,31 @@
 
 ---
 
+## Session 2026-06-19 (suite) — Déduplication de la modale « Message groupé »
+
+### Objectif
+La modale de message groupé (Email BCC / WhatsApp / SMS) existait en double : le module partagé `js/group-message.js` (utilisé par `visites.html` depuis le commit `ef89644`) et une copie inline historique dans `acquereurs.html`. Faire utiliser le module partagé par `acquereurs.html` sans régresser le flux existant.
+
+### Modifications
+- `acquereurs.html` : inclusion de `<script src="js/group-message.js?v=260619">`.
+- `acquereurs.html` (barre de sélection multiple) : le bouton « Message groupé » appelle désormais `GroupMessage.open({ recipients: buyers sélectionnés, context: {} })`. Pas de contexte de bien côté pipeline acquéreur → `[adresse]`/`[prix]`/`[ville]`/`[type]` restent des tokens à compléter (comportement identique à avant).
+- `acquereurs.html` (`handlePendingNotify`) : refactoré pour appeler `GroupMessage.open` avec `context` (adresse/prix/ville/type) + `defaultTemplate`, au lieu de l'ancien double `setTimeout` qui manipulait le DOM de la modale inline. Flux vendeurs→acquéreurs (bouton « Notifier ces acquéreurs » de `vendeurs.html`, toujours actif) préservé et simplifié.
+- `acquereurs.html` : suppression du code inline devenu inutile : `GROUP_MSG_TEMPLATES`, `openGroupMessageModal`, `sendGroupMessage`, `personalizeMessage`, `insertMsgVar`, `getBuyerSalutation` (devenu mort, plus aucun appelant) et le CSS mort `.msg-var-chip` (le module utilise ses propres styles `.lgm-*`).
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/acquereurs.html`
+
+### Vérifié (preview)
+- Aucune erreur de syntaxe JS dans les scripts inline après suppression (parse via `new Function`).
+- Module chargé, `GroupMessage.open` appelé. Sélection simulée de 3 destinataires (3 emails / 2 téléphones) : modale OK, en-tête « 3 destinataires · 3 email · 2 téléphone », boutons Email (3) / WhatsApp (2) / SMS (2), 4 templates, défaut `baisse_prix`.
+- Sans contexte : `[adresse]`/`[prix]` conservés comme tokens.
+- Avec contexte (chemin `handlePendingNotify`) : adresse remplie, prix formaté « 350 000 € », `[salutation]` conservé, pas de tiret long.
+
+### Commit
+À pousser sur `main` (déploiement Vercel auto).
+
+---
+
 ## Session 2026-06-19 (suite) — Adresse de la parcelle dans le panneau DVF
 
 ### Objectif
