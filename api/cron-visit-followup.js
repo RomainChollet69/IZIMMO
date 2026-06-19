@@ -141,7 +141,9 @@ export default async function handler(req, res) {
                 subject,
                 html,
                 from: `${fromName} <noreply@${domain}>`,
-                replyTo: agentEmail || undefined
+                replyTo: agentEmail || undefined,
+                // Agent en copie de l'envoi de documents (pour vérifier que le mail est bon et parti).
+                cc: agentEmail || undefined
             });
 
             if (result.success) {

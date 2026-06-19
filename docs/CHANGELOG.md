@@ -4,6 +4,30 @@
 
 ---
 
+## Session 2026-06-19 (suite) — Agent en copie des mails de visite
+
+### Objectif
+L'agent veut recevoir une copie des mails automatiques envoyés au visiteur (confirmation de visite, envoi de documents post-visite) pour vérifier que le mail est correct et bien parti.
+
+### Modifications
+- `lib/mailgun-send.js` : nouveau paramètre `cc` dans `sendEmail()`. Ajoute `formData.append('cc', cc)` si `cc` est fourni et différent du destinataire (pas de copie redondante).
+- `api/cron-visit-reminder.js` : `cc = agentEmail` **uniquement sur la confirmation** (`stage === 'confirmation'`). Les rappels -24h/-4h ne sont pas mis en copie (même template que la confirmation, évite de saturer la boîte de l'agent).
+- `api/cron-visit-followup.js` : `cc = agentEmail` sur l'envoi de documents (followup).
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/lib/mailgun-send.js`
+- `/Users/user/Documents/Izimmo/api/cron-visit-reminder.js`
+- `/Users/user/Documents/Izimmo/api/cron-visit-followup.js`
+
+### Vérifié
+Syntaxe `node --check` OK sur les 3 fichiers. L'email agent (`agentEmail`) était déjà résolu dans les deux crons (utilisé en Reply-To), réutilisé tel quel en CC. Envoi réel testable seulement en prod (crons Vercel).
+
+### Points d'attention
+- Si l'agent et le visiteur ont la même adresse (cas de test), pas de doublon (garde-fou `cc !== to`).
+- Les rappels -24h/-4h restent sans copie : à activer si l'agent le demande (passer `cc` aussi pour `stage === '24h' | '4h'`).
+
+---
+
 ## Session 2026-06-19 — Fix faux mail de confirmation + mail de bienvenue
 
 ### Contexte

@@ -140,7 +140,10 @@ export default async function handler(req, res) {
             const result = await sendEmail({
                 to: visitorEmail, subject, html,
                 from: `${fromName} <noreply@${domain}>`,
-                replyTo: agentEmail || undefined
+                replyTo: agentEmail || undefined,
+                // Agent en copie de la CONFIRMATION uniquement (pour vérifier l'envoi).
+                // Les rappels -24h/-4h ne sont pas mis en copie pour ne pas saturer sa boîte.
+                cc: (stage === 'confirmation' && agentEmail) ? agentEmail : undefined
             });
 
             if (result.success) {

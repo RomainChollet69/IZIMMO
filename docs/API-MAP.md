@@ -522,7 +522,7 @@ Cron Vercel (`*/10 * * * *`) — email de suivi automatique post-visite.
 2. Visites éligibles : `followup_sent_at IS NULL`, `status != 'annulee'`, `visit_time` non nul,
    échéance (`visit_date`+`visit_time`+30 min, fuseau Europe/Paris) passée et dans la fenêtre 24h.
 3. Filtre : ≥ 1 lien du bien (`sellers.link_documents/link_virtual_tour/link_listing`) ET email visiteur valide.
-4. Envoi via `lib/mailgun-send.js` (template `lib/visit-followup-email.js`, Reply-To = email agent) puis `followup_sent_at = now()`.
+4. Envoi via `lib/mailgun-send.js` (template `lib/visit-followup-email.js`, Reply-To = email agent, **CC = email agent** pour vérifier l'envoi) puis `followup_sent_at = now()`.
 
 ⚠️ Nécessite la variable d'env **`CRON_SECRET`** sur Vercel.
 
@@ -550,6 +550,7 @@ Cron Vercel (`*/10 * * * *`, 2e cron du projet) — emails automatiques AVANT la
 4. Email charté Léon (branding agence via `lib/agency-branding.js`, encart Quand/Adresse + lien Google Maps),
    construit par `lib/visit-reminder-email.js` → `buildVisitReminderHtml({ kind, visitorFirstName, whenLabel, propertyAddress, mapUrl, agent })`
    et envoyé via `lib/mailgun-send.js`.
+5. **CC = email agent uniquement sur la confirmation** (`stage === 'confirmation'`), pour qu'il vérifie l'envoi. Les rappels -24h/-4h ne sont pas mis en copie (anti-saturation).
 
 Réglages dans `parametres.html` (section « 🏠 Email de suivi après visite ») : 3 toggles (suivi post-visite, rappel de visite, confirmation de visite).
 
