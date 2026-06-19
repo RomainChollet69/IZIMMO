@@ -14,15 +14,16 @@
         const path = window.location.pathname.split('/').pop() || 'home.html';
 
     const NAV_ITEMS = [
-        { href: 'vendeurs.html',      icon: 'fa-solid fa-house',         label: 'Vendeurs',    id: 'vendeurs.html' },
-        { href: 'acquereurs.html',  icon: 'fa-solid fa-key',           label: 'Acquéreurs',  id: 'acquereurs.html' },
-        { href: 'micro.html',      icon: 'fa-solid fa-microphone',     label: null,          id: 'micro.html', isFab: true },
-        { href: 'dvf.html',        icon: 'fa-solid fa-chart-simple',   label: 'Marché',      id: 'dvf.html' },
-        { href: '#more',           icon: 'fa-solid fa-ellipsis',       label: 'Plus',        id: 'more', isMore: true },
+        { href: 'home.html',        icon: 'fa-solid fa-house',          label: 'Accueil',     id: 'home.html' },
+        { href: 'vendeurs.html',    icon: 'fa-solid fa-table-columns',  label: 'Pipeline',    id: 'vendeurs.html', activeIds: ['vendeurs.html', 'acquereurs.html'] },
+        { href: 'micro.html',       icon: 'fa-solid fa-microphone',     label: null,          id: 'micro.html', isFab: true },
+        { href: 'dvf.html',         icon: 'fa-solid fa-chart-simple',   label: 'Marché',      id: 'dvf.html' },
+        { href: 'visites.html',     icon: 'fa-solid fa-calendar-check', label: 'Visites',     id: 'visites.html' },
     ];
 
+    // Pages secondaires accessibles ailleurs (Paramètres = roue dans le header) ;
+    // conservé pour l'action sheet (non affichée par défaut depuis la refonte de la nav).
     const MORE_ITEMS = [
-        { href: 'visites.html',     icon: 'fa-solid fa-calendar-check',         label: 'Visites' },
         { href: 'aide-vocale.html', icon: 'fa-solid fa-wand-magic-sparkles',     label: 'Guide vocal' },
         { href: 'parametres.html',  icon: 'fa-solid fa-gear',                    label: 'Paramètres' },
     ];
@@ -61,7 +62,9 @@
             });
         } else {
             a.href = item.href;
-            if (path === item.id) a.classList.add('active');
+            // "Pipeline" reste actif sur vendeurs.html ET acquereurs.html (activeIds)
+            const activeIds = item.activeIds || [item.id];
+            if (activeIds.includes(path)) a.classList.add('active');
         }
 
         a.innerHTML = `<i class="${item.icon}"></i><span>${item.label}</span>`;

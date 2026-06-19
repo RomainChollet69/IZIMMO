@@ -4,6 +4,29 @@
 
 ---
 
+## Session 2026-06-20 — Refonte de la barre de navigation mobile + toggle Pipeline
+
+Demande utilisateur : barre du bas mobile = **Accueil · Pipeline · 🎙️ · Marché · Visites**.
+
+### `js/mobile-nav.js`
+- Nouveaux `NAV_ITEMS` : Accueil (`home.html`), Pipeline (`vendeurs.html`, icône `fa-table-columns`), micro (FAB), Marché (`dvf.html`), Visites (`visites.html`).
+- « Pipeline » reste **actif** sur `vendeurs.html` ET `acquereurs.html` (champ `activeIds`).
+- Suppression du bouton « Plus » : Visites est désormais un onglet direct. Paramètres reste accessible via la roue du header ; `aide-vocale`/`parametres` conservés dans `MORE_ITEMS` (action sheet dormante).
+
+### Toggle Vendeurs/Acquéreurs (`vendeurs.html` + `acquereurs.html`)
+Comme « Pipeline » fusionne les deux pipelines, ajout d'un segmented control `.m-tiles-seg` en haut du hub tuiles (titre « PIPELINE » → toggle Vendeurs|Acquéreurs → recherche → tuiles). L'onglet actif = page courante, l'autre navigue vers l'autre pipeline.
+
+### Cache-bust
+`js/mobile-nav.js?v=260620` ajouté sur les 13 pages qui l'incluent (l'include n'avait pas de version → sinon ancienne barre en cache).
+
+### Vérifié (preview 390px, démo)
+Barre Accueil/Pipeline/micro/Marché/Visites, « Pipeline » actif sur les deux pipelines, toggle qui bascule vendeurs↔acquéreurs, pas de débordement. Desktop inchangé (nav mobile masquée >768px).
+
+### Commit
+À pousser sur `main`.
+
+---
+
 ## Session 2026-06-20 — Tutoriels in-app "Premiers pas" (pages dédiées)
 
 ### Vision (utilisateur)

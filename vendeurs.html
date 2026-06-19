@@ -3039,6 +3039,9 @@
             .m-tiles-search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #E1E8ED; border-radius: 14px; padding: 11px 14px; margin-bottom: 10px; }
             .m-tiles-search input { border: none; outline: none; flex: 1; min-width: 0; font-size: 15px; font-family: inherit; background: transparent; color: #1A1F36; }
             .m-tiles-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+            .m-tiles-seg { display: flex; gap: 4px; background: #fff; border-radius: 12px; padding: 4px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
+            .m-tiles-seg a { flex: 1; text-align: center; padding: 9px 6px; border-radius: 9px; font-size: 14px; font-weight: 600; color: #64748B; text-decoration: none; }
+            .m-tiles-seg a.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
             .m-tiles-title { flex: 1; font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 800; font-size: 22px; text-transform: uppercase; color: #1A1F36; letter-spacing: 0.01em; }
             .m-tiles-mic { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 19px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
             .m-tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -7052,7 +7055,7 @@
         }
 
         function renderTilesHub(host) {
-            const head = `<div class="m-tiles-head"><div class="m-tiles-title">Pipeline vendeurs</div></div>`;
+            const head = `<div class="m-tiles-head"><div class="m-tiles-title">Pipeline</div></div><div class="m-tiles-seg"><a href="vendeurs.html" class="active">Vendeurs</a><a href="acquereurs.html">Acquéreurs</a></div>`;
             const search = `<div class="m-tiles-search"><span style="color:#94A3B8;font-size:16px">🔍</span><input id="mTilesSearch" type="search" placeholder="Chercher un vendeur, une ville…" autocomplete="off"></div>`;
             host.innerHTML = head + search + '<div id="mTilesBody"></div>';
             const input = document.getElementById('mTilesSearch');
@@ -12590,7 +12593,7 @@
     </script>
 
     <script src="js/touch-drag-drop.js"></script>
-    <script src="js/mobile-nav.js"></script>
+    <script src="js/mobile-nav.js?v=260620"></script>
 
     <script>
         // ===== IMPORT CSV VENDEURS =====
