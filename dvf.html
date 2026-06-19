@@ -1894,6 +1894,13 @@
             <button class="map-type-toggle" id="mapTypeToggle">🗺️ Plan</button>
             <div id="map"></div>
 
+            <!-- Mode démo : message expliquant que les données de marché réelles sont désactivées -->
+            <div id="demoDvfNotice" style="display:none; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:600; max-width:380px; width:calc(100% - 48px); background:#fff; border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,0.18); padding:26px 28px; text-align:center; font-family:'Inter',sans-serif;">
+                <div style="font-size:34px; margin-bottom:10px;">🔒</div>
+                <div style="font-family:'Barlow Semi Condensed',sans-serif; font-weight:800; text-transform:uppercase; font-size:19px; color:#243B53; letter-spacing:0.3px; margin-bottom:8px;">Données de marché désactivées en démo</div>
+                <p style="font-size:14px; line-height:1.55; color:#64748B; margin:0;">La carte des ventes réelles (DVF) et des DPE n'est pas disponible dans la démonstration. Cette fonctionnalité est pleinement active dans Léon.</p>
+            </div>
+
             <!-- Panneau latéral : historique des ventes de la parcelle cliquée (façon cadastre.com) -->
             <div class="parcel-panel" id="parcelPanel">
                 <div class="parcel-panel-header">
@@ -2272,6 +2279,14 @@
         }
 
         async function fetchDVFData(lat, lng, radius) {
+            // Mode démo : pas de données de marché réelles, on affiche un message à la place
+            if (sessionStorage.getItem('leon_demo') === '1') {
+                const notice = document.getElementById('demoDvfNotice');
+                if (notice) notice.style.display = 'block';
+                const ov = document.getElementById('loadingOverlay');
+                if (ov) ov.classList.remove('active');
+                return;
+            }
             const loading = document.getElementById('loadingOverlay');
             const loadingText = loading.querySelector('.loading-text');
             loading.classList.add('active');
@@ -3716,6 +3731,12 @@
 
         async function fetchDPEData(lat, lng, radius) {
             if (!dpeLayerActive) return;
+            // Mode démo : données de marché réelles désactivées (cf. demoDvfNotice)
+            if (sessionStorage.getItem('leon_demo') === '1') {
+                const notice = document.getElementById('demoDvfNotice');
+                if (notice) notice.style.display = 'block';
+                return;
+            }
 
             clearDpeMarkers();
             allDpe = [];
