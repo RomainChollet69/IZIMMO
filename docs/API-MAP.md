@@ -636,7 +636,7 @@ GET https://api-adresse.data.gouv.fr/search/?q={query}&limit=5&type=municipality
 ```
 GET https://api-adresse.data.gouv.fr/reverse/?lon={lng}&lat={lat}&limit=1
 ```
-- Utilisé dans : `dvf.html` (couche DVF)
+- Utilisé dans : `dvf.html` (couche DVF) — info-bulles des ventes + adresse de la parcelle dans le panneau « Historique des ventes » (via `cachedReverseGeocode()`, cache mémoire)
 
 **Auth** : Aucune | **Coût** : Gratuit | **Limite** : Aucune documentée
 

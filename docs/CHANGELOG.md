@@ -4,6 +4,31 @@
 
 ---
 
+## Session 2026-06-19 (suite) — Adresse de la parcelle dans le panneau DVF
+
+### Objectif
+Sur la page DVF de Léon, quand on clique une parcelle, le panneau latéral droit (« Historique des ventes ») n'affichait que le numéro de parcelle (ex. « Parcelle AB 105 »). L'agent ne pouvait pas vérifier qu'il était bien sur la bonne parcelle. Besoin : afficher l'adresse.
+
+### Contexte technique
+Les données DVF chargées sont compressées (`[date, prix, type, surf_bati, surf_terrain, lng, lat]`) et ne contiennent **pas** de champ adresse. L'adresse est obtenue par reverse geocoding (`api-adresse.data.gouv.fr/reverse`), comme c'est déjà fait dans les info-bulles des ventes.
+
+### Modifications
+- `dvf.html` : nouvelle ligne `#parcelPanelAddr` dans l'en-tête du panneau, entre le titre et le sous-titre.
+- `dvf.html` (CSS `.parcel-panel-addr`) : style charte (map-pin violet `#667eea`), masquée par défaut, classe `.show` pour l'afficher.
+- `dvf.html` (`openParcelPanel`) : reçoit le point cliqué, géocode en priorité le 1er point de vente (précis au bâti) sinon le point cliqué, affiche « Recherche de l'adresse… » puis l'adresse (ou « Adresse non trouvée »). Réutilise `cachedReverseGeocode()` (cache existant, pas de requête redondante).
+- `dvf.html` (`onParcelClick`) : passe `{ lat, lng }` du clic à `openParcelPanel`.
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/dvf.html`
+
+### Vérifié
+Modifications ciblées (28 lignes), helpers réutilisés (`cachedReverseGeocode`, `escapeHtml` confirmés présents). Rendu réel testable seulement avec recherche d'adresse + API Google Maps/IGN en session authentifiée.
+
+### Commit
+`4d09f55` — poussé sur `main` (déploiement Vercel auto).
+
+---
+
 ## Session 2026-06-19 (suite) — Agent en copie des mails de visite
 
 ### Objectif
