@@ -4,6 +4,18 @@
 
 ---
 
+## Session 2026-06-20 — Polish graphique du mode tuiles mobile
+
+Retours utilisateur sur le mode tuiles (`vendeurs.html` + `acquereurs.html`) :
+- **Doublons d'icônes corrigés** : certains `col.label` contiennent déjà un emoji (`🔒 OFF MARKET`, `ACHETÉS AVEC MOI 🎉`…) en plus de `col.icon`. Helpers `cleanColLabel()` (retire l'emoji du label) + `tileLabel()` (icône unique + libellé propre), utilisés sur les tuiles et les titres de répertoire.
+- **Fond plus foncé** (`#E7EBF2` au lieu de `#F8FAFC`) pour faire ressortir les tuiles et le répertoire (cartes blanches + légère ombre).
+- **Typo affinée** : libellés de tuiles 13px/600 (plus tout-en-capitales forcé), compteur Barlow 46px ; répertoire encapsulé dans une carte blanche arrondie (`.m-tlist-card`).
+
+### Commit
+À pousser sur `main`.
+
+---
+
 ## Session 2026-06-19 (suite) — Mode TUILES mobile pour les pipelines (refonte simplifiée)
 
 ### Vision (utilisateur)

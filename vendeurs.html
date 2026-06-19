@@ -3032,7 +3032,7 @@
                 bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                background: #F8FAFC;
+                background: #E7EBF2;
                 z-index: 40;
                 padding: 14px;
             }
@@ -3042,18 +3042,20 @@
             .m-tiles-title { flex: 1; font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 800; font-size: 22px; text-transform: uppercase; color: #1A1F36; letter-spacing: 0.01em; }
             .m-tiles-mic { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 19px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
             .m-tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-            .m-tile { aspect-ratio: 1 / 1; background: #fff; border: 1px solid #EEF0F4; border-top: 3px solid var(--tile-c, #94A3B8); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 10px; cursor: pointer; font-family: inherit; }
-            .m-tile:active { background: #F8FAFC; }
-            .m-tile-count { font-size: 44px; font-weight: 800; font-family: 'Barlow Semi Condensed', sans-serif; color: var(--tile-c, #475569); line-height: 1; }
-            .m-tile-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.2; }
+            .m-tile { aspect-ratio: 1 / 1; background: #fff; border: 1px solid #fff; border-top: 3px solid var(--tile-c, #94A3B8); border-radius: 16px; box-shadow: 0 1px 3px rgba(16,24,40,0.06); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 10px; cursor: pointer; font-family: inherit; }
+            .m-tile:active { transform: scale(0.98); }
+            .m-tile-count { font-size: 46px; font-weight: 800; font-family: 'Barlow Semi Condensed', sans-serif; color: var(--tile-c, #475569); line-height: 1; }
+            .m-tile-label { font-size: 13px; font-weight: 600; color: #334155; letter-spacing: 0.01em; line-height: 1.25; }
             .m-tlist-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 10px; }
             .m-tlist-back { border: none; background: none; font-size: 26px; line-height: 1; color: #475569; cursor: pointer; padding: 0 4px; }
             .m-tlist-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
             .m-tlist-title { font-size: 18px; font-weight: 700; font-family: 'Barlow Semi Condensed', sans-serif; color: #1A1F36; }
             .m-tlist-badge { margin-left: auto; font-size: 14px; color: #64748B; }
             .m-tlist-sub, .m-tiles-empty { font-size: 13px; color: #64748B; padding: 8px 2px; }
+            .m-tlist-card { background: #fff; border: 1px solid #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(16,24,40,0.06); }
             .m-tlist-row { display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-bottom: 1px solid #EEF0F4; cursor: pointer; background: #fff; }
-            .m-tlist-row:active { background: #F8FAFC; }
+            .m-tlist-row:last-child { border-bottom: none; }
+            .m-tlist-row:active { background: #F4F6FA; }
             .m-tlist-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
             .m-tlist-name { font-size: 15px; font-weight: 600; color: #1A1F36; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .m-tlist-tel { font-size: 13px; color: #64748B; }
@@ -7033,6 +7035,14 @@
         function normalizeTxt(s) {
             return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
         }
+        // Certaines colonnes ont déjà un emoji dans leur label : on le retire pour ne garder
+        // que l'icône (col.icon), évitant les doublons d'emoji sur les tuiles.
+        function cleanColLabel(label) {
+            return (label || '').replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2190}-\u{21FF}\u{2B00}-\u{2BFF}️‍]/gu, '').replace(/\s+/g, ' ').trim();
+        }
+        function tileLabel(col) {
+            return (col.icon ? col.icon + ' ' : '') + cleanColLabel(col.label);
+        }
 
         function renderMobileTiles() {
             const host = document.getElementById('mobileTilesView');
@@ -7064,7 +7074,7 @@
                     normalizeTxt(s.address).includes(nq)
                 ).slice(0, 50);
                 body.innerHTML = `<div class="m-tlist-sub">${results.length} résultat${results.length > 1 ? 's' : ''}</div>` +
-                    (results.length ? results.map(tilesRowHtml).join('') : '<div class="m-tiles-empty">Aucun résultat</div>');
+                    (results.length ? '<div class="m-tlist-card">' + results.map(tilesRowHtml).join('') + '</div>' : '<div class="m-tiles-empty">Aucun résultat</div>');
                 attachTilesRowHandlers(body);
                 return;
             }
@@ -7073,7 +7083,7 @@
                 const count = sellers.filter(s => s.status === col.key).length;
                 return `<button class="m-tile" style="--tile-c:${col.color}" onclick="openTilesList('${col.key}')">
                     <div class="m-tile-count">${count}</div>
-                    <div class="m-tile-label">${col.icon || ''} ${escapeHtml(col.label)}</div>
+                    <div class="m-tile-label">${escapeHtml(tileLabel(col))}</div>
                 </button>`;
             }).join('') + '</div>';
         }
@@ -7118,10 +7128,10 @@
             host.innerHTML = `<div class="m-tlist-head">
                     <button class="m-tlist-back" onclick="backToTilesHub()" aria-label="Retour">‹</button>
                     <span class="m-tlist-dot" style="background:${col.color}"></span>
-                    <span class="m-tlist-title">${col.icon || ''} ${escapeHtml(col.label)}</span>
+                    <span class="m-tlist-title">${escapeHtml(tileLabel(col))}</span>
                     <span class="m-tlist-badge">${list.length}</span>
                 </div>` +
-                (list.length ? list.map(tilesRowHtml).join('') : '<div class="m-tiles-empty">Aucun contact dans cette colonne</div>');
+                (list.length ? '<div class="m-tlist-card">' + list.map(tilesRowHtml).join('') + '</div>' : '<div class="m-tiles-empty">Aucun contact dans cette colonne</div>');
             attachTilesRowHandlers(host);
         }
 
