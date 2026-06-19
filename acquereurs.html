@@ -2287,6 +2287,7 @@
         .mobile-search-btn { display: none; }
         .mobile-move-btn { display: none !important; }
         .card-mobile-move { display: none; } /* visible seulement sur mobile, carte repliée (cf. @media) */
+        .m-tiles { display: none; } /* mode tuiles mobile : affiché via body.tiles-mode */
         .move-popup-overlay {
             display: none;
             position: fixed;
@@ -2671,6 +2672,47 @@
                 box-shadow: 0 1px 2px rgba(0,0,0,0.06);
             }
             .lead-card.pm2 .card-mobile-move:active { background: #EEF2FF; }
+
+            /* ===== MODE TUILES MOBILE (V1) ===== */
+            body.tiles-mode #mobileTabs,
+            body.tiles-mode .pipeline,
+            body.tiles-mode .mobile-search-btn { display: none !important; }
+            body.tiles-mode .m-tiles {
+                display: block;
+                position: fixed;
+                top: var(--m-header-h, 56px);
+                left: 0;
+                right: 0;
+                bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                background: #F8FAFC;
+                z-index: 40;
+                padding: 14px;
+            }
+            .m-tiles-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+            .m-tiles-title { flex: 1; font-family: 'Barlow Semi Condensed', sans-serif; font-weight: 800; font-size: 22px; text-transform: uppercase; color: #1A1F36; letter-spacing: 0.01em; }
+            .m-tiles-mic { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-size: 19px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+            .m-tiles-search { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid #E1E8ED; border-radius: 14px; padding: 11px 14px; margin-bottom: 14px; }
+            .m-tiles-search input { border: none; outline: none; flex: 1; min-width: 0; font-size: 15px; font-family: inherit; background: transparent; color: #1A1F36; }
+            .m-tiles-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+            .m-tile { aspect-ratio: 1 / 1; background: #fff; border: 1px solid #EEF0F4; border-top: 3px solid var(--tile-c, #94A3B8); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 10px; cursor: pointer; font-family: inherit; }
+            .m-tile:active { background: #F8FAFC; }
+            .m-tile-count { font-size: 44px; font-weight: 800; font-family: 'Barlow Semi Condensed', sans-serif; color: var(--tile-c, #475569); line-height: 1; }
+            .m-tile-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.02em; line-height: 1.2; }
+            .m-tlist-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 10px; }
+            .m-tlist-back { border: none; background: none; font-size: 26px; line-height: 1; color: #475569; cursor: pointer; padding: 0 4px; }
+            .m-tlist-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+            .m-tlist-title { font-size: 18px; font-weight: 700; font-family: 'Barlow Semi Condensed', sans-serif; color: #1A1F36; }
+            .m-tlist-badge { margin-left: auto; font-size: 14px; color: #64748B; }
+            .m-tlist-sub, .m-tiles-empty { font-size: 13px; color: #64748B; padding: 8px 2px; }
+            .m-tlist-row { display: flex; align-items: center; gap: 12px; padding: 12px 12px; border-bottom: 1px solid #EEF0F4; cursor: pointer; background: #fff; }
+            .m-tlist-row:active { background: #F8FAFC; }
+            .m-tlist-av { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; }
+            .m-tlist-name { font-size: 15px; font-weight: 600; color: #1A1F36; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            .m-tlist-tel { font-size: 13px; color: #64748B; }
+            .m-tlist-call { text-decoration: none; font-size: 18px; padding: 6px; flex-shrink: 0; }
+            .m-tlist-chev { color: #CBD5E1; font-size: 22px; flex-shrink: 0; }
 
             .cards-container { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 20px; }
 
@@ -3500,6 +3542,9 @@
             </a>
         </div>
     </div>
+
+    <!-- Mode tuiles mobile (V1) : rempli par renderMobileTiles(), affiché via body.tiles-mode -->
+    <div class="m-tiles" id="mobileTilesView"></div>
 
     <div class="pipeline">
         <!-- Colonne Nouveaux Acquéreurs -->
@@ -5366,6 +5411,10 @@
         // N'affecte que le mobile (classe .pm2 + CSS @media), bouton visible carte repliée seulement.
         const PIPELINE_MOBILE_V2 = true;
 
+        // Mode TUILES mobile (V1) : remplace le pipeline en colonnes par des tuiles + compteur.
+        // Passer à false rétablit l'ancien pipeline mobile. Aucun impact desktop.
+        const MOBILE_TILES_V1 = true;
+
         function setMobileTab(status) {
             mobileActiveTab = status;
             localStorage.setItem('leon_mobile_tab_buyers', status);
@@ -5869,7 +5918,119 @@
         }
 
         // ===== RENDU =====
+        // ===== MODE TUILES MOBILE (V1) =====
+        let tilesState = { view: 'hub', key: null, q: '' };
+
+        function buyerDisplayName(b) {
+            return ((b.first_name || '') + ' ' + (b.last_name || '')).trim() || 'Sans nom';
+        }
+        function buyerInitials(b) {
+            return buyerDisplayName(b).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        }
+        function normalizeTxt(s) {
+            return (s || '').toString().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+        }
+        function buyerStatusColor(status) {
+            const c = STATUS_COLUMNS.find(x => x.key === status);
+            return c ? c.color : '#94A3B8';
+        }
+
+        function renderMobileTiles() {
+            const host = document.getElementById('mobileTilesView');
+            if (!host) return;
+            if (tilesState.view === 'list') renderTilesList(host);
+            else renderTilesHub(host);
+        }
+
+        function renderTilesHub(host) {
+            const head = `<div class="m-tiles-head"><div class="m-tiles-title">Pipeline acquéreurs</div></div>`;
+            const search = `<div class="m-tiles-search"><span style="color:#94A3B8;font-size:16px">🔍</span><input id="mTilesSearch" type="search" placeholder="Chercher un acquéreur, un secteur…" autocomplete="off"></div>`;
+            host.innerHTML = head + search + '<div id="mTilesBody"></div>';
+            const input = document.getElementById('mTilesSearch');
+            input.value = tilesState.q;
+            input.addEventListener('input', () => { tilesState.q = input.value; fillTilesBody(); });
+            fillTilesBody();
+            if (tilesState.q) input.focus();
+        }
+
+        function fillTilesBody() {
+            const body = document.getElementById('mTilesBody');
+            if (!body) return;
+            const q = tilesState.q.trim();
+            if (q) {
+                const nq = normalizeTxt(q);
+                const results = buyers.filter(b =>
+                    normalizeTxt(buyerDisplayName(b)).includes(nq) ||
+                    normalizeTxt(b.phone).includes(nq) ||
+                    normalizeTxt(b.email).includes(nq) ||
+                    normalizeTxt(b.sector).includes(nq)
+                ).slice(0, 50);
+                body.innerHTML = `<div class="m-tlist-sub">${results.length} résultat${results.length > 1 ? 's' : ''}</div>` +
+                    (results.length ? results.map(tilesRowHtml).join('') : '<div class="m-tiles-empty">Aucun résultat</div>');
+                attachTilesRowHandlers(body);
+                return;
+            }
+            body.innerHTML = '<div class="m-tiles-grid">' + STATUS_COLUMNS.map(col => {
+                const count = buyers.filter(b => b.status === col.key).length;
+                return `<button class="m-tile" style="--tile-c:${col.color}" onclick="openTilesList('${col.key}')">
+                    <div class="m-tile-count">${count}</div>
+                    <div class="m-tile-label">${col.icon || ''} ${escapeHtml(col.label)}</div>
+                </button>`;
+            }).join('') + '</div>';
+        }
+
+        function tilesRowHtml(b) {
+            const tel = b.phone || '—';
+            const c = buyerStatusColor(b.status);
+            return `<div class="m-tlist-row" data-id="${b.id}">
+                <div class="m-tlist-av" style="background:${c}22;color:${c}">${buyerInitials(b)}</div>
+                <div style="flex:1;min-width:0">
+                    <div class="m-tlist-name">${escapeHtml(buyerDisplayName(b))}</div>
+                    <div class="m-tlist-tel">${escapeHtml(tel)}</div>
+                </div>
+                ${b.phone ? `<a href="tel:${escapeHtml(b.phone)}" class="m-tlist-call" onclick="event.stopPropagation()" aria-label="Appeler">📞</a>` : ''}
+                <span class="m-tlist-chev">›</span>
+            </div>`;
+        }
+
+        function attachTilesRowHandlers(scope) {
+            scope.querySelectorAll('.m-tlist-row').forEach(r => {
+                r.addEventListener('click', () => editBuyer(r.dataset.id));
+            });
+        }
+
+        function openTilesList(key) {
+            tilesState.view = 'list';
+            tilesState.key = key;
+            renderMobileTiles();
+            const host = document.getElementById('mobileTilesView');
+            if (host) host.scrollTop = 0;
+        }
+        function backToTilesHub() {
+            tilesState.view = 'hub';
+            tilesState.key = null;
+            renderMobileTiles();
+        }
+
+        function renderTilesList(host) {
+            const col = STATUS_COLUMNS.find(c => c.key === tilesState.key) || { label: '', color: '#94A3B8', icon: '' };
+            const list = buyers.filter(b => b.status === tilesState.key)
+                .sort((a, b) => buyerDisplayName(a).localeCompare(buyerDisplayName(b)));
+            host.innerHTML = `<div class="m-tlist-head">
+                    <button class="m-tlist-back" onclick="backToTilesHub()" aria-label="Retour">‹</button>
+                    <span class="m-tlist-dot" style="background:${col.color}"></span>
+                    <span class="m-tlist-title">${col.icon || ''} ${escapeHtml(col.label)}</span>
+                    <span class="m-tlist-badge">${list.length}</span>
+                </div>` +
+                (list.length ? list.map(tilesRowHtml).join('') : '<div class="m-tiles-empty">Aucun acquéreur dans cette colonne</div>');
+            attachTilesRowHandlers(host);
+        }
+
         function renderBuyers() {
+            document.body.classList.toggle('tiles-mode', isMobile() && MOBILE_TILES_V1);
+            if (isMobile() && MOBILE_TILES_V1) {
+                try { renderMobileTiles(); } catch (e) { console.error('[MobileTiles] Erreur rendu mobile:', e); }
+            }
             const columns = getActiveColumns();
             const containers = {};
             columns.forEach(col => {

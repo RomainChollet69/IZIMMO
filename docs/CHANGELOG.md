@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-06-19 (suite) — Mode TUILES mobile pour les pipelines (refonte simplifiée)
+
+### Vision (utilisateur)
+Le mobile doit être très différent du desktop : simple, clair, rapide. Pas une liste/colonnes en réduit, mais : titre de la page, barre de recherche, puis des TUILES carrées (1 par colonne) avec le compteur centré. Tap sur une tuile → répertoire simple (nom + tél, façon contacts du téléphone) → tap sur un contact → fiche détail. Capture vocale assurée par le micro déjà présent dans la barre du bas.
+
+### Implémentation (`vendeurs.html` + `acquereurs.html`)
+Derrière le flag `MOBILE_TILES_V1` (passer à `false` rétablit l'ancien pipeline mobile en colonnes). Aucun impact desktop : tout est gaté par `isMobile() && MOBILE_TILES_V1` + classe `body.tiles-mode` (CSS `@media max-width:768px`), et le conteneur `.m-tiles` est `display:none` par défaut.
+- Nouveau conteneur `#mobileTilesView` + fonctions `renderMobileTiles` / `renderTilesHub` / `fillTilesBody` / `renderTilesList` / `tilesRowHtml`.
+- Hub : titre (« Pipeline vendeurs » / « Pipeline acquéreurs ») → recherche (filtre nom/tél/ville ou secteur, live) → grille 2 colonnes de tuiles carrées (`aspect-ratio:1/1`, chiffre centré, accent couleur de la colonne).
+- Tap tuile → répertoire (avatar initiales coloré, nom, tél, appel direct, chevron). Tap contact → vendeurs : `openMobileDetail` (bottom sheet) ; acquéreurs : `editBuyer` (modale).
+- En `tiles-mode`, masque `#mobileTabs`, `#pipelineContainer`/`.pipeline`, `.mobile-search-btn`.
+- Branché dans `renderSellers` / `renderBuyers` (rafraîchi à chaque changement de données).
+
+### Vérifié (preview 390px, démo)
+- Tuiles + compteurs corrects, recherche, tuile → répertoire → fiche, sur les deux pipelines. Aucune erreur console, pas de débordement. Desktop : redirige vers le shell `app.html`, tiles-mode non appliqué.
+
+### Reste à faire / harmoniser
+- Détail acquéreur via `editBuyer` (modale d'édition, titre « Nouvel acquéreur » même en édition — bug pré-existant) vs bottom sheet vendeurs : à harmoniser (idéalement une fiche light commune).
+- Densité « profonde » de l'ancienne carte : caduque en mode tuiles.
+- Code mort `createMobileCard`/`renderMobileCardDeck` à nettoyer.
+
+### Commit
+À pousser sur `main` (déploiement Vercel auto).
+
+---
+
 ## Session 2026-06-19 (suite) — DVF mobile simplifié : barre de recherche flottante
 
 ### Problème
