@@ -1767,3 +1767,24 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Décision** : Retirer la règle `.bottom-micro-btn{display:none!important;}`. Le bouton et sa modale existaient déjà dans vendeurs/acquereurs/dvf/visites, ils réapparaissent tels quels. Cache-bust `tab-shell.js?v=20260618a`.
 
 **Conséquences** : Doublon assumé (onglet Vocal + FAB micro), arbitré en faveur de l'accès rapide à la dictée. Le bouton To Do de la barre du bas était déjà conservé, le FAB le rejoint.
+
+---
+
+## D081 — Inscription : pas de double opt-in, mail de bienvenue déclenché côté client
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : Remontées « le mail de confirmation ne marche pas ». La confirmation d'email est désactivée côté Supabase (comptes auto-confirmés, `confirmation_sent_at` = 0, `immediate_login_after_signup: true`). `login.html` affichait pourtant « Un email de vérification vous a été envoyé » → fausse promesse. Par ailleurs, demande d'un mail de bienvenue.
+
+**Alternatives envisagées pour le mail de confirmation** :
+- *Réactiver « Confirm email » dans Supabase* : vraie double opt-in, mais le SMTP par défaut Supabase est plafonné à ~2-3 mails/h (inadapté prod) → casserait les inscriptions sans SMTP custom branché.
+- *Aligner le message sur la réalité (retenu)* : inscription fluide, compte actif immédiatement, redirection directe vers l'app. Zéro friction, zéro mail fantôme.
+
+**Alternatives envisagées pour le déclenchement du mail de bienvenue** :
+- *Webhook DB Supabase sur `auth.users` INSERT* → endpoint serveur : robuste (part même si l'onglet se ferme), mais nécessite config dashboard + secret de webhook.
+- *Appel client après signUp (retenu)* : `login.html` appelle `POST /api/welcome-email` avec l'access_token. Simple, aucune config dashboard, cohérent avec l'archi (front → Vercel). Sécurisé par `verifyAuth` (envoi vers soi-même uniquement) et idempotent (`welcome_email_sent` dans `user_metadata`).
+
+**Décision** : Confirmation d'email désactivée assumée + message honnête + redirection directe. Mail de bienvenue via `api/welcome-email.js` (Mailgun), déclenché côté client, best-effort non bloquant.
+
+**Conséquences** : Si l'utilisateur ferme l'onglet entre signUp et le `fetch`, le mail de bienvenue ne part pas (rare). Le flag d'idempotence permet de basculer plus tard vers un trigger serveur sans risque de doublon. Réactiver la double opt-in imposera d'abord de brancher un SMTP custom (Mailgun) dans Supabase Auth.

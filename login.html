@@ -409,7 +409,29 @@
                 return;
             }
 
-            showMessage('signupMessage', '📧 Un email de vérification vous a été envoyé. Vérifiez votre boîte de réception (et les spams).', 'success');
+            // La confirmation d'email est désactivée côté Supabase : signUp renvoie
+            // directement une session et le compte est déjà actif. On enchaîne donc
+            // sur l'app sans promettre un mail de vérification qui ne partira jamais.
+            // Le `else` couvre le cas où "Confirm email" serait réactivé plus tard
+            // (avec SMTP custom) : signUp ne renverrait alors pas de session.
+            if (data.session) {
+                // Mail de bienvenue (best-effort : ne bloque pas la connexion si échec)
+                sendWelcomeEmail(data.session.access_token);
+                showMessage('signupMessage', '✅ Compte créé. Bienvenue dans Léon, on te connecte…', 'success');
+                window.location.href = 'home.html';
+            } else {
+                showMessage('signupMessage', '📧 Un email de confirmation vous a été envoyé. Vérifiez votre boîte de réception (et les spams) pour activer votre compte.', 'success');
+            }
+        }
+
+        // Déclenche l'envoi du mail de bienvenue côté serveur (Vercel + Mailgun).
+        // Best-effort : on n'attend pas la réponse et on n'interrompt jamais le parcours
+        // d'inscription si l'envoi échoue. Le endpoint valide le token avant d'envoyer.
+        function sendWelcomeEmail(accessToken) {
+            fetch('/api/welcome-email', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            }).catch(err => console.warn('[Welcome] envoi mail bienvenue échoué (non bloquant):', err));
         }
 
         // ===== MOT DE PASSE OUBLIÉ =====

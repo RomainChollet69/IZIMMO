@@ -4,6 +4,33 @@
 
 ---
 
+## Session 2026-06-19 — Fix faux mail de confirmation + mail de bienvenue
+
+### Contexte
+Remontées utilisateurs : « le mail de confirmation d'inscription ne fonctionne pas ». Diagnostic via les logs Auth et la table `auth.users` : la confirmation d'email est **désactivée** côté Supabase (97 comptes, 100 % confirmés automatiquement, `confirmation_sent_at` = 0 sur toute la base, flag `immediate_login_after_signup: true` dans les logs). Aucun mail n'est donc jamais parti. Le bug n'était pas l'envoi mais le **message** : `login.html` promettait après inscription « Un email de vérification vous a été envoyé », alors que le compte est déjà actif et qu'aucun mail ne part. Les gens attendaient un mail inexistant.
+
+### Modifications
+- `login.html` : `handleSignUp()` ne promet plus de mail. Si `signUp` renvoie une session (cas actuel, confirmation désactivée) → message « Compte créé » + redirection directe vers `home.html`. Sinon (si « Confirm email » est réactivé un jour avec SMTP custom) → message d'attente de confirmation. Robuste aux deux configs.
+- `login.html` : nouvel appel best-effort `sendWelcomeEmail(access_token)` après inscription réussie (non bloquant, n'interrompt jamais le parcours).
+- `api/welcome-email.js` (nouveau) : endpoint Vercel qui envoie le mail de bienvenue via Mailgun. Sécurisé par `verifyAuth` (token de session, envoi vers soi-même uniquement). Idempotent via flag `welcome_email_sent` dans `user_metadata` (aucun changement de schéma). Template HTML aux couleurs Léon (gradient, tutoiement, CTA « Ouvrir Léon »).
+
+### Fichiers créés/modifiés
+- `/Users/user/Documents/Izimmo/login.html`
+- `/Users/user/Documents/Izimmo/api/welcome-email.js` (nouveau)
+
+### Vérifié
+Syntaxe JS OK (`node --check` sur welcome-email.js + parsing des `<script>` inline de login.html). Rendu visuel du mail validé en aperçu. Env vars (`MAILGUN_API_KEY`, `MAILGUN_DOMAIN`, `SUPABASE_SERVICE_ROLE_KEY`) déjà présentes côté Vercel (réutilisées de `submit-form.js`). L'envoi réel n'est testable qu'en prod (runtime Vercel + vraie inscription).
+
+### Points d'attention
+- Le mail de bienvenue est déclenché **côté client** après signUp : si l'utilisateur ferme l'onglet entre signUp et le `fetch`, le mail ne part pas (rare, et le flag d'idempotence permet un renvoi propre si on ajoute un trigger serveur plus tard). Alternative plus robuste non retenue pour l'instant : webhook DB Supabase sur `auth.users` INSERT.
+- La confirmation d'email reste désactivée : si on veut un jour de la vraie double opt-in, il faut brancher un SMTP custom (le SMTP par défaut Supabase est limité à ~2-3 mails/h, inadapté à la prod).
+
+### Prochaines étapes possibles
+- Brancher Mailgun comme SMTP custom dans Supabase Auth si on veut réactiver la confirmation d'email.
+- Migrer le déclenchement du mail de bienvenue vers un webhook serveur si le déclenchement client s'avère peu fiable.
+
+---
+
 ## Session 2026-06-18 — Mode démo public (bac à sable isolé)
 
 ### Objectif
