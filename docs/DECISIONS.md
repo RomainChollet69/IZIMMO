@@ -1805,3 +1805,21 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Décision** : Ajout d'un paramètre `cc` à `sendEmail()` (`lib/mailgun-send.js`, garde-fou `cc !== to`). CC = email de l'agent (déjà résolu pour le Reply-To) sur la confirmation (`cron-visit-reminder.js`, `stage === 'confirmation'`) et sur le followup/documents (`cron-visit-followup.js`). Les rappels -24h/-4h restent sans copie.
 
 **Conséquences** : La copie est automatique et par agent (multi-tenant : chaque visite met en copie son propre agent), aucun réglage à exposer. Pour inclure les rappels plus tard, étendre le `cc` aux `stage === '24h' | '4h'` dans `cron-visit-reminder.js`.
+
+
+## D083 — Message groupé : 100% client (mailto/wa.me/sms) + module partagé
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : Permettre d'envoyer un message à plusieurs contacts à la fois (baisse de prix, nouveau bien, proposition de visite), depuis le pipeline Acquéreurs ET depuis la page Visites (contacts d'un bien). Question : envoi serveur (Mailgun) ou via la messagerie de l'agent ?
+
+**Décision** : **Envoi 100% côté client** via les schémas natifs : Email en **cci** (`mailto:?bcc=`), **WhatsApp** (`wa.me`, une conversation par destinataire), **SMS** (`sms:`). Et factorisation dans un **module autonome `js/group-message.js`** (`GroupMessage.open({ recipients, context, defaultTemplate })`), sans dépendance aux globals de la page (styles inline), réutilisable sur n'importe quelle page.
+
+**Alternatives rejetées** :
+- *Envoi serveur via Mailgun* : l'envoi ne partirait pas de l'adresse de l'agent (mauvaise délivrabilité, pas de fil dans SA boîte), consommerait le quota Mailgun (limité, cf. domaine récent), et nécessiterait un opt-in / une gestion de bounce. Le `mailto:`/`wa.me`/`sms:` laisse l'agent maître de l'envoi depuis ses propres outils.
+- *Copie inline dupliquée par page* : `acquereurs.html` avait déjà sa version inline ; plutôt que de la copier dans `visites.html`, on extrait un module partagé. (Migration d'acquereurs.html vers le module restante.)
+
+**Conséquences** :
+- Pas de personnalisation par destinataire en email (cci = envoi unique) : `[salutation]` y devient « à vous ». En WhatsApp/SMS, l'envoi est séquentiel donc `[salutation]`/`[prénom]`/`[nom]` sont personnalisés par contact.
+- Dépend des handlers d'URL de l'appareil (client email, WhatsApp installé). Aucun coût serveur, aucun quota.
