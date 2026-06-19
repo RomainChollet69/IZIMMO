@@ -1875,3 +1875,24 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Garder le modèle cadastre.com (carte épurée, ventes masquées jusqu'au clic « Voir les ventes ») sur mobile : un tap de plus, peu intuitif sur petit écran. On privilégie le feedback immédiat (taper l'adresse → voir les ventes). Le desktop conserve le modèle épuré.
 
 **Conséquences** : Desktop inchangé (la recherche reste dans le panneau latéral ; en desktop, DVF est chargé en iframe via le shell `app.html` à >768px). Limite connue : si l'utilisateur franchit le seuil 768px sans recharger (rotation tablette), le node déplacé n'est pas remis en place — cas marginal, accepté (cohérent avec les autres checks `innerWidth <= 768` one-shot de la page). Vérifié en preview (mobile 375px : barre flottante + boutons repositionnés + 0 erreur ; desktop 1280px iframe : recherche dans le panneau). Chargement réel des ventes non testable en preview (mode démo non authentifié).
+
+---
+
+## D087 — Tutoriels in-app : pages dédiées + CSS partagée, et `mobile.css` requis sur les guides
+
+**Date** : 2026-06-20
+**Statut** : Actif
+
+**Contexte** : Besoin de tutoriels in-app pour Léon (en complément de vidéos). Trois choix à trancher : le format de tuto, comment ouvrir un guide depuis une carte, et un bug d'affichage de la bottom-nav.
+
+**Décisions** :
+- **Format = pages web dédiées** (`tuto-vendeur.html`, `tuto-acquereurs.html`, `tuto-pipeline.html`), une par sujet, sur le gabarit de `aide-vocale.html`. Choix utilisateur, parmi accordéon / modale / pages dédiées. Avantage : URL partageable par tuto, page focalisée, pas de routing JS.
+- **CSS partagée** `css/tuto.css` plutôt que dupliquer ~250 lignes de style dans chaque page (DRY). Chargée après `mobile.css` pour garder le fond clair du guide.
+- **Contenu adossé au code réel** : les libellés (bouton « + Lead », fenêtre « Nouveau lead », sources, colonnes, barème de matching, bouton 📂) ont été relevés via des sous-agents Explore dans `vendeurs.html` / `acquereurs.html` / `pipeline-config.js`, pas inventés.
+- **`css/mobile.css` obligatoire sur toute page chargeant `js/mobile-nav.js`** : la nav (et le bouton Todo) sont injectés en JS avec des classes (`.m-nav`, `.m-todo-fab`) définies uniquement dans `mobile.css`. Sans cette feuille, la nav s'affiche en texte brut (constaté par l'utilisateur). `aide-vocale.html` avait le même défaut latent, corrigé au passage.
+
+**Alternatives écartées** :
+- *Accordéon / modale* dans `tutoriels.html` : page unique qui gonfle, pas d'URL par tuto. La modale reste utilisée pour les vidéos YouTube.
+- *Retirer `mobile-nav.js` des guides* : casserait la cohérence de navigation mobile (la barre du bas est présente partout). On garde la nav, on charge juste son CSS.
+
+**Conséquences** : Tout nouveau guide doit charger `css/mobile.css` **puis** `css/tuto.css`. `mobile.css` étant intégralement sous `@media (max-width:768px)` (+ masquage `.m-nav`/FABs en desktop), aucun impact desktop. Le lot « Fonctionnalités avancées » (DVF, Réseaux, Assistant, Import, Google Agenda) suivra le même gabarit.

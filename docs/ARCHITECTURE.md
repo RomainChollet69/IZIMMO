@@ -24,7 +24,11 @@ IZIMMO/
 ├── micro.html                  # Assistant vocal — notes CRM, visites, agenda, commandes Léon, requêtes DVF
 ├── dvf.html                    # Visualiseur données DVF + DPE
 ├── etude-marche.html           # Étude de marché IA — formulaire + interview express + photos + paramètres + génération 2 passes Claude Sonnet + DVF
-├── tutoriels.html              # Centre de formation & onboarding (placeholder, contenu à venir)
+├── tutoriels.html              # Centre de formation & onboarding — grille de cartes cliquables ; section "Premiers pas" placée en tête
+├── tuto-vendeur.html           # Guide dédié : créer son premier lead vendeur (charte Léon, styles css/tuto.css)
+├── tuto-acquereurs.html        # Guide dédié : gérer les acquéreurs + matching (barème réel 30/25/15/15/15/10)
+├── tuto-pipeline.html          # Guide dédié : déplacer un lead (drag desktop + bouton 📂 mobile)
+├── aide-vocale.html            # Guide vocal — toutes les phrases que Léon comprend (lié depuis tutoriels.html + micro.html)
 ├── leon.html                   # Cockpit quotidien — Guide intelligent Léon (priorisation tâches, debrief visites, relances)
 ├── visites.html                # Gestion des visites — Vue groupée par bien, visiteurs libres, feedback, promotion en acquéreur
 ├── reset-password.html         # Réinitialisation mot de passe (redirige vers home.html)

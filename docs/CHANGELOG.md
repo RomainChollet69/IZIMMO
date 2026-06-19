@@ -4,6 +4,37 @@
 
 ---
 
+## Session 2026-06-20 — Tutoriels in-app "Premiers pas" (pages dédiées)
+
+### Vision (utilisateur)
+Créer des tutoriels in-app pour Léon, en complément de vidéos à venir. Format retenu : **pages web dédiées** (une par tuto), accessibles depuis `tutoriels.html`.
+
+### Implémentation
+Trois guides dédiés mobile-first (charte Léon : header gradient, Barlow/Inter, étapes numérotées, astuce vocale, bloc "Et après ?") :
+- `tuto-vendeur.html` — créer son premier lead vendeur (4 champs obligatoires, sources, 8 colonnes du pipeline).
+- `tuto-acquereurs.html` — acquéreurs + matching (critères, formulaire public, barème réel 30/25/15/15/15/10 pts, 3 critères éliminatoires, seuil 75 %).
+- `tuto-pipeline.html` — déplacer un lead (drag desktop, bouton 📂 mobile, colonnes qui déclenchent une action).
+- Contenu **vérifié contre le code réel** (libellés UI relevés via sous-agents Explore dans `vendeurs.html`, `acquereurs.html`, `pipeline-config.js`).
+- `css/tuto.css` — feuille de style partagée par les 3 pages (DRY).
+- `tutoriels.html` — 4 cartes "Premiers pas" rendues cliquables (badge "Disponible") ; la carte vocale pointe vers `aide-vocale.html` existante. Section "Premiers pas" déplacée **tout en haut** (point de départ logique).
+
+### Correctif (retour utilisateur)
+Bottom-nav injectée par `mobile-nav.js` rendue **sans style** sur les guides (classes `.m-nav`, `.m-todo-fab` non définies). Cause : pages qui chargent `mobile-nav.js` sans `css/mobile.css`. Ajout de `css/mobile.css` sur `tuto-vendeur/acquereurs/pipeline` **et** `aide-vocale.html` (même défaut latent). Résultat : nav stylée sur mobile, masquée en desktop (`display:none`, le shell garde sa nav).
+
+### Vérifié (preview mobile 375px + desktop)
+- Les 3 pages : 200, CSS chargée, rendu charte OK, liens inter-tutos fonctionnels.
+- Bottom-nav : `position:fixed` en bas sur mobile, `display:none` en desktop ; `.m-todo-fab` masqué aussi en desktop.
+- `tutoriels.html` : ordre des sections = Premiers pas → Vidéo → Recevoir tes leads → Fonctionnalités avancées.
+
+### Fichiers créés / modifiés
+- Créés : `tuto-vendeur.html`, `tuto-acquereurs.html`, `tuto-pipeline.html`, `css/tuto.css`
+- Modifiés : `tutoriels.html`, `aide-vocale.html`
+
+### Reste à faire
+- Lot "Fonctionnalités avancées" (encore en "Bientôt") : DVF, Réseaux/Léa, Assistant Léon, Import contacts, + Google Agenda — même gabarit.
+
+---
+
 ## Session 2026-06-20 — Polish graphique du mode tuiles mobile
 
 Retours utilisateur sur le mode tuiles (`vendeurs.html` + `acquereurs.html`) :

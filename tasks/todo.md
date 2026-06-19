@@ -71,6 +71,14 @@ _(rien d'autre en cours)_
 
 ## À faire
 
+### Tutoriels in-app (session 2026-06-20)
+- [x] Lot "Premiers pas" : `tuto-vendeur.html`, `tuto-acquereurs.html`, `tuto-pipeline.html` + `css/tuto.css` — fait
+- [x] Cartes "Premiers pas" cliquables + section remontée en tête de `tutoriels.html` — fait
+- [x] Fix bottom-nav non stylée (charger `css/mobile.css` sur les guides + `aide-vocale.html`) — fait
+- [ ] Lot "Fonctionnalités avancées" (même gabarit) : DVF, Réseaux/Léa, Assistant Léon, Import contacts, Google Agenda
+- [ ] Passer les 4 cartes "Fonctionnalités avancées" en "Disponible" une fois rédigées
+- [ ] (Option) Ajouter une carte d'accès direct au guide "Recevoir tes leads des portails" déjà inline dans `tutoriels.html`
+
 ### Matching / Visites
 - [ ] Tester le rendu des chips visite avec différents retours (feedback, prix, points, décision)
 - [ ] Vérifier le deep-link acquéreur depuis les cartes visite (clic nom → fiche)
