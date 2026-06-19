@@ -4,6 +4,32 @@
 
 ---
 
+## Session 2026-06-19 (suite) — Refonte mobile L2 : cartes pipelines (déplacement rapide + densité)
+
+### Contexte
+Suite de la refonte mobile (L1 Visites déjà fait, commit `ee585c0`). Demande utilisateur sur le pipeline : déplacer un lead plus vite + densité/lisibilité des cartes. Constat : le pipeline mobile utilise les `lead-card` desktop (le `deck-card`/`createMobileCard` est du code mort, conteneur `display:none`), donc les cartes sont complètes mais ont beaucoup d'espace vide à droite, et déplacer était lent.
+
+### Modifications (`vendeurs.html` + `acquereurs.html`)
+Derrière le flag `PIPELINE_MOBILE_V2` (classe `.pm2` + CSS `@media max-width:768px`, zéro impact desktop ; passer à `false` = ancien rendu) :
+- **Bouton « déplacer » rapide** `.card-mobile-move` (📂) directement sur la carte, dans l'espace vide en bas-droite → 1 tap ouvre `openMovePopup` (avant : tap → sheet/déplier → Déplacer).
+- Vendeurs : tap carte = bottom sheet → bouton toujours visible. Taille 40px.
+- Acquéreurs : tap carte = expand inline → bouton visible **carte repliée seulement** (`:not(.expanded)`), les actions complètes prennent le relais une fois dépliée.
+- `padding-right: 52px` réservé pour structurer la carte et exploiter l'espace droit (densité).
+
+### Vérifié (preview 390px, démo)
+- Boutons visibles (30 vendeurs / 57 acquéreurs), 1 tap → popup colonnes, masqué carte dépliée (acquéreurs), pas de débordement horizontal, zéro impact desktop.
+
+### Points d'attention / reste à faire
+- `createMobileCard`/`renderMobileCardDeck`/`.mobile-card-deck` = code mort à nettoyer.
+- Modèles d'interaction différents vendeurs (sheet) vs acquéreurs (expand inline) : harmonisation possible.
+- Densité « profonde » (refonte hiérarchie/layout carte) non faite : à valider avec l'utilisateur.
+- L3 (gestes/drag tactile) et L4 (navigation, conservation d'état) restent à faire.
+
+### Commit
+À pousser sur `main` (déploiement Vercel auto).
+
+---
+
 ## Session 2026-06-19 (suite 4) — Bug 403 Google Calendar : VRAIE cause = OAuth lancé dans l'iframe
 
 ### Diagnostic final (capture décisive)

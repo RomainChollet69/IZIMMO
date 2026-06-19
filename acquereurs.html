@@ -2286,6 +2286,7 @@
         .mobile-tabs { display: none; }
         .mobile-search-btn { display: none; }
         .mobile-move-btn { display: none !important; }
+        .card-mobile-move { display: none; } /* visible seulement sur mobile, carte repliée (cf. @media) */
         .move-popup-overlay {
             display: none;
             position: fixed;
@@ -2647,6 +2648,30 @@
             .card-actions { margin-top: 8px; gap: 4px; }
             .card-btn { font-size: 14px; padding: 4px; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
             .mobile-move-btn { display: inline-flex !important; }
+
+            /* L2 — Bouton "déplacer" rapide sur la carte repliée (occupe l'espace vide à droite).
+               Masqué quand la carte est dépliée (les actions complètes prennent le relais). */
+            .lead-card.pm2:not(.expanded) { position: relative; padding-right: 52px; }
+            .lead-card.pm2:not(.expanded) .card-mobile-move {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                border: 1.5px solid #E1E8ED;
+                background: #fff;
+                font-size: 15px;
+                line-height: 1;
+                cursor: pointer;
+                z-index: 2;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            }
+            .lead-card.pm2 .card-mobile-move:active { background: #EEF2FF; }
+
             .cards-container { display: flex; flex-direction: column; gap: 6px; padding: 8px 12px 20px; }
 
             /* --- MODALE : pleine largeur, au-dessus des FABs et bottom nav --- */
@@ -5337,6 +5362,10 @@
 
         function isMobile() { return window.innerWidth <= 768; }
 
+        // L2 — Refonte carte mobile pipeline. Passe à false pour revenir à l'ancien rendu.
+        // N'affecte que le mobile (classe .pm2 + CSS @media), bouton visible carte repliée seulement.
+        const PIPELINE_MOBILE_V2 = true;
+
         function setMobileTab(status) {
             mobileActiveTab = status;
             localStorage.setItem('leon_mobile_tab_buyers', status);
@@ -5955,7 +5984,7 @@
 
         function createBuyerCard(buyer) {
             const card = document.createElement('div');
-            card.className = 'lead-card';
+            card.className = 'lead-card' + (PIPELINE_MOBILE_V2 ? ' pm2' : '');
             card.draggable = true;
             card.dataset.id = buyer.id;
 
@@ -6032,7 +6061,11 @@
             ext += '</div>';
 
             const selectCheckbox = '<div class="select-checkbox"><i class="fa-solid fa-check"></i></div>';
-            card.innerHTML = selectCheckbox + alertBadge + compact + ext + '<div class="card-expand-arrow">▼</div>';
+            // Bouton "déplacer" rapide sur la carte repliée (mobile) : 1 tap → popup.
+            const mobileMoveBtn = PIPELINE_MOBILE_V2
+                ? `<button class="card-mobile-move" onclick="event.stopPropagation(); openMovePopup('${buyer.id}')" title="Déplacer cet acquéreur" aria-label="Déplacer cet acquéreur">📂</button>`
+                : '';
+            card.innerHTML = selectCheckbox + alertBadge + compact + ext + mobileMoveBtn + '<div class="card-expand-arrow">▼</div>';
             if (selectedBuyerIds.has(buyer.id)) card.classList.add('selected');
 
             // Click handler on match indicator → open modal on matching tab

@@ -2640,6 +2640,7 @@
         .mobile-tabs { display: none; }
         .mobile-search-btn { display: none; }
         .mobile-move-btn { display: none !important; }
+        .card-mobile-move { display: none; } /* visible seulement sur mobile (cf. @media) */
         .move-popup-overlay {
             display: none;
             position: fixed;
@@ -2991,6 +2992,28 @@
             .lead-card .card-extended { display: none !important; }
             .lead-card .card-expand-arrow { display: none; }
             .lead-card .card-actions { display: none; }
+
+            /* L2 — Bouton "déplacer" rapide sur la carte (occupe l'espace vide à droite) */
+            .lead-card.pm2 { position: relative; padding-right: 52px; }
+            .lead-card.pm2 .card-mobile-move {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: absolute;
+                right: 10px;
+                bottom: 10px;
+                width: 40px;
+                height: 40px;
+                border-radius: 10px;
+                border: 1.5px solid #E1E8ED;
+                background: #fff;
+                font-size: 15px;
+                line-height: 1;
+                cursor: pointer;
+                z-index: 2;
+                box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            }
+            .lead-card.pm2 .card-mobile-move:active { background: #EEF2FF; }
 
             /* ===== VUE DÉTAIL OVERLAY ===== */
             .mobile-detail-overlay {
@@ -6280,6 +6303,10 @@
 
         function isMobile() { return window.innerWidth <= 768; }
 
+        // L2 — Refonte carte mobile pipeline. Passe à false pour revenir à l'ancien rendu
+        // (carte sans bouton déplacer direct). N'affecte que le mobile (classe .pm2 + CSS @media).
+        const PIPELINE_MOBILE_V2 = true;
+
         const DAYS_AUTO_REMINDER_AFTER_RDV = 15; // Délai auto-relance après RDV vendeur (jours)
 
         // ===== MOBILE CARD DECK STATE =====
@@ -8541,7 +8568,7 @@
 
         function createSellerCard(seller) {
             const card = document.createElement('div');
-            card.className = 'lead-card';
+            card.className = 'lead-card' + (PIPELINE_MOBILE_V2 ? ' pm2' : '');
             card.draggable = true;
             card.dataset.id = seller.id;
 
@@ -8656,7 +8683,11 @@
                 ? `<div class="match-indicator" data-match-seller="${seller.id}" title="${escapeHtml(matchTooltip)}" aria-label="${escapeHtml(matchTooltip)}">🎯 ${matchCount}</div>`
                 : '';
 
-            card.innerHTML = matchIndicator + compact + ext + '<div class="card-expand-arrow">▼</div>';
+            // Bouton "déplacer" rapide visible directement sur la carte (mobile) : 1 tap → popup.
+            const mobileMoveBtn = PIPELINE_MOBILE_V2
+                ? `<button class="card-mobile-move" onclick="event.stopPropagation(); openMovePopup('${seller.id}')" title="Déplacer ce lead" aria-label="Déplacer ce lead">📂</button>`
+                : '';
+            card.innerHTML = matchIndicator + compact + ext + mobileMoveBtn + '<div class="card-expand-arrow">▼</div>';
 
             // Click handler on match indicator → open modal on matching tab
             const matchEl = card.querySelector('.match-indicator');
