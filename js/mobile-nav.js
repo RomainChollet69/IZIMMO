@@ -15,7 +15,7 @@
 
     const NAV_ITEMS = [
         { href: 'home.html',        icon: 'fa-solid fa-house',          label: 'Accueil',     id: 'home.html' },
-        { href: 'vendeurs.html',    icon: 'fa-solid fa-table-columns',  label: 'Pipeline',    id: 'vendeurs.html', activeIds: ['vendeurs.html', 'acquereurs.html'] },
+        { href: 'vendeurs.html',    icon: 'fa-solid fa-filter',         label: 'Pipeline',    id: 'vendeurs.html', activeIds: ['vendeurs.html', 'acquereurs.html'] },
         { href: 'micro.html',       icon: 'fa-solid fa-microphone',     label: null,          id: 'micro.html', isFab: true },
         { href: 'dvf.html',         icon: 'fa-solid fa-chart-simple',   label: 'Marché',      id: 'dvf.html' },
         { href: 'visites.html',     icon: 'fa-solid fa-calendar-check', label: 'Visites',     id: 'visites.html' },
