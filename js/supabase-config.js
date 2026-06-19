@@ -7,7 +7,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const DVF_STORAGE_URL = SUPABASE_URL + '/storage/v1/object/public/dvf-data';
 const DPE_STORAGE_URL = SUPABASE_URL + '/storage/v1/object/public/dpe-data';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Mode démo : si demo-supabase.js a installé un faux client (sessionStorage.leon_demo),
+// on l'utilise à la place du vrai (bac à sable isolé, aucun accès backend réel).
+const supabaseClient = window.__LEON_DEMO_CLIENT__ || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Sources de leads VENDEURS — charte graphique Léon
 const SOURCE_CONFIG = {

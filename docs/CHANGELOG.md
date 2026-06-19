@@ -4,6 +4,36 @@
 
 ---
 
+## Session 2026-06-18 — Mode démo public (bac à sable isolé)
+
+### Objectif
+Offrir une démo publique du CRM pour la prospection : un prospect entre sans login, voit un compte déjà rempli (vraies données de `romainchollet69@gmail.com` mais anonymisées), et peut tout manipuler (glisser les cartes, traiter, planifier, "envoyer" des messages) comme un vrai compte. Aucune écriture sur le backend, aucun email réel, état réinitialisé à chaque entrée.
+
+### Approche
+Point de bascule unique : toutes les pages parlent à la base via le seul objet `supabaseClient` (créé dans `js/supabase-config.js`). En mode démo, on le remplace par un **faux client en mémoire** (backed `sessionStorage`) qui imite supabase-js (query builder chaînable, jointures, `.or`/`.contains`, auth, storage) et neutralise les appels `/api/*`. Activation via le flag `sessionStorage.leon_demo`, posé uniquement par `demo.html`.
+
+### Modifications
+- `demo.html` (nouveau) : landing, pose le flag, copie le seed anonymisé dans `sessionStorage`, entre dans l'app. Réinitialise à chaque passage.
+- `js/demo-data.js` (nouveau, généré) : seed ANONYMISÉ (30 vendeurs, 57 acquéreurs, 46 visites, 78 notes, 150 contacts...). Faux noms, tél `0102030405`, emails `exemple@mail.com`. Chargé uniquement par `demo.html`.
+- `js/demo-supabase.js` (nouveau) : faux client Supabase + intercepteur `fetch` pour `/api/*`. No-op total hors démo.
+- `js/supabase-config.js` : 1 ligne — `const supabaseClient = window.__LEON_DEMO_CLIENT__ || supabase.createClient(...)`.
+- `js/auth.js` : `logout()` en démo nettoie le flag et renvoie vers `demo.html`.
+- Toutes les pages chargeant `supabase-config.js` : ajout de `<script src="js/demo-supabase.js">` avant, + bump cache `?v=260618d` (le fichier config était figé en cache navigateur sous l'ancienne URL).
+- `scripts/demo-export/anonymize.cjs` (nouveau) : régénère le seed depuis un export brut (scrub déterministe noms/tél/emails + passe IA pour les noms de tiers cités dans les notes).
+
+### Anonymisation (RGPD)
+Champs structurés (noms, tél, emails, tokens) anonymisés par règles. Les notes en texte libre (qui citaient des tiers : conjoints, copropriétaires, notaires, confrères) ont été repassées par une anonymisation IA pour ne laisser fuiter aucun nom réel. Garde-fou de vérification intégré au script. Adresses/villes/prix/photos conservés pour le réalisme. `scripts/demo-export/*.json` (export brut PII) ignorés par git.
+
+### Vérifié
+demo.html → app OK ; pipelines vendeurs (30) / acquéreurs (57) rendus, noms anonymisés ; visites avec jointures `sellers(*)/buyers(*)` ; persistance des écritures (drag&drop) dans sessionStorage ; stubs `/api/generate-message` et `/api/assistant` (create_event) ; non-régression : sans flag, aucun client démo, parcours réel intact.
+
+### Points d'attention
+- Le shell desktop `app.html` n'a pas pu être exercé dans le preview (imbrication d'iframes fausse la détection top-level), mais chaque page fonctionne en standalone en démo et le shell ne fait que les embarquer (même origine = flag partagé).
+- Pour partager la démo : lien vers `/demo.html` (ou `/demo.html?go=1` pour auto-démarrer).
+- Régénérer le seed : `node scripts/demo-export/anonymize.cjs <export_brut.txt> js/demo-data.js`.
+
+---
+
 ## Session 2026-06-18 — Fix : prix tronqué (280 € au lieu de 280 000 €) sur Visites
 
 ### Bug

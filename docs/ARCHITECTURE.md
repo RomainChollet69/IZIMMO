@@ -12,6 +12,7 @@ IZIMMO/
 ├── CLAUDE.md                   # Règles de comportement Claude Code
 ├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée (accessible mobile ; sur desktop redirige vers app.html)
 ├── app.html                    # 🖥️ Shell desktop multi-onglets — barre foncée (logo + onglets + "+") qui charge chaque rubrique dans un <iframe> vivant (façon navigateur). Point d'entrée desktop. Mobile → redirige vers home.html
+├── demo.html                    # 🎭 Point d'entrée du MODE DÉMO (public, sans login) — pose le flag sessionStorage, seede le store anonymisé, entre dans l'app. Voir §Mode démo
 ├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes personnalisables + Card Deck mobile + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
@@ -30,7 +31,9 @@ IZIMMO/
 ├── pipeline-acquereurs.html    # ⚠️ DEPRECATED — ancien fichier à nettoyer
 │
 ├── js/
-│   ├── supabase-config.js      # Client Supabase + utilitaires partagés
+│   ├── supabase-config.js      # Client Supabase + utilitaires partagés (bascule vers le faux client en mode démo)
+│   ├── demo-supabase.js        # 🎭 Faux client Supabase (mode démo) — query builder + auth + storage en sessionStorage, intercepteur /api/*. No-op hors démo
+│   ├── demo-data.js            # 🎭 Seed ANONYMISÉ du mode démo (généré par scripts/demo-export/anonymize.cjs) — chargé uniquement par demo.html
 │   ├── auth.js                 # Guard d'authentification + profil header
 │   ├── workflows.js            # Définitions workflows + gestion des étapes
 │   ├── relance-widget.js       # Widget flottant des relances (cloche)

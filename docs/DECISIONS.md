@@ -4,6 +4,23 @@
 
 ---
 
+## D0xx — Mode démo : faux client Supabase en mémoire plutôt que compte démo partagé
+
+**Date** : 2026-06-18
+**Statut** : Actif
+
+**Contexte** : Besoin d'une démo publique manipulable (cartes, visites, messages) sans login, sur un compte déjà rempli, pour la prospection.
+
+**Alternatives envisagées** :
+- *Compte démo réel partagé dans Supabase* + reset programmé : peu de dev, mais état partagé entre visiteurs (ils se marchent dessus), risque d'emails réels envoyés, démo vite saccagée.
+- *Bac à sable isolé client (retenu)* : un faux client Supabase en mémoire (sessionStorage), seedé par un snapshot anonymisé.
+
+**Décision** : Bac à sable isolé. Comme toutes les pages passent par le **seul** objet `supabaseClient`, on le substitue en mode démo (`window.__LEON_DEMO_CLIENT__`). Chaque visiteur a sa copie, repart de zéro à chaque entrée, zéro écriture réelle, zéro email. Le coût (réécrire la surface supabase-js utilisée : builder chaînable, jointures, `.or`, `.contains`) est borné et payé une fois dans `js/demo-supabase.js`.
+
+**Conséquences** : Le faux client doit suivre la surface supabase-js réellement utilisée par l'app ; si un nouvel usage apparaît (nouvelle méthode/RPC), l'ajouter au mock. Le seed est régénérable via `scripts/demo-export/anonymize.cjs`.
+
+---
+
 ## D001 — Frontend en vanilla JS (pas de framework)
 
 **Date** : Début du projet

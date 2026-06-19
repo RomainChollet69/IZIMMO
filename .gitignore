@@ -9,3 +9,6 @@ www/
 # Capacitor — builds natifs (générés par cap sync)
 ios/App/App/public/
 android/app/src/main/assets/public/
+
+# Mode démo — exports temporaires contenant des données réelles (ne jamais committer)
+scripts/demo-export/*.json

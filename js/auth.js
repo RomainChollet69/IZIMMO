@@ -85,6 +85,13 @@ document.addEventListener('click', () => {
 });
 
 async function logout() {
+    // En mode démo : on quitte vers la page d'accueil de la démo, pas le login Google
+    if (sessionStorage.getItem('leon_demo') === '1') {
+        sessionStorage.removeItem('leon_demo');
+        sessionStorage.removeItem('leon_demo_db');
+        window.location.href = 'demo.html';
+        return;
+    }
     await supabaseClient.auth.signOut();
     window.location.href = 'login.html';
 }
