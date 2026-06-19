@@ -1815,6 +1815,100 @@
                 display: block;
             }
 
+            /* ===== MV-PROPERTY V2 : stats en-tête, actions, sections Contacts/Visites ===== */
+            .mv-property-section.v2 .mv-property-header { align-items: flex-start; }
+            .mv-property-stats {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 6px;
+            }
+            .mv-stat {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 11px;
+                font-weight: 600;
+                color: var(--m-text-secondary);
+                background: var(--m-surface-2);
+                padding: 3px 8px;
+                border-radius: 8px;
+            }
+            .mv-stat i { font-size: 10px; }
+            .mv-stat.contacts { color: #7B1FA2; background: #F3E5F5; }
+            .mv-stat.planned { color: #1565C0; background: #E8EAF6; }
+            .mv-stat.pending { color: #E65100; background: #FFF3E0; }
+
+            .mv-property-actions {
+                display: flex;
+                gap: 8px;
+                margin: 2px 0 12px;
+            }
+            .mv-action-btn {
+                flex: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                min-height: 42px;
+                padding: 8px 4px;
+                border: 1.5px solid var(--m-surface-3, #E1E8ED);
+                border-radius: 10px;
+                background: var(--m-surface-0);
+                color: var(--m-text-primary);
+                font-size: 12px;
+                font-weight: 600;
+                font-family: inherit;
+                cursor: pointer;
+                transition: background 0.15s;
+            }
+            .mv-action-btn i { font-size: 13px; color: #667eea; }
+            .mv-action-btn:active { background: #EEF2FF; }
+
+            .mv-group-label {
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                color: var(--m-text-tertiary);
+                margin: 10px 2px 6px;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+            .mv-group-label.contacts { color: #7B1FA2; }
+            .mv-group-count {
+                font-size: 10px;
+                font-weight: 700;
+                padding: 1px 7px;
+                border-radius: 10px;
+                background: var(--m-surface-2);
+                color: var(--m-text-secondary);
+            }
+            .mv-group-label.contacts .mv-group-count { background: #F3E5F5; color: #7B1FA2; }
+
+            .mv-contact-source {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 10px;
+                font-weight: 700;
+                padding: 2px 7px;
+                border-radius: 8px;
+                background: #F3E5F5;
+                color: #7B1FA2;
+            }
+            .mv-contact-meta {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 8px;
+                margin-top: 3px;
+                font-size: 11px;
+                color: var(--m-text-tertiary);
+            }
+            .mv-contact-meta i { font-size: 10px; }
+
             /* ===== MV-FAB ===== */
             .mv-fab {
                 position: fixed;
@@ -2838,7 +2932,15 @@
     }
 
     /** Vue par bien : sections dépliables */
+    // Bascule du rendu mobile "Par bien". Passe à false pour revenir instantanément
+    // à l'ancien rendu (renderMobilePropertyGroupsLegacy) si la refonte ne convient pas.
+    const MOBILE_VISITS_V2 = true;
+
     function renderMobilePropertyGroups(groups) {
+        return MOBILE_VISITS_V2 ? renderMobilePropertyGroupsV2(groups) : renderMobilePropertyGroupsLegacy(groups);
+    }
+
+    function renderMobilePropertyGroupsLegacy(groups) {
         const sortedKeys = Object.keys(groups).sort((a, b) => {
             const ga = groups[a], gb = groups[b];
             if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
@@ -2919,6 +3021,160 @@
         });
 
         return html;
+    }
+
+    /**
+     * Rendu mobile "Par bien" V2 : en-tête avec ligne de stats (mêmes calculs que
+     * l'accordéon desktop, pour que les chiffres concordent), boutons d'action
+     * (message groupé, ajouter contact, partager), et corps découpé en deux sections
+     * distinctes : "Contacts" (leads à traiter) puis "Visites".
+     */
+    function renderMobilePropertyGroupsV2(groups) {
+        const sortedKeys = Object.keys(groups).sort((a, b) => {
+            const ga = groups[a], gb = groups[b];
+            if (ga.plannedCount > 0 && gb.plannedCount === 0) return -1;
+            if (gb.plannedCount > 0 && ga.plannedCount === 0) return 1;
+            const totalA = ga.visits.length + ga.contactCount;
+            const totalB = gb.visits.length + gb.contactCount;
+            if (totalA > 0 && totalB === 0) return -1;
+            if (totalB > 0 && totalA === 0) return 1;
+            return totalB - totalA;
+        });
+
+        if (sortedKeys.length === 0) {
+            return `<div class="mv-empty">
+                <i class="fa-solid fa-house"></i>
+                <div>Aucun bien avec des visites</div>
+            </div>`;
+        }
+
+        const allPortal = (typeof portalRequests !== 'undefined') ? portalRequests : [];
+        const allProcessed = (typeof processedRequests !== 'undefined') ? processedRequests : [];
+
+        let html = '';
+        applyVisitOrder(sortedKeys).forEach(key => {
+            const group = groups[key];
+            const seller = group.seller;
+            const hasSeller = seller && key !== 'no_seller';
+            const isOpen = mobileOpenSections.has(key);
+            const address = seller ? (seller.address || 'Adresse inconnue') : 'Bien non renseigné';
+            const sellerName = seller ? [(seller.first_name || ''), (seller.last_name || '')].filter(Boolean).join(' ') : '';
+            const photo = seller ? getSellerPhoto(seller) : null;
+
+            const photoHtml = photo
+                ? `<img class="mv-property-photo" src="${escapeHtml(photo)}" onerror="this.style.display='none'" alt="">`
+                : `<div class="mv-property-photo" style="display:flex;align-items:center;justify-content:center;color:var(--m-text-tertiary)"><i class="fa-solid fa-house"></i></div>`;
+
+            const photoHintHtml = (!photo && hasSeller && !photoHintDismissed())
+                ? `<div class="photo-hint-line" data-photo-hint>
+                        <a href="vendeurs.html?openLead=${seller.id}" onclick="event.stopPropagation()" title="Ouvrir la fiche du bien"><i class="fa-solid fa-circle-plus"></i> Lien réseau (efficity, IAD) = photo affichée</a>
+                        <button type="button" class="photo-hint-close" onclick="event.stopPropagation(); dismissPhotoHint()" title="Ne plus afficher">✕</button>
+                   </div>`
+                : '';
+
+            // Stats : mêmes calculs que renderPropertyAccordion (desktop) pour que les chiffres concordent.
+            const activeVisits = group.visits.filter(v => v.status === 'planifiee' || v.status === 'effectuee');
+            const sellerPendingCount = allPortal.filter(r => r.matched_seller_id === key).length;
+            const sellerProcessedCount = allProcessed.filter(r => r.matched_seller_id === key && r.status !== 'accepted').length;
+            const totalContacts = group.contacts.length + activeVisits.length + sellerPendingCount + sellerProcessedCount;
+            const treatedContacts = group.contacts.filter(c => c.contact_treated).length + activeVisits.length + sellerProcessedCount;
+            const totalVisits = activeVisits.length;
+            const pendingFeedbackCount = group.visits.filter(v => v.status === 'effectuee' && !v.feedback_rating).length;
+
+            const statTags = [];
+            if (totalContacts > 0) statTags.push(`<span class="mv-stat contacts"><i class="fa-solid fa-envelope"></i> ${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>`);
+            if (treatedContacts > 0) statTags.push(`<span class="mv-stat"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>`);
+            if (totalVisits > 0) statTags.push(`<span class="mv-stat"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`);
+            if (group.plannedCount > 0) statTags.push(`<span class="mv-stat planned"><i class="fa-solid fa-calendar-check"></i> ${group.plannedCount} planifiée${group.plannedCount > 1 ? 's' : ''}</span>`);
+            if (pendingFeedbackCount > 0) statTags.push(`<span class="mv-stat pending"><i class="fa-solid fa-clock"></i> ${pendingFeedbackCount} retour${pendingFeedbackCount > 1 ? 's' : ''} en attente</span>`);
+            const statsHtml = statTags.length ? `<div class="mv-property-stats">${statTags.join('')}</div>` : '';
+
+            // Actions du bien (dans le corps déplié) : mêmes handlers que l'accordéon desktop.
+            const actionsHtml = hasSeller ? `<div class="mv-property-actions">
+                <button class="mv-action-btn" onclick="event.stopPropagation(); contactSellerBuyers('${key}')" title="Message groupé aux acquéreurs intéressés"><i class="fa-solid fa-paper-plane"></i> Message</button>
+                <button class="mv-action-btn" onclick="event.stopPropagation(); openAddContactModal('${key}')" title="Ajouter un contact"><i class="fa-solid fa-user-plus"></i> Contact</button>
+                <button class="mv-action-btn" onclick="event.stopPropagation(); shareSellerContacts('${key}')" title="Partager le bien et ses contacts"><i class="fa-solid fa-arrow-up-from-bracket"></i> Partager</button>
+            </div>` : '';
+
+            // Section Contacts (leads à traiter), distincte des visites.
+            const contactsList = [...group.contacts].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+            let contactsHtml = '';
+            if (contactsList.length > 0) {
+                contactsHtml = `<div class="mv-group-label contacts"><i class="fa-solid fa-address-book"></i> Contacts <span class="mv-group-count">${contactsList.length}</span></div>`;
+                contactsList.forEach(c => { contactsHtml += renderMobileContactItem(c); });
+            }
+
+            // Section Visites.
+            const visitsList = [...group.visits].sort((a, b) => {
+                if (a.status === 'planifiee' && b.status !== 'planifiee') return -1;
+                if (b.status === 'planifiee' && a.status !== 'planifiee') return 1;
+                return (b.visit_date || '').localeCompare(a.visit_date || '');
+            });
+            let visitsHtml = '';
+            if (visitsList.length > 0) {
+                visitsHtml = `<div class="mv-group-label"><i class="fa-solid fa-eye"></i> Visites <span class="mv-group-count">${visitsList.length}</span></div>`;
+                visitsList.forEach(v => { visitsHtml += renderMobileVisitItem(v); });
+            }
+
+            const bodyInner = (contactsHtml || visitsHtml)
+                ? (actionsHtml + contactsHtml + visitsHtml)
+                : (actionsHtml + '<div style="font-size:var(--m-font-caption);color:var(--m-text-tertiary);padding:6px 2px">Aucun contact ni visite pour ce bien.</div>');
+
+            html += `<div class="mv-property-section v2${isOpen ? ' open' : ''}" data-seller-id="${key}">
+                <div class="mv-property-header" onclick="toggleMobilePropertySection('${key}')">
+                    ${photoHtml}
+                    <div class="mv-property-info">
+                        <div class="mv-property-address">${escapeHtml(address)}</div>
+                        <div class="mv-property-seller">${escapeHtml(sellerName)}</div>
+                        ${statsHtml}
+                        ${photoHintHtml}
+                    </div>
+                    <i class="fa-solid fa-chevron-down mv-property-chevron"></i>
+                </div>
+                <div class="mv-property-visits">${bodyInner}</div>
+            </div>`;
+        });
+
+        return html;
+    }
+
+    /** Item contact mobile enrichi (source, date, statut traité) pour la section Contacts. */
+    function renderMobileContactItem(visit) {
+        const visitorName = getVisitorName(visit);
+        const phone = getVisitorPhone(visit);
+        const email = getVisitorEmail(visit);
+        const source = visit.contact_source || 'manual';
+        const sourceLabel = CONTACT_SOURCE_LABELS[source] || source;
+        const dateStr = visit.created_at
+            ? new Date(visit.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })
+            : '';
+        const treated = !!visit.contact_treated;
+
+        const metaParts = [];
+        if (dateStr) metaParts.push(`<span><i class="fa-regular fa-clock"></i> ${escapeHtml(dateStr)}</span>`);
+        if (phone) metaParts.push(`<span><i class="fa-solid fa-phone"></i> tél</span>`);
+        if (email) metaParts.push(`<span><i class="fa-solid fa-envelope"></i> email</span>`);
+
+        const actionBtn = phone
+            ? `<button class="mv-visit-action" onclick="event.stopPropagation();window.location.href='tel:${escapeHtml(phone)}'"><i class="fa-solid fa-phone"></i></button>`
+            : '';
+
+        const statusBadge = treated
+            ? '<span class="mv-badge feedback-done">Traité</span>'
+            : '<span class="mv-badge" style="background:#FFF3E0;color:#E65100">À traiter</span>';
+
+        return `<div class="mv-visit-item" onclick="openMobileVisitDetail('${visit.id}')">
+            <div class="mv-visit-bar demande"></div>
+            <div class="mv-visit-content">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span class="mv-contact-source">${escapeHtml(sourceLabel)}</span>
+                    ${statusBadge}
+                </div>
+                <div class="mv-visit-visitor">${escapeHtml(visitorName)}</div>
+                ${metaParts.length ? `<div class="mv-contact-meta">${metaParts.join('')}</div>` : ''}
+            </div>
+            ${actionBtn}
+        </div>`;
     }
 
     /** Rend un item de visite mobile (utilisé dans les deux vues) */
