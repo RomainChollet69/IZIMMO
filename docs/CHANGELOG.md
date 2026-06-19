@@ -34,6 +34,19 @@ demo.html → app OK ; pipelines vendeurs (30) / acquéreurs (57) rendus, noms a
 
 ---
 
+## Session 2026-06-19 — Fix : drag des biens (Visites) embarquait plusieurs cartes
+
+### Bug
+En glissant un bien sur la page Visites, "presque tous les biens" étaient embarqués. Cause : la mécanique "activer `draggable` au `mousedown` de la poignée" était fragile et laissait le navigateur démarrer une **sélection de texte** s'étendant sur plusieurs cartes, puis draguer cette sélection.
+
+### Correctif (`visites.html`)
+- Accordéon **toujours `draggable="true"`** ; un flag `dragArmed` (armé au `mousedown` de la poignée, remis à zéro au `mouseup` global et au `dragend`) autorise le réordonnancement **uniquement** quand on saisit la poignée. Un `dragstart` ailleurs → `preventDefault` (aucun drag, aucune sélection).
+- `user-select: none` sur `.property-accordion-header` (plus de sélection de texte embarquée).
+- Guard `.visit-card` dans `handleAccordionDragStart` : le `dragstart` d'une carte contact qui bubble n'est plus intercepté → drag contact→visite préservé.
+- Image de drag réduite à l'en-tête (plus l'accordéon ouvert entier).
+- Logique validée en DOM synthétique (réordonnancement 1 cran à la fois ; carte contact ignorée ; header non armé annulé).
+
+
 ## Session 2026-06-18 — Fix : prix tronqué (280 € au lieu de 280 000 €) sur Visites
 
 ### Bug
