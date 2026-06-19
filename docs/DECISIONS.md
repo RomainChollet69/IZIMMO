@@ -1788,3 +1788,20 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Décision** : Confirmation d'email désactivée assumée + message honnête + redirection directe. Mail de bienvenue via `api/welcome-email.js` (Mailgun), déclenché côté client, best-effort non bloquant.
 
 **Conséquences** : Si l'utilisateur ferme l'onglet entre signUp et le `fetch`, le mail de bienvenue ne part pas (rare). Le flag d'idempotence permet de basculer plus tard vers un trigger serveur sans risque de doublon. Réactiver la double opt-in imposera d'abord de brancher un SMTP custom (Mailgun) dans Supabase Auth.
+
+---
+
+## D082 — Agent en copie (CC) des mails de visite : confirmation + documents, pas les rappels
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : L'agent veut s'assurer que les mails automatiques envoyés au visiteur (confirmation de visite, envoi de documents post-visite) sont corrects et bien partis. Il demande à être en copie.
+
+**Alternatives envisagées** :
+- *CC sur tous les mails visiteur* (confirmation + rappels -24h/-4h + followup) : couverture maximale mais sature la boîte de l'agent, alors que les rappels réutilisent le même template que la confirmation (déjà vérifiée).
+- *CC sur confirmation + envoi de documents seulement (retenu)* : couvre les deux mails nommés, chaque template est vu au moins une fois, sans bruit.
+
+**Décision** : Ajout d'un paramètre `cc` à `sendEmail()` (`lib/mailgun-send.js`, garde-fou `cc !== to`). CC = email de l'agent (déjà résolu pour le Reply-To) sur la confirmation (`cron-visit-reminder.js`, `stage === 'confirmation'`) et sur le followup/documents (`cron-visit-followup.js`). Les rappels -24h/-4h restent sans copie.
+
+**Conséquences** : La copie est automatique et par agent (multi-tenant : chaque visite met en copie son propre agent), aucun réglage à exposer. Pour inclure les rappels plus tard, étendre le `cc` aux `stage === '24h' | '4h'` dans `cron-visit-reminder.js`.

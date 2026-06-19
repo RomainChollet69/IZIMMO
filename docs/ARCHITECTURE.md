@@ -43,6 +43,7 @@ IZIMMO/
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
 │   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
+│   ├── group-message.js        # Modale de message groupé (Email BCC / WhatsApp / SMS) 100% client — module autonome réutilisable (utilisé par visites.html)
 │   ├── tab-shell.js            # Moteur d'onglets du shell desktop (app.html) — open/activate/close, iframes vivants, injection "mode embarqué" (masque header interne, intercepte liens, recale pipeline/sticky), menu du bouton "+"
 │   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
 │   ├── pipeline-config.js      # Personnalisation colonnes pipeline (renommer, masquer, réordonner, sous-titres, 3 colonnes custom) — Supabase JSONB
@@ -63,12 +64,13 @@ IZIMMO/
 │   ├── generate-study.js       # Génération étude de marché IA (2 passes Claude Sonnet, prompt adaptatif densité)
 │   ├── google-auth.js           # OAuth Google Calendar (POST=init nonce, GET=callback tokens)
 │   ├── assistant.js             # Assistant unifié (orchestrate, draft_message, parse_workflow_response, calendar CRUD, visit requests)
-│   ├── cron-visit-followup.js   # Cron Vercel (*/10) — email de suivi ~+30 min après la visite (docs du bien)
-│   └── cron-visit-reminder.js   # Cron Vercel (*/10) — confirmation à la programmation + rappels -24h / -4h au visiteur
+│   ├── cron-visit-followup.js   # Cron Vercel (*/10) — email de suivi ~+30 min après la visite (docs du bien). Agent en copie (CC)
+│   ├── cron-visit-reminder.js   # Cron Vercel (*/10) — confirmation à la programmation (agent en CC) + rappels -24h / -4h au visiteur
+│   └── welcome-email.js         # Mail de bienvenue au nouvel inscrit (Mailgun). Sécurisé par verifyAuth, idempotent via user_metadata.welcome_email_sent
 │
 ├── lib/                        # Modules partagés serveur (non exposés en endpoints)
 │   ├── agency-branding.js      # Branding agence (logo, couleurs) pour les emails chartés Léon
-│   ├── mailgun-send.js         # Envoi d'email via Mailgun (EU)
+│   ├── mailgun-send.js         # Envoi d'email via Mailgun (EU) — params to/subject/html/from/replyTo/cc
 │   ├── visit-followup-email.js # Template HTML de l'email de suivi post-visite
 │   └── visit-reminder-email.js # Template HTML confirmation / rappels de visite (buildVisitReminderHtml)
 │
@@ -843,6 +845,13 @@ Liste de tâches personnelle avec dictée vocale + drag-reorder.
 - Saisie texte ou vocale (découpage automatique par délimiteurs)
 - Drag-and-drop pour réordonner (ordre persisté en localStorage)
 - CRUD sur table `todos`
+
+### `group-message.js`
+Module autonome (IIFE) de message groupé — API `GroupMessage.open({ recipients, context, defaultTemplate })`.
+- 3 canaux 100% client : Email en **cci** (`mailto:?bcc=`), **WhatsApp** (`wa.me`, une conversation par destinataire), **SMS** (`sms:`). Aucun envoi serveur — l'agent garde la main.
+- 4 templates (baisse de prix, nouveau bien, visite groupée, libre) + variables : `[salutation]` (personnalisée par destinataire à l'envoi WhatsApp/SMS), `[adresse]/[prix]/[ville]/[type]` (pré-remplies depuis `context`), `[date]` (manuelle).
+- `recipients` = `[{ first_name, last_name, civility, email, phone }]`. Styles inline + `<style id="lgm-styles">` injecté une fois → **aucune dépendance aux globals de la page**, réutilisable partout.
+- Utilisé par `visites.html` (`contactSellerBuyers` : bouton "message à tous les contacts d'un bien"). `acquereurs.html` garde encore sa copie inline (migration vers ce module à faire).
 
 ### `gamification.js`
 Système de gamification dopaminergique — points, streaks, toasts, milestones.
