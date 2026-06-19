@@ -1823,3 +1823,20 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Conséquences** :
 - Pas de personnalisation par destinataire en email (cci = envoi unique) : `[salutation]` y devient « à vous ». En WhatsApp/SMS, l'envoi est séquentiel donc `[salutation]`/`[prénom]`/`[nom]` sont personnalisés par contact.
 - Dépend des handlers d'URL de l'appareil (client email, WhatsApp installé). Aucun coût serveur, aucun quota.
+
+
+## D084 — OAuth Google : forcer le sélecteur de compte (`prompt=select_account`)
+
+**Date** : 2026-06-19
+**Statut** : Actif
+
+**Contexte** : Des consultants signalaient une page Google « 403. Vous n'avez pas accès à cette page » au moment de lier leur Google Calendar depuis Paramètres. Audit complet de la Google Cloud Console (projet `izimmo-487311`, compte perso `romainchollet69@gmail.com`, OAuth client « Waimmo ») : tout est conforme — app **En production**, type **Externe**, branding **validé**, accès aux données (scopes Calendar) **validé**, redirect URI `https://avecleon.fr/api/google-auth` enregistré. Le consentement fonctionne même avec une adresse `@efficity.com` (testé avec `rchollet@efficity.com`). Le bug n'était donc ni un défaut de config, ni le mode Testing, ni un blocage Workspace généralisé.
+
+**Diagnostic** : La page 403 « robot cassé » en plein OAuth est le symptôme classique d'un utilisateur connecté à **plusieurs comptes Google** dans Chrome. L'URL OAuth utilisait `prompt=consent` sans forcer le choix du compte → Google sélectionne un `authuser` par défaut (mauvais compte) et renvoie le 403.
+
+**Décision** : Passer `prompt: 'consent'` à `prompt: 'select_account consent'` dans `api/google-auth.js` (`handleInit`). Google affiche désormais toujours le sélecteur de compte ; `consent` est conservé pour continuer à récupérer le `refresh_token`.
+
+**Alternatives / pistes restantes** :
+- Si le 403 persiste pour certains consultants : blocage Workspace **par Organizational Unit** (efficity restreint les apps tierces pour certains profils mais pas les directeurs) → l'IT efficity doit ajouter l'app en *trusted* (client ID `1053118371289-btb18tscr2q6gs33ekeomjncs3jmuq14`). Contournement immédiat : navigation privée avec uniquement le compte pro.
+
+**Conséquences** : Un clic de plus (choix du compte) pour les utilisateurs mono-compte, mais élimine le 403 multi-comptes. Changement à très faible risque. Non vérifiable en local (fonction serverless + flux Google réel) : à valider en prod par un consultant qui avait l'erreur.

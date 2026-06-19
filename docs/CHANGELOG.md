@@ -4,6 +4,28 @@
 
 ---
 
+## Session 2026-06-19 (suite 3) — Bug liaison Google Calendar (403) : forcer le sélecteur de compte
+
+### Problème signalé
+Des consultants tombent sur une page Google « 403. Vous n'avez pas accès à cette page » en cliquant « Connecter Google Calendar » depuis Paramètres. Hypothèse initiale : adresses `@efficity.com` non autorisées.
+
+### Diagnostic (audit Google Cloud Console via navigateur)
+Projet `izimmo-487311` (compte perso `romainchollet69@gmail.com`), OAuth client « Waimmo ». Tout est conforme : **En production**, type **Externe**, **branding validé**, **accès aux données validé**, redirect URI `https://avecleon.fr/api/google-auth` enregistré. Le consentement fonctionne même avec `rchollet@efficity.com`. Le 403 « robot cassé » est le symptôme classique d'un utilisateur connecté à **plusieurs comptes Google** : l'URL OAuth (`prompt=consent`) ne forçait pas le choix du compte → Google prend un `authuser` par défaut (mauvais compte) → 403.
+
+### Modifications
+- `api/google-auth.js` (`handleInit`) : `prompt: 'consent'` → `prompt: 'select_account consent'`. Google affiche toujours le sélecteur de compte ; `consent` conservé pour le `refresh_token`. Cf. décision D084.
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/api/google-auth.js`
+- `/Users/user/Documents/Izimmo/docs/DECISIONS.md` (D084)
+
+### Vérifié
+- Config Google Cloud auditée en direct (Production, Externe, validations OK, redirect URI OK, consentement `@efficity.com` OK).
+- `node --check api/google-auth.js` OK.
+- Non vérifiable en local (fonction serverless Vercel + flux Google réel) : à valider en prod par un consultant qui avait l'erreur. Si le 403 persiste, piste restante = blocage Workspace efficity par OU (ajouter l'app en *trusted* côté IT efficity).
+
+---
+
 ## Session 2026-06-19 (suite 2) — Dictée vocale : commandes directes + bugs d'enchaînement
 
 ### Problème signalé

@@ -75,7 +75,12 @@ async function handleInit(req, res) {
             response_type: 'code',
             scope: GOOGLE_SCOPES,
             access_type: 'offline',
-            prompt: 'consent',
+            // 'select_account' force le sélecteur de compte Google : indispensable car
+            // les consultants ont souvent plusieurs comptes Google ouverts dans Chrome.
+            // Sans ça, Google choisit un authuser par défaut (mauvais compte) et renvoie
+            // une page 403 « vous n'avez pas accès à cette page ». 'consent' garde l'écran
+            // d'autorisation pour récupérer le refresh_token à chaque connexion.
+            prompt: 'select_account consent',
             state: nonce
         });
 
