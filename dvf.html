@@ -1596,10 +1596,14 @@
             .user-avatar { width: 32px; height: 32px; }
             .logo img { height: 28px; }
 
-            /* Carte plein écran entre header et bottom bar */
+            /* Carte calée entre le header mobile (.m-header, sticky en haut) et la bottom
+               nav (.m-nav, fixée par-dessus le bas). On soustrait les deux + la safe-area
+               pour que le bas de la carte (légende, contrôles) ne passe pas sous le footer.
+               100dvh (et non 100vh) : suit le viewport réel malgré les barres dynamiques mobiles. */
             .main-container {
                 flex-direction: column;
-                height: calc(100vh - 52px);
+                height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
+                height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
             }
 
             .map-container {
