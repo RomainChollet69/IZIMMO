@@ -1580,7 +1580,17 @@
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            body { overflow: hidden; height: 100vh; }
+            /* Réserve l'espace de la bottom nav (.m-nav, fixée) via padding-bottom :
+               le body est un flex column, .main-container (flex:1) remplit alors
+               l'espace AU-DESSUS de la nav. Plus fiable qu'un calc de hauteur car
+               flex-grow ignorerait un height explicite. 100dvh suit le viewport réel. */
+            body {
+                overflow: hidden;
+                height: 100vh;
+                height: 100dvh;
+                box-sizing: border-box;
+                padding-bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
+            }
             .m-todo-fab { display: none !important; }
 
             /* Header simplifié — logo + profil (nav dans la bottom bar) */
@@ -1596,14 +1606,12 @@
             .user-avatar { width: 32px; height: 32px; }
             .logo img { height: 28px; }
 
-            /* Carte calée entre le header mobile (.m-header, sticky en haut) et la bottom
-               nav (.m-nav, fixée par-dessus le bas). On soustrait les deux + la safe-area
-               pour que le bas de la carte (légende, contrôles) ne passe pas sous le footer.
-               100dvh (et non 100vh) : suit le viewport réel malgré les barres dynamiques mobiles. */
+            /* Carte entre le header mobile (.m-header sticky) et la nav : .main-container
+               garde flex:1 (règle de base) et remplit l'espace restant du body, dont le
+               bas est réservé pour la nav via padding-bottom. Pas de height explicite
+               (flex-grow la neutraliserait). */
             .main-container {
                 flex-direction: column;
-                height: calc(100vh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
-                height: calc(100dvh - var(--m-header-h, 56px) - var(--m-bottom-bar-h, 64px) - env(safe-area-inset-bottom, 0px));
             }
 
             .map-container {
