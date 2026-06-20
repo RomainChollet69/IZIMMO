@@ -4,6 +4,28 @@
 
 ---
 
+## Session 2026-06-20 — DVF mobile : carte plein écran + bottom sheet (façon cadastre.com)
+
+### Problème
+Les deux versions mobiles précédentes ne convenaient pas : carte plein écran + barre flottante + FAB overlay (« pas pratique »), puis 2 cadres empilés menu/carte (« moche »). L'utilisateur a donné une référence : la version mobile de `cadastre.com/historiques`, jugée « très bien faite et pratique ».
+
+### Référence observée (cadastre.com, via Chrome MCP)
+Carte dominante, barre de recherche flottante en haut, panneau de filtres (qui, sur mobile, se replie en **bottom sheet** coulissant depuis le bas, façon Google Maps). Filtres sectionnés (zone de recherche, année de vente, type de bien, caractéristiques, prix/m²), CTA principal en bas.
+
+### Modifications (`dvf.html`)
+- **Carte plein écran** : `.map-container` occupe tout l'écran (`flex:1`), plus de cadres ni de marges.
+- **Barre de recherche flottante** en haut de la carte (`setupMobileSearchBar()` ré-introduit, déplace `.search-section` dans `.map-container`), + contrôles de couche (DVF/DPE/Plan) juste en dessous.
+- **Bottom sheet** (`.side-panel` repositionné `position:fixed; bottom:nav; border-radius 20px haut; max-height:78vh`) : réduit par défaut (`transform:translateY(calc(100% - 112px))` → poignée + CTA « Voir les ventes » visibles), déplié au tap sur la poignée (`.expanded` → `translateY(0)`, filtres visibles). Poignée `.sheet-handle` (nouvelle, masquée en desktop) ; `order:-2`/`-1` pour placer poignée puis CTA en tête.
+- **Épuré** : stats / liste des ventes / graphe / stats DPE masqués sur mobile. Détail d'une vente via clic sur une parcelle (panneau historique).
+
+### Vérifié (preview mobile 375px, démo)
+- Recherche dans `.map-container` (flottante). Peek : poignée (y≈646) + CTA visibles au-dessus de la nav. Déplié (tap poignée, `transition:none` pour mesurer) : `translateY(0)`, top≈401, filtres (rayon, année, type, « Plus de filtres ») visibles. Stats/liste masquées. Pas d'erreur JS (hors `RefererNotAllowedMapError` Google Maps, normal sur localhost). Captures peek + déplié conformes au pattern cadastre.
+
+### Commit
+`feat(dvf): refonte mobile carte plein écran + bottom sheet` — poussé sur `main`.
+
+---
+
 ## Session 2026-06-20 — Fusion de comptes (gmail → efficity)
 
 ### Contexte

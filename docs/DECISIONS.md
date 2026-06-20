@@ -1861,7 +1861,7 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 ## D086 — DVF mobile : barre de recherche flottante sur la carte (sortie du panneau)
 
 **Date** : 2026-06-19
-**Statut** : ⚠️ Remplacé par [D087](#d087) le 2026-06-20 (la barre flottante et l'auto-révélation ont été abandonnées au profit d'une disposition à 2 cadres). Conservé pour l'historique.
+**Statut** : ⚠️ Remplacé par [D088](#d088) le 2026-06-20 (la barre flottante et l'auto-révélation ont été abandonnées au profit d'une disposition à 2 cadres), elle-même remplacée par [D089](#d089). Conservé pour l'historique.
 
 **Contexte** : Le DVF mobile « ne marchait pas bien ». La barre de recherche d'adresse était enfouie dans le panneau plein écran (`#sidePanel`), accessible seulement via le bouton flottant « réglages ». Chercher une adresse imposait : ouvrir le panneau (qui recouvre toute la carte) → taper → sélectionner → le panneau restait ouvert par-dessus la carte. Lourd et contre-intuitif sur un format où la carte devrait être l'écran principal.
 
@@ -1898,10 +1898,12 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Conséquences** : Tout nouveau guide doit charger `css/mobile.css` **puis** `css/tuto.css`. `mobile.css` étant intégralement sous `@media (max-width:768px)` (+ masquage `.m-nav`/FABs en desktop), aucun impact desktop. Le lot « Fonctionnalités avancées » (DVF, Réseaux, Assistant, Import, Google Agenda) suivra le même gabarit.
 
 
-## D087 — DVF mobile : refonte en 2 cadres (menu + carte) au lieu de la carte plein écran
+## D088 — DVF mobile : refonte en 2 cadres (menu + carte) au lieu de la carte plein écran
+
+> Note : renuméroté D088 (un D087 « Tutoriels in-app » coexistait). Remplace [D086](#d086).
 
 **Date** : 2026-06-20
-**Statut** : Actif (remplace [D086](#d086))
+**Statut** : ⚠️ Remplacé par [D089](#d089) le 2026-06-20 (jugé « moche » ; passage au modèle carte plein écran + bottom sheet façon cadastre.com). Conservé pour l'historique.
 
 **Contexte** : La version issue de D086 (carte plein écran + barre de recherche flottante posée dessus + FAB « réglages » ouvrant un overlay plein écran avec filtres/stats) restait peu pratique : l'overlay recouvrait la carte, les filtres et le bouton « Voir les ventes » étaient enfouis, et le mélange carte/contrôles superposés manquait de clarté. Demande utilisateur : « la carte dans un cadre et le menu dans un autre, avec un bouton principal voir les ventes, une barre de recherche d'adresse et les filtres ».
 
@@ -1922,3 +1924,21 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - Bouton non sticky (simple fin de liste) : le CTA pouvait sortir du viewport au scroll → sticky retenu.
 
 **Conséquences** : Desktop inchangé (sidebar + carte côte à côte). Sur mobile, le menu défile légèrement (~47px) quand « Plus de filtres » est replié ; le bouton sticky reste visible et « Plus de filtres » est joignable juste au-dessus. Vérifié en preview (375px, header authentifié simulé) : layout correct, fonctions clés OK, pas d'erreur JS hors `RefererNotAllowedMapError` (clé Maps restreinte au domaine de prod). Rendu réel des ventes à confirmer sur le déploiement.
+
+
+## D089 — DVF mobile : carte plein écran + bottom sheet (façon cadastre.com)
+
+**Date** : 2026-06-20
+**Statut** : Actif (remplace [D088](#d088), qui remplaçait [D086](#d086))
+
+**Contexte** : Deux itérations rejetées par l'utilisateur — overlay FAB sur carte plein écran ([D086](#d086), « pas pratique ») puis 2 cadres empilés menu/carte ([D088](#d088), « moche »). L'utilisateur a fourni une référence : la version mobile de `cadastre.com/historiques`, qu'il juge « très bien faite et pratique ». Observation de cadastre.com (via Chrome MCP, layout desktop + connaissance du repli mobile) : carte dominante, recherche flottante en haut, panneau de filtres qui se replie en **bottom sheet** coulissant depuis le bas (pattern Google Maps), CTA principal accessible.
+
+**Décision** : Reproduire ce pattern sur mobile (`dvf.html`, media query ≤768px) :
+- **Carte plein écran** (`.map-container { flex:1 }`), sans cadre.
+- **Barre de recherche flottante** en haut (node `.search-section` déplacé dans `.map-container` par `setupMobileSearchBar()`, listeners conservés), contrôles de couche (DVF/DPE/Plan) juste en dessous.
+- **Bottom sheet** = `.side-panel` repositionné `position:fixed; bottom:nav; border-radius:20px 20px 0 0; max-height:78vh; box-shadow haut`. Réduit par défaut (`transform:translateY(calc(100% - 112px))` → seuls la poignée + le CTA « Voir les ventes » dépassent), déplié au tap sur la poignée (classe `.expanded` → `translateY(0)`). Poignée `.sheet-handle` (nouvel élément, `display:none` en desktop, `order:-2` ; CTA `order:-1` pour le placer juste sous la poignée). Bascule JS : `sheetHandle.addEventListener('click', () => sidePanel.classList.toggle('expanded'))`.
+- Menu épuré : stats / liste des ventes / graphe / stats DPE masqués sur mobile. Détail d'une vente via clic sur une parcelle (panneau « Historique des ventes »).
+
+**Alternatives écartées** : carte plein écran + overlay FAB (D086) et 2 cadres empilés (D088), tous deux rejetés par l'utilisateur. Drag gestuel complet du sheet : remplacé par un simple tap sur la poignée (robuste, suffisant).
+
+**Conséquences** : Desktop inchangé (sidebar + carte côte à côte, `.sheet-handle` masquée). Vérifié en preview (375px, démo) : recherche flottante OK, peek (poignée + CTA au-dessus de la nav) OK, déplié (filtres visibles) OK, pas d'erreur JS hors `RefererNotAllowedMapError` (clé Maps restreinte au domaine de prod). Rendu réel des ventes à confirmer sur le déploiement.

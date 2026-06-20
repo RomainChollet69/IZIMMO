@@ -389,15 +389,18 @@ Google Maps initialisé (maps-config.js)
                   complément (étage/porte), date DPE, alerte passoire
 ```
 
-**Mobile (≤ 768px)** : disposition empilée à **2 cadres** — un cadre **menu** en
-haut (`.side-panel`, `max-height:46vh`, défilant) et un cadre **carte** en dessous
-(`.map-container`, `flex:1`). Le menu est épuré : barre de recherche d'adresse,
-rayon, filtres (type, année, « Plus de filtres »), et le bouton principal « Voir
-les ventes » épinglé en bas (`position:sticky`). Stats / liste des ventes / graphe
-sont masqués sur mobile. L'affichage des ventes (parcelles cyan) se déclenche au
-clic sur « Voir les ventes » (`toggleSalesMarkers`). Le clic sur une parcelle ouvre
-le panneau « Historique des ventes » (bottom sheet) avec l'adresse géocodée.
-Voir [D086](DECISIONS.md) (historique) et [D087](DECISIONS.md) (refonte 2 cadres).
+**Mobile (≤ 768px)** : modèle **carte plein écran + bottom sheet** (façon
+cadastre.com). La carte occupe tout l'écran. Une barre de recherche d'adresse
+flotte en haut (`.search-section` déplacée dans `.map-container` par
+`setupMobileSearchBar()`), avec les contrôles de couche (DVF/DPE/Plan) juste en
+dessous. Le menu (`.side-panel`) devient un **panneau coulissant** ancré en bas :
+réduit par défaut (`transform:translateY(...)` → poignée `.sheet-handle` + bouton
+« Voir les ventes » visibles), déplié au tap sur la poignée (classe `.expanded`)
+pour révéler les filtres (rayon, type, année, « Plus de filtres »). Stats / liste
+des ventes / graphe masqués sur mobile ; le détail d'une vente passe par le clic
+sur une parcelle (panneau « Historique des ventes » avec adresse géocodée).
+Historique des décisions : [D086](DECISIONS.md) → [D088](DECISIONS.md) →
+[D089](DECISIONS.md) (modèle actuel).
 
 **Pipeline de données DPE** :
 ```
