@@ -378,6 +378,9 @@
             overflow-x: hidden;
         }
 
+        /* Poignée du bottom sheet (visible uniquement sur mobile, cf. media query) */
+        .sheet-handle { display: none; }
+
         .search-section {
             padding: 20px;
             border-bottom: 1px solid rgba(15,23,42,0.10);
@@ -1606,67 +1609,101 @@
             .user-avatar { width: 32px; height: 32px; }
             .logo img { height: 28px; }
 
-            /* ===== DVF MOBILE : MENU (haut) + CARTE (bas), chacun dans un cadre =====
-               Disposition empilée et simple : on cherche / filtre dans le cadre du haut,
-               la carte des résultats s'affiche dans le cadre du bas. */
-            .main-container {
-                flex-direction: column;
-                gap: 8px;
-                padding: 8px;
-                box-sizing: border-box;
-            }
+            /* ===== DVF MOBILE : carte plein écran + BOTTOM SHEET (façon cadastre.com) =====
+               La carte occupe tout l'écran. Une barre de recherche flotte en haut. Un
+               panneau coulissant (bottom sheet) en bas contient le bouton "Voir les ventes"
+               + les filtres : réduit par défaut (poignée + CTA visibles), déplié au tap sur
+               la poignée. */
+            .main-container { flex-direction: column; }
 
-            /* CADRE MENU (en haut) : recherche + filtres + bouton "Voir les ventes" */
-            .side-panel {
-                position: static;
-                width: 100%;
-                min-width: 0;
-                flex: 0 1 auto;
-                max-height: 46vh;
-                overflow-y: auto;
-                background: #fff;
-                border: 1px solid rgba(15,23,42,0.10);
-                border-right: none;
-                border-radius: 16px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-                transform: none;
+            /* CARTE plein écran (derrière le bottom sheet) */
+            .map-container {
+                flex: 1 1 auto;
+                min-height: 0;
             }
-            /* Le panneau n'est plus un overlay : on neutralise l'état "replié" et le FAB */
-            .side-panel.collapsed { transform: none; opacity: 1; pointer-events: auto; }
             .toggle-panel-btn { display: none !important; }
 
-            /* Bouton principal "Voir les ventes" : épinglé en bas du cadre menu, après les filtres */
-            .reveal-sales-btn {
-                order: 5;
-                position: sticky;
-                bottom: 8px;
-                margin: 8px 16px 12px;
+            /* Barre de recherche flottante en haut (déplacée dans la carte par setupMobileSearchBar) */
+            .map-container > .search-section {
+                position: absolute;
+                top: calc(8px + env(safe-area-inset-top, 0px));
+                left: 10px;
+                right: 10px;
+                padding: 0;
+                border-bottom: none;
+                z-index: var(--z-search-dropdown);
             }
-            /* Menu épuré : on masque stats, liste des ventes, graphe et stats DPE */
+            .map-container > .search-section .search-input {
+                background: #fff;
+                border-color: rgba(15,23,42,0.06);
+                box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            }
+            /* Contrôles de couche sous la barre de recherche */
+            .dvf-toggle, .dpe-toggle, .map-type-toggle {
+                top: calc(62px + env(safe-area-inset-top, 0px));
+                padding: 7px 10px;
+                font-size: 12px;
+            }
+            .map-legend {
+                bottom: calc(var(--m-bottom-bar-h, 64px) + 128px);
+                left: 10px;
+                font-size: 11px;
+                padding: 8px 12px;
+            }
+
+            /* ===== BOTTOM SHEET ===== */
+            .side-panel {
+                position: fixed;
+                left: 0;
+                right: 0;
+                top: auto;
+                bottom: calc(var(--m-bottom-bar-h, 64px) + env(safe-area-inset-bottom, 0px));
+                width: 100%;
+                min-width: 0;
+                max-height: 78vh;
+                background: #fff;
+                border: none;
+                border-right: none;
+                border-radius: 20px 20px 0 0;
+                box-shadow: 0 -6px 24px rgba(0,0,0,0.18);
+                overflow: hidden;                 /* contenu masqué en peek */
+                z-index: var(--z-dropdown);
+                /* État réduit (peek) : seuls poignée + CTA dépassent */
+                transform: translateY(calc(100% - 112px));
+                transition: transform 0.32s cubic-bezier(0.25, 0.8, 0.3, 1);
+            }
+            .side-panel.expanded {
+                transform: translateY(0);
+                overflow-y: auto;
+            }
+            .side-panel.collapsed { transform: translateY(calc(100% - 112px)); }
+
+            /* Poignée (tap pour déplier/replier) */
+            .sheet-handle {
+                display: block;
+                order: -2;
+                width: 40px;
+                height: 5px;
+                background: rgba(15,23,42,0.18);
+                border-radius: 3px;
+                margin: 10px auto 2px;
+                flex-shrink: 0;
+            }
+
+            /* CTA "Voir les ventes" : juste sous la poignée, visible en peek */
+            .reveal-sales-btn {
+                order: -1;
+                margin: 6px 16px 14px;
+                flex-shrink: 0;
+            }
+
+            /* Menu épuré : stats, liste des ventes, graphe et stats DPE masqués */
             .stats-section,
             .sales-section,
             .chart-section,
             .dpe-stats-section { display: none !important; }
 
-            /* CADRE CARTE (en bas) */
-            .map-container {
-                flex: 1 1 auto;
-                min-height: 240px;
-                border: 1px solid rgba(15,23,42,0.10);
-                border-radius: 16px;
-                overflow: hidden;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            }
-            /* Contrôles de couche en haut du cadre carte */
-            .dvf-toggle, .dpe-toggle, .map-type-toggle {
-                top: 10px;
-                padding: 7px 10px;
-                font-size: 12px;
-            }
-
-            .map-legend { bottom: 10px; left: 10px; font-size: 11px; padding: 8px 12px; }
-
-            /* Panneau sélection (étude de marché) — non utilisé sur mobile, fallback propre */
+            /* Panneau sélection (étude de marché) — non utilisé sur mobile */
             .selection-panel {
                 top: auto;
                 right: 0;
@@ -1749,6 +1786,8 @@
     <div class="main-container">
         <!-- Side Panel -->
         <div class="side-panel" id="sidePanel">
+            <!-- Poignée du bottom sheet mobile (tap pour déplier/replier) — masquée en desktop -->
+            <div class="sheet-handle" id="sheetHandle"></div>
             <div class="search-section">
                 <div class="search-wrapper">
                     <span class="search-icon">🔍</span>
@@ -3447,16 +3486,27 @@
         }
         document.getElementById('parcelPanelClose').addEventListener('click', closeParcelPanel);
 
-        // ===== TOGGLE PANEL (MOBILE) =====
-        document.getElementById('togglePanelBtn').addEventListener('click', () => {
-            const panel = document.getElementById('sidePanel');
-            const btn = document.getElementById('togglePanelBtn');
-            panel.classList.toggle('collapsed');
-            const isCollapsed = panel.classList.contains('collapsed');
-            btn.innerHTML = isCollapsed
-                ? '<i class="fas fa-sliders"></i>'
-                : '<i class="fas fa-times"></i>';
-        });
+        // ===== DVF MOBILE : BARRE DE RECHERCHE FLOTTANTE + BOTTOM SHEET =====
+        // Carte plein écran : la recherche flotte en haut (node déplacé, listeners conservés),
+        // et les filtres + bouton "Voir les ventes" vivent dans un panneau coulissant (bottom
+        // sheet) réduit par défaut, déplié au tap sur la poignée. (Façon cadastre.com.)
+        function setupMobileSearchBar() {
+            if (window.innerWidth > 768) return;
+            const section = document.querySelector('#sidePanel .search-section');
+            const mapContainer = document.querySelector('.map-container');
+            if (section && mapContainer && section.parentElement !== mapContainer) {
+                mapContainer.appendChild(section);
+            }
+        }
+        setupMobileSearchBar();
+
+        // Tap sur la poignée → déplie / replie le bottom sheet
+        const sheetHandle = document.getElementById('sheetHandle');
+        if (sheetHandle) {
+            sheetHandle.addEventListener('click', () => {
+                document.getElementById('sidePanel').classList.toggle('expanded');
+            });
+        }
 
         // ===== DPE LAYER =====
         // Couleurs DPE lues depuis les CSS variables (source unique de vérité)
