@@ -576,6 +576,29 @@
             transform: none;
         }
 
+        /* Bouton de déconnexion — section Compte (rouge, distinct du gradient principal) */
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 28px;
+            background: #fff;
+            color: #C62828;
+            border: 1.5px solid #F2C4C4;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'Barlow Semi Condensed', sans-serif;
+        }
+        .logout-btn:hover {
+            background: #FFEBEE;
+            border-color: #C62828;
+        }
+
         .save-success {
             display: inline-flex;
             align-items: center;
@@ -1762,6 +1785,17 @@
             </div>
         </div>
 
+        <!-- Section Compte (déconnexion) -->
+        <div class="settings-section" id="accountSection">
+            <h2 class="section-title">Compte</h2>
+            <p style="color:var(--text-light);font-size:14px;margin:0 0 14px;">
+                Connecté en tant que <strong id="accountEmail">—</strong>
+            </p>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fa-solid fa-right-from-bracket"></i> Se déconnecter
+            </button>
+        </div>
+
         <!-- Section Google Calendar -->
         <div class="settings-section" id="calendarSection">
             <h2 class="section-title">📅 Google Calendar</h2>
@@ -2229,6 +2263,7 @@
             document.getElementById('profileName').textContent = fullName;
             document.getElementById('profileEmail').textContent = email;
             document.getElementById('profileEmailInput').value = email;
+            document.getElementById('accountEmail').textContent = email;
 
             const parts = fullName.trim().split(/\s+/);
             document.getElementById('profileFirstName').value = parts.length > 1 ? parts.slice(0, -1).join(' ') : parts[0] || '';
@@ -2256,6 +2291,9 @@
 
             // Profile
             document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+
+            // Déconnexion (logout() défini dans js/auth.js : signOut + redirection login.html)
+            document.getElementById('logoutBtn').addEventListener('click', logout);
 
             // Auto-reply toggle
             document.getElementById('autoReplyToggle').addEventListener('change', async function() {
