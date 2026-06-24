@@ -4,6 +4,18 @@
 
 ---
 
+## Session 2026-06-20 — Reprogrammer une visite déplace aussi l'événement Google Agenda
+
+### Évolution
+Avant, la sync agenda créait un événement **one-shot** sans mémoriser son id : reprogrammer une visite ne déplaçait pas l'événement Google Calendar. Désormais c'est synchronisé.
+
+### Détails (`visites.html`, `api/assistant.js` réutilisé)
+- **Migration** : colonne `visits.google_event_id` (id de l'événement Calendar lié).
+- `confirmCalendarSync` mémorise l'`event.id` retourné par `create_event` sur la visite (DB + local).
+- `confirmReschedule` : si la visite a un `google_event_id` et que l'agenda est connecté, appelle `update_event` (PATCH start/end) via `syncRescheduledEvent` (best-effort, ne bloque pas l'UI, toast « Agenda mis à jour »). Constante `VISIT_DURATION_MIN` (30 min) pour le créneau.
+- Vérifié en preview (démo) : reprogrammation OK (date/heure à jour, modale fermée), champ `google_event_id` présent, sync agenda non déclenchée si pas d'événement (aucun appel API inutile), zéro erreur console.
+
+
 ## Session 2026-06-20 — Visites mobile : fix fermeture au scroll + swipe-delete contact
 
 ### Bug corrigé : les sections se refermaient au scroll (`visites.html`)

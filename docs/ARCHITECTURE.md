@@ -635,6 +635,7 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `confirmation_sent_at` | TIMESTAMPTZ | Horodatage de l'email de confirmation (envoi unique) |
 | `reminder_24h_sent_at` | TIMESTAMPTZ | Horodatage du rappel -24h (envoi unique)             |
 | `reminder_4h_sent_at`  | TIMESTAMPTZ | Horodatage du rappel -4h (envoi unique)              |
+| `google_event_id`  | TEXT        | ID de l'événement Google Calendar lié (sync) — permet de déplacer l'événement à la reprogrammation |
 | `created_at`       | TIMESTAMPTZ | Date de création                                     |
 | `updated_at`       | TIMESTAMPTZ | Dernière modification                                |
 
