@@ -2718,6 +2718,15 @@
 
     // ===== STATS =====
 
+    // Un retour de visite est "en attente" tant qu'aucune note (feedback_rating) NI décision
+    // (buyer_decision ≠ en_attente) n'a été saisie. Ex : un refus se renseigne via buyer_decision
+    // sans note d'appréciation — la visite est alors traitée, pas "en attente".
+    function isFeedbackPending(v) {
+        return v.status === 'effectuee'
+            && !v.feedback_rating
+            && (!v.buyer_decision || v.buyer_decision === 'en_attente');
+    }
+
     function computeQuickStats(visits) {
         const today = new Date().toISOString().split('T')[0];
         const weekStart = new Date();
@@ -2734,7 +2743,7 @@
         visits.forEach(v => {
             if (v.status === 'planifiee' && v.visit_date === today) todayCount++;
             if (v.status === 'planifiee' && v.visit_date >= weekStartStr && v.visit_date <= weekEndStr) weekCount++;
-            if (v.status === 'effectuee' && !v.feedback_rating) pendingFeedback++;
+            if (isFeedbackPending(v)) pendingFeedback++;
         });
 
         return { todayCount, weekCount, pendingFeedback };
@@ -3085,7 +3094,7 @@
             const totalContacts = group.contacts.length + activeVisits.length + sellerPendingCount + sellerProcessedCount;
             const treatedContacts = group.contacts.filter(c => c.contact_treated).length + activeVisits.length + sellerProcessedCount;
             const totalVisits = activeVisits.length;
-            const pendingFeedbackCount = group.visits.filter(v => v.status === 'effectuee' && !v.feedback_rating).length;
+            const pendingFeedbackCount = group.visits.filter(isFeedbackPending).length;
 
             const statTags = [];
             if (totalContacts > 0) statTags.push(`<span class="mv-stat contacts"><i class="fa-solid fa-envelope"></i> ${totalContacts} contact${totalContacts > 1 ? 's' : ''}</span>`);
@@ -3214,7 +3223,7 @@
         if (visit.visit_type === 'contre_visite') badges += '<span class="mv-badge" style="background:#FFF3E0;color:#E65100">🔄 Contre-visite</span>';
         if (!linked && !isContact) badges += '<span class="mv-badge libre">Libre</span>';
         if (isContact && visit.contact_treated) badges += '<span class="mv-badge feedback-done">Traité</span>';
-        if (visit.status === 'effectuee' && !visit.feedback_rating) badges += '<span class="mv-badge feedback-pending">Retour en attente</span>';
+        if (isFeedbackPending(visit)) badges += '<span class="mv-badge feedback-pending">Retour en attente</span>';
         if (visit.status === 'effectuee' && visit.feedback_rating) {
             const fb = FEEDBACK_LABELS[visit.feedback_rating];
             if (fb) badges += `<span class="mv-badge feedback-done">${fb.emoji} ${fb.label}</span>`;
@@ -3787,7 +3796,7 @@
         if (treatedContacts > 0) inlineStats.push(`<span class="portal-stat-tag"><i class="fa-solid fa-check"></i> ${treatedContacts} traité${treatedContacts > 1 ? 's' : ''}</span>`);
         if (totalVisits > 0) inlineStats.push(`<span class="portal-stat-tag"><i class="fa-solid fa-eye"></i> ${totalVisits} visite${totalVisits > 1 ? 's' : ''}</span>`);
         if (group.plannedCount > 0) inlineStats.push(`<span class="portal-stat-tag" style="color:#1565C0"><i class="fa-solid fa-calendar-check"></i> ${group.plannedCount} planifiée${group.plannedCount > 1 ? 's' : ''}</span>`);
-        const pendingFeedbackCount = group.visits.filter(v => v.status === 'effectuee' && !v.feedback_rating).length;
+        const pendingFeedbackCount = group.visits.filter(isFeedbackPending).length;
         if (pendingFeedbackCount > 0) inlineStats.push(`<span class="portal-stat-tag" style="color:#E65100"><i class="fa-solid fa-clock"></i> ${pendingFeedbackCount} retour${pendingFeedbackCount > 1 ? 's' : ''} en attente</span>`);
         const portalStatsHtml = inlineStats.length > 0 ? `<div class="accordion-portal-stats">${inlineStats.join('')}</div>` : '';
 
