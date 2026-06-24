@@ -4,6 +4,26 @@
 
 ---
 
+## Leçons récentes (refonte mobile, 2026-06)
+
+### L027 — Vérifier le DOM réel, pas le rapport d'un sous-agent (2026-06-19)
+**Erreur** : Un audit délégué a décrit la carte mobile comme appauvrie (sans matching/parrain) en analysant `createMobileCard`/`.deck-card`… qui est du **code mort** (conteneur `display:none`). Le vrai rendu mobile réutilise la `lead-card` desktop. J'ai failli « corriger » un faux problème.
+**Règle** : Pour toute affirmation sur le rendu, vérifier sur le DOM live (preview) ce qui est réellement affiché/visible, avant de conclure ou de coder. Les rapports d'agents et le code « présent » ne prouvent pas qu'il est actif.
+
+### L028 — Sur mobile, `resize` se déclenche au scroll (barre d'URL) (2026-06-20)
+**Erreur** : Un handler `window.resize` qui re-render la page refermait les sections Visites au scroll : sur mobile, afficher/masquer la barre d'URL change la **hauteur** → événement `resize`.
+**Règle** : Dans un handler resize qui re-render, ne réagir que si la **largeur** a changé (mémoriser `lastWidth`). Ignorer les resize en hauteur seule.
+
+### L029 — Cache-buster les JS/CSS partagés à chaque modif (2026-06-20)
+**Erreur** : `mobile-nav.js` et `relance-widget.js` étaient inclus sans `?v=` → les conseillers gardaient l'ancienne version en cache après déploiement.
+**Règle** : Tout asset partagé modifié (`js/*.js`, `css/*.css`) doit voir son `?v=AAMMJJ` bumpé sur **toutes** les pages qui l'incluent (convention du projet). Si on rééédite le même jour, suffixer (`?v=260620b`).
+
+### L030 — Refontes mobiles derrière un flag réversible (2026-06-19)
+**Erreur évitée** : L'utilisateur a explicitement demandé de « garder l'ancienne version si la nouvelle ne convient pas ».
+**Règle** : Pour une refonte d'UI conséquente, la mettre derrière un flag booléen (`MOBILE_TILES_V1`, `MOBILE_VISITS_V2`…) sans supprimer l'ancien code, afin de revenir en arrière instantanément.
+
+---
+
 ## Règles du projet
 
 1. **Toujours push sur GitHub à la fin de chaque action** — le déploiement Vercel est automatique

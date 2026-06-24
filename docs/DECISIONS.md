@@ -4,6 +4,27 @@
 
 ---
 
+## D092 — Mobile = hub simplifié (tuiles), différent du desktop, derrière flags réversibles
+
+**Date** : 2026-06-20
+**Statut** : Actif
+
+**Contexte** : Les conseillers utilisent surtout leur mobile. Le pipeline mobile reprenait l'UI desktop (colonnes/listes) en réduit, jugée « fouillis » et peu adaptée. L'utilisateur veut un mobile simple et rapide : recherche, capture vocale, et le pipeline en tuiles à compteur → répertoire → fiche.
+
+**Alternatives envisagées** :
+- *Continuer à adapter le responsive de l'UI desktop* : faible effort mais conserve la complexité des colonnes/cartes denses sur petit écran.
+- *Refonte mobile assumée, distincte du desktop (retenu)* : un rendu mobile propre (tuiles), au prix de chemins de rendu séparés à maintenir.
+
+**Décision** : Refonte mobile distincte, activée par des **flags booléens réversibles** plutôt que par suppression de l'ancien code :
+- `MOBILE_TILES_V1` (vendeurs/acquereurs) : remplace les colonnes par le hub tuiles (titre + toggle Vendeurs/Acquéreurs + recherche + tuiles → répertoire → fiche). Gaté par `isMobile()` + `body.tiles-mode`, **zéro impact desktop**.
+- `MOBILE_VISITS_V2` (visites) : vue « Par bien » avec contacts en section dédiée + swipe-delete.
+- `PIPELINE_MOBILE_V2` : bouton « déplacer » direct sur la carte mobile (hors mode tuiles).
+- Barre de nav refondue : Accueil · Pipeline (entonnoir, actif sur vendeurs ET acquereurs) · 🎙️ · Marché · Visites.
+
+**Conséquences** : Chaque flag à `false` rétablit l'ancien comportement instantanément (filet de sécurité demandé par l'utilisateur). Dette à résorber : code mort du « card deck » (`renderMobileCardDeck`), et harmonisation de la fiche acquéreur mobile (modale `editBuyer`) avec la bottom sheet vendeurs (`openMobileDetail`). Toute évolution desktop d'un pipeline doit penser à la déclinaison mobile (rendus séparés). Voir `docs/DIAGNOSTIC-MOBILE.md`.
+
+---
+
 ## D0xx — Mode démo : faux client Supabase en mémoire plutôt que compte démo partagé
 
 **Date** : 2026-06-18
@@ -1960,3 +1981,24 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 - *Champ « nb de visites » sur une seule ligne* : ne permet pas dates/heures/retours distincts par visite.
 
 **Conséquences** : Migration `add_visit_type_to_visits` (colonne `visit_type`). Le même contact apparaît plusieurs fois sous le bien (visite 1 effectuée + contre-visite planifiée), comportement voulu. La persistance d'`INSERT` n'est pas testable en mode démo (backend simulé), mais l'appel renvoie bien `data[0]`.
+
+---
+
+## D091 — RDV vendeur planifié : champs dédiés sur `sellers` (pas de réutilisation de `appointment_date`)
+
+**Date** : 2026-06-24
+**Statut** : Actif
+
+**Contexte** : L'utilisatrice voulait planifier le RDV vendeur dans l'agenda **directement depuis la fiche prospect** (avec le lien vers la fiche + le téléphone), au lieu de passer par l'assistant vocal qui perdait ce lien. La fiche disposait déjà d'un champ `appointment_date` + checkbox `rdv_done`, mais ceux-ci tracent un RDV physique **déjà effectué** (passé), avec auto-relance J+15 (voir D029).
+
+**Décision** : Ajouter **deux colonnes dédiées** sur `sellers` (migration `016_sellers_rdv_planned.sql`) :
+- `rdv_scheduled_at TIMESTAMPTZ` : date+heure du RDV **futur** planifié.
+- `rdv_google_event_id TEXT` : ID de l'événement Google Calendar associé.
+
+Un bouton « Planifier le RDV dans l'agenda » sur la fiche crée l'événement via `/api/assistant` (`create_event`), durée 1h, titre `RDV vendeur [Ville] - Nom`, lieu = adresse, description = nom + tél + email + adresse. La fiche affiche ensuite « RDV planifié le X à H » avec **Modifier** (`update_event`, réutilise l'event_id) et **Annuler** (`delete_event` + nettoyage). Réutilise l'infra agenda existante sur le modèle de `syncVisitToCalendar` (D016, D090).
+
+**Alternatives rejetées** :
+- *Réutiliser `appointment_date` / `rdv_done`* : conflit sémantique (RDV passé vs futur), casserait l'auto-relance J+15 qui se déclenche sur `appointment_date`, et un seul champ DATE ne porte ni l'heure ni l'event_id.
+- *Ne rien persister (juste pousser dans l'agenda)* : recréerait un doublon à chaque clic et la fiche ne garderait aucune trace (ni affichage, ni annulation possible). L'event_id stocké permet update/delete et anti-doublon.
+
+**Conséquences** : `rdv_scheduled_at` est stocké en ISO/UTC depuis l'heure locale saisie (utilisateur en Europe/Paris), relu via `toLocaleString` — cohérent tant que l'utilisateur reste sur ce fuseau. Le RDV planifié n'est pour l'instant affiché que dans la fiche (pas sur la carte du pipeline). Le bouton exige un prospect déjà enregistré (besoin de son ID).

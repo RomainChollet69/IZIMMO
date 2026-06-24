@@ -4,6 +4,37 @@
 
 ---
 
+## Terminé récemment
+
+### Refonte mobile (session 2026-06-19/20) ✅
+- [x] Diagnostic desktop vs mobile (`docs/DIAGNOSTIC-MOBILE.md`)
+- [x] Cibles tactiles : chips relances 38px, onglets colonnes 37px (cache-bust relance-widget)
+- [x] Visites mobile V2 (`MOBILE_VISITS_V2`) : stats par bien, actions, section Contacts distincte
+- [x] Pipelines mobile : bouton « déplacer » direct sur carte (`PIPELINE_MOBILE_V2`)
+- [x] Mode Tuiles mobile (`MOBILE_TILES_V1`) : titre + recherche + tuiles carrées → répertoire → fiche (vendeurs + acquéreurs)
+- [x] Barre de nav mobile : Accueil · Pipeline (entonnoir) · 🎙️ · Marché · Visites + toggle Vendeurs/Acquéreurs
+- [x] Polish tuiles : icônes uniques (cleanColLabel), fond plus foncé, typo, carte répertoire
+- [x] Fix Visites : sections qui se refermaient au scroll (resize en hauteur ignoré)
+- [x] Swipe-left pour supprimer un contact (demande de visite)
+- [x] Docs à jour (CHANGELOG, ARCHITECTURE 3.4/3.4b, DECISIONS D092, mémoire `mobile-tiles-direction`)
+
+**Prochaines étapes mobile (à valider avec l'utilisateur)**
+- [ ] Harmoniser la fiche acquéreur mobile : remplacer la modale `editBuyer` par une bottom sheet façon `openMobileDetail` (vendeurs). Bug pré-existant : titre « Nouvel acquéreur » même en édition.
+- [ ] Nettoyer le code mort `createMobileCard` / `renderMobileCardDeck` / `.mobile-card-deck`.
+- [ ] Décliner éventuellement l'esprit tuiles/recherche sur l'accueil ou Visites.
+- [ ] (Optionnel) Étendre le swipe-delete aux lignes visite si souhaité.
+
+### RDV vendeur planifiable depuis la fiche prospect (session 2026-06-24) ✅
+- [x] Migration `016_sellers_rdv_planned.sql` : `rdv_scheduled_at`, `rdv_google_event_id` (appliquée)
+- [x] Bouton « Planifier le RDV dans l'agenda » sur la fiche vendeur (au-dessus de « RDV physique effectué »)
+- [x] Création / modification / annulation de l'événement Google Calendar (réutilise `/api/assistant`)
+- [x] Affichage « RDV planifié le X à H » + Modifier / Annuler ; persistance + anti-doublon via event_id
+- [x] Docs à jour (CHANGELOG, ARCHITECTURE, API-MAP, DECISIONS D091)
+- [ ] **À tester en conditions réelles** (session connectée + agenda Google lié) : round-trip create/update/delete
+- [ ] Évolution possible : afficher « RDV planifié » sur la carte du pipeline ; auto-relance depuis `rdv_scheduled_at`
+
+---
+
 ## En cours
 
 ### Email de suivi automatique post-visite (session 2026-06-13)

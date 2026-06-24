@@ -13,7 +13,7 @@ IZIMMO/
 ├── home.html                   # Page d'accueil / Cockpit — 8 tuiles métiers, recherche globale, bienvenue personnalisée (accessible mobile ; sur desktop redirige vers app.html)
 ├── app.html                    # 🖥️ Shell desktop multi-onglets — barre foncée (logo + onglets + "+") qui charge chaque rubrique dans un <iframe> vivant (façon navigateur). Point d'entrée desktop. Mobile → redirige vers home.html
 ├── demo.html                    # 🎭 Point d'entrée du MODE DÉMO (public, sans login) — pose le flag sessionStorage, seede le store anonymisé, entre dans l'app. Voir §Mode démo
-├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes personnalisables + Card Deck mobile + recherche (table `sellers`)
+├── vendeurs.html                # Pipeline Vendeurs — Kanban 8 colonnes (desktop) + mode Tuiles mobile (flag MOBILE_TILES_V1) + recherche (table `sellers`)
 ├── acquereurs.html             # Pipeline Acquéreurs — Kanban 5/7 colonnes personnalisables (2 vues) + recherche (table `buyers`)
 ├── formulaire.html             # Formulaire public acquéreur (sans auth)
 ├── login.html                  # Page de connexion Google OAuth (redirige vers home.html)
@@ -46,7 +46,7 @@ IZIMMO/
 │   ├── audio-recorder.js       # Enregistrement micro + détection silence
 │   ├── onboarding.js           # Tour guidé première utilisation
 │   ├── social.js               # Logique calendrier social + IA
-│   ├── mobile-nav.js            # Bottom navigation mobile + menu "Plus..." (injecté dynamiquement)
+│   ├── mobile-nav.js            # Bottom navigation mobile : Accueil · Pipeline (entonnoir) · 🎙️ · Marché · Visites (injectée dynamiquement, cache-bust ?v=)
 │   ├── group-message.js        # Modale de message groupé (Email BCC / WhatsApp / SMS) 100% client — module autonome réutilisable (utilisé par visites.html)
 │   ├── tab-shell.js            # Moteur d'onglets du shell desktop (app.html) — open/activate/close, iframes vivants, injection "mode embarqué" (masque header interne, intercepte liens, recale pipeline/sticky), menu du bouton "+"
 │   ├── touch-drag-drop.js      # Polyfill tactile drag & drop pour iPad (tablettes >= 768px)
@@ -87,7 +87,8 @@ IZIMMO/
 │   ├── 010_gamification_monthly.sql  # ALTER TABLE : ajout monthly_points + month_year
 │   ├── 011_sellers_rooms.sql   # ALTER TABLE : ajout champ rooms sur sellers (T1-T5+)
 │   ├── 012_visit_requests.sql # Table visit_requests + colonnes inbound_email sur user_integrations
-│   └── 014_pipeline_configs.sql # Table pipeline_configs — config JSONB colonnes personnalisables
+│   ├── 014_pipeline_configs.sql # Table pipeline_configs — config JSONB colonnes personnalisables
+│   └── 016_sellers_rdv_planned.sql # ALTER TABLE sellers : rdv_scheduled_at + rdv_google_event_id (RDV vendeur planifié dans l'agenda)
 │
 ├── img/
 │   ├── Logo_leon.svg           # Logo vectoriel
@@ -232,37 +233,49 @@ Confirmation + lien vers la fiche créée
 - `unmatched_contacts` retourne des objets structurés (nom, budget, type, secteur, critères)
 - La création est directe (pas de formulaire intermédiaire)
 
-### 3.4 Pipeline vendeurs mobile (card deck)
+### 3.4 Pipeline mobile (mode Tuiles)
+
+Sur mobile (<= 768px), les pipelines (vendeurs & acquéreurs) n'affichent pas les colonnes
+du desktop mais un hub simplifié, branché sur `isMobile() && MOBILE_TILES_V1` (classe
+`body.tiles-mode`, conteneur `#mobileTilesView`). Le mobile est volontairement différent
+et plus simple que le desktop — voir décision **D092**.
 
 ```
-Chargement index.html (mobile, <= 768px)
+vendeurs.html / acquereurs.html (mobile)
     │
     ▼
-loadSellers() — Supabase query
+renderSellers() / renderBuyers() → renderMobileTiles()
     │
     ▼
-renderSellers() → renderMobileCardDeck()
-  ├── Filtre sellers par tab actif (mobileActiveTab)
-  ├── Auto-sélection du premier tab avec des leads si courant vide
-  ├── Lazy render : ±2 cartes autour de l'index courant
-  └── Indicateur de position (N/M)
+HUB  titre "PIPELINE" + toggle Vendeurs|Acquéreurs (.m-tiles-seg → navigue entre les 2 pages)
+     + recherche live (nom / tél / ville ou secteur)
+     + grille de TUILES carrées (1 par colonne, compteur centré, accent couleur de colonne)
     │
-    ▼
-Navigation : swipe gauche/droite (initDeckSwipe)
-  ├── Seuil : 50px ou vélocité 0.3px/ms
-  ├── Rubber-band aux extrémités
-  └── navigateDeck(±1) → re-render
+    ▼  tap sur une tuile
+RÉPERTOIRE  liste simple façon contacts téléphone (avatar initiales, nom, tél, appel direct)
     │
-    ▼
-Tap carte → openMobileDetail(sellerId)
-  ├── Bottom sheet slide-up (92vh max)
-  ├── Sections : bien, contact, mandat, concurrent, notes, commission
-  ├── Actions : Modifier, Déplacer, Supprimer
-  └── Fermeture : swipe-down (seuil 120px) ou tap backdrop
+    ▼  tap sur une ligne
+FICHE  vendeurs → openMobileDetail (bottom sheet) ; acquéreurs → editBuyer (modale)
 
-État persisté : localStorage (tab + index)
-Couleurs colonnes : COLUMN_COLORS (8 statuts → hex)
+Capture vocale : micro de la bottom nav (pas de bouton dédié dans le hub).
+État réversible : MOBILE_TILES_V1=false rétablit l'ancien pipeline mobile en colonnes.
 ```
+
+**Legacy / dette** : `createMobileCard` / `renderMobileCardDeck` / `.mobile-card-deck`
+(ancien « card deck » à swipe) sont conservés mais **inactifs** (conteneur `display:none`)
+— à nettoyer. Hors mode tuiles, la carte desktop `lead-card` est réutilisée sur mobile
+avec un bouton 📂 « déplacer » direct (flag `PIPELINE_MOBILE_V2`).
+
+### 3.4b Visites mobile (rendu `mv-*` + V2)
+
+`visites.html` a un rendu mobile séparé (`renderMobile*`, classes `mv-*`), distinct de
+l'accordéon desktop. Sous le flag `MOBILE_VISITS_V2` (`renderMobilePropertyGroupsV2`), la
+vue « Par bien » affiche : ligne de stats par bien (mêmes calculs que desktop), boutons
+message groupé / ajouter contact / partager, puis deux sections distinctes **Contacts**
+(leads à traiter) et **Visites**. Les lignes contact sont **swipeables** (swipe-left →
+bouton Supprimer, façon iOS ; module `initMvSwipe`, suppression via `confirmDeleteVisit`).
+Garde-fou re-render : le handler `resize` ne reconstruit la page que si la **largeur**
+change (sinon le scroll mobile, qui montre/cache la barre d'URL, refermait les sections).
 
 ### 3.5 Déplacement de fiche (drag-and-drop)
 
@@ -492,7 +505,9 @@ Les budgets parfois stockés formatés (`"280 000 €"`) sont parsés via `parse
 | `referrer_name` | TEXT        | Nom du recommandant (si source = recommandation)         |
 | `notes`         | TEXT        | Notes relationnelles / commerciales                      |
 | `reminder`      | DATE        | Date de prochaine relance                                |
-| `appointment_date` | DATE     | Date du RDV physique vendeur (auto-relance J+15)         |
+| `appointment_date` | DATE     | Date du RDV physique vendeur **déjà effectué** (avec `rdv_done`, auto-relance J+15) |
+| `rdv_scheduled_at` | TIMESTAMPTZ | Date+heure du RDV vendeur **planifié** (futur) dans l'agenda Google — distinct de `appointment_date` (voir D091) |
+| `rdv_google_event_id` | TEXT  | ID de l'événement Google Calendar du RDV planifié (update/delete + anti-doublon) |
 | `contact_date`  | DATE        | Date du premier contact                                  |
 | `mandate_start_date` | DATE   | Date de début du mandat                                  |
 | `last_activity_at` | TIMESTAMPTZ | Dernière activité enregistrée                         |
