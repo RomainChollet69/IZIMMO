@@ -4,6 +4,12 @@
 
 ---
 
+## Session 2026-06-20 — Contre-visite = retour donné pour la visite précédente
+
+### Évolution
+Planifier une contre-visite signifie que le visiteur veut revenir : la visite précédente ne doit plus apparaître en « retour en attente ». Désormais, `submitContreVisite` enregistre la décision `contre_visite` sur la **visite source** si aucun retour n'avait été saisi (`feedback_rating` et `buyer_decision` vides). N'écrase jamais un retour déjà renseigné. Combiné à `isFeedbackPending`, la visite source sort du compteur « retours en attente ».
+
+
 ## Session 2026-06-20 — Fix : « retour en attente » comptait les visites avec décision (sans note)
 
 ### Bug
