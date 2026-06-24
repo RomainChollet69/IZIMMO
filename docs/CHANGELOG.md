@@ -4,6 +4,19 @@
 
 ---
 
+## Session 2026-06-20 — Fix : l'event_id agenda n'était mémorisé que par le bouton manuel
+
+### Bug
+La reprogrammation ne déplaçait pas l'événement Google Agenda dans la plupart des cas. Cause : `visits.google_event_id` n'était stocké que quand on ajoutait à l'agenda via le **bouton manuel** (`addVisitToCalendar`). Les flux de planif courants (planifier depuis un contact, nouvelle visite, demande portail) passaient à `proposeCalendarSync` un objet **sans `id`** → `confirmCalendarSync` ne pouvait pas écrire l'`event_id` → reschedule sans cible.
+
+### Correctif (`visites.html`)
+- `submitPlanFromContact` → `{ id: contactId, ... }`.
+- Nouvelle visite (modal) → passe `created` (ligne insérée avec id).
+- Portail (`process_visit_request`) → `{ id: data.created_visit_id, ... }`.
+- `proposeCalendarSync` : `dataset.visitId = visit.id || ''` (garde si id inconnu).
+- Désormais **toute** visite ajoutée à l'agenda mémorise son `event_id`, donc la reprogrammation le déplace. NB : les visites mises à l'agenda **avant** ce fix n'ont pas d'`event_id` → à ré-ajouter une fois.
+
+
 ## Session 2026-06-20 — Contre-visite : 2e visite du même contact sur le même bien
 
 ### Besoin
