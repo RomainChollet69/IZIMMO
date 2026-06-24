@@ -5324,6 +5324,16 @@
         });
         if (!created) return; // createVisitRecord a déjà alerté
 
+        // Planifier une contre-visite vaut "retour donné" pour la visite précédente
+        // (le visiteur veut revenir). Si aucun retour n'avait été saisi, on enregistre
+        // la décision "contre_visite" sur la visite source → elle n'est plus "en attente".
+        if (src.status === 'effectuee' && !src.feedback_rating && (!src.buyer_decision || src.buyer_decision === 'en_attente')) {
+            const uid = await getCurrentUserId();
+            await supabaseClient.from('visits')
+                .update({ buyer_decision: 'contre_visite', updated_at: new Date().toISOString() })
+                .eq('id', src.id).eq('user_id', uid);
+        }
+
         document.getElementById('contreVisiteModal')?.remove();
         await loadAllVisits();
         renderVisitsPage();
