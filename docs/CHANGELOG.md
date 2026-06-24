@@ -4,6 +4,26 @@
 
 ---
 
+## Session 2026-06-20 — Visites mobile : fix fermeture au scroll + swipe-delete contact
+
+### Bug corrigé : les sections se refermaient au scroll (`visites.html`)
+Sur mobile, scroller affiche/masque la barre d'URL du navigateur → événement `resize` (hauteur seule) → le handler appelait `renderVisitsPage()` qui reconstruisait toute la liste (sensation de fermeture + saut en haut). Fix : le handler `resize` ne re-render plus que si la **largeur** change (`lastResizeWidth`), pas sur un resize en hauteur dû au scroll.
+
+### Feature : swipe-left pour supprimer un contact (demande de visite)
+- `renderMobileContactItem` encapsule désormais la ligne dans `.mv-swipe` (contenu `.mv-swipe-content` + bouton rouge `.mv-swipe-del` révélé par glissement, façon iOS).
+- Module de swipe délégué (`initMvSwipe`) : touchstart/move/end, seuil 44px, révèle 88px, referme les autres lignes ouvertes, ignore le scroll vertical.
+- `mvRowTap` : un tap sur une ligne ouverte la referme, sinon ouvre la fiche.
+- `confirmDeleteVisit(id, opts)` accepte des libellés ; `deleteContactFromSwipe` → « Supprimer ce contact ? » / toast « Contact supprimé » (suppression dans la table `visits`).
+- Uniquement sur les lignes **contact** (demandes) ; les lignes visite ne sont pas swipeables.
+
+### Vérifié (preview 390px, démo)
+Structure swipe OK (bouton rouge révélé à l'état `swiped`), 3 contacts swipeables sur un bien, aucune erreur console.
+
+### Commit
+À pousser sur `main`.
+
+---
+
 ## Session 2026-06-20 — DVF mobile : carte plein écran + bottom sheet (façon cadastre.com)
 
 ### Problème
