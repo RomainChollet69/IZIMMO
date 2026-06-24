@@ -4879,6 +4879,37 @@
                         <input type="text" class="form-input" id="budget" placeholder="350 000 €">
                     </div>
 
+                    <!-- Planifier le RDV vendeur (futur) dans Google Calendar, relié au prospect.
+                         Distinct du checkbox "RDV physique effectué" ci-dessous qui trace un RDV passé. -->
+                    <div class="form-group" id="planRdvGroup" style="margin-bottom:16px">
+                        <button type="button" class="modal-action-btn" id="planRdvTriggerBtn" onclick="showSellerRdvForm()">
+                            <i class="fa-solid fa-calendar-plus"></i> Planifier le RDV dans l'agenda
+                        </button>
+                        <div id="planRdvForm" class="visit-creation-form" style="display:none;margin-top:8px">
+                            <div class="visit-form-row">
+                                <div class="form-group">
+                                    <label class="form-label">Date du RDV</label>
+                                    <input type="date" class="form-input" id="planRdvDate">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Heure</label>
+                                    <input type="time" class="form-input" id="planRdvTime" value="14:00">
+                                </div>
+                            </div>
+                            <div class="visit-form-actions">
+                                <button type="button" class="visit-confirm-btn" onclick="confirmCreateSellerRdv()">Planifier</button>
+                                <button type="button" class="visit-cancel-btn" onclick="cancelSellerRdvForm()">Annuler</button>
+                            </div>
+                        </div>
+                        <div id="planRdvStatus" style="display:none;margin-top:8px;padding:10px 12px;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;font-size:13px;color:#166534">
+                            <span><i class="fa-solid fa-calendar-check"></i> RDV planifié le <strong id="planRdvStatusText"></strong></span>
+                            <div style="margin-top:6px;display:flex;gap:14px">
+                                <a href="#" onclick="showSellerRdvForm();return false" style="color:#166534;font-weight:600;text-decoration:none">Modifier</a>
+                                <a href="#" onclick="cancelSellerRdv();return false" style="color:#B91C1C;font-weight:600;text-decoration:none">Annuler le RDV</a>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group" style="margin-bottom:16px">
                         <label class="annexe-toggle" style="display:inline-flex;align-items:center;gap:8px;cursor:pointer">
                             <input type="checkbox" id="rdvDone" style="display:none">
@@ -6148,6 +6179,176 @@
                 }
             } catch (err) {
                 console.error('[CalendarSync] Erreur:', err);
+            }
+        }
+
+        // --- Planification du RDV vendeur dans l'agenda (depuis la fiche prospect) ---
+        // Crée/maj/supprime un événement Google Calendar relié au prospect (nom, tél, email, adresse).
+        // Distinct du checkbox "RDV physique effectué" qui ne trace qu'un RDV passé.
+        // Persisté sur sellers.rdv_scheduled_at + sellers.rdv_google_event_id (migration 016).
+        const SELLER_RDV_DURATION_MIN = 60; // Durée par défaut d'un RDV vendeur (estimation/mandat)
+
+        /**
+         * Met à jour l'affichage du bloc "Planifier le RDV" selon l'état du seller :
+         * bouton de planification si aucun RDV, sinon bandeau "RDV planifié le X".
+         * Stocke event_id + date sur le dataset du groupe pour les actions suivantes.
+         */
+        function renderSellerRdvPlanner(seller) {
+            const group = document.getElementById('planRdvGroup');
+            if (!group) return;
+            const scheduledAt = seller && seller.rdv_scheduled_at ? seller.rdv_scheduled_at : '';
+            const eventId = seller && seller.rdv_google_event_id ? seller.rdv_google_event_id : '';
+            group.dataset.eventId = eventId;
+            group.dataset.scheduledAt = scheduledAt;
+            document.getElementById('planRdvForm').style.display = 'none';
+            const trigger = document.getElementById('planRdvTriggerBtn');
+            const status = document.getElementById('planRdvStatus');
+            if (scheduledAt) {
+                const d = new Date(scheduledAt);
+                const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' });
+                const timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('planRdvStatusText').textContent = `${dateStr} à ${timeStr}`;
+                status.style.display = '';
+                trigger.style.display = 'none';
+            } else {
+                status.style.display = 'none';
+                trigger.style.display = '';
+            }
+        }
+
+        /** Ouvre le formulaire date/heure. Exige un prospect déjà enregistré (besoin de son ID). */
+        function showSellerRdvForm() {
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (!editId) {
+                showMatchToast('Enregistre d\'abord le prospect, puis planifie le RDV');
+                return;
+            }
+            const scheduledAt = document.getElementById('planRdvGroup').dataset.scheduledAt;
+            if (scheduledAt) {
+                // Pré-remplir avec le RDV déjà planifié (mode modification)
+                const d = new Date(scheduledAt);
+                document.getElementById('planRdvDate').value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                document.getElementById('planRdvTime').value = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            }
+            document.getElementById('planRdvTriggerBtn').style.display = 'none';
+            document.getElementById('planRdvStatus').style.display = 'none';
+            document.getElementById('planRdvForm').style.display = '';
+        }
+
+        /** Referme le formulaire sans rien changer : restaure l'état courant du seller. */
+        function cancelSellerRdvForm() {
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            renderSellerRdvPlanner(sellers.find(s => s.id === editId) || {});
+        }
+
+        /**
+         * Crée (ou met à jour si déjà planifié) l'événement RDV vendeur dans Google Calendar,
+         * puis persiste rdv_scheduled_at + rdv_google_event_id sur le prospect.
+         */
+        async function confirmCreateSellerRdv() {
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (!editId) { showMatchToast('Enregistre d\'abord le prospect'); return; }
+            const date = document.getElementById('planRdvDate').value;
+            const time = document.getElementById('planRdvTime').value;
+            if (!date || !time) { showMatchToast('Choisis une date et une heure'); return; }
+
+            // Coordonnées lues depuis le formulaire (reflète les modifs non encore enregistrées)
+            const name = (document.getElementById('fullName').value.trim()
+                || `${document.getElementById('firstName').value} ${document.getElementById('lastName').value}`.trim()
+                || 'Vendeur');
+            const phone = document.getElementById('phone').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const city = document.getElementById('address').dataset.city || (address ? extractCity(address) : '') || '';
+
+            const startTime = time.substring(0, 5);
+            const [h, m] = startTime.split(':').map(Number);
+            const endMin = h * 60 + m + SELLER_RDV_DURATION_MIN;
+            const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}`;
+
+            const title = `RDV vendeur${city ? ' ' + city : ''} - ${name}`;
+            const descParts = [`Vendeur : ${name}`];
+            if (phone) descParts.push(`Tél : ${phone}`);
+            if (email) descParts.push(`Email : ${email}`);
+            if (address) descParts.push(`Bien : ${address}`);
+            const description = descParts.join('\n');
+
+            const existingEventId = document.getElementById('planRdvGroup').dataset.eventId;
+            const confirmBtn = document.querySelector('#planRdvForm .visit-confirm-btn');
+            if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = 'Planification...'; }
+
+            try {
+                const headers = await getAuthHeaders();
+                const body = {
+                    action: existingEventId ? 'update_event' : 'create_event',
+                    title, date, start_time: startTime, end_time: endTime,
+                    location: address, description
+                };
+                if (existingEventId) body.event_id = existingEventId;
+
+                const resp = await fetch('/api/assistant', { method: 'POST', headers, body: JSON.stringify(body) });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    if (err.error === 'calendar_not_connected') {
+                        showMatchToast('Connecte ton agenda Google dans les paramètres');
+                    } else {
+                        console.warn('[SellerRdv] Échec sync agenda:', err.error || resp.status);
+                        showMatchToast('Agenda non synchronisé');
+                    }
+                    return;
+                }
+
+                const data = await resp.json();
+                const eventId = data.event?.id || existingEventId;
+                // Construit l'ISO depuis l'heure locale saisie (utilisateur en Europe/Paris)
+                const scheduledAt = new Date(`${date}T${startTime}:00`).toISOString();
+
+                const userId = await getCurrentUserId();
+                if (userId) {
+                    await supabaseClient.from('sellers')
+                        .update({ rdv_scheduled_at: scheduledAt, rdv_google_event_id: eventId })
+                        .eq('id', editId).eq('user_id', userId);
+                }
+                // Met à jour l'objet local pour refléter sans recharger la page
+                const seller = sellers.find(s => s.id === editId);
+                if (seller) { seller.rdv_scheduled_at = scheduledAt; seller.rdv_google_event_id = eventId; }
+                renderSellerRdvPlanner(seller || { rdv_scheduled_at: scheduledAt, rdv_google_event_id: eventId });
+                showMatchToast(existingEventId ? 'RDV mis à jour dans l\'agenda ✓' : 'RDV ajouté à l\'agenda ✓');
+            } catch (err) {
+                console.error('[SellerRdv] Erreur planification:', err);
+                showMatchToast('Erreur lors de la planification');
+            } finally {
+                if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Planifier'; }
+            }
+        }
+
+        /** Annule le RDV planifié : supprime l'événement Google et efface les champs du prospect. */
+        async function cancelSellerRdv() {
+            const editId = document.getElementById('submitBtn').dataset.editId;
+            if (!editId) return;
+            if (!confirm('Annuler ce RDV et le retirer de l\'agenda ?')) return;
+            const eventId = document.getElementById('planRdvGroup').dataset.eventId;
+            try {
+                if (eventId) {
+                    const headers = await getAuthHeaders();
+                    await fetch('/api/assistant', {
+                        method: 'POST', headers,
+                        body: JSON.stringify({ action: 'delete_event', event_id: eventId })
+                    });
+                }
+                const userId = await getCurrentUserId();
+                if (userId) {
+                    await supabaseClient.from('sellers')
+                        .update({ rdv_scheduled_at: null, rdv_google_event_id: null })
+                        .eq('id', editId).eq('user_id', userId);
+                }
+                const seller = sellers.find(s => s.id === editId);
+                if (seller) { seller.rdv_scheduled_at = null; seller.rdv_google_event_id = null; }
+                renderSellerRdvPlanner(seller || {});
+                showMatchToast('RDV annulé');
+            } catch (err) {
+                console.error('[SellerRdv] Erreur annulation:', err);
+                showMatchToast('Erreur lors de l\'annulation');
             }
         }
 
@@ -9919,6 +10120,7 @@
             document.getElementById('appointmentDate').value = '';
             document.getElementById('appointmentDate').dataset.loaded = '';
             document.getElementById('appointmentDateGroup').style.display = 'none';
+            renderSellerRdvPlanner({});
             document.getElementById('commissionRate').value = 4;
             document.getElementById('commissionAmount').value = '';
 
@@ -10025,6 +10227,7 @@
             // Mémorise la date RDV chargée : l'auto-relance ne se déclenche que si le RDV change
             document.getElementById('appointmentDate').dataset.loaded = seller.appointment_date || '';
             document.getElementById('appointmentDateGroup').style.display = seller.rdv_done ? '' : 'none';
+            renderSellerRdvPlanner(seller);
             // Co-contact
             document.getElementById('contact2Name').value = seller.contact2_name || '';
             document.getElementById('contact2Phone').value = seller.contact2_phone || '';

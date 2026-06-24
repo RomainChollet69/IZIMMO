@@ -467,6 +467,10 @@ Endpoint unifié de l'assistant organisationnel. Routage par champ `action`.
 | `update_event` | `{ event_id, title?, date?, start_time?, end_time?, ... }` | `{ event: { id, summary, start, end, htmlLink } }` |
 | `delete_event` | `{ event_id }` | `{ deleted: true, event_id }` |
 
+> **Appelants front de `create_event` / `update_event` / `delete_event`** (hors assistant vocal) :
+> - `visites.html` → `syncVisitToCalendar` (sync des visites acquéreur, event_id stocké sur `visits.google_event_id`)
+> - `vendeurs.html` → `confirmCreateSellerRdv` / `cancelSellerRdv` (RDV vendeur planifié depuis la fiche prospect, event_id stocké sur `sellers.rdv_google_event_id`) — voir D091
+
 ---
 
 ### POST `/api/send-auto-reply`

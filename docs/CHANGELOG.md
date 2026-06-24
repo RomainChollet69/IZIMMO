@@ -4,6 +4,15 @@
 
 ---
 
+## Session 2026-06-20 — Tuto vidéo "automatiser les visites" (nouvelle vidéo)
+
+Nouvelle vidéo YouTube `mqLp9Ko4pPs` (remplace `BHU4n1_9cCg`) pour le tutoriel d'automatisation des visites.
+- `tutoriels.html` : carte vidéo "Tutoriels vidéo" → nouvel ID.
+- `home.html` : modale `openTutoVideoModal()` → nouvel ID ; **+ carte promo toujours visible** dans "Quoi de neuf" (ouvre le lecteur). La bannière promo existante reste conditionnelle (cachée si le transfert est déjà activé).
+- Fichiers : `tutoriels.html`, `home.html`.
+
+---
+
 ## Session 2026-06-24 — Paramètres : bouton Déconnexion + clarification tuto portails
 
 ### Modifications

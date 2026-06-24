@@ -838,6 +838,14 @@
             <!-- Dernières nouveautés -->
             <div class="wn-grid">
 
+                <!-- Promo tuto vidéo : automatiser les visites (toujours visible, ouvre le lecteur) -->
+                <div class="wn-card" onclick="openTutoVideoModal()" style="cursor:pointer;">
+                    <span class="wn-badge-new"><i class="fa-solid fa-play"></i> Tuto vidéo</span>
+                    <div class="wn-ic ic-visites"><i class="fa-solid fa-circle-play"></i></div>
+                    <h4>Automatise tes demandes de visite</h4>
+                    <p>En vidéo : connecte tes portails et reçois chaque demande directement dans Léon, sans copier-coller. Clique pour regarder.</p>
+                </div>
+
                 <div class="wn-card">
                     <span class="wn-badge-new">Nouveau</span>
                     <div class="wn-ic ic-visites"><i class="fa-solid fa-envelope-circle-check"></i></div>
@@ -958,7 +966,7 @@
                 <button onclick="document.getElementById('tutoVideoOverlay').remove()" style="position:absolute; top:12px; right:12px; width:36px; height:36px; background:rgba(0,0,0,0.6); color:white; border:none; border-radius:50%; cursor:pointer; font-size:18px; z-index:1; display:flex; align-items:center; justify-content:center;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
-                <iframe src="https://www.youtube.com/embed/BHU4n1_9cCg?autoplay=1" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+                <iframe src="https://www.youtube.com/embed/mqLp9Ko4pPs?autoplay=1" width="100%" height="100%" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
             </div>
         `;
         document.body.appendChild(overlay);
