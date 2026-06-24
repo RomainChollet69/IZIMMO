@@ -4279,7 +4279,7 @@
         modal.dataset.title = title;
         modal.dataset.location = address;
         modal.dataset.description = description;
-        modal.dataset.visitId = visit.id; // pour mémoriser l'event_id créé sur la visite
+        modal.dataset.visitId = visit.id || ''; // pour mémoriser l'event_id créé sur la visite (vide si inconnu)
         document.body.appendChild(modal);
     }
 
@@ -5247,7 +5247,7 @@
         // Proposer l'ajout au calendrier
         if (contact && date) {
             const seller = activeSellers.find(s => s.id === contact.seller_id);
-            proposeCalendarSync({ visit_date: date, visit_time: time, buyer_name: contact.buyer_name }, seller);
+            proposeCalendarSync({ id: contactId, visit_date: date, visit_time: time, buyer_name: contact.buyer_name }, seller);
         }
     }
 
@@ -5602,13 +5602,9 @@
             renderVisitsPage();
             showToast('Visite planifiée');
 
-            // Proposer l'ajout au calendrier
+            // Proposer l'ajout au calendrier (created a un id → l'event sera mémorisé)
             const seller = activeSellers.find(s => s.id === sellerId);
-            proposeCalendarSync({
-                visit_date: visitDate,
-                visit_time: visitTime || null,
-                buyer_name: visit.buyer_name || ''
-            }, seller);
+            proposeCalendarSync(created, seller);
         }
     }
 
@@ -7741,6 +7737,7 @@
         const seller = activeSellers.find(s => s.id === sellerId);
         const visitTime = document.getElementById('ppVisitTime').value || null;
         proposeCalendarSync({
+            id: data.created_visit_id,
             visit_date: visitDate,
             visit_time: visitTime,
             buyer_name: req.visitor_name || ''
