@@ -1942,3 +1942,21 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Alternatives écartées** : carte plein écran + overlay FAB (D086) et 2 cadres empilés (D088), tous deux rejetés par l'utilisateur. Drag gestuel complet du sheet : remplacé par un simple tap sur la poignée (robuste, suffisant).
 
 **Conséquences** : Desktop inchangé (sidebar + carte côte à côte, `.sheet-handle` masquée). Vérifié en preview (375px, démo) : recherche flottante OK, peek (poignée + CTA au-dessus de la nav) OK, déplié (filtres visibles) OK, pas d'erreur JS hors `RefererNotAllowedMapError` (clé Maps restreinte au domaine de prod). Rendu réel des ventes à confirmer sur le déploiement.
+
+
+## D090 — Contre-visite = nouvelle ligne `visit` (pas de réutilisation de ligne)
+
+**Date** : 2026-06-20
+**Statut** : Actif
+
+**Contexte** : Un acquéreur revient souvent voir un bien une 2e fois (avec conjoint, artisan...). Or le modèle « 1 contact = 1 ligne `visit` » et les actions « Planifier »/« Reprogrammer » (qui font un `UPDATE` de la ligne) ne permettaient qu'une seule visite par contact.
+
+**Décision** : La contre-visite **crée une nouvelle ligne** `visit` (`INSERT` via `createVisitRecord`) pour le même `buyer_id`/`buyer_name` + `seller_id`, taguée `visit_type = 'contre_visite'`, statut `planifiee`. La 1re visite (souvent `effectuee`) n'est pas modifiée.
+- Déclenchement : bouton « Contre-visite » sur les visites effectuées (carte desktop + bottom sheet mobile) **et** auto-proposition quand le retour de visite porte la décision « 🔄 Contre-visite » (`buyer_decision = 'contre_visite'`), avec garde anti-doublon (pas de relance si une contre-visite est déjà planifiée pour ce contact).
+- Badge `🔄 Contre-visite` (desktop + mobile). Événement agenda propre via `proposeCalendarSync`.
+
+**Alternatives rejetées** :
+- *Réutiliser/mettre à jour la ligne existante* : écraserait l'historique (on perdrait la trace de la 1re visite effectuée + son retour) et fausserait les stats. Une ligne par visite garde l'historique, des stats justes et un événement agenda distinct.
+- *Champ « nb de visites » sur une seule ligne* : ne permet pas dates/heures/retours distincts par visite.
+
+**Conséquences** : Migration `add_visit_type_to_visits` (colonne `visit_type`). Le même contact apparaît plusieurs fois sous le bien (visite 1 effectuée + contre-visite planifiée), comportement voulu. La persistance d'`INSERT` n'est pas testable en mode démo (backend simulé), mais l'appel renvoie bien `data[0]`.

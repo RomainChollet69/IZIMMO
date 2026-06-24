@@ -636,6 +636,7 @@ Visible dans l'onglet Matching des deux fiches (vendeur et acquéreur).
 | `reminder_24h_sent_at` | TIMESTAMPTZ | Horodatage du rappel -24h (envoi unique)             |
 | `reminder_4h_sent_at`  | TIMESTAMPTZ | Horodatage du rappel -4h (envoi unique)              |
 | `google_event_id`  | TEXT        | ID de l'événement Google Calendar lié (sync) — permet de déplacer l'événement à la reprogrammation |
+| `visit_type`       | TEXT        | `null` = visite standard, `contre_visite` = 2e visite du même acquéreur sur le même bien (voir D090) |
 | `created_at`       | TIMESTAMPTZ | Date de création                                     |
 | `updated_at`       | TIMESTAMPTZ | Dernière modification                                |
 

@@ -4,6 +4,19 @@
 
 ---
 
+## Session 2026-06-20 — Contre-visite : 2e visite du même contact sur le même bien
+
+### Besoin
+L'acquéreur revient souvent (conjoint, artisan...). Le modèle « 1 contact = 1 ligne visit » + « Planifier/Reprogrammer » (UPDATE) ne permettait qu'une visite.
+
+### Détails (`visites.html`)
+- **Migration** : colonne `visits.visit_type` (`contre_visite` | null).
+- `openContreVisite` / `submitContreVisite` : **crée une nouvelle ligne** visit (même acquéreur + bien, statut planifiée, `visit_type='contre_visite'`) sans toucher à la visite 1 → historique préservé. Voir **D090**.
+- Déclenchement : bouton « Contre-visite » sur les visites **effectuées** (carte desktop + bottom sheet mobile) **et** auto-proposition après un retour de visite avec décision « 🔄 Contre-visite » (garde anti-doublon).
+- Badge `🔄 Contre-visite` (desktop + mobile). Événement agenda propre (sync reprogrammation incluse).
+- Vérifié en preview (démo) : boutons présents (26 cartes effectuées desktop + sheet mobile), badge rendu, `INSERT` renvoie `data[0]`, zéro erreur console. Persistance d'insert non testable en démo (backend simulé).
+
+
 ## Session 2026-06-20 — Reprogrammer une visite déplace aussi l'événement Google Agenda
 
 ### Évolution
