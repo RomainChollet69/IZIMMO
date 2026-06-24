@@ -2686,11 +2686,16 @@
                     <div class="email-fwd-howto-title">Comment configurer le transfert ?</div>
                     <ol>
                         <li><strong>Copie</strong> l'adresse ci-dessus</li>
-                        <li>Dans ta messagerie (Gmail, Outlook...), ajoute cette adresse comme <strong>adresse de transfert</strong> dans les parametres</li>
-                        <li>Gmail enverra un email de confirmation — <strong>le lien apparaitra ici automatiquement</strong></li>
-                        <li>Clique sur le lien pour valider, puis cree un <strong>filtre</strong> (Parametres → Filtres → Creer un filtre) qui transfere vers cette adresse <strong>uniquement</strong> les emails des portails (SeLoger, LeBonCoin, BienIci, PAP, Logic-Immo...)</li>
+                        <li>Dans Gmail : <em>Paramètres → Transfert et POP/IMAP → Ajouter une adresse de transfert</em>, colle ton adresse Léon</li>
+                        <li>Gmail enverra un email de confirmation : <strong>le lien apparaitra ici automatiquement</strong>. Clique dessus pour valider.</li>
+                        <li>Crée un <strong>filtre</strong> (<em>Paramètres → Filtres → Créer un filtre</em>) sur les emails des portails (SeLoger, LeBonCoin, BienIci, PAP, Logic-Immo...), et dans les actions du filtre <strong>coche « Transférer à » puis choisis ton adresse Léon</strong>.</li>
                         <li>Les demandes de visite apparaitront automatiquement dans ta page <strong><a href="visites.html" style="color:#667eea;">Visites</a></strong> !</li>
                     </ol>
+                    <div style="background:#FEF2F2; border:1px solid #FECACA; border-radius:10px; padding:12px 14px; margin-top:4px; font-size:13px; color:#991B1B; line-height:1.5;">
+                        <strong><i class="fa-solid fa-triangle-exclamation"></i> Le point qui bloque le plus souvent</strong><br>
+                        Confirmer ton adresse dans <em>Transfert et POP/IMAP</em> ne suffit pas : ça ne fait <strong>qu'autoriser</strong> l'adresse, ça ne transfère rien. C'est sur le <strong>filtre</strong> que l'action <strong>« Transférer à » → ton adresse Léon</strong> doit être cochée. Le libellé seul ne transfère rien.<br>
+                        <span style="color:#7F1D1D;">Si tu as importé le filtre <strong>avant</strong> d'avoir confirmé l'adresse, Gmail a retiré le transfert sans rien dire (il ne reste que le libellé) : ré-importe le filtre maintenant que l'adresse est confirmée, ou ouvre le filtre et coche « Transférer à » à la main.</span>
+                    </div>
                     <div style="background:#FFF7ED; border:1px solid #FED7AA; border-radius:10px; padding:12px 14px; margin-top:4px; font-size:13px; color:#9A3412; line-height:1.5;">
                         <strong><i class="fa-solid fa-circle-info"></i> Et mes anciennes demandes ?</strong>
                         À l'import, Gmail propose « Appliquer aussi le filtre aux conversations correspondantes ». Attention : Gmail ne transfère <strong>jamais rétroactivement</strong>, seules les <strong>nouvelles</strong> demandes arriveront dans Léon. Pour rapatrier d'anciennes demandes, <strong>transfère-les à la main</strong> à ton adresse Léon ci-dessus : l'expéditeur d'origine (le portail) est conservé, donc Léon les reconnaît, et il n'y a pas de doublon.

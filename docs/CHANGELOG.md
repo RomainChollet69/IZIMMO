@@ -4,6 +4,45 @@
 
 ---
 
+## Session 2026-06-24 — Paramètres : bouton Déconnexion + clarification tuto portails
+
+### Modifications
+- `parametres.html` : nouvelle section « Compte » (email du compte connecté + bouton « Se déconnecter » appelant `logout()` de `auth.js`). Le logout n'existait que dans le menu de l'avatar (header), peu découvrable, ce qui bloquait le changement de compte après la fusion gmail→efficity.
+- `parametres.html` : tutoriel « Transfert emails portails » renforcé. Point de blocage fréquent rendu explicite : confirmer l'adresse dans *Transfert et POP/IMAP* ne fait qu'**autoriser** l'adresse, ça ne transfère rien ; c'est sur le **filtre** que l'action « Transférer à » → adresse Léon doit être cochée (le libellé seul ne transfère rien). Ajout du cas « filtre importé avant confirmation » (Gmail retire silencieusement le transfert → ré-importer).
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/parametres.html`
+
+### Contexte
+Feedback utilisateur : après la fusion de comptes, pas de logout visible pour basculer sur efficity ; et confusion sur le filtre Gmail (le transfert doit être sur le filtre, pas seulement l'adresse confirmée).
+
+---
+
+## Session 2026-06-24 — Planifier le RDV vendeur dans l'agenda depuis la fiche prospect
+
+### Évolution
+Nouveau bouton « Planifier le RDV dans l'agenda » sur la fiche prospect vendeur (juste au-dessus de « RDV physique effectué »). Crée un événement Google Calendar relié au prospect (titre `RDV vendeur [Ville] - Nom`, lieu = adresse du bien, description = nom + tél + email + adresse), durée 1h. Plus besoin de passer par l'assistant vocal qui perdait le lien avec la fiche et le numéro de téléphone.
+
+- **Mémorisation** : `sellers.rdv_scheduled_at` (timestamptz) + `sellers.rdv_google_event_id` (migration `016_sellers_rdv_planned.sql`). La fiche affiche « RDV planifié le X à H » avec actions Modifier / Annuler.
+- **Modifier** = `update_event` (réutilise l'event_id). **Annuler** = `delete_event` + nettoyage des deux champs. Anti-doublon : re-planifier met à jour l'événement existant.
+- **Concept distinct** de `rdv_done` / `appointment_date` (RDV passé, déjà effectué) : ici c'est un RDV futur planifié.
+- Réutilise l'infra agenda existante (`/api/assistant` actions `create_event` / `update_event` / `delete_event`, `ensureValidToken`) sur le modèle de `syncVisitToCalendar`.
+- Coordonnées lues depuis les champs du formulaire (reflète les modifs non encore enregistrées). Exige un prospect déjà enregistré (besoin de son ID) ; toast d'invite sinon.
+
+### Fichiers créés/modifiés
+- `vendeurs.html` : bloc HTML `#planRdvGroup` au-dessus de « RDV physique effectué » ; fonctions `renderSellerRdvPlanner` / `showSellerRdvForm` / `cancelSellerRdvForm` / `confirmCreateSellerRdv` / `cancelSellerRdv` ; branchements dans `editSeller` (état initial) et le reset nouveau lead.
+- `sql/016_sellers_rdv_planned.sql` : nouvelles colonnes `rdv_scheduled_at`, `rdv_google_event_id` (appliquée sur Supabase).
+
+### Points d'attention
+- `rdv_scheduled_at` stocké en ISO/UTC depuis l'heure locale saisie (utilisateur en Europe/Paris) ; relu via `new Date().toLocaleString` côté fiche. Cohérent tant que l'utilisateur reste sur ce fuseau.
+- Le RDV planifié n'est PAS encore affiché sur la carte du pipeline (uniquement dans la fiche). Évolution possible si besoin d'un coup d'œil rapide.
+- Si l'agenda Google n'est pas connecté : toast « Connecte ton agenda Google dans les paramètres », rien n'est persisté.
+
+### Prochaines étapes possibles
+- Afficher un picto « RDV planifié le X » sur la carte du pipeline (rendu liste/détail).
+- Auto-renseigner la relance à partir du RDV planifié (comme l'auto-relance après `appointment_date`).
+
+
 ## Session 2026-06-20 — Contre-visite = retour donné pour la visite précédente
 
 ### Évolution
