@@ -4,6 +4,17 @@
 
 ---
 
+## Session 2026-06-20 — Fix : « retour en attente » comptait les visites avec décision (sans note)
+
+### Bug
+Un bien affichait « 2 retours en attente » alors que les visites étaient traitées. Cause : le compteur ne regardait que `feedback_rating`. Or un retour se saisit aussi via `buyer_decision` (ex : un **refus** n'a pas de note d'appréciation). Les visites avec `buyer_decision='refus'` mais `feedback_rating=null` restaient comptées « en attente ».
+
+### Correctif (`visites.html`)
+- Helper **`isFeedbackPending(v)`** : `effectuee` && pas de `feedback_rating` && (pas de `buyer_decision` ou `en_attente`).
+- Appliqué aux 4 calculs : stat globale « Retours en attente » (`computeQuickStats`), stats par bien (mobile `mv-stat` + desktop accordéon), badge mobile « Retour en attente ».
+- Vérifié sur données réelles (bien 1 Rue Edouard Branly) : 2 refus sans note ne sont plus comptés → 0 retour en attente ; une visite sans note ni décision reste bien « en attente ».
+
+
 ## Session 2026-06-20 — Fix : l'event_id agenda n'était mémorisé que par le bouton manuel
 
 ### Bug
