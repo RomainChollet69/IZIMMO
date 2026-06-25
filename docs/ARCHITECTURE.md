@@ -233,6 +233,34 @@ Confirmation + lien vers la fiche créée
 - `unmatched_contacts` retourne des objets structurés (nom, budget, type, secteur, critères)
 - La création est directe (pas de formulaire intermédiaire)
 
+### 3.3b Commande agenda vocale → RDV vendeur relié à la fiche
+
+Quand la dictée est une commande Léon (ex. « planifie un RDV vendeur avec X mardi à 14h »),
+`handleLeonCommand` (micro.html) appelle `/api/assistant` action `orchestrate`. L'IA renvoie
+un `intent` (`create_event`, `find_slots`, `list_events`...) + des `params` (dont `who`,
+`who_role`, `event_type`). Pour un `create_event` :
+
+```
+micro.html  handleLeonCommand → orchestrate (api/assistant.js)
+    │  intent=create_event, params{ title, date, start_time, who, event_type, ... }
+    ▼
+executeCreateEventIntent
+    │  isRdvVendeur = event_type rdv_vendeur/estimation (ou who_role vendeur / titre)
+    │  matching `who` parmi les sellers (loadUserLeads) :
+    │     1 match certain → lien direct (sellerLinkId)
+    │     >1 ou 0         → needsProspectConfirm → <select> dans la carte Léon
+    ▼  clic "Confirmer le RDV"  (leonCmdConfirmBtn)
+create_event (Google Calendar) + si prospect lié :
+    description = buildSellerRdvDescription (nom/tél/email/adresse)
+    UPDATE sellers SET rdv_scheduled_at, rdv_google_event_id
+    ▼
+La fiche prospect affiche ensuite "RDV planifié le X" (renderSellerRdvPlanner, vendeurs.html)
+```
+
+Parité voulue avec le bouton « Planifier le RDV » de la fiche (`confirmCreateSellerRdv`).
+Voir décisions **D091** (champs dédiés sur `sellers`) et **D093** (chemin vocal + confirmation prospect).
+Côté vocal : création seulement (Modifier/Annuler restent sur la fiche).
+
 ### 3.4 Pipeline mobile (mode Tuiles)
 
 Sur mobile (<= 768px), les pipelines (vendeurs & acquéreurs) n'affichent pas les colonnes
