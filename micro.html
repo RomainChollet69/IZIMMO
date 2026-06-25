@@ -1325,6 +1325,11 @@
                     </div>
                     <div class="leon-cmd-response" id="leonCmdResponse"></div>
                     <div class="leon-cmd-slots" id="leonCmdSlots"></div>
+                    <!-- Confirmation du prospect vendeur à relier (affiché si nom ambigu/introuvable) -->
+                    <div class="leon-cmd-prospect-wrap" id="leonCmdProspectWrap" style="display:none;margin:10px 0">
+                        <label class="leon-cmd-prospect-label" id="leonCmdProspectLabel" style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Quel prospect vendeur ?</label>
+                        <select class="leon-cmd-prospect-select" id="leonCmdProspectSelect" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;font-size:14px;background:#fff"></select>
+                    </div>
                     <div class="leon-cmd-confirm-wrap" id="leonCmdConfirmWrap" style="display:none">
                         <button class="leon-cmd-confirm-btn" id="leonCmdConfirmBtn">
                             <i class="fa-solid fa-calendar-check"></i> Confirmer le RDV
@@ -1633,7 +1638,7 @@
             try {
                 const [sellersRes, buyersRes] = await Promise.all([
                     supabaseClient.from('sellers')
-                        .select('id, first_name, last_name, phone, address, status')
+                        .select('id, first_name, last_name, phone, email, address, status')
                         .eq('user_id', userId)
                         .order('updated_at', { ascending: false }).limit(500),
                     supabaseClient.from('buyers')
@@ -1645,7 +1650,7 @@
                 if (sellersRes.error) console.error('[Micro] Erreur chargement vendeurs:', sellersRes.error);
                 if (buyersRes.error) console.error('[Micro] Erreur chargement acquéreurs:', buyersRes.error);
 
-                const sellers = (sellersRes.data || []).map(s => ({ id: s.id, type: 'seller', first_name: s.first_name, last_name: s.last_name, phone: s.phone, address: s.address }));
+                const sellers = (sellersRes.data || []).map(s => ({ id: s.id, type: 'seller', first_name: s.first_name, last_name: s.last_name, phone: s.phone, email: s.email, address: s.address }));
                 const buyers = (buyersRes.data || []).map(b => ({ id: b.id, type: 'buyer', first_name: b.first_name, last_name: b.last_name, phone: b.phone, sector: b.sector }));
                 allLeads = [...sellers, ...buyers];
 
@@ -2001,6 +2006,23 @@
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Création...';
             try {
                 const headers = pendingCreateEvent.headers;
+
+                // Résoudre le prospect vendeur lié (choix utilisateur si confirmation demandée).
+                // Vide = "Sans lien avec une fiche" → événement agenda autonome, comme avant.
+                let linkedSeller = null;
+                if (pendingCreateEvent.isRdvVendeur) {
+                    const chosenId = pendingCreateEvent.needsProspectConfirm
+                        ? document.getElementById('leonCmdProspectSelect').value
+                        : pendingCreateEvent.sellerLinkId;
+                    if (chosenId) {
+                        linkedSeller = (pendingCreateEvent.sellerCandidates || []).find(c => c.id === chosenId) || null;
+                    }
+                }
+                // Si un prospect est lié, on enrichit la description avec ses coordonnées
+                const description = linkedSeller
+                    ? buildSellerRdvDescription(linkedSeller, pendingCreateEvent.location)
+                    : pendingCreateEvent.description;
+
                 const resp = await fetch('/api/assistant', {
                     method: 'POST', headers,
                     body: JSON.stringify({
@@ -2010,11 +2032,26 @@
                         start_time: pendingCreateEvent.start_time,
                         end_time: pendingCreateEvent.end_time,
                         location: pendingCreateEvent.location,
-                        description: pendingCreateEvent.description
+                        description
                     })
                 });
                 if (!resp.ok) throw new Error('Erreur création événement');
                 const eventData = await resp.json().catch(() => ({}));
+
+                // RDV vendeur relié à une fiche : persister sur sellers (rdv_scheduled_at + event_id),
+                // pour que la fiche prospect affiche "RDV planifié le X" (parité avec le bouton fiche, cf. D091).
+                if (linkedSeller && pendingCreateEvent.isRdvVendeur) {
+                    try {
+                        const scheduledAt = new Date(`${pendingCreateEvent.date}T${(pendingCreateEvent.start_time || '09:00')}:00`).toISOString();
+                        const { error: sellerErr } = await supabaseClient.from('sellers')
+                            .update({ rdv_scheduled_at: scheduledAt, rdv_google_event_id: eventData.event?.id || null })
+                            .eq('id', linkedSeller.id).eq('user_id', userId);
+                        if (sellerErr) console.error('[Micro:CreateEvent] Erreur persist RDV vendeur:', sellerErr);
+                        else console.log('[Micro:CreateEvent] RDV vendeur relié à la fiche', linkedSeller.id);
+                    } catch (e) {
+                        console.error('[Micro:CreateEvent] Persist RDV vendeur échoué:', e);
+                    }
+                }
 
                 // Si c'est une visite acquéreur avec buyer + seller identifiés → insérer en table visits
                 if (pendingCreateEvent.isVisite && (pendingCreateEvent.buyerId || pendingCreateEvent.sellerId)) {
@@ -2248,6 +2285,41 @@
                 }
             }
 
+            // Détecter si c'est un RDV vendeur (à relier à une fiche prospect vendeur).
+            // Distinct d'une visite acquéreur : on persiste rdv_scheduled_at + rdv_google_event_id
+            // sur la ligne sellers et on enrichit la description avec ses coordonnées (cf. D091).
+            const isRdvVendeur = !isVisiteAcquereur && (
+                (p.event_type || '').match(/rdv_vendeur|estimation/i)
+                || (p.who_role || '').match(/vendeur|propri[ée]taire/i)
+                || (p.title || '').toLowerCase().match(/vendeur|estimation/)
+            );
+            let sellerCandidates = [];   // candidats pour la confirmation
+            let sellerLinkId = null;     // prospect résolu sans ambiguïté
+            let needsProspectConfirm = false;
+            if (isRdvVendeur) {
+                const leads = await loadUserLeads();
+                const sellers = leads.filter(l => l.type === 'seller');
+                const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+                let matches = [];
+                if (p.who) {
+                    const searchName = norm(p.who);
+                    matches = sellers.filter(l => {
+                        const full = norm(`${l.first_name || ''} ${l.last_name || ''}`);
+                        return full.includes(searchName) || (l.last_name && searchName.includes(norm(l.last_name)));
+                    });
+                }
+                if (matches.length === 1) {
+                    // Match unique et certain : on relie directement (le bouton Confirmer suffit)
+                    sellerLinkId = matches[0].id;
+                    sellerCandidates = matches;
+                } else {
+                    // Ambigu (>1) ou introuvable (0) : demander à l'utilisateur de confirmer le prospect.
+                    // Propose les noms qui matchent, sinon tous les vendeurs.
+                    sellerCandidates = matches.length > 1 ? matches : sellers;
+                    needsProspectConfirm = sellerCandidates.length > 0;
+                }
+            }
+
             // Stocker l'événement en attente de confirmation
             pendingCreateEvent = {
                 title: p.title,
@@ -2259,11 +2331,22 @@
                 headers,
                 isVisite: isVisiteAcquereur,
                 buyerId: visitBuyerId,
-                sellerId: visitSellerId
+                sellerId: visitSellerId,
+                isRdvVendeur,
+                sellerLinkId,
+                needsProspectConfirm,
+                sellerCandidates
             };
 
+            let response = orch.leon_response || `Je te propose de créer ce RDV dans ton agenda.`;
+            if (needsProspectConfirm) {
+                response = p.who
+                    ? `Je n'ai pas trouvé « ${p.who} » de façon certaine. Confirme le prospect à relier, puis valide.`
+                    : `Confirme le prospect vendeur à relier à ce RDV, puis valide.`;
+            }
+
             showLeonCmdResult({
-                response: orch.leon_response || `Je te propose de créer ce RDV dans ton agenda.`,
+                response,
                 eventDetail: {
                     title: p.title,
                     dayLabel: dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1),
@@ -2271,10 +2354,23 @@
                     location: p.location
                 },
                 showConfirm: true,
+                prospectConfirm: needsProspectConfirm,
+                prospectCandidates: sellerCandidates,
                 message,
                 contactPhone,
                 channel: p.message_channel
             });
+        }
+
+        /** Description d'événement agenda pour un RDV vendeur : coordonnées du prospect (cf. confirmCreateSellerRdv dans vendeurs.html). */
+        function buildSellerRdvDescription(seller, fallbackLocation) {
+            const name = `${seller.first_name || ''} ${seller.last_name || ''}`.trim() || 'Vendeur';
+            const parts = [`Vendeur : ${name}`];
+            if (seller.phone) parts.push(`Tél : ${seller.phone}`);
+            if (seller.email) parts.push(`Email : ${seller.email}`);
+            const addr = seller.address || fallbackLocation;
+            if (addr) parts.push(`Bien : ${addr}`);
+            return parts.join('\n');
         }
 
         async function executeListEventsIntent(orch, headers) {
@@ -2306,8 +2402,21 @@
         // Stocke le téléphone du contact pour les boutons SMS/WhatsApp
         let leonCmdContactPhone = null;
 
-        function showLeonCmdResult({ response, slots, message, contactPhone, channel, eventDetail, showConfirm }) {
+        function showLeonCmdResult({ response, slots, message, contactPhone, channel, eventDetail, showConfirm, prospectConfirm, prospectCandidates }) {
             document.getElementById('leonCmdResponse').textContent = response || '';
+
+            // Sélecteur de prospect vendeur (confirmation si nom ambigu/introuvable)
+            const prospectWrap = document.getElementById('leonCmdProspectWrap');
+            if (prospectConfirm && prospectCandidates && prospectCandidates.length > 0) {
+                const opts = prospectCandidates.map(c => {
+                    const label = `${c.first_name || ''} ${c.last_name || ''}`.trim() || 'Sans nom';
+                    return `<option value="${escHtml(c.id)}">${escHtml(label)}${c.address ? ' — ' + escHtml(c.address) : ''}</option>`;
+                }).join('');
+                document.getElementById('leonCmdProspectSelect').innerHTML = opts + '<option value="">Sans lien avec une fiche</option>';
+                prospectWrap.style.display = '';
+            } else {
+                prospectWrap.style.display = 'none';
+            }
 
             // Slots (créneaux disponibles)
             const slotsEl = document.getElementById('leonCmdSlots');

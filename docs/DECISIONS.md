@@ -2002,3 +2002,22 @@ Un bouton « Planifier le RDV dans l'agenda » sur la fiche crée l'événement 
 - *Ne rien persister (juste pousser dans l'agenda)* : recréerait un doublon à chaque clic et la fiche ne garderait aucune trace (ni affichage, ni annulation possible). L'event_id stocké permet update/delete et anti-doublon.
 
 **Conséquences** : `rdv_scheduled_at` est stocké en ISO/UTC depuis l'heure locale saisie (utilisateur en Europe/Paris), relu via `toLocaleString` — cohérent tant que l'utilisateur reste sur ce fuseau. Le RDV planifié n'est pour l'instant affiché que dans la fiche (pas sur la carte du pipeline). Le bouton exige un prospect déjà enregistré (besoin de son ID).
+
+---
+
+## D093 — RDV vendeur vocal : relié à la fiche, avec confirmation du prospect si ambigu
+
+**Date** : 2026-06-25
+**Statut** : Actif
+
+**Contexte** : Suite de D091. Quand l'utilisatrice planifie un RDV vendeur **par la voix** (micro.html), l'événement agenda était créé « isolé » : pas de coordonnées du prospect dans la description, et aucune trace sur la fiche (`rdv_scheduled_at` vide). Le lien fiche n'existait que via le bouton de la fiche.
+
+**Décision** : Dans `executeCreateEventIntent` (micro.html), détecter un RDV vendeur (`event_type` `rdv_vendeur`/`estimation`, ou `who_role` vendeur, ou titre) et le relier à la fiche prospect :
+- **Matching par nom** (`who`) parmi les `sellers`. Pour cela, `who`/`who_role` ont été ajoutés aux params `create_event` du prompt orchestrateur (avant, seul `create_event_and_draft` les renvoyait).
+- **1 seul match certain → lien direct** (le bouton « Confirmer le RDV » suffit).
+- **Ambigu (>1) ou introuvable (0) → confirmation** : un `<select>` apparaît dans la carte Léon pour choisir le prospect (candidats filtrés si plusieurs matchs, sinon tous les vendeurs), plus une option « Sans lien avec une fiche ».
+- À la confirmation : description enrichie (`buildSellerRdvDescription`, parité avec `confirmCreateSellerRdv`) + `UPDATE sellers SET rdv_scheduled_at, rdv_google_event_id`.
+
+**Alternative rejetée** : *lier automatiquement le 1er match même si ambigu* — risque de rattacher le RDV au mauvais prospect (homonymes, nom partiel). La confirmation explicite évite une erreur silencieuse sur une donnée client. Choix utilisateur validé.
+
+**Conséquences** : `micro.html` charge désormais aussi `email` des sellers (pour la description). Un RDV vendeur vocal relié apparaît ensuite « RDV planifié le X » sur la fiche, comme via le bouton. La voix ne gère pas encore Modifier/Annuler (réservé à la fiche).

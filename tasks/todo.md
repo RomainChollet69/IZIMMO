@@ -30,8 +30,9 @@
 - [x] Création / modification / annulation de l'événement Google Calendar (réutilise `/api/assistant`)
 - [x] Affichage « RDV planifié le X à H » + Modifier / Annuler ; persistance + anti-doublon via event_id
 - [x] Docs à jour (CHANGELOG, ARCHITECTURE, API-MAP, DECISIONS D091)
-- [ ] **À tester en conditions réelles** (session connectée + agenda Google lié) : round-trip create/update/delete
-- [ ] Évolution possible : afficher « RDV planifié » sur la carte du pipeline ; auto-relance depuis `rdv_scheduled_at`
+- [x] **Parité vocale (session 2026-06-25, D093)** : RDV vendeur dicté relié à la fiche (description + `rdv_scheduled_at`), avec confirmation du prospect si ambigu/introuvable (`micro.html` + params `who`/`who_role` dans `api/assistant.js`)
+- [ ] **À tester en conditions réelles** (session connectée + agenda Google lié) : round-trip fiche (create/update/delete) + commande vocale « planifie un RDV vendeur avec X »
+- [ ] Évolution possible : afficher « RDV planifié » sur la carte du pipeline ; auto-relance depuis `rdv_scheduled_at` ; côté vocal, update au lieu de doublon si RDV déjà planifié
 
 ---
 

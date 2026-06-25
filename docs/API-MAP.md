@@ -464,6 +464,7 @@ Endpoint unifié de l'assistant organisationnel. Routage par champ `action`.
 | `list_events` | `{ date_from, date_to }` | `{ events: [...] }` |
 | `find_slots` | `{ date_from, date_to, slot_type, duration_minutes }` | `{ slots: [...], total_found }` |
 | `create_event` | `{ title, date, start_time, end_time, location?, description? }` | `{ event: { id, summary, start, end, htmlLink } }` |
+| `orchestrate` (intent `create_event`) | renvoie aussi `who` / `who_role` / `event_type` dans `params` — sert au matching prospect côté front (RDV vendeur vocal relié à la fiche, voir D093) | — |
 | `update_event` | `{ event_id, title?, date?, start_time?, end_time?, ... }` | `{ event: { id, summary, start, end, htmlLink } }` |
 | `delete_event` | `{ event_id }` | `{ deleted: true, event_id }` |
 

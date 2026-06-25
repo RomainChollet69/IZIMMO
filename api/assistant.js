@@ -810,6 +810,8 @@ Pour create_event :
   "end_time": "HH:MM",
   "location": "adresse si mentionnée ou null",
   "description": null,
+  "who": "nom du contact concerné si mentionné, sinon null",
+  "who_role": "vendeur|acquéreur|... si déductible, sinon null",
   "event_type": "rdv_vendeur"|"estimation"|"visite"|"signature"|"reunion"|"autre",
   "needs_confirmation": true
 }

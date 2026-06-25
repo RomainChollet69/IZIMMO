@@ -4,6 +4,28 @@
 
 ---
 
+## Session 2026-06-25 — RDV vendeur par la voix relié à la fiche prospect
+
+### Évolution
+Parité du RDV vendeur vocal avec le bouton de la fiche (D091, D093). Quand on dicte « planifie un RDV vendeur avec X », Léon relie maintenant l'événement agenda à la fiche prospect : description enrichie (nom + tél + email + adresse) et persistance `rdv_scheduled_at` + `rdv_google_event_id` sur `sellers` → la fiche affiche ensuite « RDV planifié le X ».
+
+- **Confirmation si ambigu** : 1 seul prospect correspondant au nom dicté → lien direct ; plusieurs ou aucun → un sélecteur apparaît dans la carte Léon (candidats ou tous les vendeurs + option « Sans lien avec une fiche »), à confirmer avant de valider. Évite de rattacher le RDV au mauvais prospect.
+- `api/assistant.js` : ajout de `who` / `who_role` aux params `create_event` du prompt orchestrateur (avant, seul `create_event_and_draft` les fournissait), nécessaire au matching par nom.
+- `micro.html` : `loadUserLeads` charge aussi `email` des sellers ; `executeCreateEventIntent` détecte le RDV vendeur et prépare les candidats ; le bouton Confirmer résout le prospect choisi, construit la description (`buildSellerRdvDescription`) et met à jour `sellers`.
+
+### Fichiers créés/modifiés
+- `micro.html` : sélecteur `#leonCmdProspectWrap`, `showLeonCmdResult` (params `prospectConfirm` / `prospectCandidates`), `executeCreateEventIntent`, handler `leonCmdConfirmBtn`, `loadUserLeads`, helper `buildSellerRdvDescription`.
+- `api/assistant.js` : params `who` / `who_role` dans le bloc `create_event` du prompt orchestrateur.
+
+### Points d'attention
+- La voix ne gère pas Modifier / Annuler du RDV (réservé à la fiche). Une re-dictée recréerait un nouvel événement (pas d'update de l'existant côté vocal).
+- Non testable de bout en bout sans session connectée + agenda Google lié + commande vocale réelle. Syntaxe JS des deux fichiers validée (0 erreur).
+
+### Prochaines étapes possibles
+- Côté vocal, détecter un RDV vendeur déjà planifié pour proposer un update plutôt qu'un doublon.
+- Afficher « RDV planifié » sur la carte du pipeline.
+
+
 ## Session 2026-06-20 — Tuto vidéo "automatiser les visites" (nouvelle vidéo)
 
 Nouvelle vidéo YouTube `mqLp9Ko4pPs` (remplace `BHU4n1_9cCg`) pour le tutoriel d'automatisation des visites.
