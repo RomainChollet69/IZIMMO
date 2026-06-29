@@ -303,6 +303,7 @@ Webhook Mailgun pour réception et traitement des emails portails immobiliers tr
 2. Parsing multipart via `busboy` (extraction champs email)
 3. Identification de l'utilisateur via l'adresse `recipient` → lookup `user_integrations.inbound_email`
 4. **Allowlist `PORTAL_SENDER_DOMAINS` sur le header `From`** (filtre AVANT Claude) — matching racine + sous-domaines (ex. `mail.seloger.com` matche `seloger.com`). Tout expéditeur non-portail est rejeté : log `[InboundEmail] Expéditeur non-portail rejeté: …`, horodatage `flagNonPortalSender()` sur `user_integrations` (`non_portal_last_at` + `non_portal_last_sender`, best-effort), puis `200 { ignored: true }` — l'email n'est PAS parsé
+4ter. **Filtre newsletters/rapports** (`isPortalNewsletterOrReport`, AVANT Claude) — un domaine portail légitime peut envoyer des newsletters/rapports de stats (pas des demandes). Écarté si sous-domaine d'emailing (`news.*`/`newsletter.*`...) OU sujet de rapport/newsletter (« rapport d'activité », « statistiques de publication/diffusion », « se désabonner », « nouveaux critères d'achat »...). Conservateur (zéro vraie demande bloquée). `200 { ignored }`, pas de flag "transfert toute la boîte"
 5. Envoi du contenu email à Claude Haiku → extraction JSON (portail, nom, email, téléphone, date souhaitée, adresse du bien)
 6. Matching automatique `sellers` par adresse
 7. INSERT dans `visit_requests` (status: `pending`)
@@ -317,7 +318,7 @@ Expéditeur non-portail : `200 { "ignored": true }` (pas de parsing).
 
 **Erreurs** : `400` (signature invalide), `404` (utilisateur non trouvé), `502` (Claude échoue), `500` (erreur serveur)
 
-**Filtre Gmail téléchargeable** : `downloadGmailFilter()` dans `parametres.html` génère côté client un `.xml` (flux Atom des filtres Gmail) pré-rempli avec l'adresse inbound de l'agent (`shouldForwardTo`) + les domaines portails (`from`, constante `PORTAL_FILTER_FROM`), à importer via Gmail → Filtres → Importer des filtres. Permet à l'agent de ne transférer QUE les portails (au lieu de toute sa boîte) et donc d'éviter les rejets allowlist.
+**Filtre Gmail téléchargeable** : `downloadGmailFilter()` dans `parametres.html` génère côté client un `.xml` (flux Atom des filtres Gmail) pré-rempli avec l'adresse inbound de l'agent (`shouldForwardTo`) + les domaines portails (`from`, constante `PORTAL_FILTER_FROM`) + une exclusion conservatrice newsletters/rapports (`doesNotHaveTheWord`, constante `PORTAL_FILTER_EXCLUDE` : `news.leboncoin.fr` + sujets de rapport), à importer via Gmail → Filtres → Importer des filtres. Permet à l'agent de ne transférer QUE les portails (au lieu de toute sa boîte) et donc d'éviter les rejets allowlist.
 
 **Variables d'environnement requises** : `MAILGUN_WEBHOOK_SIGNING_KEY`, `ANTHROPIC_API_KEY`
 

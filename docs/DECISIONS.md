@@ -1731,6 +1731,8 @@ Côté front-end, le seuil minimum de ventes/an pour le graphe d'évolution est 
 **Conséquences** :
 - **Risque assumé** : un portail émettant depuis un domaine non listé voit son lead rejeté silencieusement. Mitigation : chaque rejet est loggé (`[InboundEmail] Expéditeur non-portail rejeté: …`) pour repérer un domaine manquant et l'ajouter à `PORTAL_SENDER_DOMAINS`.
 
+**Complément (2026-06-29) — filtre newsletters/rapports** : un domaine portail *autorisé* peut quand même envoyer des newsletters ou rapports de stats (ex : `news.leboncoin.fr`, « Rapport d'activité hebdomadaire » Bien'ici), qui ne sont PAS des demandes de contact. Ajout d'un 2e filtre AVANT Claude, `isPortalNewsletterOrReport(from, subject)` : écarte si le domaine est un sous-domaine d'emailing (`news.*`/`newsletter.*`...) OU si le sujet matche un rapport/newsletter. **Inverse de la philosophie allowlist** (ici on bloque par motif), mais le risque est maîtrisé car les critères sont conservateurs et ne recoupent jamais une vraie demande (testé). Le prompt Claude reste un 2e filet, et le filtre Gmail généré applique la même exclusion (`PORTAL_FILTER_EXCLUDE`). Pas de flag "transfert toute la boîte" (c'est bien un portail, juste du bruit marketing).
+
 ---
 
 ## D078 — Cycle d'emails de visite (confirmation / rappels / suivi) piloté par cron
