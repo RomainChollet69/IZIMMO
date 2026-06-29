@@ -2773,6 +2773,11 @@
         // Domaines des portails à transférer (cohérent avec l'allowlist serveur api/inbound-email.js)
         const PORTAL_FILTER_FROM = 'leboncoin.fr OR seloger.com OR myselogerpro.com OR bienici.com OR jinka.fr OR lefigaro.fr OR paruvendupro.fr OR green-acres.fr OR pap.fr OR logic-immo.com OR meilleursagents.com OR avendrealouer.fr OR ouestfrance-immo.com';
 
+        // Exclusions : newsletters / rapports de stats des portails (pas des demandes de contact).
+        // Volontairement conservateur (sous-domaine d'emailing + sujets de rapport très spécifiques)
+        // pour ne JAMAIS écarter une vraie demande au niveau Gmail. Le backend Léon filtre aussi.
+        const PORTAL_FILTER_EXCLUDE = 'from:news.leboncoin.fr OR subject:("rapport d\'activité" OR "se désabonner" OR "statistiques de publication" OR "statistiques de diffusion")';
+
         // Génère et télécharge un filtre Gmail (.xml) prêt à importer, avec l'adresse Léon de l'agent.
         // Format = flux Atom des filtres Gmail (Paramètres → Filtres → Importer des filtres).
         function downloadGmailFilter() {
@@ -2788,6 +2793,7 @@
     <title>Leads portails &#8594; Léon</title>
     <content></content>
     <apps:property name="from" value="${esc(PORTAL_FILTER_FROM)}"/>
+    <apps:property name="doesNotHaveTheWord" value="${esc(PORTAL_FILTER_EXCLUDE)}"/>
     <apps:property name="label" value="Leads portails (Léon)"/>
     <apps:property name="shouldForwardTo" value="${esc(addr)}"/>
     <apps:property name="sizeOperator" value="s_sl"/>

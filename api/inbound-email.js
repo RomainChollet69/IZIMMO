@@ -113,6 +113,15 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: 'Sender not a known portal, ignored' });
         }
 
+        // 4ter. Ignorer les newsletters / rapports de stats des portails : ce sont des domaines
+        //       légitimes (leboncoin, bienici...) mais PAS des demandes de contact. On les écarte
+        //       avant Claude (économie d'appel). Pas de flag "transfert toute la boîte" : c'est
+        //       bien un portail, juste du bruit marketing.
+        if (isPortalNewsletterOrReport(originalFrom, subject)) {
+            console.log(`[InboundEmail] Newsletter/rapport portail ignoré: "${subject}" de "${originalFrom}"`);
+            return res.status(200).json({ message: 'Portal newsletter/report, ignored' });
+        }
+
         // 5. Déduplication par email_message_id
         const messageId = fields['Message-Id'] || fields['message-id'] || `auto-${Date.now()}`;
         const isDuplicate = await checkDuplicate(agent.user_id, messageId);
@@ -252,6 +261,23 @@ function isPortalSender(fromField) {
     const domain = extractSenderDomain(fromField);
     if (!domain) return false;
     return PORTAL_SENDER_DOMAINS.some(d => domain === d || domain.endsWith('.' + d));
+}
+
+// Sous-domaines d'envoi de masse (newsletters / notifs marketing), jamais utilisés pour les leads.
+// Ex : news.leboncoin.fr (newsletter), newsletter.seloger.com...
+const NEWSLETTER_SUBDOMAINS = /(^|\.)(news|newsletter|newsletters|mailing|emailing|communication|mkt|marketing|actu|actualites)\./i;
+
+// Sujets de newsletters / rapports de stats. Les vraies demandes de visite n'ont JAMAIS ces
+// formulations (elles disent "vous a contacté", "demande de visite", "souhaite visiter"...).
+const NON_LEAD_SUBJECT = /rapport d['’ ]?activit|statistiques? de (publication|diffusion)|bilan (hebdo|de diffusion|d['’ ]?activit)|votre rapport|se d[ée]sabonner|newsletter|nouveaux crit[èe]res d['’ ]?achat|tendances? (immo|du march)|conseils? (pro|immo)|webinaire|offre commerciale/i;
+
+// Newsletter ou rapport de stats d'un portail (légitime côté domaine, mais pas une demande de
+// contact). Détection volontairement sûre pour ne jamais écarter une vraie demande.
+function isPortalNewsletterOrReport(fromField, subject) {
+    const domain = extractSenderDomain(fromField);
+    if (domain && NEWSLETTER_SUBDOMAINS.test(domain)) return true;
+    if (subject && NON_LEAD_SUBJECT.test(subject)) return true;
+    return false;
 }
 
 // Horodate le dernier email non-portail reçu pour un agent (signal "transfert
@@ -460,8 +486,8 @@ Extrais les informations et retourne UNIQUEMENT un JSON valide :
 
 RÈGLES :
 - is_visit_request = true si c'est un message d'un portail concernant un bien (demande de visite, demande d'info, nouveau message, prise de contact, favori)
-- is_visit_request = false UNIQUEMENT pour les newsletters, rapports de stats, confirmations de publication, pubs
-- En cas de doute, mets is_visit_request = true (mieux vaut un faux positif qu'un faux négatif)
+- is_visit_request = false pour les newsletters, rapports de stats, bilans/rapports d'activité ("Rapport d'activité hebdomadaire", "statistiques de publication/diffusion : X vues, Y favoris"), confirmations de publication, conseils/tendances, pubs et offres commerciales
+- En cas de doute SUR UN MESSAGE QUI S'ADRESSE PERSONNELLEMENT AU VENDEUR (un internaute, un nom, un téléphone, "souhaite visiter"), mets is_visit_request = true (mieux vaut un faux positif qu'un faux négatif). Mais un email générique de stats/newsletter (chiffres globaux, "cher partenaire", aucun contact nommé) reste false.
 - Détecte le portail depuis l'objet, l'expéditeur ou le contenu
 - Le téléphone doit être au format français (06/07) avec espaces
 - property_price en nombre entier sans symbole (ex: 515000). IMPORTANT : extrais le prix depuis la description du bien dans l'email (souvent en bas : "Maison 4 pièces 96 m² / 515000 €")
