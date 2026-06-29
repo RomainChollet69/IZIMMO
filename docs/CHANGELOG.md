@@ -4,6 +4,17 @@
 
 ---
 
+## Session 2026-06-29 — Inbound : ignorer les newsletters / rapports des portails
+
+### Problème
+Des mails légitimes des portails mais qui ne sont **pas des demandes de contact** (newsletter leboncoin depuis `news.leboncoin.fr`, rapport d'activité hebdo Bien'ici depuis `no_reply@bienici.com`) passaient l'allowlist et étaient libellisés « Leads portails (Léon) » dans Gmail. Claude les écartait déjà (`is_visit_request=false`) mais de façon non déterministe et au coût d'un appel.
+
+### Correctif
+- **`api/inbound-email.js`** : filtre pré-Claude `isPortalNewsletterOrReport(from, subject)` (étape 4ter) — écarte si le domaine est un sous-domaine d'emailing (`news.*`, `newsletter.*`...) OU si le sujet matche un rapport/newsletter (« rapport d'activité », « statistiques de publication/diffusion », « se désabonner », « nouveaux critères d'achat »...). Volontairement **sûr** : testé sur 7 cas, aucune vraie demande bloquée, même venant de `no_reply@bienici.com`. Économise l'appel Claude. Prompt Claude renforcé (rapports/bilans = false explicitement, sans biais "doute=true" pour le générique).
+- **`parametres.html`** : le filtre Gmail généré exclut aussi ces mails (`doesNotHaveTheWord` conservateur : `news.leboncoin.fr` + sujets de rapport) → les futurs imports ne les transfèrent ni ne les libellisent.
+- Constat : **aucune fausse demande existante en base** (Claude filtrait déjà). Le « Leads portails (Léon) » visible était le libellé Gmail, pas un lead Léon.
+
+
 ## Session 2026-06-25 — RDV vendeur par la voix relié à la fiche prospect
 
 ### Évolution
