@@ -4,6 +4,27 @@
 
 ---
 
+## Session 2026-06-30 — Fix bannière « Confirmation de transfert requise » persistante
+
+### Contexte
+La bannière de confirmation de transfert Gmail (page Paramètres → Transfert emails portails) restait affichée **en permanence**, même quand le transfert était confirmé et fonctionnel (ex: compte avec 129 demandes reçues). Cause : `forwarding_confirmation_link` (lien Gmail à usage unique, capté par `inbound-email.js`) n'était jamais purgé. La bannière s'affichait dès que ce champ était non nul, sans tenir compte du fait que le transfert marchait. Bug systémique : 23 comptes actifs concernés.
+
+### Correctif code (`parametres.html`, `loadEmailForwarding`)
+- La bannière n'est plus affichée si des demandes de portails sont déjà arrivées (`totalEmails > 0` = transfert forcément confirmé).
+- Auto-réparation : dans ce cas, le lien périmé est purgé en base (`forwarding_confirmation_link`/`_date` → null, best-effort) pour ne plus réapparaître. Vaut pour tous les comptes à leur prochaine ouverture des Paramètres.
+- Note : `email_forwarding_active` est mis à `true` dès la génération de l'adresse (pas à la confirmation), donc inutilisable comme signal de confirmation ; on se base sur les demandes reçues.
+
+### Correctif data (prod, MCP Supabase)
+- Purge unique de `forwarding_confirmation_link`/`_date` pour les comptes ayant ≥1 `visit_request` (transfert prouvé). **23 comptes nettoyés**, 0 lien périmé restant côté comptes actifs. Les 10 comptes sans aucune demande conservent la bannière (rappel légitime).
+
+### Fichiers modifiés
+- `/Users/user/Documents/Izimmo/parametres.html`
+
+### Vérifié
+Parsing JS OK. Requête de contrôle post-purge : `liens_restants_avec_demande = 0`, bannière du compte de référence supprimée.
+
+---
+
 ## Session 2026-06-29 — Inbound : ignorer les newsletters / rapports des portails
 
 ### Problème

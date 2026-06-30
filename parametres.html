@@ -2634,10 +2634,20 @@
                 ? `Actif &mdash; ${totalEmails} email${totalEmails > 1 ? 's' : ''} recu${totalEmails > 1 ? 's' : ''}`
                 : 'En attente du premier email';
 
-            // Bandeau de confirmation de transfert Gmail/Outlook
+            // Bandeau de confirmation de transfert Gmail/Outlook.
+            // Le lien Gmail est à usage unique : dès que des demandes de portails arrivent
+            // (totalEmails > 0), le transfert est forcément confirmé. On masque alors la
+            // bannière ET on purge le lien périmé en base (best-effort, auto-réparation pour
+            // tous les comptes), sinon elle se réafficherait à chaque chargement.
             const confirmLink = integration?.forwarding_confirmation_link;
             const confirmDate = integration?.forwarding_confirmation_date;
-            const confirmBanner = confirmLink ? `
+            const forwardingConfirmed = totalEmails > 0;
+            if (confirmLink && forwardingConfirmed) {
+                supabaseClient.from('user_integrations')
+                    .update({ forwarding_confirmation_link: null, forwarding_confirmation_date: null })
+                    .eq('user_id', currentUserId).then(() => {});
+            }
+            const confirmBanner = (confirmLink && !forwardingConfirmed) ? `
                 <div class="email-fwd-confirm-banner">
                     <div class="email-fwd-confirm-icon"><i class="fa-solid fa-envelope-circle-check"></i></div>
                     <div class="email-fwd-confirm-content">
