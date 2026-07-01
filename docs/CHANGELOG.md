@@ -4,6 +4,18 @@
 
 ---
 
+## Session 2026-07-01 — Recherche vendeurs par code postal
+
+### Évolution
+La barre de recherche du pipeline vendeurs matche désormais le **code postal** (ex. `69007`) et la **ville** via les champs dédiés `postal_code` / `city`, en plus de l'adresse. Avant, seul `address` était fouillé : ça marchait quand le code postal figurait dans l'adresse libre, mais pas de façon fiable. Taper un code postal fait remonter tous les biens correspondants.
+
+### Fichiers modifiés
+- `vendeurs.html` : `filterLeads` (recherche desktop) et `fillTilesBody` (recherche mobile/répertoire tuiles) ajoutent `postal_code` + `city` aux critères. Placeholders mis à jour (« code postal »).
+
+### Points d'attention
+- Dépend de `sellers.postal_code` / `sellers.city` renseignés (remplis à la géocodification de l'adresse). Les fiches sans ces champs restent trouvables via l'adresse si le CP y figure.
+
+
 ## Session 2026-06-30 — Fix bannière « Confirmation de transfert requise » persistante
 
 ### Contexte

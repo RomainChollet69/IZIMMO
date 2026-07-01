@@ -4443,7 +4443,7 @@
         <div class="search-bar-section-inner">
             <i class="fa-solid fa-magnifying-glass" style="color:#9CA3AF;margin-right:10px;font-size:14px;"></i>
             <input type="text" id="bottomSearchInput" class="search-input"
-                   placeholder="Rechercher un lead (nom, ville, téléphone…)">
+                   placeholder="Rechercher (nom, ville, code postal, téléphone…)">
             <span class="search-result-count" id="bottomSearchCount" style="display:none;"></span>
             <button type="button" class="search-clear" id="bottomSearchClear" style="display:none;">✕</button>
         </div>
@@ -7257,7 +7257,7 @@
 
         function renderTilesHub(host) {
             const head = `<div class="m-tiles-head"><div class="m-tiles-title">Pipeline</div></div><div class="m-tiles-seg"><a href="vendeurs.html" class="active">Vendeurs</a><a href="acquereurs.html">Acquéreurs</a></div>`;
-            const search = `<div class="m-tiles-search"><span style="color:#94A3B8;font-size:16px">🔍</span><input id="mTilesSearch" type="search" placeholder="Chercher un vendeur, une ville…" autocomplete="off"></div>`;
+            const search = `<div class="m-tiles-search"><span style="color:#94A3B8;font-size:16px">🔍</span><input id="mTilesSearch" type="search" placeholder="Chercher un vendeur, une ville, un code postal…" autocomplete="off"></div>`;
             host.innerHTML = head + search + '<div id="mTilesBody"></div>';
             const input = document.getElementById('mTilesSearch');
             input.value = tilesState.q;
@@ -7275,7 +7275,9 @@
                 const results = sellers.filter(s =>
                     normalizeTxt(sellerDisplayName(s)).includes(nq) ||
                     normalizeTxt(s.phone).includes(nq) ||
-                    normalizeTxt(s.address).includes(nq)
+                    normalizeTxt(s.address).includes(nq) ||
+                    normalizeTxt(s.postal_code).includes(nq) ||
+                    normalizeTxt(s.city).includes(nq)
                 ).slice(0, 50);
                 body.innerHTML = `<div class="m-tlist-sub">${results.length} résultat${results.length > 1 ? 's' : ''}</div>` +
                     (results.length ? '<div class="m-tlist-card">' + results.map(tilesRowHtml).join('') + '</div>' : '<div class="m-tiles-empty">Aucun résultat</div>');
@@ -9105,7 +9107,8 @@
                 const searchable = [
                     seller.first_name, seller.last_name,
                     seller.address, seller.phone, seller.email,
-                    seller.source, seller.referrer_name
+                    seller.source, seller.referrer_name,
+                    seller.postal_code, seller.city
                 ].filter(Boolean).join(' ').toLowerCase();
 
                 const match = searchable.includes(term);
